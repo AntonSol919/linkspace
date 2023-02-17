@@ -1,0 +1,8 @@
+
+
+link pull-udp:GROUP:PATH
+create stamp means before X
+first link is [DOMAIN] + [Optional Signature]
+data is a list of hashes. 
+
+

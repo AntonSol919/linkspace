@@ -1,0 +1,6 @@
+{
+    "include":["./examples","./"],
+    "reportTypeshedErrors": false,
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false
+}

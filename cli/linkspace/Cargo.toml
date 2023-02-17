@@ -1,0 +1,28 @@
+[package]
+name = "linkspace-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Anton Sol <AntonSol919@gmail.com>"]
+
+[[bin]]
+name = "lk"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "*"
+bytes = "1.1.0"
+liblinkspace = { path = "../../crates/liblinkspace" }
+linkspace-common = { path = "../../crates/common" }
+serde_json = "1.0.82"
+tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
+notify = { version = "5.0" }
+smol = "1.2.5"
+futures = "0.3.21"
+serde = { version = "1.0.139", features = ["derive"] }
+lazy_static = "1.4.0"
+
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+fxhash = "0.2.1"
+either = "1.7.0"
+libc = "0.2.137"

@@ -1,0 +1,9 @@
+[target.x86_64-pc-windows-msvc]
+image = "windows"
+
+[build.env]
+passthrough = [
+    "RUST_BACKTRACE",
+    "RUST_LOG",
+    "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER", # = lld-link
+]

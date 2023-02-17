@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>The Linkspace Protocol - a general purpose supernet</title>
+		 <link rel="icon" type="image/x-icon" href="./images/logo2.png	">
+		<link rel="stylesheet" href="./style.css"/>
+	<body>
+		<a id="name" href="./index.html" >The Linkspace Protocol</a>
+    <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
+		<div id="tagline">a general purpose supernet</div>
+    <nav>
+      <li>
+        <a href="./index.html">Home</a>
+      </li>
+      <li>
+        <a href="./eli5.html">ELI5</a>
+      </li>
+      <li >
+        <a href="./docs/guide/index.html">Guide</a>
+      </li>
+      <li >
+        <a href="./lns.html">LNS</a>
+      </li>
+
+      <li >
+        <a href="./domains.html">Domains</a>
+      </li>
+      <li >
+        <a href="./groups.html">Groups</a>
+      </li>
+      <li>
+        <a href="./download.html"> Download </a>
+      </li>
+    </nav>
+    
+    <footer>
+    </footer>
+    <div id="main">
+<h1 id="lns">LNS</h1>
+<p>LNS provides a way for publicly naming groups and public keys. Groups
+look like:</p>
+<ul>
+<li>#:lns:org</li>
+<li>#:myfancystore:com</li>
+</ul>
+<p>Pubkeys like:</p>
+<ul>
+<li>@:john:lns:org</li>
+<li>@:alice:my:fancystore:com</li>
+</ul>
+<p>:com, :dev,:local and :free registars are reserved.<br />
+To apply for a new top level registar contact me directly.</p>
+<p>LNS is not fully implemented yet.<br />
+However you can reserve a name.<br />
+Read this page to find out how.</p>
+<h2 id="qa">Q&amp;A:</h2>
+<h3 id="what-does-my-registratiton-do">What does my registratiton
+do?</h3>
+<p>It gives you binding right for all sub registration.<br />
+The keys associated with ‘:org’ can give ‘company:org’ authority.<br />
+‘sales:company:org’ authority to name ‘bob:sales:company:org’,
+etc.<br />
+Every registration can carry additional links &amp; data.<br />
+In the future further auxiliary information is likely to be included</p>
+<h3 id="do-i-require-a-registration">Do i require a registration?</h3>
+<p>Nothing in linkspace requires a registration.<br />
+Everything can be done without.<br />
+It allow you to pick names to tell others.</p>
+<h3 id="how-much-is-a-registration">How much is a registration?</h3>
+<p>:free is free. first come first serve.<br />
+:dev registrations are given to contributors.<br />
+:com is 10 euro per year.<br />
+for others read on</p>
+<h3 id="can-i-become-a-top-level-registar">Can i become a top level
+registar?</h3>
+<p>Yes. I am looking for more partners.<br />
+They are leased on a first come first serve bases of a 1000 euro p/m (
+12000 euro a year ). Alternative deals are negotiable. Just ask.<br />
+The income help funds development and i’ll throw in some goodwill
+consulting.</p>
+<h3 id="can-i-buy-with-crypto-why-not-use-crypto-to-do-x-y-z">Can i buy
+with crypto? Why not use crypto to do X, Y, Z ?</h3>
+<p>Linkspace is probably easy to integrate with blockchains (or even
+create a new blockchain). You are free to built on it as you wish
+(MPL-2.0 license). However, in an effort to put food on the table and
+pay taxes i believe plain fiat government backed money is currently
+better suited for the job then a token representing a stake in spent
+electricity.</p>
+<h2 id="reserve-a-name">Reserve a name</h2>
+<p>To make a reservation clone this git repository, install rust
+and:</p>
+<pre class="terminal"><code>make install-lk
+lk --init key | tee lnskey
+lk keypoint lns:{#:pub}:/request/com/YOUR_NAME &gt; lnsreq.lkp</code></pre>
+<p>keep the file lnskey safe. Email the lnsreq.lkp file to
+AntonSol919+lns at gmail.com<br />
+I will accept /request/free untill some asshole decides to claim the
+dictionary. After which i’ll probably make it a little more
+difficult.</p>
+<p>Get a pull request accepted and you can get a :dev name.</p>
+<p>First come first serve<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>.</p>
+<section class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>You’ll have to reply within a week
+once I send a follow up email. This is done on a best effort basis no
+rights are given.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+      </div>
+	</body>
+</html>

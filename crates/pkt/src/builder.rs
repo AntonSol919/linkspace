@@ -1,0 +1,211 @@
+// Copyright Anton Sol
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use linkspace_crypto::SigningKey;
+
+use crate::*;
+
+pub fn datapoint(data: &[u8], netopts: impl Into<NetOpts>) -> NetPktParts<'_> {
+    try_datapoint_ref(data, netopts.into()).unwrap()
+}
+pub fn try_datapoint_ref(data: &[u8], netopts: NetOpts) -> Result<NetPktParts<'_>, Error> {
+    let pkt_parts = PointParts {
+        pkt_header: PointHeader::new(PktTypeFlags::DATA_POINT, data.len())?,
+        fields: PointFields::DataPoint(data),
+    };
+    let hash = pkt_parts.compute_hash();
+    Ok(NetPktParts {
+        net_header: netopts.into(),
+        hash,
+        point_parts: pkt_parts,
+    })
+}
+
+// TODO : decide if all default arguments should produce a try_datapoint and ifso, what the defaults are.
+#[allow(clippy::too_many_arguments)]
+pub fn try_point<'t>(
+    group: GroupID,
+    domain: Domain,
+    spath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    signkey: Option<&SigningKey>,
+    netopts: impl Into<NetOpts>,
+) -> Result<NetPktParts<'t>, Error> {
+    let netopts = netopts.into();
+    match signkey {
+        Some(key) => try_keypoint_ref(group, domain, spath, links, data, stamp, key, netopts),
+        None => try_linkpoint_ref(group, domain, spath, links, data, stamp, netopts),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn point<'t>(
+    group: GroupID,
+    domain: Domain,
+    spath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    signkey: Option<&SigningKey>,
+    netopts: impl Into<NetOpts>,
+) -> NetPktParts<'t> {
+    try_point(
+        group,
+        domain,
+        spath,
+        links,
+        data,
+        stamp,
+        signkey,
+        netopts.into(),
+    )
+    .unwrap()
+}
+pub fn linkpoint<'t>(
+    group: GroupID,
+    domain: Domain,
+    ipath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    netopts: impl Into<NetOpts>,
+) -> NetPktParts<'t> {
+    let netopts = netopts.into();
+    try_linkpoint_ref(group, domain, ipath, links, data, stamp, netopts).unwrap()
+}
+#[allow(clippy::too_many_arguments)]
+pub fn keypoint<'t>(
+    group: GroupID,
+    domain: Domain,
+    ipath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    signkey: &SigningKey,
+    netopts: impl Into<NetOpts>,
+) -> NetPktParts<'t> {
+    let netopts = netopts.into();
+    try_keypoint_ref(group, domain, ipath, links, data, stamp, signkey, netopts).unwrap()
+}
+
+fn linkp<'t>(
+    group: GroupID,
+    domain: Domain,
+    ipath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+) -> Result<(PointHeader, LinkPoint<'t>), Error> {
+    ipath.check_components().unwrap();
+    let tail = Tail { links, data, ipath };
+    let ipath_size = ipath.ipath_bytes().len();
+    let offset_ipathu =
+        size_of::<PointHeader>() + size_of::<LinkPointHeader>() + (links.len() * size_of::<Link>());
+    let offset_ipath = U16::new(offset_ipathu as u16);
+    let offset_data = U16::new((offset_ipathu + ipath_size) as u16);
+    let pkt_header = PointHeader::new(
+        PktTypeFlags::LINK_POINT,
+        size_of::<LinkPointHeader>() + tail.byte_len(),
+    )?;
+    let sp = LinkPoint {
+        head: LinkPointHeader {
+            info: LinkPointInfo {
+                offset_ipath,
+                offset_data,
+            },
+            group,
+            domain,
+            create_stamp: stamp,
+        },
+        tail,
+    };
+    Ok((pkt_header, sp))
+}
+
+pub fn try_linkpoint_ref<'t>(
+    group: GroupID,
+    domain: Domain,
+    ipath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    netopts: NetOpts,
+) -> Result<NetPktParts<'t>, Error> {
+    let (pkt_header, linkpoint) = linkp(group, domain, ipath, links, data, stamp)?;
+    let pkt_parts = PointParts {
+        pkt_header,
+        fields: PointFields::LinkPoint(linkpoint),
+    };
+    let hash = pkt_parts.compute_hash();
+    Ok(NetPktParts {
+        net_header: netopts.into(),
+        hash,
+        point_parts: pkt_parts,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn try_keypoint_ref<'t>(
+    group: GroupID,
+    domain: Domain,
+    ipath: &'t IPath,
+    links: &'t [Link],
+    data: &'t [u8],
+    stamp: Stamp,
+    signkey: &SigningKey,
+    netopts: NetOpts,
+) -> Result<NetPktParts<'t>, Error> {
+    let (linkpoint_pkt_header, sp) = linkp(group, domain, ipath, links, data, stamp)?;
+    let linkpoint_hash = PointParts {
+        pkt_header: linkpoint_pkt_header,
+        fields: PointFields::LinkPoint(sp),
+    }
+    .compute_hash();
+    let signature = linkspace_crypto::sign_hash(signkey, &linkpoint_hash.0).into();
+    let pkt_parts = PointParts {
+        pkt_header: PointHeader::new(
+            PktTypeFlags::KEY_POINT,
+            size_of::<KeyPointHeader>() + sp.tail.byte_len(),
+        )?,
+        fields: PointFields::KeyPoint(KeyPoint {
+            head: KeyPointHeader {
+                reserved: KeyPointPadding::default(),
+                signed: Signed {
+                    pubkey: signkey.pubkey(),
+                    signature,
+                    linkpoint_hash,
+                },
+                inner_point: linkpoint_pkt_header,
+                linkpoint: sp.head,
+            },
+            tail: sp.tail,
+        }),
+    };
+    let hash = pkt_parts.compute_hash();
+    Ok(NetPktParts {
+        net_header: netopts.into(),
+        hash,
+        point_parts: pkt_parts,
+    })
+}
+
+pub fn errorpoint(error: &[u8], netopts: impl Into<NetOpts>) -> NetPktParts<'_> {
+    __error_blk_ref(error, netopts.into())
+}
+
+fn __error_blk_ref(error: &[u8], netopts: NetOpts) -> NetPktParts<'_> {
+    let pkt_parts = PointParts {
+        pkt_header: PointHeader::new(PktTypeFlags::ERROR_POINT, error.len()).unwrap(),
+        fields: PointFields::Error(error),
+    };
+    let hash = pkt_parts.compute_hash();
+    NetPktParts {
+        net_header: netopts.into(),
+        hash,
+        point_parts: pkt_parts,
+    }
+}

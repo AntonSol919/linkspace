@@ -1,0 +1,13 @@
+[package]
+name = "imageboard-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+image = { version = "0.24", features = ["jpeg", "png"] }
+imageproc = {version="0.23"}
+liblinkspace = {path ="../../../../crates/liblinkspace"}
+tracing = "0.1.37"
