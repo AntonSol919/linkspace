@@ -80,7 +80,7 @@ pub fn rewrite_pkt(
     let path = opts.path.as_ref().map(|v| v.eval(ctx)).transpose()?;
     let path = path.as_deref().unwrap_or(&t.ipath);
     let mut data = vec![];
-    let pkt_data = (data_reader)(ctx.dynr(), &mut data)?;
+    let pkt_data = (data_reader)(&ctx.dynr(), &mut data)?;
 
     let pkt = try_point(
         group,

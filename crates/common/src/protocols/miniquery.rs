@@ -43,7 +43,7 @@ pub fn packedq_pull_path2(
         &links,
         &[],
         now,
-        NetOpts::ValidUntil(now),
+        NetOpts::Stamp(now),
     )
     .as_netbox()
 }
@@ -63,7 +63,7 @@ pub fn packedq_pull(hashes: &[Ptr]) -> NetPktParts {
         &[],
         data,
         now,
-        NetOpts::ValidUntil(now),
+        NetOpts::Stamp(now),
     )
 }
 

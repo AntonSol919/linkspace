@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopReason};
+use abe::abtxt::as_abtxt_e;
 use anyhow::bail;
 pub use async_executors::{Timer, TimerExt};
 use futures::future::Either;
@@ -17,7 +18,7 @@ use std::{
     rc::{Rc, Weak},
     time::{Duration, Instant},
 };
-use tracing::{warn, Span};
+use tracing::{warn, Span, debug_span};
 
 pub type PktStream = Box<dyn PktStreamHandler + 'static>;
 pub type Matcher = linkspace_core::matcher::matcher2::Matcher<PktStream>;
@@ -127,7 +128,7 @@ impl Linkspace {
         }
     }
 
-    pub fn watch(&self, watch_entry: RxEntry) {
+    pub fn insert_watch(&self, watch_entry: RxEntry) {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 if let Some(w) = lk.0.register(watch_entry) {
@@ -158,7 +159,7 @@ impl Linkspace {
     }
     pub async fn poll(&self) -> Stamp {
         loop {
-            self.process_views();
+            self.process();
             let rt_head = self.rt_log_head();
             let env_head = self.inner().log_head().await;
             if env_head == rt_head {
@@ -170,17 +171,17 @@ impl Linkspace {
         loop {
             if let Some(v) = self.inner().log_head.next_d(None) {
                 if self.rt_log_head().get() < v {
-                    self.process_views();
+                    self.process();
                 }
             }
         }
     }
 
     /**
-    continiously trigger view callbacks unless
+    continiously trigger watch callbacks unless
     - max_wait has elapsed between new packets - return false
     - untill time has been reached - returns false
-    - no more view callbacks exists - returns true
+    - no more watch callbacks exists - returns true
      **/
     pub fn run_while(
         &self,
@@ -194,7 +195,7 @@ impl Linkspace {
         let mut last_new_pkt = Instant::now();
         // check the 3 break conditions, and update 'next_check' as required for next check
         loop {
-            let new_recv_id = self.process_views();
+            let new_recv_id = self.process();
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
 
@@ -249,7 +250,8 @@ impl Linkspace {
         }
     }
 
-    pub fn process_views(&self) -> Stamp {
+    /// check the log for new packets and execute callbacks
+    pub fn process(&self) -> Stamp {
         self.exec.writen.set(false);
         let this = self.clone();
         let (txn, from, upto): (Rc<ReadTxn>, Stamp, Stamp) = {
@@ -334,7 +336,7 @@ impl Linkspace {
         std::mem::drop((txn, lk));
         if self.exec.writen.get() {
             tracing::trace!("Written true");
-            return self.process_views();
+            return self.process();
         } else {
             upto
         }
@@ -358,27 +360,27 @@ impl Linkspace {
                 Box::new(SinglePktHandler(Some(rx))),
                 span,
             )?;
-            self.watch(e);
+            self.insert_watch(e);
         }
         Ok(())
     }
     /// automatically handle the options 'follow', 'start', 'mode', and 'id'
-    pub fn view_query(
+    pub fn watch_query(
         &self,
         query: &Query,
         onmatch: impl PktStreamHandler + 'static,
         span: Span,
     ) -> anyhow::Result<u32> {
         let mode = query.get_mode()?;
-        let id = query.id().transpose()?;
+        let id = query.watch_id().transpose()?;
         let follow = query.get_known_opt(KnownOptions::Follow);
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.
-        let span = tracing::debug_span!(parent: &span, "with_opts", ?id, ?follow, ?mode, ?start);
+        let span = tracing::debug_span!(parent: &span, "with_opts", id=?id.map(as_abtxt_e), ?follow, ?mode, ?start);
         match follow {
             Some(_p) => {
                 let onmatch = FollowHandler { inner: onmatch };
-                Ok(self.view(
+                Ok(self.watch(
                     id.map(Vec::from),
                     mode,
                     Cow::Borrowed(&query),
@@ -387,7 +389,7 @@ impl Linkspace {
                     span,
                 )?)
             }
-            None => Ok(self.view(
+            None => Ok(self.watch(
                 id.map(Vec::from),
                 mode,
                 Cow::Borrowed(&query),
@@ -398,7 +400,7 @@ impl Linkspace {
         }
     }
     /// only checks predicates, does not handle any options.
-    pub fn view(
+    pub fn watch(
         &self,
         watch_id: Option<WatchID>,
         mode: query_mode::Mode,
@@ -410,6 +412,7 @@ impl Linkspace {
         if start.is_some() {
             panic!("todo")
         }
+        let span = debug_span!(parent:&span,"query", preds=%q.predicates);
         let mut counter = 0;
         let check_db = q.predicates.state.check_db();
         if check_db {
@@ -426,7 +429,7 @@ impl Linkspace {
             if Rc::strong_count(&reader) > 2 {
                 warn!("Holding txn open");
             }
-            tracing::debug!(r=?r,"Done with DB");
+            tracing::debug!(?r,"Done with DB");
             if matches!(r, ControlFlow::Break(_)) {
                 return Ok(counter);
             }
@@ -434,13 +437,13 @@ impl Linkspace {
         if let Some(wid) = watch_id {
             match RxEntry::new(wid, q.into_owned(), counter, Box::new(onmatch), span) {
                 Ok(e) => {
-                    tracing::debug!(q=%e.query,"Setup Watch");
-                    self.watch(e)
+                    tracing::debug!("Setup Watch");
+                    self.insert_watch(e)
                 }
                 Err(r) => tracing::info!(e=?r,"Did not register"),
             }
         } else if !check_db {
-            tracing::warn!(parent: &span, ?q, "Useless rules. Nothing checked");
+            anyhow::bail!("nothing checked - did you set the :watch option?");
         }
         Ok(counter)
     }

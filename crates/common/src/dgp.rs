@@ -71,26 +71,20 @@ impl DGPExpr {
             }
         }
     }
-    pub fn as_test_exprs(&self) -> impl Iterator<Item = PredicateExpr> {
+    pub fn as_test_exprs(self) -> impl Iterator<Item = Vec<ABE>> {
+        let DGPExpr { domain, group, path } = self;
         let mut prefix = None;
-        if !self.path.is_empty() {
+        if !path.is_empty() {
             prefix = Some(
-                abe!("prefix" : "=" :)
-                    .chain(self.path.iter().cloned())
-                    .collect::<Vec<ABE>>(),
+                abev!("prefix" : "=" : +(path.0))
             );
         }
         [
-            abe!("domain" : "=" : )
-                .chain(self.domain.iter().cloned())
-                .collect::<Vec<ABE>>(),
-            abe!("group" : "=" : )
-                .chain(self.group.iter().cloned())
-                .collect::<Vec<ABE>>(),
+            abev!("domain" : "=" : +(domain.0)),
+            abev!("group" : "=" : +(group.0))
         ]
         .into_iter()
         .chain(prefix)
-        .map(PredicateExpr::from_unchecked)
     }
 }
 #[derive(Debug, Clone, PartialEq)]
@@ -135,7 +129,7 @@ pub struct DGPDExpr {
     pub subsegment_limit: u8,
 }
 impl DGPDExpr {
-    pub fn predicate_exprs(&self) -> impl Iterator<Item = PredicateExpr> {
+    pub fn predicate_exprs(self) -> impl Iterator<Item = Vec<ABE>> {
         let mut prefix_rule = None;
         if self.subsegment_limit < MAX_PATH_LEN as u8 {
             let prefix_len = self
@@ -147,12 +141,7 @@ impl DGPDExpr {
                 .count()
                 .min(8) as u8;
             let exclude = prefix_len.saturating_add(self.subsegment_limit).min(8) + 1;
-            let rule = PredicateExpr::from_unchecked(
-                abe!("path_len" : "<" : )
-                    .chain(U8(exclude).to_abe().into_iter())
-                    .collect(),
-            );
-            prefix_rule = Some(rule);
+            prefix_rule = Some(abev!("path_len" : "<" : +(U8(exclude).to_abe())));
         }
         self.dgp.as_test_exprs().chain(prefix_rule)
     }

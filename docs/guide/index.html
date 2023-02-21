@@ -71,10 +71,10 @@
 <li><a href="#orgc21db50">lk_open</a></li>
 <li><a href="#orgbe4beb6">lk_save</a></li>
 <li><a href="#org3238760">lk_read</a></li>
-<li><a href="#orga57895e">lk_view</a></li>
+<li><a href="#orga57895e">lk_watch</a></li>
 <li><a href="#org07b2db2">lk_process</a></li>
 <li><a href="#orgae313db">lk_process_while</a></li>
-<li><a href="#orgae5e0bd">lk_close_view</a></li>
+<li><a href="#orgae5e0bd">lk_close_watch</a></li>
 </ul>
 </li>
 <li><a href="#orge5741c2">Conventions</a>
@@ -248,7 +248,7 @@ It consists of the following functions:
 <li><a href="#orgc21db50">lk_open</a></li>
 <li><a href="#orgbe4beb6">lk_save</a></li>
 <li><a href="#org3238760">lk_read</a></li>
-<li><a href="#orga57895e">lk_view</a></li>
+<li><a href="#orga57895e">lk_watch</a></li>
 <li><a href="#org07b2db2">lk_process</a></li>
 <li><a href="#orgae313db">lk_process_while</a></li>
 </ul></li>
@@ -953,7 +953,7 @@ funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}}
 - readhash         HASH ':' expr [ ':' alt if not found ]   
 
 # netpkt field
-get a field of a netpkt. also used in view predicates.
+get a field of a netpkt. also used in watch predicates.
 ## functions
 - netflags         /            0..=1     ?(str|abe) - get netflags field from netpkt  
 - hop              /            0..=1     ?(str|abe) - get hop field from netpkt  
@@ -1080,7 +1080,7 @@ The function to do so is not yet exported (crates/common/protocol/lns/local.rs::
 <div class="outline-text-2" id="text-orgbbd938d">
 <p>
 A query is a list of predicates and options used to select a set of packets.
-They are used by the local index ( <a href="#orga57895e">lk_view</a> and <a href="#org3238760">lk_read</a> ),
+They are used by the local index ( <a href="#orga57895e">lk_watch</a> and <a href="#org3238760">lk_read</a> ),
 or to signal what packets should be found looked for in the group ( <a href="#lk_pull">lk_pull</a> ),
 or as a filter function.
 </p>
@@ -1221,9 +1221,9 @@ path_len:&gt;:{u8:0}
 </pre>
 
 <p class="verse">
-Note that many cli commands (e.g. <code>print-statemnt</code>, <code>view</code> ) take as the first argument a <code>domain:group:path:[?depth]</code><br>
+Note that many cli commands (e.g. <code>print-statemnt</code>, <code>watch</code> ) take as the first argument a <code>domain:group:path:[?depth]</code><br>
 If no depth is set the path_len is constraint by default.<br>
-Except for <code>view-tree</code> which sets the depth to unconstraint by default<br>
+Except for <code>watch-tree</code> which sets the depth to unconstraint by default<br>
 </p>
 </div>
 </li>
@@ -1388,11 +1388,11 @@ The full list of addressable fields is the same as in the ABE packet scope:
 <p>
 The linkspace is a local log and index that one or more processes connect to.
 It is the place you save and retrieve data from.
-Either by read or view.
+Either by get or watch.
 The latter lets you callback for each currently known and future packet matching a specific set of predicates.
 This is done in the <a href="#org07b2db2">lk_process</a> stage.
 The callback receives the linkspace.
-You can nest calling <code>lk_view</code> and <code>lk_read</code>.
+You can nest calling <code>lk_watch</code> and <code>lk_read</code>.
 </p>
 </div>
 
@@ -1407,7 +1407,7 @@ You can nest calling <code>lk_view</code> and <code>lk_read</code>.
 <h3 id="org3238760">lk_read</h3>
 </div>
 <div id="outline-container-orga57895e" class="outline-3">
-<h3 id="orga57895e">lk_view</h3>
+<h3 id="orga57895e">lk_watch</h3>
 </div>
 
 <div id="outline-container-org07b2db2" class="outline-3">
@@ -1418,7 +1418,7 @@ You can nest calling <code>lk_view</code> and <code>lk_read</code>.
 </div>
 
 <div id="outline-container-orgae5e0bd" class="outline-3">
-<h3 id="orgae5e0bd">lk_close_view</h3>
+<h3 id="orgae5e0bd">lk_close_watch</h3>
 </div>
 </div>
 
@@ -1608,14 +1608,14 @@ fi
 START_STAMP=${2:-"0"} # If no stamp is given we begin at 0, i.e. unix epoch in microseconds
 
 # We select everything with a create field greater or equal to $START_STAMP
-lk view --index "imgboard:$GROUP:/$BOARD" -- "create:&gt;=:{u64:$START_STAMP}" \
+lk watch --index "imgboard:$GROUP:/$BOARD" -- "create:&gt;=:{u64:$START_STAMP}" \
     | lk printf "{/links:{tag:str} {ptr:str}}" \
     | while read REF; do
         X=${REF:0:8}
         Y=${REF:8:8}
         IMG_HASH=${REF: -43}
         echo "Placing $IMG_HASH at $X , $Y"
-        lk view-hash $IMG_HASH \
+        lk watch-hash $IMG_HASH \
             | lk printf "{data}" --delimiter "" \
             | magick composite -geometry +$X+$Y - PNG32:$BOARD.png PNG32:$BOARD.png
     done
@@ -1644,10 +1644,10 @@ function pull {
 ./imgboard-view.sh $BOARD 0 # run once
 
 #On receiving a new packet of interest we repaint the board from that stamp
-lk view --new "imgboard:$GROUP:/$BOARD" | \
+lk watch --new "imgboard:$GROUP:/$BOARD" | \
     lk printf "{create:str}" | \
     while read STAMP; do
-        ./imgboard-view.sh $BOARD $STAMP
+        ./imgboard-watch.sh $BOARD $STAMP
     done
 </pre>
 </div>
@@ -1697,8 +1697,8 @@ THEIR_KEY="{b:$THEIR_KEY}"
 
 lk link --create {u64:0} ":{#:0}:/rxlog/$THEIR_KEY" --write db
 lk link --create {u64:0} ":{#:0}:/txlog/$THEIR_KEY" --write db
-LAST_RX=$(lk --private view --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
-LAST_TX=$(lk --private view --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
+LAST_RX=$(lk --private watch --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
+LAST_TX=$(lk --private watch --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
 lk eval "last rx {u64:$LAST_RX/s:str}\nlast tx {u64:$LAST_TX/s:str}\n"
 
 #lk alias auto-update-status exchange {b:$GROUP} peer "{b:$THEIR_KEY}" --link "connected@:$THEIR_KEY" --data "abe:$SESSION"  &amp;
@@ -1712,7 +1712,7 @@ lk save --new db --new stdout \
               --write db &amp;
 
 # read the pull request made by other apps and place them into the group
-lk --private view --new "{f:exchange}:{#:0}:/pull/$GROUP:**" \
+lk --private watch --new "{f:exchange}:{#:0}:/pull/$GROUP:**" \
     | lk --private rewrite \
                 --password "" \
                 --group $GROUP \
@@ -1721,7 +1721,7 @@ lk --private view --new "{f:exchange}:{#:0}:/pull/$GROUP:**" \
 
 
 # This group exchange requires us to send all the data to the server
-lk view --bare --mode log-asc -- "group:=:$GROUP" "hop:=:{:0/u32}" \
+lk watch --bare --mode log-asc -- "group:=:$GROUP" "hop:=:{:0/u32}" \
     | lk get-links \
     | lk dedup \
     | lk printf --inspect "{now:str} SENDING {hash:str}" \
@@ -1807,8 +1807,8 @@ THEIR_KEY="{b:$THEIR_KEY}"
 
 lk link --create {u64:0} ":{#:0}:/rxlog/$THEIR_KEY" --write db
 lk link --create {u64:0} ":{#:0}:/txlog/$THEIR_KEY" --write db
-LAST_RX=$(lk --private view --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
-LAST_TX=$(lk --private view --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
+LAST_RX=$(lk --private watch --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
+LAST_TX=$(lk --private watch --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
 lk eval "last rx {u64:$LAST_RX/s:str}\nlast tx {u64:$LAST_TX/s:str}\n"
 
 # save reads from std. i.e. what the client is sending
@@ -1826,9 +1826,9 @@ sleep 2
 lk link dummy:: | tee &gt;( cat - &gt;&amp;4 ) | lk p "dummy2 ok {pkt}"
 
 # Read new request keypoints and return their content
-lk view --new "{f:exchange}:$GROUP:/pull/$GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
+lk watch --new "{f:exchange}:$GROUP:/pull/$GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
     | lk printf --inspect "&gt;&gt;&gt;&gt;Pull req {hash:str}\n{data}\n&lt;&lt;&lt;&lt;$PID " \
-    | lk multi-view \
+    | lk multi-watch \
     | lk dedup \
     | lk printf --inspect "$PID Tx {hash:str}" &gt;&amp;4 
 

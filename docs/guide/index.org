@@ -45,7 +45,7 @@ A communication protocol where the method of exchange is a extraneous concern.
 #+END_VERSE
 
 The supernet paradigm is a tradeoff.
-Instead of processing ordered streams of network data, an application is a function over the partial view of (potentially noisy) interlinked state.
+Instead of processing ordered streams of network data, an application is a function over the partial watch of (potentially noisy) interlinked state.
 
 The Linkspace Protocol is best understood as 4 ideas.
 
@@ -119,7 +119,7 @@ It consists of the following functions:
   - [[lk_open]]
   - [[lk_save]]
   - [[lk_read]]
-  - [[lk_view]]
+  - [[lk_watch]]
   - [[lk_process]]
   - [[lk_process_while]]
 
@@ -601,7 +601,7 @@ The function to do so is not yet exported (crates/common/protocol/lns/local.rs::
 * Query
 
 A query is a list of predicates and options used to select a set of packets.
-They are used by the local index ( [[lk_view]] and [[lk_read]] ),
+They are used by the local index ( [[lk_watch]] and [[lk_read]] ),
 or to signal what packets should be found looked for in the group ( [[lk_pull]] ),
 or as a filter function.
 
@@ -623,7 +623,7 @@ link_len:<=:{u16:8}
 
 :mode:tree-asc
 :follow
-:id:gethellos
+:watch:gethellos
 #+END_EXAMPLE
 
 A predicate can be set multiple times.
@@ -669,9 +669,9 @@ path_len:>:{u8:0}
 #+end_example
 
 #+BEGIN_VERSE 
-Note that many cli commands (e.g. ~print-statemnt~, ~view~ ) take as the first argument a ~domain:group:path:[?depth]~
+Note that many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:path:[?depth]~
 If no depth is set the path_len is constraint by default.
-Except for ~view-tree~ which sets the depth to unconstraint by default
+Except for ~watch-tree~ which sets the depth to unconstraint by default
 #+END_VERSE 
 
 ** lk_query_print
@@ -740,22 +740,22 @@ The full list of addressable fields is the same as in the ABE packet scope:
 
 The linkspace is a local log and index that one or more processes connect to.
 It is the place you save and retrieve data from.
-Either by read or view.
+Either by read or watch.
 The latter lets you callback for each currently known and future packet matching a specific set of predicates.
 This is done in the [[lk_process]] stage.
 The callback receives the linkspace.
-You can nest calling ~lk_view~ and ~lk_read~.
+You can nest calling ~lk_watch~ and ~lk_read~.
 
 ** lk_open
 ** lk_save
    
 ** lk_read
-** lk_view
+** lk_watch
 
 ** lk_process
 ** lk_process_while
 
-** lk_close_view 
+** lk_close_watch 
 
 * Conventions
 Conventions are functions built from the other linkspace functions that encode a commonly used convention.

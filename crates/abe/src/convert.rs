@@ -51,6 +51,9 @@ impl From<Vec<ABE>> for TypedABE<Vec<u8>> {
 }
 
 impl<A: ABEValidator> TypedABE<A> {
+    pub fn unwrap(self) -> Vec<ABE>{
+        self.0
+    }
     pub fn eval_default(
         &self,
         default: A,
@@ -147,6 +150,11 @@ impl ABEValidator for ABList {
     }
 }
 pub type AnyABE = TypedABE<ABList>;
+impl From<Vec<ABE>> for AnyABE {
+    fn from(value: Vec<ABE>) -> Self {
+        TypedABE(value,PhantomData)
+    }
+}
 
 impl ABEValidator for String {
     fn check(b: &[ABE]) -> Result<(), MatchError> {

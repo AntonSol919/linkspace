@@ -42,26 +42,17 @@ use linkspace_common::{
     },
 };
 use tracing_subscriber::EnvFilter;
-use view::DGPDViewCLIOpts;
+use watch::DGPDWatchCLIOpts;
 
 pub mod collect;
 pub mod filter;
-pub mod multi_view;
+pub mod multi_watch;
 pub mod point;
 pub mod printf;
 pub mod rewrite;
 pub mod save;
 pub mod status;
-pub mod view;
-
-const VERSION: &str = concat!(
-    env!("CARGO_PKG_VERSION"),
-    " -- ",
-    include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../.git/refs/heads/main"
-    ))
-);
+pub mod watch;
 
 const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
     use std::fmt::Write;
@@ -101,12 +92,10 @@ Commands taking a WriteDestSpec can set the destination of the packets they crea
 lk link :: --write db --write stdout --write stderr --write file:./file
 
 
-Many commands are specifically to be used in a pipeline and read packets from stdin.
-If a command outputs packets; the destination is set as one or more --write [WriteDest] options.
-WriteDest values are : db , stdout , null , file:...
+Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
-#[clap(author, version = VERSION, about, long_about = None)]
+#[clap(author, about)]
 struct Cli {
     #[clap(flatten)]
     common: CommonOpts,
@@ -161,7 +150,7 @@ enum Command {
     #[clap(alias="ps",alias="print-predicate",before_help=QUERY_HELP.to_string())]
     PrintQuery {
         #[clap(flatten)]
-        opts: DGPDViewCLIOpts,
+        opts: DGPDWatchCLIOpts,
     },
 
     /** runtime - save packets from stdin to database
@@ -175,32 +164,32 @@ enum Command {
      **/
     Save(save::SaveForward),
     /// runtime - get packets matching query
-    View {
+    Watch {
         #[clap(flatten)]
-        view: view::CLIQuery,
+        watch: watch::CLIQuery,
     },
-    /// runtime - view all packets with the same locaiton prefix. alias for: view --mode tree-desc 'dom:grp:path:**'
-    ViewTree {
+    /// runtime - watch all packets with the same locaiton prefix. alias for: watch --mode tree-desc 'dom:grp:path:**'
+    WatchTree {
         #[clap(short, long)]
         asc: bool,
         #[clap(flatten)]
-        query: view::CLIQuery,
+        query: watch::CLIQuery,
     },
-    /// runtime - alias for: view --mode hash-asc -- hash:=:HASH
-    ViewHash {
+    /// runtime - alias for: watch --mode hash-asc -- hash:=:HASH
+    WatchHash {
         #[clap(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         hash: HashExpr,
     },
-    /// runtime - alias for: view --mode log-desc
-    ViewLog {
+    /// runtime - alias for: watch --mode log-desc
+    WatchLog {
         #[clap(short, long)]
         asc: bool,
         #[clap(flatten)]
-        query: view::CLIQuery,
+        query: watch::CLIQuery,
     },
     /// runtime - read a stream of queries
-    MultiView(multi_view::MultiView),
+    MultiWatch(multi_watch::MultiWatch),
     /// convention - generate / print a signing key
     Key(keys::KeyGenOpts),
     /// convention - create a pull request
@@ -210,7 +199,7 @@ enum Command {
         #[clap(long, default_value = "1m")]
         ttl: DurationStr,
         #[clap(flatten)]
-        view: DGPDViewCLIOpts,
+        watch: DGPDWatchCLIOpts,
     },
     /// convention - creates a status update request (or checks for a recent one)
     PollStatus(status::PollStatus),
@@ -225,7 +214,7 @@ enum Command {
     /// filter a stream of packets based on a query
     Filter {
         #[clap(flatten)]
-        query: view::CLIQuery,
+        query: watch::CLIQuery,
         /// destination for filtered packets
         #[clap(short = 'f', long, default_value = "null")]
         write_false: Vec<WriteDestSpec>,
@@ -395,20 +384,20 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                 }
             }
         }
-        Command::ViewHash { hash, write } => {
+        Command::WatchHash { hash, write } => {
             let env = common.env()?;
             let hash = hash.eval(&common.eval_ctx())?;
             let r = env.get_reader()?;
             let pkt = r.read(&hash)?.context("Pkt not in db")?;
             common.write_multi_dest(&mut common.open(&write)?, &pkt.pkt, None)?;
         }
-        Command::ViewTree { mut query, asc } => {
+        Command::WatchTree { mut query, asc } => {
             if let Some(dgpd) = &mut query.opts.dgpd {
                 if dgpd.subsegment_limit == 0 {
                     dgpd.subsegment_limit = 255;
                 }
             }
-            view::view(
+            watch::watch(
                 common,
                 query.mode(Mode {
                     table: Table::Tree,
@@ -416,14 +405,14 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                 }),
             )?
         }
-        Command::ViewLog { query, asc } => view::view(
+        Command::WatchLog { query, asc } => watch::watch(
             common,
             query.mode(Mode {
                 table: Table::Log,
                 order: Order::asc(asc),
             }),
         )?,
-        Command::View { view } => view::view(common, view)?,
+        Command::Watch { watch } => watch::watch(common, watch)?,
         Command::Filter { query, write_false } => {
             filter::select(query, common.open(&write_false)?, common)?
         }
@@ -439,7 +428,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             out.flush()?;
         }
-        Command::MultiView(mv) => multi_view::multi_view(common, mv)?,
+        Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
         Command::Route { field_mut } => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
             common.enable_private();
@@ -454,7 +443,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
 
         Command::PrintQuery { opts } => {
-            print_query(1, &opts.view_predicates(&common.eval_ctx())?.into())
+            print_query(1, &opts.watch_predicates(&common.eval_ctx())?.into())
         }
         Command::External(args) => {
             let name = format!("linkspace-{}", args[0].to_str().unwrap());
@@ -469,10 +458,11 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             println!("exec not supported")
         }
-        Command::Pull { write, ttl, view } => {
+        Command::Pull { write, ttl, mut watch } => {
             let ctx = common.eval_ctx();
-            ensure!(view.dgpd.is_some(), "DGSD required for pull request");
-            let query = view.view_predicates(&ctx)?;
+            watch.watch_opts.opts.aliasses.watch = true;
+            ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
+            let query = watch.watch_predicates(&ctx)?;
             let req = liblinkspace::conventions::lk_pull_req(&query.into(), ttl.stamp())?;
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;

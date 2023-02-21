@@ -21,7 +21,7 @@ Two options come to mind:
 use crate::pkt::field_ids::FieldEnum;
 use crate::predicate::pkt_predicates::PktPredicates;
 use either::Either;
-use linkspace_pkt::{Stamp, B64, U256, VAR_FIELDS};
+use linkspace_pkt::{Stamp, B64, U256 };
 
 use crate::prelude::TestSet;
 use crate::{
@@ -36,6 +36,8 @@ use crate::{
 };
 
 use super::query_mode::{Mode, Order, Table};
+use super::tree_key::treekey_checked;
+
 
 impl<C: super::db::Cursors> IReadTxn<C> {
     pub fn scope_iter<'o>(
@@ -68,6 +70,8 @@ impl<C: super::db::Cursors> IReadTxn<C> {
         let pkt_stamp = rules.create;
         let recv_stamp = rules.recv_stamp;
         let hash = rules.hash;
+        let data_size = rules.data_size;
+        let links_len = rules.links_len;
         std::iter::from_fn(move || {
             if yields.peek().is_none() {
                 key_ptr = keys_iter.as_mut().and_then(|v| v.next_entry());
@@ -100,7 +104,9 @@ impl<C: super::db::Cursors> IReadTxn<C> {
                 let next_item = next_item.unwrap();
                 let ok = pkt_stamp.test(next_item.create().get())
                     && recv_stamp.test(next_item.local_log_ptr().get())
-                    && hash.test(next_item.hash().into());
+                    && hash.test(next_item.hash().into())
+                    && links_len.test(next_item.links_len().into())
+                    && data_size.test(next_item.data_size().into());
                 tracing::debug!(ok, ?next_item, "key entry");
                 if ok {
                     let yielding = yields.next();
@@ -123,20 +129,10 @@ impl<C: super::db::Cursors> IReadTxn<C> {
         ord: Order,
         predicates: &PktPredicates,
     ) -> impl Iterator<Item = RecvPktPtr<'o>> {
-        let select: Vec<RuleType> = [FieldEnum::PointSizeF]
-            .into_iter()
-            .chain(VAR_FIELDS.into_iter())
-            .map(|v| v.into())
-            .collect();
         let pkt_filter = compile_predicates(predicates)
             .0
-            .filter_map(|(test, kind)| {
-                if select.contains(&kind) {
-                    Some(test)
-                } else {
-                    None
-                }
-            })
+            .filter(|(_test, kind)| !treekey_checked(*kind))
+            .map(|(test,_)| test)
             .collect::<Vec<_>>();
         let c1 = self.btree_txn.pkt_cursor();
         let it = self

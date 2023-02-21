@@ -35,7 +35,7 @@ impl From<PktPredicates> for Query {
 See the (guide#query)[./guide/index.html].
 A set of predicates and options.
 Create with liblinkspace::lk_query, extend with lk_query_append, and stringify with lk_query_str
-Argument to lk_get and lk_view.
+Argument to lk_get and lk_watch.
 **/
 #[derive(Debug, Clone, Default)]
 pub struct Query {
@@ -57,8 +57,8 @@ impl Display for Query {
 pub enum KnownOptions {
     /// which index to walk when reading from the database
     Mode,
-    /// the ID under which to operate. Can be overwritten or closed
-    Id,
+    /// Watch - check the incoming packets. The arg is the ID under which to operate. Can be overwritten or closed
+    Watch,
     /// try and attach linked pkts. takes a list of HASH,decimal idx range, or ~tag expr
     Follow,
     /// prepend the request if possible
@@ -71,9 +71,13 @@ pub enum KnownOptions {
     */
 }
 impl KnownOptions {
+    //todo make static
+    pub fn as_bytes(self) -> Vec<u8>{
+        self.to_string().into_bytes()
+    }
     pub fn iter_all() -> impl Iterator<Item = Self> {
         use KnownOptions::*;
-        [Mode, Id, Follow, Echo, EchoClose].into_iter()
+        [Mode, Watch, Follow, Echo, EchoClose].into_iter()
     }
 }
 
@@ -103,8 +107,8 @@ impl Query {
 
     pub fn add_option_abl(&mut self, opt: ABList) -> anyhow::Result<()> {
         ensure!(
-            opt.lst[0].0.is_empty() && opt.lst[0].1 == Some(Ctr::Colon),
-            "options start with ':' got {opt:?}"
+            opt.lst[0].0.is_empty() ,
+            "options start with ':' (or '/' to clear) got {opt:?}"
         );
         self.options.push(opt);
         Ok(())
@@ -112,25 +116,25 @@ impl Query {
     pub fn get_known_opt(&self, opt: KnownOptions) -> Option<&ABList> {
         self.get_option(opt.to_string().as_bytes())
     }
-    /// get an option, i.e. the latest value starting with :id and its value i.e. :follow:HASH
-    pub fn get_option(&self, id: &[u8]) -> Option<&ABList> {
-        self.options.iter().rev().find(|a| a.lst[1].0 == id)
+    /// get an option. i.e. the last statement starting with `:XXX` and return the entire statement
+    pub fn get_option(&self, name: &[u8]) -> Option<&ABList> {
+        self.options.iter().rev().find(|a| a.lst[1].0 == name).filter(|v| v.lst[0].1.unwrap() == Ctr::Colon)
     }
-    /// If you're expecting an exact tuple such as 'mode:tree-desc' this will return tree-desc
-    pub fn get_option_bytes(&self, id: &[u8]) -> Option<anyhow::Result<&[u8]>> {
-        self.get_option(id).map(|abl| {
+    /// If the option has 0 or 1 arguments this will return the arg.
+    pub fn get_option_bytes(&self, name: &[u8]) -> Option<anyhow::Result<&[u8]>> {
+        self.get_option(name).map(|abl| {
             ensure!(
-                abl.lst.len() == 3 && abl.lst[1].1 == Some(Ctr::Colon),
-                "cant parse id. expected ':' "
+                abl.lst.len() < 4 && abl.lst[1].1 != Some(Ctr::FSlash),
+                "Bad options argument expected at most 1 arg, got {abl}"
             );
-            Ok(abl.lst[2].0.as_slice())
+            Ok(abl.lst.get(2).map(|v| v.0.as_slice()).unwrap_or(&[]))
         })
     }
-    pub fn id(&self) -> Option<anyhow::Result<&[u8]>> {
-        self.get_option_bytes(b"id")
+    pub fn watch_id(&self) -> Option<anyhow::Result<&[u8]>> {
+        self.get_option_bytes(KnownOptions::Watch.to_string().as_bytes())
     }
     pub fn mode(&self) -> Option<anyhow::Result<Mode>> {
-        self.get_option_bytes(b"mode")
+        self.get_option_bytes(KnownOptions::Mode.to_string().as_bytes())
             .map(|r| r.and_then(|b| Ok(std::str::from_utf8(b)?.parse()?)))
     }
     pub fn get_mode(&self) -> anyhow::Result<Mode> {
@@ -202,7 +206,7 @@ impl Query {
 
 impl<'o> EvalScopeImpl for &'o Query {
     fn about(&self) -> (String, String) {
-        ("viewopts".into(), "get options set in the extview".into())
+        ("watchopts".into(), "get options set in the extwatch".into())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([(
@@ -210,8 +214,8 @@ impl<'o> EvalScopeImpl for &'o Query {
             1..=1,
             Some(true),
             "[X] - try get byte value associated with X",
-            |eview: &&Query, name: &[&[u8]]| {
-                let optv = eview.get_option_bytes(name[0]).transpose()?;
+            |ewatch: &&Query, name: &[&[u8]]| {
+                let optv = ewatch.get_option_bytes(name[0]).transpose()?;
                 optv.ok_or_else(|| format!("{} not set", AB(name[0])).into())
                     .map(Vec::from)
             }

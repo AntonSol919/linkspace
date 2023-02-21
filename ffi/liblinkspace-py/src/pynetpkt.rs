@@ -151,7 +151,7 @@ impl Pkt {
     }
     #[setter]
     pub fn set_until(&mut self, until: [u8; 8]) {
-        self.0.net_header.until.0 = until;
+        self.0.net_header.stamp.0 = until;
     }
     #[setter]
     pub fn set_ubits0(&mut self, b: [u8; 4]) {
@@ -182,7 +182,7 @@ impl Pkt {
     /// Suggestion to others to forget this packet after this date
     #[getter]
     pub fn until(&self) -> [u8; 8] {
-        self.0.net_header.until.0
+        self.0.net_header.stamp.0
     }
     #[getter]
     pub fn ubits0(&self) -> [u8; 4] {

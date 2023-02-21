@@ -72,7 +72,7 @@ impl<'o> EvalScopeImpl for NetPktFieldsEval<'o> {
     fn about(&self) -> (String, String) {
         (
             "netpkt field".into(),
-            r#"get a field of a netpkt. also used in view predicates."#.into(),
+            r#"get a field of a netpkt. also used in watch predicates."#.into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {

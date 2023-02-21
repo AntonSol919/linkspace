@@ -6,7 +6,7 @@
 #![feature(try_blocks, once_cell, thread_local, array_chunks)]
 pub mod utils;
 
-use image::{GenericImage, GenericImageView, ImageOutputFormat, RgbaImage};
+use image::{GenericImage, GenericImageWatch, ImageOutputFormat, RgbaImage};
 pub use liblinkspace;
 use liblinkspace::query::lk_hash_query;
 pub use utils::ImgHandle;
@@ -187,7 +187,7 @@ impl Klets {
         let mut buf = [0u8; MAX_DATA_SIZE];
         let img = self
             .painter
-            .view(
+            .watch(
                 place.x as u32,
                 place.y as u32,
                 place.w as u32,
@@ -242,7 +242,7 @@ impl Klets {
             .or_default()
             .clone();
         let board2 = board.clone();
-        lk_view(&self.lk, query, move |pkt: PktSlot, _: &Linkspace| {
+        lk_watch(&self.lk, query, move |pkt: PktSlot, _: &Linkspace| {
             board.borrow_mut().add(&pkt);
             cont()
         })?;

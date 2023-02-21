@@ -18,8 +18,8 @@ THEIR_KEY="{b:$THEIR_KEY}"
 
 lk link --create {u64:0} ":{#:0}:/rxlog/$THEIR_KEY" --write db
 lk link --create {u64:0} ":{#:0}:/txlog/$THEIR_KEY" --write db
-LAST_RX=$(lk --private view --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
-LAST_TX=$(lk --private view --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
+LAST_RX=$(lk --private watch --max 1 ":{#:0}:/rxlog/$THEIR_KEY" | lk printf {create:str})
+LAST_TX=$(lk --private watch --max 1 ":{#:0}:/txlog/$THEIR_KEY" | lk printf {create:str})
 lk eval "last rx {u64:$LAST_RX/s:str}\nlast tx {u64:$LAST_TX/s:str}\n"
 
 # save reads from std. i.e. what the client is sending
@@ -31,15 +31,10 @@ lk save --new db --new stdout \
          --forward null \
          --write db  > /dev/null &
 
-
-lk link dummy:: | tee >( cat - >&4 ) | lk p "dummy ok {pkt}"
-sleep 2
-lk link dummy:: | tee >( cat - >&4 ) | lk p "dummy2 ok {pkt}"
-
 # Read new request keypoints and return their content
-lk view --new "{f:exchange}:$GROUP:/pull/$GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
+lk watch --new "{f:exchange}:$GROUP:/pull/$GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
     | lk printf --inspect ">>>>Pull req {hash:str}\n{data}\n<<<<$PID " \
-    | lk multi-view \
+    | lk multi-watch \
     | lk dedup \
     | lk printf --inspect "$PID Tx {hash:str}" >&4 
 

@@ -21,7 +21,7 @@ pub struct Checkout {
     #[clap(short, long)]
     pub r#async: bool,
     #[clap(flatten)]
-    q: ExtViewCLIOpts,
+    q: ExtWatchCLIOpts,
     #[clap(long)]
     dest: PathBuf,
 }

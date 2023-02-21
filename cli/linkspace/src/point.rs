@@ -38,7 +38,7 @@ pub fn build<'o>(
     data_source: &mut Reader,
 ) -> anyhow::Result<NetPktParts<'o>> {
     let ctx = common.eval_ctx();
-    let data = (data_source)(ctx.dynr(), data_buf)?;
+    let data = (data_source)(&ctx.dynr(), data_buf)?;
     let stamp = build_opts
         .create
         .as_ref()

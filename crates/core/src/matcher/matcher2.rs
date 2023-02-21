@@ -70,7 +70,7 @@ impl<C> WatchEntry<C> {
         }
         tracing::trace!(?i_new, ?i_query, ?recv_bounds, ?nth_query, "Watch budgets");
 
-        ensure!(i_new.has_any(), "query budget empty");
+        ensure!(i_new.has_any(), "watch budget empty");
         ensure!(i_query.info(nth_query).val.is_some(), "watch budget empty");
         Ok(WatchEntry {
             id,
@@ -83,7 +83,7 @@ impl<C> WatchEntry<C> {
             nth_query,
             ctx,
             span: DSpan(span),
-            last_test: (false, Cf::CONTINUE),
+            last_test: (false, Cf::Continue(())),
         })
     }
     pub fn map<N>(self, new_ctx: N) -> (C, WatchEntry<N>) {
@@ -134,16 +134,16 @@ impl<C> WatchEntry<C> {
     fn _test(&mut self, pkt: RecvPktPtr) -> (bool, Cf) {
         if self.recv_bounds.high < pkt.get_recv().get() {
             tracing::trace!("break: Recv Out of upper bound");
-            return (false, Cf::BREAK);
+            return (false, Cf::Break(()));
         }
         if self.recv_bounds.low > pkt.get_recv().get() {
             tracing::trace!("cnt: Recv Out of lower bound");
-            return (false, Cf::CONTINUE);
+            return (false, Cf::Continue(()));
         }
         let accepted = self.tests.result(&pkt);
         if let Err(kind) = accepted {
             tracing::trace!(?kind, "Test failed");
-            return (false, Cf::CONTINUE);
+            return (false, Cf::Continue(()));
         }
         let accepted_nth = self.i_new.test(self.nth_new) && self.i_query.test(self.nth_query);
         tracing::trace!(accepted_nth, "accepted");
@@ -152,9 +152,9 @@ impl<C> WatchEntry<C> {
         (
             accepted_nth,
             if self.i_new.bound.high < self.nth_new {
-                Cf::BREAK
+                Cf::Break(())
             } else {
-                Cf::CONTINUE
+                Cf::Continue(())
             },
         )
     }

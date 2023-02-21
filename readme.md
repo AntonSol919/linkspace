@@ -32,8 +32,8 @@ The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinks
 A linkspace instance is a directory containing a database and auxiliary data.
 Multiple applications use it at the same time.
 
-
 Its suggested to start at the [guide](http://83.172.162.31/docs/guide/index.html) ( or build it locally with `make docs`)
+
 Or jump straight to a section:
 - [Point](http://83.172.162.31/docs/guide/index.html#Point) creation
   - lk_datapoint
@@ -54,6 +54,6 @@ Or jump straight to a section:
   - lk_open
   - lk_save
   - lk_read
-  - lk_view
+  - lk_watch
   - lk_process
   - lk_process_while

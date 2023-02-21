@@ -8,9 +8,11 @@
     io_error_other,
     once_cell,
     write_all_vectored,
+    control_flow_enum,
     type_alias_impl_trait,
     concat_bytes,
-    try_trait_v2
+    try_trait_v2,
+    strict_provenance
 )]
 #![doc = include_str!("../readme.md")]
 #![doc = r#"
@@ -45,7 +47,7 @@ use prelude::*;
 
 pub use prelude::SigningKey;
 
-/// Callbacks stored in a [Linkspace] instance
+/// Callbacks stored in a [Linkspace] instance. use [misc::cb] to impl from function
 pub trait PktHandler {
     // if returns some, periodcially check to see if the handler can be closed.
     //fn checkup(&mut self) -> Option<ControlFlow<()>>{None}
@@ -54,46 +56,13 @@ pub trait PktHandler {
     /// Called when break, finished, or replaced
     fn stopped(&mut self, query: Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32);
 }
-
-impl<F> PktHandler for F
-where
-    F: FnMut(&dyn NetPkt, &Linkspace) -> bool,
-{
+impl PktHandler for Box<dyn PktHandler>{
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
-        if (self)(pkt, lk) {
-            ControlFlow::Continue(())
-        } else {
-            ControlFlow::Break(())
-        }
+        (**self).handle_pkt(pkt, lk)
     }
-    fn stopped(
-        &mut self,
-        _query: Query,
-        _lk: &Linkspace,
-        _reason: StopReason,
-        _total: u32,
-        _new: u32,
-    ) {
-    }
-}
-// Wrapper to hide PktStreamHandler and its type arguments
-struct Handler<T: PktHandler + ?Sized>(T);
-use linkspace_common::runtime::Linkspace as LinkspaceImpl;
-impl<T: PktHandler + ?Sized> linkspace_common::runtime::handlers::PktStreamHandler for Handler<T> {
-    fn handle_pkt(&mut self, pkt: &dyn NetPkt, rx: &LinkspaceImpl) -> ControlFlow<()> {
-        let rx = unsafe { &*(rx as *const LinkspaceImpl as *const Linkspace) };
-        self.0.handle_pkt(pkt, rx)
-    }
-    fn stopped(
-        &mut self,
-        watch: linkspace_common::prelude::BareWatch,
-        rx: &LinkspaceImpl,
-        reason: StopReason,
-    ) {
-        let query = Query(*watch.query);
-        let rx = unsafe { &*(rx as *const LinkspaceImpl as *const Linkspace) };
-        self.0
-            .stopped(query, rx, reason, watch.nth_query, watch.nth_new)
+
+    fn stopped(&mut self, query: Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32) {
+        (**self).stopped(query, lk, reason, total, new)
     }
 }
 
@@ -439,7 +408,7 @@ pub mod query {
     domain:=:{a:hello}
     prefix:=:/some/path
 
-    :id:default
+    :watch:default
     ";
     lk_query_parse(&mut query,query_str)?;
 
@@ -480,10 +449,11 @@ pub mod query {
     }
     /// Add a single statement to a [Query], potentially skipping an encode step.
     ///
-    /// Also accepts options in the form ```lk_query_push(q,"","id",&[0])```;
+    /// Also accepts options in the form ```lk_query_push(q,"","mode",b"tree-asc")```;
     pub fn lk_query_push(query: &mut Query, field: &str, test: &str, val: &[u8]) -> LkResult<bool> {
         if field.is_empty() {
             query.0.add_option(test, &[val]);
+            return Ok(false);
         }
         let epre = ExtPredicate {
             kind: field.parse()?,
@@ -589,7 +559,7 @@ pub mod key {
 }
 
 pub use runtime::{
-    lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_view, Linkspace,
+    lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch, Linkspace,
 };
 pub mod runtime {
     /**
@@ -599,8 +569,8 @@ pub mod runtime {
     Open or create with [lk_open].
     This can be called multiple times across threads and processes.
     save with [lk_save] and get packets with [lk_get],
-    register callbacks with [lk_view], and process new data with [lk_process] or [lk_process_while]
-    It is possible to nest lk_view and lk_get calls.
+    register callbacks with [lk_watch], and process new data with [lk_process] or [lk_process_while]
+    It is possible to nest lk_watch and lk_get calls.
      **/
     #[derive(Clone)]
     #[repr(transparent)]
@@ -615,7 +585,7 @@ pub mod runtime {
     /// and open 'PATH/linkspace' unless the basename of PATH is linkspacel 'linkspace'
     ///
     /// A runtime is used to [lk_save] and [lk_get] packets.
-    /// [lk_view] also reacts to new packets to saved by this or other processes/thread  when running [lk_process] or [lk_process_while]
+    /// [lk_watch] also reacts to new packets to saved by this or other processes/thread  when running [lk_process] or [lk_process_while]
     /// You can open the same instance in multiple threads (sharing their db session & ipc ) and across multiple processes.
     /// moving an open linkspace across threads is not supported.
     pub fn lk_open(path: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
@@ -637,7 +607,7 @@ pub mod runtime {
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
         linkspace_common::core::env::write_trait::save_pkt(&mut lk.0.get_writer(), pkt)
     }
-    /// [lk_view] but only for currently indexed packets.
+    /// [lk_watch] but only for currently indexed packets.
     /// Terminates early when `cb` returns false
     pub fn lk_get_all(
         lk: &Linkspace,
@@ -676,11 +646,11 @@ pub mod runtime {
         Ok(opt_pkt.map(|v| (cb)(v)))
     }
     /**
-    view packets matching the query - both already in the db and new packets on arrival
+    watch packets matching the query - both already in the db and new packets on arrival
 
     Calls `cb` for each matching packet.
-    If the `query` contains an id ( e.g. ':id:example' ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
-    The view is dropped when
+    If the `query` contains the watch option ( e.g. ':watch:example' ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    The watch is dropped when
     - the cb returns 'break' ( usually false )
     - [[lk_stop]] is called with the matching id
     - the predicate set will never match again ( 'i' counters and recv )
@@ -688,27 +658,27 @@ pub mod runtime {
     returns the number matches in the local index.
     i.e. the number of times cb was called immediatly.
     **/
-    pub fn lk_view(lk: &Linkspace, query: &Query, cb: impl PktHandler + 'static) -> LkResult<u32> {
-        lk_view2(lk, query, cb, debug_span!("lk_view - (untraced)"))
+    pub fn lk_watch(lk: &Linkspace, query: &Query, cb: impl PktHandler + 'static) -> LkResult<u32> {
+        lk_watch2(lk, query, cb, debug_span!("lk_watch - (untraced)"))
     }
 
-    /// [lk_view] with a custom log [tracing::Span]
+    /// [lk_watch] with a custom log [tracing::Span]
     /// The span will be entered on every callback.
-    /// If you do not care for structured options you can use [vspan] `lk_view2(.. , .. ,.. , vspan("my function"))`
-    pub fn lk_view2(
+    /// If you do not care for structured options you can use [vspan] `lk_watch2(.. , .. ,.. , vspan("my function"))`
+    pub fn lk_watch2(
         lk: &Linkspace,
         query: &Query,
         cb: impl PktHandler + 'static,
         span: tracing::Span,
     ) -> LkResult<u32> {
-        Ok(lk.0.view_query(&query.0, Handler(cb), span)?)
+        Ok(lk.0.watch_query(&query.0, interop::Handler(cb), span)?)
     }
-    /// See [lk_view2]
+    /// See [lk_watch2]
     pub fn vspan(name: &str) -> tracing::Span {
         tracing::debug_span!("{}", name)
     }
 
-    /// close lk_view watches based on the id ':id:example' in the query.
+    /// close lk_watch watches based on the watch id ':watch:example' in the query.
     pub fn lk_stop(rt: &Linkspace, id: &[u8], range: bool) {
         if range {
             rt.0.close_range(id)
@@ -719,7 +689,7 @@ pub mod runtime {
 
     /// process the log of new packets and trigger callbacks
     pub fn lk_process(rt: &Linkspace) -> Stamp {
-        rt.0.process_views()
+        rt.0.process()
     }
     /** process the log of new packets continiously
 
@@ -728,13 +698,13 @@ pub mod runtime {
       e.g. lk_eval("{s:+1M}") or 0u64 to ignore
     - untill time has been reached - returns false
       e.g. lk_eval("{now:+1M}") or 0u64 to ignore
-    - no more view callbacks exists - returns true
+    - no more watch callbacks exists - returns true
     **/
-    pub fn lk_process_while(rt: &Linkspace, max_wait: Stamp, untill: Stamp) -> LkResult<bool> {
+    pub fn lk_process_while(lk: &Linkspace, max_wait: Stamp, untill: Stamp) -> LkResult<bool> {
         let max_wait =
             (max_wait != Stamp::ZERO).then_some(std::time::Duration::from_micros(max_wait.get()));
         let untill = (untill != Stamp::ZERO).then(|| pkt::as_instance(untill).into());
-        rt.0.run_while(max_wait, untill)
+        lk.0.run_while(max_wait, untill)
     }
 
     pub struct LkInfo<'o> {
@@ -761,6 +731,7 @@ pub mod consts {
     };
     
 }
+pub use misc::{cb};
 pub mod misc {
     use std::ops::{ControlFlow, Try};
 
@@ -772,36 +743,37 @@ pub mod misc {
     use linkspace_common::prelude::NetPkt;
     pub use linkspace_common::runtime::handlers::StopReason;
 
-    use crate::{Linkspace, PktHandler};
+    use crate::{Linkspace, PktHandler, Query};
 
-    /// Allow you to use  lk_view(lk,TryCb(move |pkt:&dyn NetPkt,lk:&Linkspace| -> LkResult<()> { lk_write(...)? }))
-    /// Will log errors to stderr
-    pub struct TryCb<F>(pub F);
-    impl<P, T> PktHandler for TryCb<P>
-    where
-        P: FnMut(&dyn NetPkt, &Linkspace) -> T,
-        T: Try,
-        <T as Try>::Residual: std::fmt::Debug,
+    pub struct Cb<A,B>{
+        pub handle_pkt: A,
+        pub stopped:B
+    }
+    pub fn nop_stopped(_:Query,_:&Linkspace,_:StopReason,_:u32,_:u32){}
+    pub fn cb<A,R,E>(mut handle_pkt:A) -> Cb<impl FnMut(&dyn NetPkt, & Linkspace) -> ControlFlow<()>+'static,fn(Query,&Linkspace,StopReason,u32,u32)>
+        where
+        R: Try<Output = (), Residual = E>,
+        E: std::fmt::Debug,
+        A: for<'a,'b>FnMut(&'a dyn NetPkt,&'b Linkspace) -> R + 'static,
     {
+        Cb{handle_pkt: move |pkt:&dyn NetPkt,lk:&Linkspace| {
+            (handle_pkt)(pkt,lk).branch().map_break(|brk| {tracing::info!(?brk,"break")})
+        },stopped:nop_stopped}
+    }
+
+    impl<A,B> PktHandler for Cb<A,B> where
+        A: FnMut(&dyn NetPkt,&Linkspace) -> ControlFlow<()>,
+        B: FnMut(Query,&Linkspace,StopReason, u32, u32) // TODO could be FnOnce
+        {
         fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
-            match (self.0)(pkt, lk).branch() {
-                ControlFlow::Continue(_) => ControlFlow::Continue(()),
-                ControlFlow::Break(b) => {
-                    eprintln!("{b:?}");
-                    ControlFlow::Break(())
-                }
-            }
+            (self.handle_pkt)(pkt,lk)
         }
-        fn stopped(
-            &mut self,
-            _query: crate::Query,
-            _lk: &Linkspace,
-            _reason: StopReason,
-            _total: u32,
-            _new: u32,
-        ) {
+
+        fn stopped(&mut self, query: crate::Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32) {
+            (self.stopped)(query,lk,reason,total,new)
         }
     }
+
 }
 
 /// Functions with a custom eval context

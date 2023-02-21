@@ -60,6 +60,11 @@ macro_rules! fid  {
                 const NAME : &'static str = $name;
                 const ENUM : FieldEnum = FieldEnum::$fname;
             }
+            impl $fname {
+                pub const fn id(self) -> &'static [u8]{
+                    $name.as_bytes()
+                }
+            }
         )*
         #[derive(Debug,Copy,Clone,Eq,PartialEq)]
         #[repr(u8)]
@@ -81,6 +86,7 @@ macro_rules! fid  {
         }
     };
 }
+
 impl FieldEnum {
     pub fn try_to_abe(self, abl: abe::eval::ABList) -> Option<Vec<abe::ABE>> {
         match self {
@@ -89,7 +95,7 @@ impl FieldEnum {
             FieldEnum::PktTypeF | FieldEnum::VarNetFlagsF => {
                 U8::try_from(abl).ok().map(|v| v.abe_bits())
             }
-            FieldEnum::CreateF | FieldEnum::VarUntilF => {
+            FieldEnum::CreateF | FieldEnum::VarStampF => {
                 Stamp::try_from(abl).ok().map(|v| v.to_abe())
             }
             FieldEnum::VarHopF
@@ -141,7 +147,7 @@ impl FromStr for FieldEnum {
 pub const VAR_FIELDS: [FieldEnum; 7] = [
     FieldEnum::VarNetFlagsF,
     FieldEnum::VarHopF,
-    FieldEnum::VarUntilF,
+    FieldEnum::VarStampF,
     FieldEnum::VarUBits0F,
     FieldEnum::VarUBits1F,
     FieldEnum::VarUBits2F,
@@ -151,7 +157,7 @@ pub const VAR_FIELDS: [FieldEnum; 7] = [
 fid! {[
     (VarNetFlagsF,b'f',"netflags", PktTypeFlags::DATA),
     (VarHopF,b'j',"hop" , PktTypeFlags::DATA),
-    (VarUntilF,b't',"until" , PktTypeFlags::DATA),
+    (VarStampF,b's',"stamp" , PktTypeFlags::DATA),
     (VarUBits0F,b'q',"ubits0" , PktTypeFlags::DATA),
     (VarUBits1F,b'Q',"ubits1" , PktTypeFlags::DATA),
     (VarUBits2F,b'w',"ubits2" , PktTypeFlags::DATA),
@@ -184,7 +190,7 @@ impl FieldEnum {
         Some(match self {
             FieldEnum::VarNetFlagsF => std::slice::from_mut(header.mut_flags_u8()),
             FieldEnum::VarHopF => &mut header.hop.0,
-            FieldEnum::VarUntilF => &mut header.until.0,
+            FieldEnum::VarStampF => &mut header.stamp.0,
             FieldEnum::VarUBits0F => &mut header.ubits[0].0,
             FieldEnum::VarUBits1F => &mut header.ubits[1].0,
             FieldEnum::VarUBits2F => &mut header.ubits[2].0,
@@ -231,7 +237,7 @@ macro_rules! field_ptr{
 field_val!([
     (VarNetFlagsF, u8, |pkt: &'o T| *pkt.net_header().flags_u8()),
     (VarHopF, u32, |pkt: &'o T| pkt.net_header().hop.get()),
-    (VarUntilF, u64, |pkt: &'o T| pkt.net_header().until.get()),
+    (VarStampF, u64, |pkt: &'o T| pkt.net_header().stamp.get()),
     (VarUBits0F, u32, |pkt: &'o T| pkt.net_header().ubits[0]
         .get()),
     (VarUBits1F, u32, |pkt: &'o T| pkt.net_header().ubits[1]
@@ -313,7 +319,7 @@ field_ptr!([
         .net_header_ref()
         .flags),
     (VarHopF, U32, |pkt: &'o T| &pkt.net_header_ref().hop),
-    (VarUntilF, Stamp, |pkt: &'o T| &pkt.net_header_ref().until),
+    (VarStampF, Stamp, |pkt: &'o T| &pkt.net_header_ref().stamp),
     (VarUBits0F, U32, |pkt: &'o T| &pkt.net_header_ref().ubits[0]),
     (VarUBits1F, U32, |pkt: &'o T| &pkt.net_header_ref().ubits[1]),
     (VarUBits2F, U32, |pkt: &'o T| &pkt.net_header_ref().ubits[2]),
@@ -349,7 +355,7 @@ impl FieldEnum {
             | FieldEnum::VarUBits1F
             | FieldEnum::VarUBits2F
             | FieldEnum::VarUBits3F => 4,
-            FieldEnum::CreateF | FieldEnum::VarUntilF => 8,
+            FieldEnum::CreateF | FieldEnum::VarStampF => 8,
             FieldEnum::DomainF => 16,
             FieldEnum::GroupIDF | FieldEnum::PubKeyF | FieldEnum::PktHashF => 32,
             FieldEnum::SignatureF => 64,
@@ -373,7 +379,7 @@ impl FieldEnum {
                 out.write_all(std::slice::from_ref(pkt.net_header().flags_u8()))
             }
             FieldEnum::VarHopF => out.write_all(&VarHopF::get_ptr(pkt).0),
-            FieldEnum::VarUntilF => out.write_all(&VarUntilF::get_ptr(pkt).0),
+            FieldEnum::VarStampF => out.write_all(&VarStampF::get_ptr(pkt).0),
             FieldEnum::VarUBits0F => out.write_all(&VarUBits0F::get_ptr(pkt).0),
             FieldEnum::VarUBits1F => out.write_all(&VarUBits1F::get_ptr(pkt).0),
             FieldEnum::VarUBits2F => out.write_all(&VarUBits2F::get_ptr(pkt).0),
@@ -409,7 +415,7 @@ impl FieldEnum {
         match self {
             FieldEnum::VarNetFlagsF => write!(out, "{:?}", VarNetFlagsF::get_ptr(pkt)),
             FieldEnum::VarHopF => write!(out, "{}", VarHopF::get_ptr(pkt)),
-            FieldEnum::VarUntilF => write!(out, "{}", VarUntilF::get_ptr(pkt)),
+            FieldEnum::VarStampF => write!(out, "{}", VarStampF::get_ptr(pkt)),
             FieldEnum::VarUBits0F => write!(out, "{}", VarUBits0F::get_ptr(pkt)),
             FieldEnum::VarUBits1F => write!(out, "{}", VarUBits1F::get_ptr(pkt)),
             FieldEnum::VarUBits2F => write!(out, "{}", VarUBits2F::get_ptr(pkt)),
@@ -451,7 +457,7 @@ impl FieldEnum {
         let string = match self {
             FieldEnum::VarNetFlagsF => print_abe(U8::new(VarNetFlagsF::get_val(pkt)).abe_bits()),
             FieldEnum::VarHopF => VarHopF::get_ptr(pkt).to_abe_str(),
-            FieldEnum::VarUntilF => VarUntilF::get_ptr(pkt).to_abe_str(),
+            FieldEnum::VarStampF => VarStampF::get_ptr(pkt).to_abe_str(),
             FieldEnum::VarUBits0F => VarUBits0F::get_ptr(pkt).to_abe_str(),
             FieldEnum::VarUBits1F => VarUBits1F::get_ptr(pkt).to_abe_str(),
             FieldEnum::VarUBits2F => VarUBits2F::get_ptr(pkt).to_abe_str(),

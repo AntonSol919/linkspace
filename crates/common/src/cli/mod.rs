@@ -234,7 +234,7 @@ pub enum DataSource {
 /// Returns entire buffer - caller is responsible for cleaning
 // should prob be &mut dyn Write
 pub type Reader = Box<
-    dyn for<'u> FnMut(EvalCtx<&dyn Scope>, &'u mut Vec<u8>) -> anyhow::Result<&'u [u8]>
+    dyn for<'u> FnMut(&EvalCtx<&dyn Scope>, &'u mut Vec<u8>) -> anyhow::Result<&'u [u8]>
         + Send
         + Sync,
 >;
