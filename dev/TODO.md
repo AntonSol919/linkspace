@@ -7,13 +7,13 @@
 - Add predicate type that fails if the field already contains another constraintpredicate
 - Typed (bitflags) query_push_predicate + return bitset of updated fields
 - Error packets. (Users must be able to 'fill' a hash entry with a error packet indicating they do not want it.)
-- Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val
+- Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably want "b:..." , u8:12, #:me:
 
 # Pending API updates
 convention::status_update
-convention::status_view
+convention::status_watch
 
-misc::lk_inspect_views
+misc::lk_inspect_watchs
 
 [?] lk_query_print(Some(&str)) -> "group/domain" to print just "group" predicates
 
@@ -25,15 +25,16 @@ misc::lk_inspect_views
 
 # Improvements - Things pending impl
 - rename ubits to hbits sbits gbits , dbits
-- Enable {@:me:local} lns name resolution
+- Enable {@:me:local} lns name resolution (impl in LocalNS)
 
 - :follow:TAG/HASH predicates
 - Specify/rename ubits for domain use
 - inmem store
 - wasm
 - C API  (vtable NetPkt & CPktHandler)
-- store query in watch entry as string / change view signature to query
-- /start option
+- store query in watch entry as string
+- :end:HASH option to break on pull request
+- :start:HASH option
 - Proper errors for liblinkspace
 
 - [internal] core::matcher cleanup

@@ -427,10 +427,10 @@ impl<U: UInt> std::fmt::Debug for TestSet<U> {
             }
         }
         if self.mask.ones != Self::DEFAULT.mask.ones {
-            s.field("ones", &bits(&self.mask.ones.to_be_bytes()));
+            s.field("ones", &bits(&self.mask.ones.to_be_vec()));
         }
         if self.mask.zeros != Self::DEFAULT.mask.zeros {
-            s.field("zeros", &bits(&self.mask.zeros.to_be_bytes()));
+            s.field("zeros", &bits(&self.mask.zeros.to_be_vec()));
         }
         s.finish()
     }
@@ -438,8 +438,8 @@ impl<U: UInt> std::fmt::Debug for TestSet<U> {
 impl<U: UInt> std::fmt::Debug for Mask<U> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct(&format!("Mask<{}>", std::any::type_name::<U>()))
-            .field("ones", &bits(&self.ones.to_be_bytes()))
-            .field("zeros", &bits(&self.zeros.to_be_bytes()))
+            .field("ones", &bits(&self.ones.to_be_vec()))
+            .field("zeros", &bits(&self.zeros.to_be_vec()))
             .finish()
     }
 }

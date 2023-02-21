@@ -8,7 +8,7 @@ use linkspace_common::{
     prelude::*,
 };
 
-use crate::view::CLIQuery;
+use crate::watch::CLIQuery;
 
 pub fn select(
     cli_query: CLIQuery,

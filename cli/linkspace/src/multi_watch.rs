@@ -20,7 +20,7 @@ Read multiple queries from pkts on stdin.
 **/
 #[derive(Debug, Args, Clone)]
 #[group(skip)]
-pub struct MultiView {
+pub struct MultiWatch {
     #[clap(long,short,action = clap::ArgAction::Count)]
     print: u8,
     /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
@@ -33,10 +33,10 @@ pub struct MultiView {
     //adato:PathBuf
 }
 
-pub fn multi_view(common: CommonOpts, multi_view: MultiView) -> anyhow::Result<()> {
-    let linger = multi_view.linger;
+pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Result<()> {
+    let linger = multi_watch.linger;
     let rx = common.runtime()?.clone();
-    let ctx = Arc::new((common, multi_view));
+    let ctx = Arc::new((common, multi_watch));
     let handle: JoinHandle<anyhow::Result<()>> =
         run_untill_spawn_thread(rx.clone(), move |spawner| -> anyhow::Result<()> {
             let inp = ctx.0.inp_reader().context("reader open failed")?;
@@ -65,7 +65,7 @@ pub fn multi_view(common: CommonOpts, multi_view: MultiView) -> anyhow::Result<(
 pub fn setup_watch(
     pkt: &NetPktPtr,
     rx: &Linkspace,
-    (common, mv): &(CommonOpts, MultiView),
+    (common, mv): &(CommonOpts, MultiWatch),
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
     if mv.full_ctx {
@@ -77,12 +77,12 @@ pub fn setup_watch(
         print_query(mv.print, &query);
         return Ok(());
     }
-    let span = debug_span!("watch", origin = pkt_fmt(pkt));
+    let span = debug_span!("multi-watch", origin=%pkt.hash());
     let cb = common.stdout_writer();
 
     match EchoOpt::new(cb, &query, pkt) {
-        Ok(c) => rx.view_query(&query, c, span)?,
-        Err(c) => rx.view_query(&query, c, span)?,
+        Ok(c) => rx.watch_query(&query, c, span)?,
+        Err(c) => rx.watch_query(&query, c, span)?,
     };
     Ok(())
 }

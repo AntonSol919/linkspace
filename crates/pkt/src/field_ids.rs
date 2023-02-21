@@ -60,6 +60,11 @@ macro_rules! fid  {
                 const NAME : &'static str = $name;
                 const ENUM : FieldEnum = FieldEnum::$fname;
             }
+            impl $fname {
+                pub const fn id(self) -> &'static [u8]{
+                    $name.as_bytes()
+                }
+            }
         )*
         #[derive(Debug,Copy,Clone,Eq,PartialEq)]
         #[repr(u8)]
@@ -81,6 +86,7 @@ macro_rules! fid  {
         }
     };
 }
+
 impl FieldEnum {
     pub fn try_to_abe(self, abl: abe::eval::ABList) -> Option<Vec<abe::ABE>> {
         match self {

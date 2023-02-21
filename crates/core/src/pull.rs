@@ -8,7 +8,7 @@ use linkspace_pkt::abe::eval::Scope;
 
 use crate::prelude::*;
 
-pub fn encode_view(_ev: &Query) -> NetPktBox {
+pub fn encode_watch(_ev: &Query) -> NetPktBox {
     todo!()
 }
 

@@ -59,8 +59,8 @@ where
 {
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, rx: &Linkspace) -> ControlFlow<()> {
         match (self)(pkt, rx).branch() {
-            ControlFlow::Continue(_) => ControlFlow::CONTINUE,
-            ControlFlow::Break(_e) => ControlFlow::BREAK,
+            ControlFlow::Continue(_) => ControlFlow::Continue(()),
+            ControlFlow::Break(_e) => ControlFlow::Break(()),
         }
     }
 }

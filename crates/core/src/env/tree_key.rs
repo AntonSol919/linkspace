@@ -7,6 +7,8 @@ use core::mem::size_of;
 use linkspace_pkt::*;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::RuleType;
+
 /// A wrapper around TreeKey ( see [[TreeKey::from_fields]] ) and [[TreeValue]]
 /// This is the key/value by which packets are saved in the tree index.
 #[derive(Clone, Copy, Serialize, Deserialize, PartialOrd, PartialEq)]
@@ -39,6 +41,8 @@ pub struct TreeValue {
     create: Stamp,
     hash: LkHash,
     logptr: Stamp,
+    links_len:U16,
+    data_size:U16
 }
 pub type TreeValueBytes = [u8; size_of::<TreeValue>()];
 impl TreeEntry {
@@ -49,6 +53,8 @@ impl TreeEntry {
             create: sp.create_stamp,
             hash: pkt.hash(),
             logptr: rstamp,
+            links_len: U16::new(pkt.get_links().len() as u16),
+            data_size: U16::new(pkt.data().len() as u16)
         };
         Some(TreeEntry {
             btree_key: TreeKey::from_fields(sp.group, sp.domain, *spath.path_len(), spath, key),
@@ -56,6 +62,7 @@ impl TreeEntry {
         })
     }
 }
+
 /// Borrowed Variant
 pub type TreeEntryRef<'a> = TreeEntry<&'a [u8], &'a TreeValueBytes>;
 impl<'a> TreeEntryRef<'a> {
@@ -94,6 +101,12 @@ impl<K, V: AsRef<[u8]>> TreeEntry<K, V> {
     }
     pub fn create(&self) -> Stamp {
         self.val().create
+    }
+    pub fn data_size(&self) -> U16{
+        self.val().data_size
+    }
+    pub fn links_len(&self) -> U16{
+        self.val().links_len
     }
 }
 
@@ -191,5 +204,26 @@ impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
             .field(&spath)
             .field(&k.b64_mini())
             .finish()
+    }
+}
+
+
+/// check if this type can be answered by a treekey - currently conservative to simplify tree query impl
+pub const fn treekey_checked(r:RuleType) -> bool {
+    match r {
+        RuleType::Field(f) =>match f{
+            FieldEnum::PktHashF => true,
+            FieldEnum::PubKeyF => true,
+            FieldEnum::GroupIDF => true,
+            FieldEnum::DomainF => true,
+            FieldEnum::CreateF => true,
+            FieldEnum::PathLenF => true,
+            FieldEnum::LinksLenF => true,
+            FieldEnum::DataSizeF => true,
+            _ => false,
+        },
+        RuleType::RecvStamp => true,
+        RuleType::PrefixPath => true,
+        RuleType::Limit(_) => false,
     }
 }

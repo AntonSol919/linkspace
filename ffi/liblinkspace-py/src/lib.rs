@@ -293,17 +293,17 @@ pub fn lk_get_all(
     Ok(count)
 }
 #[pyfunction]
-pub fn lk_view(
+pub fn lk_watch(
     py: Python,
     linkspace: &Linkspace,
     query: &Query,
     on_match: Py<PyFunction>,
     on_close: Option<Py<PyFunction>>,
 ) -> anyhow::Result<u32> {
-    let view_handler = PyPktStreamHandler { on_match, on_close };
+    let watch_handler = PyPktStreamHandler { on_match, on_close };
     let (file, line) = call_ctx(py);
-    let span = debug_span!("lk_view",%file,%line);
-    liblinkspace::runtime::lk_view2(&linkspace.0, &query.0, view_handler, span)
+    let span = debug_span!("lk_watch",%file,%line);
+    liblinkspace::runtime::lk_watch2(&linkspace.0, &query.0, watch_handler, span)
 }
 
 #[pyfunction]
@@ -312,12 +312,12 @@ pub fn lk_process(linkspace: &Linkspace) -> [u8; 8] {
 }
 
 /**
-continiously trigger view callbacks unless
+continiously trigger watch callbacks unless
 - max_wait has elapsed between new packets - return false
 e.g. lk_eval("{s:+1M}") or 0u64 to ignore
 - untill time has been reached - returns false
 e.g. lk_eval("{now:+1M}") or 0u64 to ignore
-- no more view callbacks exists - returns true
+- no more watch callbacks exists - returns true
  **/
 #[pyfunction]
 pub fn lk_process_while(
@@ -377,7 +377,7 @@ fn lkpy(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_all, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_view, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_watch, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process_while, m)?)?;
 

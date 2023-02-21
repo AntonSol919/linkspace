@@ -4,7 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![allow(dead_code, unused_variables)]
-use linkspace_common::cli::clap;
+use std::ops::ControlFlow;
+
+use liblinkspace::misc::{ cb};
+use liblinkspace::{ lk_process_while };
+use linkspace_common::cli::{clap };
+use linkspace_common::runtime::handlers::PktStreamHandler;
 use linkspace_common::{
     cli::{clap::Parser, opts::CommonOpts, ReadSource, WriteDestSpec},
     core::stamp_fmt::DurationStr,
@@ -38,53 +43,69 @@ pub struct SetStatus {
     #[clap(flatten)]
     args: StatusArgs,
     /// the status data.
-    #[clap(default_value = "abe:OK")]
+    #[clap(short,long,default_value = "abe:OK")]
     data: Option<ReadSource>,
+    #[clap(short,long)]
+    link: Vec<LinkExpr>,
 }
-pub fn set_status(_common: CommonOpts, _ss: SetStatus) -> anyhow::Result<()> {
-    /*
-    use liblinkspace::conventions::status::*;
+pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
+    let SetStatus { args, data, link } = ss;
     let ctx = common.eval_ctx();
-    let SetStatus { args, data } = ss;
-    let (domain,group,objtype,instance) = args.eval(&ctx)?;
-    let status = LkStatus { domain, group, objtype: &objtype, instance: instance.as_deref() };
-    let instance_path = lk_status_path(&status)?;
-    let obj_path = lk_status_path(&LkStatus { instance:None,..status})?;
+    let (domain, group, objtype, instance) = args.eval(&ctx)?;
+    use liblinkspace::prelude::*;
+    use liblinkspace::conventions::status::*;
+    let status = LkStatus {
+        domain,
+        group,
+        objtype: &objtype,
+        instance: instance.as_deref().or(Some(b"default")),
+    };
+    let lk : Linkspace = common.runtime()?.into();
+    let c= common.clone();
 
-    let init = lk_linkpoint_ref(domain, LOCAL_ONLY_GROUP, &path, &[], &value, None)?;
-    let init = lk_linkpoint_ref(domain, LOCAL_ONLY_GROUP, &instance_path, &[], data, None)?;
-    */
+    let mut data_reader = common.open_read(&data)?;
+    lk_status_set(&lk, status, move |_,domain,group,path,link| {
+        let mut buf = vec![];
+        let data = data_reader(&c.eval_ctx().dynr(),&mut buf)?;
+        lk_linkpoint(domain, group, path, &[link], data, None)
+    })?;
+    lk_process_while(&lk, Stamp::ZERO,Stamp::ZERO)?;
 
-    Ok(())
+    return Ok(())
 }
 
 #[derive(Parser)]
 pub struct PollStatus {
     #[clap(flatten)]
     args: StatusArgs,
-    /// wait for this duration (since last request) before returning an error
+    /// wait for this duration (since last request) before returning an error 
     #[clap(short, long, default_value = "5s")]
-    max_duration: DurationStr,
-    #[clap(short, long, default_value = "db")]
+    timeout: DurationStr,
+    #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
+    /// Output multiple replies (untill last_req+duration)
+    #[clap(short,long)]
+    multi: bool,
     /// only output query before quiting
     #[clap(long)]
     print_query: bool,
     /// only output the request packet
     #[clap(long)]
-    print_request: bool,
+    write_request: Vec<WriteDestSpec>,
 }
-pub fn poll_status(common: CommonOpts, ps: PollStatus) -> anyhow::Result<()> {
+pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()> {
     let PollStatus {
         args,
-        max_duration,
+        timeout,
         write,
         print_query,
-        print_request,
+        write_request,
+        multi,
     } = ps;
+    *common.mut_write_private() = Some(true);
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
-    let max_duration = max_duration;
+    let timeout = timeout;
     use liblinkspace::conventions::status::*;
     let status = LkStatus {
         domain,
@@ -92,47 +113,34 @@ pub fn poll_status(common: CommonOpts, ps: PollStatus) -> anyhow::Result<()> {
         objtype: &objtype,
         instance: instance.as_deref(),
     };
-    todo!()
 
-    /*
-    let mut query :Query= lk_status_query(&status, max_duration.stamp()).unwrap().into();
+    let query : Query= lk_status_overwatch(status, timeout.stamp()).unwrap().into();
     if print_query { println!("{}",query); return Ok(())}
-    if print_request{
-        let req = lk_status_request(&status).unwrap();
-        common.write_multi_dest(&write, &req, None)?;
+    if !write_request.is_empty(){
+
+        let mut out = common.open(&write_request)?;
+        let req = lk_status_request(status)?;
+        common.write_multi_dest(&mut out, &req, None)?;
         return Ok(())
     }
-    let lk = common.runtime()?;
-    let mut ok = false;
-    let mut has_request =false;
-    {
-        let r = lk.get_reader();
-        let it = r.query_tree(Order::Asc, &query.predicates);
 
-        for p in it {
-            if p.get_links().is_empty() && p.data().is_empty() {
-                has_request = true; continue;
-            }
-            common.write_multi_dest(&write, &p, None)?;
-            ok = true;
-        }
-        if ok { return Ok(())}
-    }
-    if !has_request{
-        let req = lk_status_request(&status).unwrap();
-        common.write_dest(&WriteDest::Db, &req, &mut None)?;
-    }
-    query.predicates.add_predicate(&Predicate { kind: FieldEnum::DataSizeF.into(), op: TestOp::Greater, val: U16::ZERO.into() })?;
-    query.predicates.add_predicate(&Predicate { kind: FieldEnum::LinksLenF.into(), op: TestOp::Greater, val: U16::ZERO.into() })?;
-    let mut w = common.multi_writer_dyn(write);
+    let out = common.open(&write)?;
+    let lk : liblinkspace::Linkspace= common.runtime()?.into();
+    let mut write= common.clone().multi_writer(out);
+
     let ok = Rc::new(std::cell::Cell::new(false));
     let isokc = ok.clone();
-    lk.view_query(&query, move |pkt:&dyn NetPkt,lk:&Linkspace| {
+
+    lk_status_poll(&lk, status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
+        if pkt.get_links().is_empty() || pkt.data().is_empty(){
+            panic!()
+        }
         isokc.set(true);
-        w.handle_pkt(pkt, lk)
-    }, debug_span!("await status"))?;
-    lk.run_while(None,None)?;
-    ensure!(ok.get(),"no resposne after {:?}",max_duration);
+        write.handle_pkt(&pkt, lk.as_impl())?;
+        if multi { ControlFlow::Continue(())}else {ControlFlow::Break(())}
+    }))?;
+    // We only have a single watch. Will be dropped after recv predicate becomes imposible.
+    lk_process_while(&lk, Stamp::ZERO,Stamp::ZERO)?;
+    anyhow::ensure!(ok.get(),"no resposne after {:?}",timeout);
     Ok(())
-        */
 }

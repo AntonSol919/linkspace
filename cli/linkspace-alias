@@ -3,31 +3,31 @@ set -euo pipefail
 
 case "${1:-UNKNOWN}" in
   inspect-tree)
-  	  lk --private view --bare --mode ${2:-tree-desc} --no-new -- "type:1:{b2:00000010}" "${@:3}" | \
+  	  lk --private watch --bare --mode ${2:-tree-desc} --no-new -- "type:1:{b2:00000010}" "${@:3}" | \
      		  lk printf  "{group:str} {domain:str} {path_len:str} {path:str} {pubkey:str} :: [ {create:str} {hash:str} _rx_ ]"
       
       ;;
   log)
-      lk --private view --bare --mode log-asc --no-new | lk printf
+      lk --private watch --bare --mode log-asc --no-new | lk printf
       ;;
   resolve)
       lk eval "{:$2/?b}"
       ;;
   auto-update-status)
-      # DOMAIN GROUP OBJTYPE INSTANCE ... 
-      INIT=$(lk link "{f:$2}:{#:0}:/\xffstatus/{:$3/size?:=:32}/$4/$5" "${@:6}" --write db --write stdout | lk p "{hash:str}")
+      # DOMAIN GROUP OBJTYPE INSTANCE ... --data abe:OK 
+      INIT=$(lk link "$2:{#:0}:/\xffstatus/{:$3/size?:=:32}/$4/$5" -l init:{#:0} "${@:6}" --write db --write stdout | lk p "{hash:str}")
       {
-          lk ps "{f:$2}:{#:0}:/\xffstatus/$3/$4" --new -- ":id:base" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
-          lk ps "{f:$2}:{#:0}:/\xffstatus/$3/$4/$5" --new -- ":id:instance" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
+          lk ps "$2:{#:0}:/\xffstatus/$3/$4" --new -- ":watch:base" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
+          lk ps "$2:{#:0}:/\xffstatus/$3/$4/$5" --new -- ":watch:instance" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
       } | \
-          RUST_LOG=trace lk --private multi-view --linger | \
-          lk --private collect "{f:$2}:{#:0}:/\xffstatus/$3/$4/$5" "${@:6}" \
+          RUST_LOG=trace lk --private multi-watch --linger | \
+          lk --private collect "$2:{#:0}:/\xffstatus/$3/$4/$5" "${@:6}" \
              -l init:$INIT --chain-tag "prev"  --collect-tag reply --max-links 1 --write db
       ;;
   query-status)
       # DOMAIN GROUP OBJTYPE
-      STAMP=$(lk link "{f:$2}:{#:0}:/\xffstatus/{:$3/size?:=:32}/$4" --write db --write stdout | lk p "{create/?a}")
-      lk --private view-log "{f:$2}:{#:0}:/\xffstatus/$3/$4:**" -- "create:>:$STAMP" "recv:<:{now:+3s}"| lk p
+      STAMP=$(lk link "$2:{#:0}:/\xffstatus/{:$3/size?:=:32}/$4" --write db --write stdout | lk p "{create/?a}")
+      lk --private watch-log "$2:{#:0}:/\xffstatus/$3/$4:**" -- "create:>:$STAMP" "recv:<:{now:+3s}"| lk p
       ;;
   *)
       echo "No such command $@"

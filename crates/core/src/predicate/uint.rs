@@ -35,10 +35,8 @@ where
     fn trailing_ones(&self) -> u32 ;
     fn leading_ones(&self) -> u32 ;
 
-    fn as_be_bytes(&self, _out: &mut dyn FnMut(&[u8])) {
-        todo!()
-    }
-    fn to_be_bytes(&self) -> Vec<u8> {
+    fn as_be_bytes(&self, _out: &mut dyn FnMut(&[u8]));
+    fn to_be_vec(&self) -> Vec<u8> {
         let mut v = vec![];
         self.as_be_bytes(&mut |o| v.extend_from_slice(o));
         v
@@ -47,6 +45,7 @@ where
     //fn as_bytes(self) -> Vec<u8>;
     //fn print_bytes(self) as bytes ...
 }
+
 macro_rules! impl_native_uint {
     ($k:ident) => {
         impl UInt for $k {
@@ -54,6 +53,8 @@ macro_rules! impl_native_uint {
             const ONE: Self = 1;
             const MAX: Self = $k::max_value();
             const BITS: u32 = std::mem::size_of::<Self>() as u32 * 8;
+
+            fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])){out(&$k::to_be_bytes(*self))}
             #[inline(always)]
             fn not(self) -> Self {
                 !self
@@ -197,6 +198,7 @@ impl UInt for B64<[u8; 32]> {
     const MAX: Self = B64([255; 32]);
     const ONE: Self = B64(u8_be::one());
     const BITS: u32 = 32 * 8;
+
     #[inline(always)]
     fn bit_and(self, other: Self) -> Self {
         B64(self.0.zip(other.0).map(|(a, b)| a & b))
@@ -254,14 +256,22 @@ impl UInt for B64<[u8; 32]> {
         (v.into(),over)
     }
 
+    fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])) {
+        out(&self.0)
+    }
+
 
 }
 
 impl UInt for AB<[u8; 16]> {
     const MIN: Self = AB([0; 16]);
-    const MAX: Self = AB([255; 16]);
+   const MAX: Self = AB([255; 16]);
     const ONE: Self = AB(u8_be::one());
     const BITS: u32 = 16 * 8;
+    fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])) {
+        out(&self.0)
+    }
+  
     #[inline(always)]
     fn bit_and(self, other: Self) -> Self {
         AB(self.0.zip(other.0).map(|(a, b)| a & b))
