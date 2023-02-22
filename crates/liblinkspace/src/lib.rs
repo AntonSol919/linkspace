@@ -558,10 +558,10 @@ pub mod key {
     }
 }
 
-pub use runtime::{
+pub use linkspace::{
     lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch, Linkspace,
 };
-pub mod runtime {
+pub mod linkspace {
     /**
     The linkspace runtime.
 

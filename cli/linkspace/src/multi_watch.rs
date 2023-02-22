@@ -13,16 +13,16 @@ use linkspace_common::{
     runtime::{handlers::EchoOpt, threads::run_untill_spawn_thread},
 };
 
-use crate::print_query;
+use crate::watch::PrintABE;
 
 /**
 Read multiple queries from pkts on stdin.
 **/
-#[derive(Debug, Args, Clone)]
+#[derive(Args, Clone)]
 #[group(skip)]
 pub struct MultiWatch {
-    #[clap(long,short,action = clap::ArgAction::Count)]
-    print: u8,
+    #[clap(flatten)]
+    print: PrintABE,
     /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
     #[clap(short, long)]
     full_ctx: bool,
@@ -73,8 +73,8 @@ pub fn setup_watch(
     } else {
         let _ = read_pull_pkt(&mut query, pkt, &*rx.get_reader(), &core_ctx())?;
     }
-    if mv.print > 0 {
-        print_query(mv.print, &query);
+    if mv.print.do_print()  {
+        mv.print.print_query(&query,&mut std::io::stdout())?;
         return Ok(());
     }
     let span = debug_span!("multi-watch", origin=%pkt.hash());

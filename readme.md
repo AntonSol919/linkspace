@@ -20,10 +20,11 @@ The challenge is defining a super structure that can work across time and space 
 In return a supernet provides a lot of usefull properties including:
 Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifyable, (offline)availble, etc.
 
-The packet format and index is stable, but its still in development.
-Expect unimplemented feature, half baked ideas, rought edges, and the occasional bug.
-
 If you don't know those words checkout [ELI5](http://83.172.162.31/eli5.html) for a more gentle introduction to the general idea.
+
+The packet format and index is stable, but the API and various conventions are still in the early stages.
+Expect unimplemented feature, half baked ideas , rought edges, and the occasional bug.
+See the ./dev folder for more.
 
 # Usage
 
@@ -35,25 +36,8 @@ Multiple applications use it at the same time.
 Its suggested to start at the [guide](http://83.172.162.31/docs/guide/index.html) ( or build it locally with `make docs`)
 
 Or jump straight to a section:
-- [Point](http://83.172.162.31/docs/guide/index.html#Point) creation
-  - lk_datapoint
-  - lk_linkpoint
-  - lk_keypoint
-
-- [ABE](http://83.172.162.31/docs/guide/index.html#ABE) - ascii byte expressions - a language for manipulating and templating bytes
-  - lk_eval
-  - lk_encode
-
-- [Query](http://83.172.162.31/docs/guide/index.html#Query) - Addressing and filtering of packets with predicates and options
-  - lk_query
-  - lk_query_parse
-  - lk_query_push
-  - lk_query_print
-
-- [Linkspace](http://83.172.162.31/docs/guide/index.html#Linkspace) instance - Locally indexed packets and new packet processing functions
-  - lk_open
-  - lk_save
-  - lk_read
-  - lk_watch
-  - lk_process
-  - lk_process_while
+- [Point](http://83.172.162.31/docs/guide/index.html#point) creation
+- [ABE](http://83.172.162.31/docs/guide/index.html#abe) - ascii byte expressions - a language for manipulating and templating bytes
+- [Query](http://83.172.162.31/docs/guide/index.html#query) - Addressing and filtering of packets with predicates and options
+- [Linkspace](http://83.172.162.31/docs/guide/index.html#linkspace) instance - Locally indexed packets and new packet processing functions
+- [Conventions](http://83.172.162.31/docs/guide/index.html#conventions) instance - Locally indexed packets and new packet processing functions

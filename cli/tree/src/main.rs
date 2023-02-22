@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use liblinkspace::misc::RecvPkt;
-use liblinkspace::runtime::lk_get_all;
+use liblinkspace::linkspace::lk_get_all;
 use liblinkspace::{abe::lk_split_abe, lk_query, lk_query_append};
 use liblinkspace::{lk_encode, lk_eval, lk_open, prelude::*};
 
@@ -161,7 +161,7 @@ fn main() -> LkResult<()> {
         path.pop();
         Ok(())
     }
-    let p = liblinkspace::runtime::lk_info(&lk).path;
+    let p = liblinkspace::linkspace::lk_info(&lk).path;
     println!("{p}");
     fmt_node(&mut vec![], &root, &cli, &mut std::io::stdout())?;
     Ok(())
