@@ -182,7 +182,7 @@ impl PktPredicates {
         as_rules_it2(PktTypeF, pkt_types.rules(), U8::new)
             .chain(as_rules_it2(VarNetFlagsF, var_flags.rules(), U8::new))
             .chain(as_rules_it2(VarHopF, var_hop.rules(), U32::new))
-            .chain(as_rules_it2(VarUntilF, var_until.rules(), Stamp::new))
+            .chain(as_rules_it2(VarStampF, var_until.rules(), Stamp::new))
             .chain(as_rules_it2(VarUBits0F, var_ubits[0].rules(), U32::new))
             .chain(as_rules_it2(VarUBits1F, var_ubits[1].rules(), U32::new))
             .chain(as_rules_it2(VarUBits2F, var_ubits[2].rules(), U32::new))
@@ -279,7 +279,7 @@ impl PktPredicates {
                     FieldEnum::DataF => todo!(),
                     FieldEnum::VarNetFlagsF => self.var_flags.try_add(op, U8::try_from(val)?.0)?,
                     FieldEnum::VarHopF => self.var_hop.try_add(op, U32::try_from(val)?.get())?,
-                    FieldEnum::VarUntilF => {
+                    FieldEnum::VarStampF => {
                         self.var_until.try_add(op, U64::try_from(val)?.get())?
                     }
                     FieldEnum::VarUBits0F => {

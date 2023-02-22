@@ -54,15 +54,6 @@ pub mod save;
 pub mod status;
 pub mod watch;
 
-const VERSION: &str = concat!(
-    env!("CARGO_PKG_VERSION"),
-    " -- ",
-    include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../.git/refs/heads/main"
-    ))
-);
-
 const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
     use std::fmt::Write;
     let mut st: String = "\n".into();
@@ -104,7 +95,7 @@ lk link :: --write db --write stdout --write stderr --write file:./file
 Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
-#[clap(author, version = VERSION, about, long_about = None)]
+#[clap(author, about)]
 struct Cli {
     #[clap(flatten)]
     common: CommonOpts,

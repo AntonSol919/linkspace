@@ -127,7 +127,7 @@ pub fn compile_predicates(
     let it = into_tests::<PktTypeF, _>(pkt_types)
         .chain(into_tests::<VarNetFlagsF, _>(var_flags))
         .chain(into_tests::<VarHopF, _>(var_hop))
-        .chain(into_tests::<VarUntilF, _>(var_until))
+        .chain(into_tests::<VarStampF, _>(var_until))
         .chain(into_tests::<VarUBits0F, _>(&var_ubits[0]))
         .chain(into_tests::<VarUBits1F, _>(&var_ubits[1]))
         .chain(into_tests::<VarUBits2F, _>(&var_ubits[2]))

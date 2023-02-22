@@ -49,6 +49,6 @@ pub fn lk_pull_req(query: &Query, duration: Stamp) -> LkResult<NetPktBox> {
         data.as_bytes(),
         None,
     )?;
-    pkt.net_header_mut().unwrap().until = now().saturating_add(duration);
+    pkt.net_header_mut().unwrap().stamp = now().saturating_add(duration);
     Ok(pkt.as_netbox())
 }

@@ -12,7 +12,7 @@ use core::fmt;
 use serde::{Deserialize, Serialize};
 
 use crate::Stamp;
-use std::{cell::Cell, time::Duration};
+use std::{cell::Cell };
 
 /// A thread local default net header value when creating new netpackets
 #[thread_local]
@@ -26,7 +26,7 @@ pub struct NetPktHeader {
     pub prefix: AB<[u8; 3]>,
     pub flags: NetFlags,
     pub hop: U32,
-    pub until: Stamp,
+    pub stamp: Stamp,
     pub ubits: [U32; 4],
 }
 
@@ -52,13 +52,13 @@ impl ToABE for NetPktHeader {
             prefix,
             flags,
             hop,
-            until,
+            stamp,
             ubits,
         } = self;
         bytefmt::abe::abev!( +(prefix.to_abe())
                 : +(U8::new(flags.bits).abe_bits())
                 : +(hop.to_abe())
-                : +(until.to_abe())
+                : +(stamp.to_abe())
                 : +(ubits[0].to_abe())
                 : +(ubits[1].to_abe())
                 : +(ubits[2].to_abe())
@@ -83,7 +83,7 @@ impl NetPktHeader {
     pub const EMPTY: Self = NetPktHeader {
         prefix: AB(*b"LK1"),
         flags: NetFlags::empty(),
-        until: Stamp::MAX,
+        stamp: Stamp::MAX,
         hop: U32::ZERO,
         ubits: [U32::ZERO; 4],
     };
@@ -153,7 +153,7 @@ impl From<NetFlags> for bytefmt::endian_types::U8 {
 pub enum NetOpts {
     Default,
     Flags(NetFlags),
-    ValidUntil(Stamp),
+    Stamp(Stamp),
     Advanced(NetPktHeader),
 }
 impl From<()> for NetOpts {
@@ -161,18 +161,7 @@ impl From<()> for NetOpts {
         NetOpts::Default
     }
 }
-pub struct TTL(pub Duration);
-impl From<TTL> for NetOpts {
-    fn from(f: TTL) -> Self {
-        NetOpts::ValidUntil(crate::stamp_add(crate::now(), f.0))
-    }
-}
-pub struct Until(pub Stamp);
-impl From<Until> for NetOpts {
-    fn from(f: Until) -> Self {
-        NetOpts::ValidUntil(f.0)
-    }
-}
+
 impl From<NetFlags> for NetOpts {
     fn from(f: NetFlags) -> Self {
         NetOpts::Flags(f)
@@ -191,8 +180,8 @@ impl From<NetOpts> for NetPktHeader {
             NetOpts::Default => NetPktHeader::default(),
             NetOpts::Flags(f) => NetPktHeader::default().with_flags(f),
             NetOpts::Advanced(h) => h,
-            NetOpts::ValidUntil(ttl) => NetPktHeader {
-                until: ttl,
+            NetOpts::Stamp(ttl) => NetPktHeader {
+                stamp: ttl,
                 ..NetPktHeader::EMPTY
             },
         }

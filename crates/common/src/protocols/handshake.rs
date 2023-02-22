@@ -48,7 +48,7 @@ pub fn phase0_client_init(id: &SigningKey) -> Phase0 {
             &[],
             now,
             &id,
-            Until(now),
+            ()
         )
         .as_netbox(),
     )
@@ -136,7 +136,7 @@ pub fn phase2_client_signs(
         &[],
         now,
         &id,
-        Until(now),
+        ()
     )
     .as_netbox();
     Ok((Phase2(proof), their_key))
