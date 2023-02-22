@@ -15,6 +15,7 @@
 #+LANGUAGE: en
 
 
+
 #+BEGIN_VERSE
 This is a living document, it is not yet finished, things are broken, and is kept up to date on a best effort basis.
 Sometimes the [[../cargo-doc/liblinkspace/index.html][liblinkspace]] docs is ahead of this guide.

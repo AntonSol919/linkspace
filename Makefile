@@ -17,10 +17,20 @@ docs:
 homepage:
 	make -C ./homepage
 
-git-checkin: homepage docs
+git-checkin: homepage docs 
 	cargo +nightly check -p liblinkspace
 	cargo +nightly check -p linkspace-cli #./cli/linkspace
 	cargo +nightly check -p lkpy          #./ffi/liblinkspace-py
 
-publish: git-checkin
+publish: git-checkin docs/guide/index.html
 	rsync -rvrkP ./homepage/ ./build/homepage
+	git branch --no-track publish c9072d8 || echo branch ok
+	git rev-parse HEAD > ./build/PUBLISH_HEAD
+	git checkout publish
+	rsync -rvrkP ./build/homepage ./ 
+	echo Publish commit $(cat ./build/PUBLISH_HEAD)
+
+# ensure our index.html is up to date.
+docs/guide/index.html: docs/guide/index.org
+	echo "TODO: Currently not able to make guide/index.html"
+	exit 1
