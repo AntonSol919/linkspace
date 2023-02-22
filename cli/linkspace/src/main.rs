@@ -33,7 +33,6 @@ use linkspace_common::{
     },
     core::{
         mut_header::{MutFieldExpr, NetHeaderMutate},
-        stamp_fmt::DurationStr,
     },
     prelude::{
         predicate_type::PredInfo,
@@ -42,7 +41,7 @@ use linkspace_common::{
     },
 };
 use tracing_subscriber::EnvFilter;
-use watch::DGPDWatchCLIOpts;
+use watch::{DGPDWatchCLIOpts, CLIQuery};
 
 pub mod collect;
 pub mod filter;
@@ -150,7 +149,7 @@ enum Command {
     #[clap(alias="pq",alias="print-predicate",before_help=QUERY_HELP.to_string())]
     PrintQuery {
         #[clap(flatten)]
-        opts: DGPDWatchCLIOpts,
+        opts: CLIQuery,
     },
 
     /** runtime - save packets from stdin to database
@@ -165,6 +164,8 @@ enum Command {
     Save(save::SaveForward),
     /// runtime - get packets matching query
     Watch {
+        #[clap(long, short, default_value = "stdout")]
+        write: Vec<WriteDestSpec>,
         #[clap(flatten)]
         watch: watch::CLIQuery,
     },
@@ -172,6 +173,8 @@ enum Command {
     WatchTree {
         #[clap(short, long)]
         asc: bool,
+        #[clap(long, short, default_value = "stdout")]
+        write: Vec<WriteDestSpec>,
         #[clap(flatten)]
         query: watch::CLIQuery,
     },
@@ -185,6 +188,8 @@ enum Command {
     WatchLog {
         #[clap(short, long)]
         asc: bool,
+        #[clap(long, short, default_value = "stdout")]
+        write: Vec<WriteDestSpec>,
         #[clap(flatten)]
         query: watch::CLIQuery,
     },
@@ -196,8 +201,6 @@ enum Command {
     Pull {
         #[clap(short, long, default_value = "db")]
         write: Vec<WriteDestSpec>,
-        #[clap(long, default_value = "1m")]
-        ttl: DurationStr,
         #[clap(flatten)]
         watch: DGPDWatchCLIOpts,
     },
@@ -215,6 +218,8 @@ enum Command {
     Filter {
         #[clap(flatten)]
         query: watch::CLIQuery,
+        #[clap(long, short, default_value = "stdout")]
+        write: Vec<WriteDestSpec>,
         /// destination for filtered packets
         #[clap(short = 'f', long, default_value = "null")]
         write_false: Vec<WriteDestSpec>,
@@ -391,7 +396,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let pkt = r.read(&hash)?.context("Pkt not in db")?;
             common.write_multi_dest(&mut common.open(&write)?, &pkt.pkt, None)?;
         }
-        Command::WatchTree { mut query, asc } => {
+        Command::WatchTree { mut query, asc, write } => {
             if let Some(dgpd) = &mut query.opts.dgpd {
                 if dgpd.subsegment_limit == 0 {
                     dgpd.subsegment_limit = 255;
@@ -403,18 +408,20 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                     table: Table::Tree,
                     order: Order::asc(asc),
                 }),
+                write
             )?
         }
-        Command::WatchLog { query, asc } => watch::watch(
+        Command::WatchLog { query, asc, write } => watch::watch(
             common,
             query.mode(Mode {
                 table: Table::Log,
                 order: Order::asc(asc),
             }),
+            write
         )?,
-        Command::Watch { watch } => watch::watch(common, watch)?,
-        Command::Filter { query, write_false } => {
-            filter::select(query, common.open(&write_false)?, common)?
+        Command::Watch { watch, write } => watch::watch(common, watch,write)?,
+        Command::Filter { query, write_false, write } => {
+            filter::select(query, write,write_false, common)?
         }
         Command::Eval { json, abe } => {
             let abe = parse_abe(&abe)?;
@@ -442,8 +449,9 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
         }
 
-        Command::PrintQuery { opts } => {
-            print_query(1, &opts.watch_predicates(&common.eval_ctx())?.into())
+        Command::PrintQuery { mut opts } => {
+            if !opts.print.do_print(){ opts.print.print_expr = true;}
+            let _ = opts.into_query(&common)?;
         }
         Command::External(args) => {
             let name = format!("linkspace-{}", args[0].to_str().unwrap());
@@ -458,12 +466,12 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             println!("exec not supported")
         }
-        Command::Pull { write, ttl, mut watch } => {
+        Command::Pull { write, mut watch } => {
             let ctx = common.eval_ctx();
             watch.watch_opts.opts.aliasses.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.watch_predicates(&ctx)?;
-            let req = liblinkspace::conventions::lk_pull_req(&query.into(), ttl.stamp())?;
+            let req = liblinkspace::conventions::lk_pull_req(&query.into())?;
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;
@@ -474,16 +482,4 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn print_query(mode: u8, query: &Query) {
-    match mode {
-        0 | 1 => {
-            println!("{}", query.to_str(true))
-        }
-        2 => {
-            println!("{}", query.to_str(false))
-        }
-        _ => {
-            println!("{:?}", query)
-        }
-    }
-}
+

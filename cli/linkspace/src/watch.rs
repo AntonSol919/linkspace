@@ -44,20 +44,40 @@ impl DGPDWatchCLIOpts {
     }
 }
 
+
+#[derive(Args,Clone,Copy)]
+#[group(skip)]
+pub struct PrintABE{
+    /// print the query
+    #[clap(short,long,alias="print",short)]
+    pub print_expr: bool,
+    /// print in ascii-byte-text format (ABE without '{..}' expressions)
+    #[clap(long,alias="text",conflicts_with="print_expr")]
+    pub print_text: bool,
+}
+impl PrintABE {
+    pub fn do_print(&self) -> bool { self.print_expr || self.print_text}
+    pub fn print_query(&self, query:&Query, out : &mut dyn std::io::Write) -> std::io::Result<()>{
+        if self.print_expr {
+            writeln!(out, "{}", query.to_str(true))?
+        }else if self.print_text {
+            writeln!(out,"{}", query.to_str(false))?
+        }
+        Ok(())
+    }
+}
+
 #[derive(Args)]
 #[group(skip)]
 pub struct CLIQuery {
-    /// print effective query in string format
-    #[clap(long,short,action = clap::ArgAction::Count)]
-    pub print_query: u8,
+    #[clap(flatten)]
+    pub print: PrintABE,
     #[clap(long, default_value = "default")]
     pub id: TypedABE<Vec<u8>>,
     #[clap(long, default_value = "tree-desc")]
     pub mode: Option<Mode>,
     #[clap(flatten)]
     pub opts: DGPDWatchCLIOpts,
-    #[clap(long, default_value = "stdout")]
-    pub write: Vec<WriteDestSpec>,
 }
 impl CLIQuery {
     // FIXME: printing here is confusing
@@ -74,8 +94,8 @@ impl CLIQuery {
         if inner_id != Some(&id) {
             select.add_option(&KnownOptions::Watch.to_string(), &[&id]);
         }
-        if self.print_query > 0 {
-            crate::print_query(self.print_query, &select.into());
+        if self.print.do_print() {
+            self.print.print_query(&select.into(), &mut std::io::stdout())?;
             return Ok(None);
         }
         Ok(Some(select))
@@ -86,8 +106,8 @@ impl CLIQuery {
         self
     }
 }
-pub fn watch(common: CommonOpts, cli_query: CLIQuery) -> anyhow::Result<()> {
-    let write = common.open(&cli_query.write)?;
+pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -> anyhow::Result<()> {
+    let write = common.open(&write)?;
     if write.iter().any(|v| matches!(v.out, Out::Db)) {
         anyhow::bail!("db and null dest not supported");
     }

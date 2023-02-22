@@ -1,64 +1,57 @@
 # RFC - Up for debate
-- Membership convention
 - Add query seperator for building multiple? ( multi hash get )
 - Group Membership
-- AdotO group filter?
 - Semantics around removing packets form the local index
 - Add predicate type that fails if the field already contains another constraintpredicate
-- Typed (bitflags) query_push_predicate + return bitset of updated fields
 - Error packets. (Users must be able to 'fill' a hash entry with a error packet indicating they do not want it.)
-- Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably want "b:..." , u8:12, #:me:
 
 # Pending API updates
-convention::status_update
-convention::status_watch
 
-misc::lk_inspect_watchs
+misc::lk_inspect_watches
+Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably want "b:..." , u8:12, #:me
 
 [?] lk_query_print(Some(&str)) -> "group/domain" to print just "group" predicates
 
-[cli] - print-query --as-txt flag  to match lk_query_print
-
 - Add custom ABE callback for a user defined scope ( opt add fs_scope )
-- Add scope filters that error on seing a specific func/eval to, for example, prevent readhash and conf
+- Add FilterScope 'scope' that errors on seing a specific func/eval to, for example, prevent readhash and conf
 - [abe] add quote eval {/q:a{bc}} => the byte seq "a:{bc}"
 
 # Improvements - Things pending impl
-- rename ubits to hbits sbits gbits , dbits
-- Enable {@:me:local} lns name resolution (impl in LocalNS)
 
+- Bloom filter(+count) query option
+- Enable {@:me:local} lns name resolution (impl in LocalNS)
 - :follow:TAG/HASH predicates
-- Specify/rename ubits for domain use
 - inmem store
 - wasm
 - C API  (vtable NetPkt & CPktHandler)
 - store query in watch entry as string
 - :end:HASH option to break on pull request
 - :start:HASH option
-- Proper errors for liblinkspace
+- status_pull should probably take an optional max_age, this allows checking if any process ever set a status without setting the timeout to max.
+
+- Packed queries: They're transmitted as text, but they can be packed into bytes.
 
 - [internal] core::matcher cleanup
 - [internal] core::env cleanup
 - [internal] PktPredicates.index(RuleType) -> &mut dyn FieldPred
-- [internal] :mode:hash iteration should use set_info
+- [internal] :mode:hash-* iteration should use set_info
 - [internal] Normalize lingo around abe "seperators" and "ctr characters" -- have to pick one
-- [internal] rename reeval to eval
 - [internal] Retype ApplyResult as EvalResult = ControlFlow<Break=Result<Vec<u8>,Error>>; 
 
 
-# Issues - Things actually broken
-- swap lns order for #
+# Issues - Things considered broken
 
-- Loading query from packet should only follow prepend_query
 - review all AS casts
+- Review query expression resolution during pull.
+- Limit anyhost requests
 - LNS resolver
 - add 'read-only (root)' key file for important information (e.g. active domain,group list ) + create a scope to {root}
 tryout lns as stages, each stage does not require to be in path . 
 {#:hello:world:this} == {&#:{#:hello:world}:this} == {&#:{&#:{#:hello}:world}:this}
 
-- pktpredicates add current todo!()
+- pktpredicates add comp[0-8]
 - predicate-aliasses impls
  --links
 
-- branch iterator options.
+- tree branch iterator options.
 -- path iter order. on pathcomp, and on pubkey ( lower pubkeys always come first currently )

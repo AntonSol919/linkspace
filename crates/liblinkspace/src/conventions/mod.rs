@@ -13,16 +13,20 @@ use linkspace_common::prelude::EXCHANGE_DOMAIN;
 use super::*;
 /** pull requests create a linkpoint in {f:exchange}:{#:0}:/pull/{query.group}/{query.domain}/{query.id}
 
+Pull queries must have the predicates 'domain:=:..' and 'group:=:..'.
 It is up to an exchange process to fullfill the query.
+The domain should be conservative with its query.
+Requesting too much can add significant overhead.
+
 You can use [lk_status_poll] to determine if a exchange is active
 **/
-pub fn lk_pull(lk: &Linkspace, query: &Query, ttl: Stamp) -> LkResult<LkHash> {
-    let req = lk_pull_req(query, ttl)?;
+pub fn lk_pull(lk: &Linkspace, query: &Query) -> LkResult<LkHash> {
+    let req = lk_pull_req(query)?;
     lk_save(lk, &req)?;
     Ok(req.hash())
 }
 #[doc(hidden)]
-pub fn lk_pull_req(query: &Query, duration: Stamp) -> LkResult<NetPktBox> {
+pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     let group: GroupID = query
         .0
         .predicates
@@ -41,7 +45,7 @@ pub fn lk_pull_req(query: &Query, duration: Stamp) -> LkResult<NetPktBox> {
     let data = query.0.to_string();
     tracing::trace!(data);
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
-    let mut pkt = lk_linkpoint(
+    let pkt = lk_linkpoint(
         EXCHANGE_DOMAIN,
         LOCAL_ONLY_GROUP,
         &pull_path,
@@ -49,6 +53,5 @@ pub fn lk_pull_req(query: &Query, duration: Stamp) -> LkResult<NetPktBox> {
         data.as_bytes(),
         None,
     )?;
-    pkt.net_header_mut().unwrap().stamp = now().saturating_add(duration);
     Ok(pkt.as_netbox())
 }

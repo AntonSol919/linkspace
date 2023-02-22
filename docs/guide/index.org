@@ -16,7 +16,7 @@
 
 
 #+BEGIN_VERSE
-This is a living document, is not yet finished, things are broken, and is kept up to date on a best effort basis.
+This is a living document, it is not yet finished, things are broken, and is kept up to date on a best effort basis.
 Sometimes the [[../cargo-doc/liblinkspace/index.html][liblinkspace]] docs is ahead of this guide.
 #+END_VERSE
 
@@ -72,7 +72,7 @@ cd cli/linkspace
 cargo install --path .
 #+END_SRC
 
-#+BEGIN_SRC bash :session cli :exports both :results output verbatim
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
 lk --version
 #+END_SRC
 
@@ -124,9 +124,9 @@ It consists of the following functions:
   - [[lk_process_while]]
 
 - [[Conventions]] - functions
-
+  - [[lk_status_set]]
+  - [[lk_status_poll]]
   - [[lk_pull]]
-  - [[lk_dginfo]]
   - [[lk_key]]
 
 
@@ -134,6 +134,11 @@ It consists of the following functions:
 :PROPERTIES:
 :CUSTOM_ID: point
 :END:
+
+#+BEGIN_VERSE
+[[../cargo-doc/liblinkspace/point/index.html][Rust docs]]
+#+END_VERSE
+
 Points are the basic units in linkspace.
 They carry data, link to other points, and might contain information about the who, what, when, and how.
 There are 3 kinds of points. datapoints, linkpoints, and keypoints.
@@ -145,9 +150,10 @@ All functions deal in netpacket.
 
 Writing an application is the art of defining a relationship between the points.
 
+
+
 ** lk_datapoint
 
-**** [[../cargo-doc/liblinkspace/point/fn.lk_datapoint.html][Rust]]
 **** Bash
 
 
@@ -218,7 +224,7 @@ The command ~lk link~ can build linkpoint packets and output's them to stdout by
 When cli commands deal with (domain,group,path) tuples the are set in the first argument as ~DOMAIN:GROUP:PATH~.
 Two links are added with the tags ~first_tag_1~ and ~another_tag~
 
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
     lk link "a_domain:{#:pub}:/dir1/dir2/thing" \
               -l first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
               -l another_tag:{#:pub} \
@@ -279,7 +285,7 @@ A key point is a linkpoint with an additional publickey and signature.
 **** Bash
 
 #+CAPTION: Setup an instance and generate a key
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
   export LINKSPACE=/tmp/linkspace
   lk --init key --insecure --password "" 
 #+END_SRC
@@ -290,7 +296,7 @@ $argon2d$v=19$m=8,t=1,p=1$QU/Qi+i+ZnbBeQhpWUUgln76qd3LwP5dw7oaz1+94yw$+2FJuz4KS5
 QU_Qi-i-ZnbBeQhpWUUgln76qd3LwP5dw7oaz1-94yw
 #+end_example
  
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
 lk keypoint "example::" --sign --password "" | lk printf
 #+END_SRC
 
@@ -353,8 +359,18 @@ e.g. ~{#:sales:mycomp:com}~ for groups and ~{@:alicekey:mycomp:com}~ for keys.
 :CUSTOM_ID: ABE
 :END:
 
+#+BEGIN_VERSE
+[[../cargo-doc/liblinkspace/abe/index.html][Rust docs]]
+#+END_VERSE
+
+
+
 ABE (Ascii-Byte-Expr) is a tiny byte templating language.
-Linkspace has no concept of encoding. Fields have a fixed length or prefix their exact length.
+Its primary purpose is to make it easy for developers to read and write arbitrary (0..=255) bytes in plain ascii,
+but it can add context's ( such as a linkspace instance) and evaluate expressions ( such as a 'name' for a public key ).
+
+Linkspace has no concept of encoding.
+Fields have a fixed length or prefix their exact length.
 The ~null~ (0) byte is not special.
 
 Things like [[Query]] or simply printing a text representation of a packet use ABE.
@@ -380,7 +396,7 @@ ABE is evaluated by substituting an expressions ( ~{..}~ ) with its result.
 For example in ~{u8:97}~, the function 'u8' parses "97" and prints it.
 The byte 97 equals the character 'a'. 
 
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
 lk eval "ab{u8:99}" | xxd
 #+END_SRC
 
@@ -390,7 +406,7 @@ lk eval "ab{u8:99}" | xxd
 #+end_example
 
 The result of an ABE is a list of (bytes, ?delimiter). 
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
 lk eval --json "h{u8:101}ll{u8:111} / world:etc" 
 #+END_SRC
 
@@ -483,7 +499,7 @@ It evaluates the inner scope for each link with the with an additional ~tag~ and
 **** bash
 <<printf>>
 ~printf~ is similar to ~eval~ except that it reads packets from stdin and uses them as context.
-#+BEGIN_SRC bash :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :session cli0 :results output verbatim :cache yes
 lk link "::" -l tag1:{#:0} -l tag2:{#:pub} | lk printf "HASH:{hash/?b}\n{/links:TAG = {tag:str} PTR = {ptr:str} \n}"
 #+END_SRC
 
@@ -564,6 +580,10 @@ lk_eval2str("{help}",lk_linkpoint())
 #+RESULTS:
 
 ** lk_encode
+:PROPERTIES:
+:CUSTOM_ID: lk_encode
+:END:
+
 Translate bytes into abe such that ~lk_eval(lk_encode(X)) == X~
 **** python
 
@@ -577,6 +597,10 @@ We can get meta, lk_encode is available as the evaluator ~{/?:bytes:options}~
 
 
 ** lk_split_abe
+:PROPERTIES:
+:CUSTOM_ID: lk_split_abe
+:END:
+
 
 
 ** LNS
@@ -599,6 +623,14 @@ The function to do so is not yet exported (crates/common/protocol/lns/local.rs::
 
 
 * Query
+:PROPERTIES:
+:CUSTOM_ID: Query
+:END:
+
+
+#+BEGIN_VERSE
+[[../cargo-doc/liblinkspace/query/index.html][Rust docs]]
+#+END_VERSE
 
 A query is a list of predicates and options used to select a set of packets.
 They are used by the local index ( [[lk_watch]] and [[lk_read]] ),
@@ -606,6 +638,10 @@ or to signal what packets should be found looked for in the group ( [[lk_pull]] 
 or as a filter function.
 
 ** lk_query
+:PROPERTIES:
+:CUSTOM_ID: lk_query
+:END:
+
 
 Queries are newline seperated.
 Predicates are [[ABE]] a 3-tuple ~field ':' test-operation ':' value~ and constrain the set of accepted packets.
@@ -655,7 +691,7 @@ The CLI has various alliasses that can act as a guide in creating queries by usi
 **** bash
 
 #+Caption: A query that matches keypoints with domain 'my' , group '{#:pub}' , path with 2 components starting with  '/hello'
-#+BEGIN_SRC bash :exports both :session cli :results output verbatim :cache yes
+#+BEGIN_SRC bash :exports both :session cli0 :results output verbatim :cache yes
 lk print-query "my:{#:pub}:/hello:*" --signed
 #+END_SRC
 
@@ -676,6 +712,10 @@ Except for ~watch-tree~ which sets the depth to unconstraint by default
 #+END_VERSE 
 
 ** lk_query_print
+:PROPERTIES:
+:CUSTOM_ID: lk_query_print
+:END:
+
 
 Print a query as text.
 The query will have merged overlapping predicates and will give the 'obvious' ABE encoding for each field.
@@ -693,12 +733,20 @@ Setting pubkey or signature excludes link and data points.
 #+END_VERSE
 
 ** lk_query_parse
+:PROPERTIES:
+:CUSTOM_ID: lk_query_parse
+:END:
+
 Add multiple constraints to a query. Returns an error if the resulting set is empty.
 #+CAPTION: Predicates contradict. No such packet can exist.
 #+begin_src python :session lkpy :exports both
   lk_query_parse("prefix:=:/hello/world","path_len:<:\x01")
 #+END_SRC
 ** lk_query_push
+:PROPERTIES:
+:CUSTOM_ID: lk_query_push
+:END:
+
 Add a single statement to a query without encoding the final field
 
 ** More on predicates
@@ -713,17 +761,19 @@ Besides the fields in a point, predicates also apply to the hash and variable ne
 The netheader fields can be mutated.
 It is 32 bytes consisting of the following field. 
 The nethead fields are :
-|              |                                     |
-| Field_{size} |                                     |
-|--------------+-------------------------------------|
-| Prefix_{3}   | magic bytes 'LS0'                   |
-| NetFlags_{1} |                                     |
-| hop_{2}      | number of hops since creation       |
-| until_{8}    | Pkt set to lose meaning after Stamp |
-| ubits0_{4}   | user defined u32                    |
-| ubits1_{4}   | user defined u32                    |
-| ubits2_{4}   | user defined u32                    |
-| ubits3_{4}   | user defined u32                    |
+|              |                               |
+| Field_{size} |                               |
+|--------------+-------------------------------|
+| Prefix_{3}   | magic bytes 'LS0'             |
+| NetFlags_{1} | See source code               |
+| hop_{2}      | number of hops since creation |
+| stamp_{8}    |                               |
+| ubits0_{4}   |                               |
+| ubits1_{4}   |                               |
+| ubits2_{4}   |                               |
+| ubits3_{4}   |                               |
+
+The stamp and ubits are usually set by the exchange process. e.g. [[#anyhost][anyhost]]
 
 **** NetFlags
 
@@ -738,6 +788,14 @@ The full list of addressable fields is the same as in the ABE packet scope:
 
 
 * Linkspace
+:PROPERTIES:
+:CUSTOM_ID: linkspace
+:END:
+#+BEGIN_VERSE
+[[../cargo-doc/liblinkspace/linkspace/index.html][Rust docs]]
+#+END_VERSE
+
+
 
 The linkspace is a local log and index that one or more processes connect to.
 It is the place you save and retrieve data from.
@@ -748,44 +806,118 @@ The callback receives the linkspace.
 You can nest calling ~lk_watch~ and ~lk_read~.
 
 ** lk_open
+:PROPERTIES:
+:CUSTOM_ID: lk_open
+:END:
+
 ** lk_save
-   
+:PROPERTIES:
+:CUSTOM_ID: lk_save
+:END:
+
 ** lk_read
+:PROPERTIES:
+:CUSTOM_ID: lk_read
+:END:
+
 ** lk_watch
+:PROPERTIES:
+:CUSTOM_ID: lk_watch
+:END:
+
 
 ** lk_process
-** lk_process_while
+:PROPERTIES:
+:CUSTOM_ID: lk_process
+:END:
 
-** lk_close_watch 
+** lk_process_while
+:PROPERTIES:
+:CUSTOM_ID: lk_process_while
+:END:
+
+
+** lk_close_watch
+:PROPERTIES:
+:CUSTOM_ID: lk_close_watch
+:END:
+
 
 * Conventions
-Conventions are functions built from the other linkspace functions that encode a commonly used convention.
+:PROPERTIES:
+:CUSTOM_ID: conventions
+:END:
+#+BEGIN_VERSE
+[[../cargo-doc/liblinkspace/linkspace/conventions.html][Rust docs]]
+#+END_VERSE
+
+Conventions are functions built on top of the other linkspace functions.
+They provide interop for processes by encoding data into linkspace packets.
 They are included in the API to promote interoperability .
 
 One general conventions is that domains and paths starting with \xff are for meta stuff, such as status queries.
+
+** lk_status_set
+:PROPERTIES:
+:CUSTOM_ID: lk_status_set
+:END:
+Status queries allow us to communicate if a process exists that is handling a specific type and a specific instance.
+
+The function signature is `DOMAIN GROUP OBJ_TYPE INSTACE`.
+
+- A request is a packet in the form DOMAIN:{#:0}:/\fstatus/GROUP/type[/instance?] , with no data and no links.
+- A reply is of the form DOMAIN:{#:0}/\status/GROUP/type/instance with some data and at least one link.
+
+Note that the packets are in `#:0`.
+This function is only for local status updates.
+
+The group argument does not ask inside GROUP, it only signals which group the query is about.
+Other processes are meant to answer a request.
+
+The following are statuses that the exchange process should set:
+
+exchange GROUP process
+exchange GROUP connection PUBKEY
+exchnage GROUP pull PULL PULL_HASH
+
+** lk_status_poll
+:PROPERTIES:
+:CUSTOM_ID: lk_status_poll
+:END:
+
+Request the status of a `domain group obj_type ?instance timeout`.
+
 
 ** lk_pull
 :PROPERTIES:
 :CUSTOM_ID: lk_pull
 :END:
+A pull request is made by a domain application and signals the set of packets it wants.
 
+#+BEGIN_VERSE
+Note that from a domain's perspective, there is no such thing as 'fully synchronized'.
+The most straight forwards way to emulate such a thing is to create 'log' packets that link to
+known packets from a single device's perspective.
+#+END_VERSE
 
-** lk_dginfo
-:PROPERTIES:
-:CUSTOM_ID: lk_pull
-:END:
+Pull queries must have the predicates 'domain:=:..' and 'group:=:..', and ':watch'
+
+It is up to an exchange process (e.g. [[#anyhost][anyhost]] ) to fullfill the query.
+The exchange is only responsible for pull requests received when it is running.
+The exchange will drop requests when you reuse the 'watch'.
+( use :watch:{now} to ensure it is unique. )
+The funciton returns the hash of the request.
+
+The domain should be conservative with its query.
+Requesting too much can add significant overhead.
 
 ** lk_key
 :PROPERTIES:
-:CUSTOM_ID: lk_pull
+:CUSTOM_ID: lk_key
 :END:
 
-
-** lk_status
-{x:status}:{#:0}:/DOMAIN/GROUP
-For example {x:status}:{#:0}:/pull/{#:pub}/PULL_HASH"
-
-** lk_update_status
+Read ( or creates ) a encrypted private key from lns:{#:0}:/local/NAME.
+Also writes into the local LNS lookup table such that the public key can be requested with ~{@local:NAME}~
 
 * LNS
 :PROPERTIES:
@@ -842,8 +974,21 @@ But its possible to solve it better then we do now.
 :CUSTOM_ID: imageboard
 :END:
 
+#+BEGIN_VERSE
+Available in the repository/examples/app
+#+END_VERSE
+
+This is a very simplified example.
+The goal is to create an image collage with multiple people.
+The data structure is as follows:
+
+Linkpackets where the first path component indicates the name of the image.
+The links are decimal encoded [X,Y] coordinates.
+The hash is a datapoint packet.
+Building the collage is done by adding all images to a base image in 'create' order.
 
 **** placing images
+TODO: Should probably add a 'prev' pointer to indicate what the user currently has.
 #+INCLUDE: "../../examples/app/imageboard/imgboard-place.sh" src bash
 
 **** viewing images
@@ -856,6 +1001,15 @@ But its possible to solve it better then we do now.
 :PROPERTIES:
 :CUSTOM_ID: anyhost
 :END:
+
+#+BEGIN_VERSE
+Available in the repo/examples/exchange
+See repo/dev/exchange.md for some open design issues/notes.
+#+END_VERSE
+
+This is currently unfinished and inefficient.
+Anybody can read any group/domain.
+Eventually the client will add a bloom filter and counter to the query.
 
 **** anyhost client
 #+INCLUDE: "../../examples/exchange/anyhost/bin/connect.sh" src bash

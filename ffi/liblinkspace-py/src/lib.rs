@@ -273,7 +273,7 @@ fn call_cont_py(
 
 #[pyfunction]
 pub fn lk_get(linkspace: &Linkspace, query: &Query) -> anyhow::Result<Option<Pkt>> {
-    liblinkspace::runtime::lk_get_ref(&linkspace.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
+    liblinkspace::linkspace::lk_get_ref(&linkspace.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
 pub fn lk_get_all(
@@ -283,7 +283,7 @@ pub fn lk_get_all(
     cb: Py<PyFunction>,
 ) -> anyhow::Result<u32> {
     let mut cb_err = Ok(());
-    let count = liblinkspace::runtime::lk_get_all(&linkspace.0, &query.0, &mut |pkt| {
+    let count = liblinkspace::linkspace::lk_get_all(&linkspace.0, &query.0, &mut |pkt| {
         let pkt = Pkt::from_dyn(pkt);
         let mut cont = false;
         cb_err = call_cont_py(py, &cb, (pkt,)).map(|c| cont = c);
@@ -303,7 +303,7 @@ pub fn lk_watch(
     let watch_handler = PyPktStreamHandler { on_match, on_close };
     let (file, line) = call_ctx(py);
     let span = debug_span!("lk_watch",%file,%line);
-    liblinkspace::runtime::lk_watch2(&linkspace.0, &query.0, watch_handler, span)
+    liblinkspace::linkspace::lk_watch2(&linkspace.0, &query.0, watch_handler, span)
 }
 
 #[pyfunction]

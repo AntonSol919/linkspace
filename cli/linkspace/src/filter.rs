@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
-    cli::{opts::CommonOpts, tracing, WriteDest},
+    cli::{opts::CommonOpts, tracing,  WriteDestSpec},
     prelude::*,
 };
 
@@ -12,10 +12,12 @@ use crate::watch::CLIQuery;
 
 pub fn select(
     cli_query: CLIQuery,
-    mut write_false: Vec<WriteDest>,
+    write : Vec<WriteDestSpec>,
+    write_false: Vec<WriteDestSpec>,
     common: CommonOpts,
 ) -> anyhow::Result<()> {
-    let mut write = common.open(&cli_query.write)?;
+    let mut write = common.open(&write)?;
+    let mut write_false = common.open(&write_false)?;
     if let Some(query) = cli_query.into_query(&common)? {
         tracing::trace!(?query, "Query");
         let mut e = WatchEntry::new(Default::default(), query, 0, (), debug_span!("Select"))?;
