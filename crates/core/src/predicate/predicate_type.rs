@@ -73,7 +73,7 @@ predty!( enum PredicateType {
     INew  => ("i_new",EMPTY,"{u32:0}","total newly received packets"),
     I => ("i",EMPTY,"{u32:0}","total matched packets"),
     Hop => ("hop",EMPTY,"{u16:5}","(mutable) number of hops"),
-    Until => ("until",EMPTY,"{now:+1D}","(mutable) suggestion for storage"),
+    Stamp => ("stamp",EMPTY,"{now}","(mutable) variable stamp"),
     Ubits0 => ("ubits0",EMPTY,"{u32:0}","(mutable) user defined bits"),
     Ubits1 => ("ubits1",EMPTY,"{u32:0}","(mutable) user defined bits"),
     Ubits2 => ("ubits2",EMPTY,"{u32:0}","(mutable) user defined bits"),
