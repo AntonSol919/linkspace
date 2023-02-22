@@ -43,7 +43,7 @@ impl KeyOpts {
                 Some(enckey) => Ok(crate::identity::decrypt(enckey, &password_bytes)?),
                 None => {
                     let e =
-                        String::new() + "{local:{:" + &self.name + "}::%=:enckey/readhash:data}";
+                        String::new() + "{local:{:" + &self.name + "}::*=:enckey/readhash:data}";
                     let enckey = String::from_utf8(
                         common
                             .eval(&e)?

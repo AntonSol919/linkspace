@@ -110,7 +110,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([(
-            "%=",
+            "*=",
             1..=1,
             "[suffix] get first link with tag ending in suffix",
             |links: &Self, i: &[&[u8]]| {

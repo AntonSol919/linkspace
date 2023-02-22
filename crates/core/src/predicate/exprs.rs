@@ -65,14 +65,17 @@ impl TryFrom<ABList> for ExtPredicate {
     }
 }
 
-#[derive(FromStr, Display, Copy, Clone, Debug)]
+#[derive(FromStr, Display, Copy, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ExtendedTestOp {
     #[display(">=")]
     GreaterEq,
     #[display("<=")]
     LessEq,
-    #[display("%=")]
+    #[display("=*")]
+    /// Set the last bytes to exactly equal to
+    HeadMask,
+    #[display("*=")]
     /// Set the last bytes to exactly equal to
     TailMask,
     #[display("{0}")]
@@ -120,17 +123,26 @@ impl ExtPredicate {
                 }
             }
             ExtendedTestOp::Op(op) => Some(op),
-            ExtendedTestOp::TailMask => {
-                let e = || TestEvalErr::Err("tailmask can only apply to fixed len fields");
+            ExtendedTestOp::TailMask | ExtendedTestOp::HeadMask => {
+                let e = || TestEvalErr::Err("head/tail mask can only apply to fixed len fields");
                 let size = kind.fixed_size().ok_or(e())?;
                 let bytes = val.as_exact_bytes().map_err(|_| e())?;
                 if bytes.len() > size {
                     return Err(TestEvalErr::Err("to much data for field"));
                 }
-                let bytes = cut_prefix_nulls(bytes);
                 let missing = size - bytes.len();
-                let zeros: Vec<u8> = [vec![255; missing].as_slice(), bytes].concat();
-                let ones: Vec<u8> = [vec![0; missing].as_slice(), bytes].concat();
+
+                let (zeros, ones) = if op == ExtendedTestOp::TailMask {
+                    (
+                        [vec![255; missing].as_slice(), bytes].concat(),
+                        [vec![0; missing].as_slice(), bytes].concat(),
+                    )
+                } else {
+                    (
+                        [bytes, vec![255; missing].as_slice()].concat(),
+                        [bytes, vec![0; missing].as_slice()].concat(),
+                    )
+                };
                 debug_assert_eq!(zeros.len(), size);
                 return Ok(Either::Right(
                     [

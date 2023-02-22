@@ -646,7 +646,8 @@ The following are shorthand and resolve to one or more of the basic tests.
 | =           | >(val-1) and <(val+1)    |
 | >=          | >(val-1)                 |
 | <=          | <(val+1)                 |
-| %=          | Last n-bytes must eq val |
+| *=          | Last n-bytes must eq val |
+| =*          | First n-bytes must eq val |
 
 
 The CLI has various alliasses that can act as a guide in creating queries by using ~print-query~.
