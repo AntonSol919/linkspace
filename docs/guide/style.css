@@ -1,0 +1,46 @@
+body{
+
+    background:#fdfdfd;
+    color:#222222;
+
+}
+.note-box{
+    margin-top:1em;
+    margin-bottom:1em;
+    max-width: 600px;
+    align-self: flex-start;
+    border-radius: 10px;
+    padding: 0.4em 0.4em;
+    margin-left:auto;
+    overflow: hidden;
+    background-color: #f6f9ff;
+    border: 1px solid #cce3f9;
+}
+.note-box::before {
+    content:"ℹ️"
+}
+
+.note-box p {
+    margin:0px;
+}
+
+table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+tr:nth-child(even){background-color: #f2f2f2;}
+tr:hover {background-color: #ddd;}
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color:#bbbbbb;
+    color: white;
+}
+
+

@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"liblinkspace":[["impl&lt;'o&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"struct\" href=\"liblinkspace/conventions/status/struct.LkStatus.html\" title=\"struct liblinkspace::conventions::status::LkStatus\">LkStatus</a>&lt;'o&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

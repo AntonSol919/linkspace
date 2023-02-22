@@ -1,0 +1,9 @@
+**/__pycache__
+**/target
+**/build/
+**/node_modules/
+**/*.db
+**/private/
+**/*.wasm
+**/.env/
+**/.*
