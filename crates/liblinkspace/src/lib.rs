@@ -525,7 +525,7 @@ pub mod key {
         new: bool,
     ) -> LkResult<SigningKey> {
         let name = if name.is_empty() { "me" } else { name };
-        let e = ["{local:{:", name, "}::%=:enckey/readhash:data}"].concat();
+        let e = ["{local:{:", name, "}::*=:enckey/readhash:data}"].concat();
         match crate::lk_eval(&e, None) {
             Ok(b) => {
                 let st = std::str::from_utf8(&b)?;

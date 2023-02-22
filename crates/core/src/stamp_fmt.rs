@@ -65,7 +65,7 @@ pub fn ty6_date(stamp: Stamp) -> String {
     ];
     let [mut year, mon, day, hour, minute, second, micros] = times.map(|v| {
         let r = micros / v.as_micros();
-        micros %= v.as_micros();
+        micros *= v.as_micros();
         r as i64
     });
     year += 11970;

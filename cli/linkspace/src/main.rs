@@ -147,7 +147,7 @@ enum Command {
     },
 
     /// query - print full query from common aliasses
-    #[clap(alias="ps",alias="print-predicate",before_help=QUERY_HELP.to_string())]
+    #[clap(alias="pq",alias="print-predicate",before_help=QUERY_HELP.to_string())]
     PrintQuery {
         #[clap(flatten)]
         opts: DGPDWatchCLIOpts,
