@@ -45,7 +45,7 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     let data = query.0.to_string();
     tracing::trace!(data);
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
-    let mut pkt = lk_linkpoint(
+    let pkt = lk_linkpoint(
         EXCHANGE_DOMAIN,
         LOCAL_ONLY_GROUP,
         &pull_path,
@@ -53,6 +53,5 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
         data.as_bytes(),
         None,
     )?;
-    pkt.net_header_mut().unwrap().stamp = now().saturating_add(duration);
     Ok(pkt.as_netbox())
 }

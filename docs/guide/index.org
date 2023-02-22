@@ -900,9 +900,14 @@ The most straight forwards way to emulate such a thing is to create 'log' packet
 known packets from a single device's perspective.
 #+END_VERSE
 
-Pull queries must have the predicates 'domain:=:..' and 'group:=:..'.
+Pull queries must have the predicates 'domain:=:..' and 'group:=:..', and ':watch'
 
 It is up to an exchange process (e.g. [[#anyhost][anyhost]] ) to fullfill the query.
+The exchange is only responsible for pull requests received when it is running.
+The exchange will drop requests when you reuse the 'watch'.
+( use :watch:{now} to ensure it is unique. )
+The funciton returns the hash of the request.
+
 The domain should be conservative with its query.
 Requesting too much can add significant overhead.
 
@@ -912,7 +917,7 @@ Requesting too much can add significant overhead.
 :END:
 
 Read ( or creates ) a encrypted private key from lns:{#:0}:/local/NAME.
-Additionally writes into the local LNS lookup table such that the public key can be requested with ~{@local:NAME}~
+Also writes into the local LNS lookup table such that the public key can be requested with ~{@local:NAME}~
 
 * LNS
 :PROPERTIES:

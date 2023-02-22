@@ -7,3 +7,4 @@
 **/*.wasm
 **/.env/
 **/.*
+**/cargo-doc

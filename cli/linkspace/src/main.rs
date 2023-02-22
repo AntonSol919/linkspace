@@ -33,7 +33,6 @@ use linkspace_common::{
     },
     core::{
         mut_header::{MutFieldExpr, NetHeaderMutate},
-        stamp_fmt::DurationStr,
     },
     prelude::{
         predicate_type::PredInfo,
@@ -202,8 +201,6 @@ enum Command {
     Pull {
         #[clap(short, long, default_value = "db")]
         write: Vec<WriteDestSpec>,
-        #[clap(long, default_value = "1m")]
-        ttl: DurationStr,
         #[clap(flatten)]
         watch: DGPDWatchCLIOpts,
     },
@@ -469,12 +466,12 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             println!("exec not supported")
         }
-        Command::Pull { write, ttl, mut watch } => {
+        Command::Pull { write, mut watch } => {
             let ctx = common.eval_ctx();
             watch.watch_opts.opts.aliasses.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.watch_predicates(&ctx)?;
-            let req = liblinkspace::conventions::lk_pull_req(&query.into(), ttl.stamp())?;
+            let req = liblinkspace::conventions::lk_pull_req(&query.into())?;
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;

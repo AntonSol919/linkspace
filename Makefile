@@ -23,4 +23,4 @@ git-checkin: homepage docs
 	cargo +nightly check -p lkpy          #./ffi/liblinkspace-py
 
 publish: git-checkin
-	 rsync -rvrkP --size-only ./homepage/ ~/mounts/pub1/www/
+	rsync -rvrkP ./homepage/ ./build/homepage
