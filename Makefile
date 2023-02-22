@@ -27,7 +27,7 @@ publish: git-checkin docs/guide/index.html
 	git branch --no-track publish c9072d8 || echo branch ok
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
 	git checkout publish
-	rsync -rvrkP ./build/homepage ./ 
+	rsync -rvrkP ./build/homepage/ ./
 	echo Publish commit $(cat ./build/PUBLISH_HEAD)
 
 # ensure our index.html is up to date.
