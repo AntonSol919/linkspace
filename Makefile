@@ -1,4 +1,4 @@
-.PHONY: install-lk build build-lkpy docs homepage
+.PHONY: install-lk build build-lkpy docs homepage git-checkin publish
 
 install-lk:
 	cargo +nightly install --path ./cli/linkspace
@@ -28,7 +28,7 @@ publish: git-checkin docs/guide/index.html
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
 	git checkout publish
 	rsync -rvrkP ./build/homepage/ ./
-	echo Publish commit $(cat ./build/PUBLISH_HEAD)
+	echo 'Publish Commit $(cat ./build/PUBLISH_HEAD)'
 
 # ensure our index.html is up to date.
 docs/guide/index.html: docs/guide/index.org
