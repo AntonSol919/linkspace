@@ -15,6 +15,7 @@
 #+LANGUAGE: en
 
 
+
 #+BEGIN_VERSE
 This is a living document, it is not yet finished, things are broken, and is kept up to date on a best effort basis.
 Sometimes the [[../cargo-doc/liblinkspace/index.html][liblinkspace]] docs is ahead of this guide.
@@ -917,7 +918,7 @@ Requesting too much can add significant overhead.
 :END:
 
 Read ( or creates ) a encrypted private key from lns:{#:0}:/local/NAME.
-Additionally writes into the local LNS lookup table such that the public key can be requested with ~{@local:NAME}~
+Also writes into the local LNS lookup table such that the public key can be requested with ~{@local:NAME}~
 
 * LNS
 :PROPERTIES:
