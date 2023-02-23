@@ -14,7 +14,7 @@ use super::*;
 /** pull requests create a linkpoint in {f:exchange}:{#:0}:/pull/{query.group}/{query.domain}/{query.id}
 
 Pull queries must have the predicates 'domain:=:..' and 'group:=:..'.
-It is up to an exchange process to fullfill the query.
+It is up to an exchange process to fulfill the query.
 The domain should be conservative with its query.
 Requesting too much can add significant overhead.
 

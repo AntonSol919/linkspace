@@ -134,7 +134,7 @@ bitflags! {
     #[derive(Serialize,Deserialize)]
     pub struct NetFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
-        /// Implementations can ignore this, mostly usefull for importing many datablocks.
+        /// Implementations can ignore this, mostly useful for importing many datablocks.
         const SILENT = 0b00000001;
         const LINKED_IN_FUTURE_PKT = 0b00000010;
         const LINKED_IN_PREVIOUS_PKT = 0b00000100;

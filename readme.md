@@ -1,29 +1,29 @@
 # The Linkspace Protocol - a general purpose supernet
 
-> Supernet  [ ˈsü-pərˌnet ]
-> A self-referential multi-user data organization protocol whose primary 
+> Supernet  [ˈsü-pərˌnet]
+> A self-referential multi-user data organization protocol whose primary
 > addressing method uses hashes instead of endpoint identifiers.
-> A communication protocol where the method of exchange is a extraneous concern. 
-> e.g. git, bitcoin, nostr, the linkspace protocol 
+> A communication protocol where the method of exchange is an extraneous concern.
+> e.g. git, bitcoin, nostr, the linkspace protocol
 
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 [The Linkspace Protocol](https://antonsol919.github.io/linkspace/index.html)  is supernet with the following highlights:
-- Small and powerfull API
-- Fast ( Blake3, no json/b64 encoding, well aligned fields )
-- Path ( url like ) addressable packets.
-  - group/domain split
+- Small and powerful API
+- Fast (Blake3, no JSON/Base64 encoding, well aligned fields)
+- Path (URL like) addressable packets.
+- Group/Domain split
 
 To write applications for a supernet requires a different perspective compared to managing sockets.
 The challenge is defining a super structure that can work across time and space with noisy incomplete data.
 
-In return a supernet provides a lot of usefull properties including:
-Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifyable, (offline)availble, etc.
+In return a supernet provides a lot of useful properties including:
+Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifiable, (offline)available, etc.
 
-If you don't know those words checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) for a more gentle introduction to the general idea.
+Checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) if the words so far mean little to you, or you want an oversimplified introduction to the general idea.
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
-Expect unimplemented feature, half baked ideas , rought edges, and the occasional bug.
+Expect unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
 See the ./dev folder for more.
 
 # Usage
@@ -33,11 +33,11 @@ The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinks
 A linkspace instance is a directory containing a database and auxiliary data.
 Multiple applications use it at the same time.
 
-Its suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) ( or build it locally with `make docs`)
+It is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) (or build it locally with `make docs`)
 
 Or jump straight to a section:
-- [Point](https://antonsol919.github.io/linkspace/docs/guide/index.html#point) creation
-- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#abe) - ascii byte expressions - a language for manipulating and templating bytes
-- [Query](https://antonsol919.github.io/linkspace/docs/guide/index.html#query) - Addressing and filtering of packets with predicates and options
-- [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#linkspace) instance - Locally indexed packets and new packet processing functions
-- [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#conventions) instance - Locally indexed packets and new packet processing functions
+- [Point](https://antonsol919.github.io/linkspace/docs/guide/index.html#Point) creation
+- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) - ascii byte expressions - a language for manipulating and templating bytes
+- [Query](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) - Addressing and filtering of packets with predicates and options
+- [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#Linkspace) instance - Locally indexed packets and new packet processing functions
+- [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions) instance - Locally indexed packets and new packet processing functions

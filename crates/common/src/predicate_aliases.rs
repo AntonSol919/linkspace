@@ -50,14 +50,14 @@ impl<R: clap::FromArgMatches + clap::Args> WithFiles<R> {
 #[group(skip)]
 pub struct ExtWatchCLIOpts {
     #[clap(flatten)]
-    pub aliasses: PredicateAliasses,
+    pub aliases: PredicateAliases,
     #[clap(last = true)]
     pub exprs: Vec<AnyABE>,
 }
 
 #[derive(Debug, Clone, Default, Args)]
-/// aliasses for a set of common predicates
-pub struct PredicateAliasses {
+/// aliases for a set of common predicates
+pub struct PredicateAliases {
     /// only match locally indexed pkts           | i_new:=:{u32:0}
     #[clap(long, alias = "no-new")]
     pub index: bool,
@@ -99,9 +99,9 @@ pub struct PredicateAliasses {
 
 }
 
-impl PredicateAliasses {
+impl PredicateAliases {
     pub fn as_predicates(self) -> impl Iterator<Item = Vec<ABE>> {
-        let PredicateAliasses {
+        let PredicateAliases {
             max,
             signed,
             unsigned,

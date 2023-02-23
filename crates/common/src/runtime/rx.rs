@@ -56,7 +56,7 @@ impl Borrow<BTreeEnv> for Linkspace {
 
 pub(crate) struct Executor {
     env: BTreeEnv,
-    writen: Cell<bool>,
+    written: Cell<bool>,
     cbs: RefCell<(Matcher, PostTxnList)>,
     pending: RefCell<Vec<Pending>>,
     process_txn: RefCell<Rc<ReadTxn>>,
@@ -72,10 +72,10 @@ impl Linkspace {
         self.exec.process_txn.borrow().clone()
     }
     pub fn get_writer(&self) -> WriteTxn2 {
-        if self.exec.writen.get() == false {
-            tracing::trace!("Set Writen true")
+        if self.exec.written.get() == false {
+            tracing::trace!("Set Written true")
         }
-        self.exec.writen.set(true);
+        self.exec.written.set(true);
         self.exec.env.get_writer().unwrap()
     }
     pub fn env(&self) -> &BTreeEnv {
@@ -116,7 +116,7 @@ impl Linkspace {
         Linkspace {
             exec: Rc::new(Executor {
                 env,
-                writen: Cell::new(false),
+                written: Cell::new(false),
                 cbs: Default::default(),
                 pending: Default::default(),
                 process_txn: RefCell::new(Rc::new(reader)),
@@ -252,7 +252,7 @@ impl Linkspace {
 
     /// check the log for new packets and execute callbacks
     pub fn process(&self) -> Stamp {
-        self.exec.writen.set(false);
+        self.exec.written.set(false);
         let this = self.clone();
         let (txn, from, upto): (Rc<ReadTxn>, Stamp, Stamp) = {
             let mut txn = self.exec.process_txn.borrow_mut();
@@ -334,7 +334,7 @@ impl Linkspace {
         self.exec.is_running.set(false);
         self.exec.process_upto.set(upto);
         std::mem::drop((txn, lk));
-        if self.exec.writen.get() {
+        if self.exec.written.get() {
             tracing::trace!("Written true");
             return self.process();
         } else {

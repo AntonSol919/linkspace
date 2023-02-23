@@ -11,11 +11,11 @@ Pubkeys like:
 - @:john:lns:org
 - @:alice:my:fancystore:com
 
-:com, :dev,:local and :free registars are reserved.  
+:com, :dev, :local and :free registars are reserved.  
 To apply for a new top level registar contact me directly.  
 
 LNS is not fully implemented yet.  
-However you can reserve a name.  
+However, you can reserve a name.  
 Read this page to find out how.  
 
 ## Q&A:
@@ -28,28 +28,28 @@ The keys associated with ':org' can give 'company:org' authority.
 Every registration can carry additional links & data.  
 In the future further auxiliary information is likely to be included  
 
-### Do i require a registration?
+### Do I require a registration?
 Nothing in linkspace requires a registration.  
 Everything can be done without.  
-It allow you to pick names to tell others.  
+It allows you to pick names to tell others.  
 
 ### How much is a registration?
-:free is free. first come first serve.  
+:free is free. First come first served.  
 :dev registrations are given to contributors.  
 :com is 10 euro per year.  
-for others read on  
+For others read on  
 
-### Can i become a top level registar?
+### Can I become a top level registar?
 Yes. I am looking for more partners.  
-They are leased on a first come first serve bases of a 1000 euro p/m ( 12000 euro a year ).
+They are leased on a first come first served bases of a 1000 euro p/m (12000 euro a year).
 Alternative deals are negotiable. Just ask.  
-The income help funds development and i'll throw in some goodwill consulting.  
+The income help funds development and I'll throw in some goodwill consulting.  
 
-### Can i buy with crypto? Why not use crypto to do X, Y, Z ?
+### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
 
 Linkspace is probably easy to integrate with blockchains (or even create a new blockchain).
 You are free to built on it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes i believe
+However, in an effort to put food on the table and pay taxes I believe
 plain fiat government backed money is currently better suited for the job then
 a token representing a stake in spent electricity.
 
@@ -63,13 +63,13 @@ lk --init key | tee lnskey
 lk keypoint lns:{#:pub}:/request/com/YOUR_NAME > lnsreq.lkp
 ```
 
-keep the file lnskey safe.
+Keep the file lnskey safe.
 Email the lnsreq.lkp file to AntonSol919+lns at gmail.com  
 I will accept /request/free untill some asshole decides to claim the dictionary.
-After which i'll probably make it a little more difficult.
+After which I'll probably make it a little more difficult.
 
-Get a pull request accepted and you can get a :dev name.
+Get a pull request accepted, and you can get a :dev name.
     
-First come first serve[^1].
+First come first served[^1].
 
-[^1]: You'll have to reply within a week once I send a follow up email. This is done on a best effort basis no rights are given.
+[^1]: You'll have to reply within a week once I send a follow-up email. This is done on a best effort basis no rights are given.

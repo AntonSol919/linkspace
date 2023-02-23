@@ -649,7 +649,7 @@ impl<V: UInt> TestSet<V> {
     TestSet {+:1, <:8} == [1,3,5,7]
     iter_contains(3) -> [true,false,true,false,true]
     //The 'at' param tracks the last yield,
-    //This is usefull in situations such as
+    //This is useful in situations such as
     let mut at = 3;
     let i = vec![4,2,6].iter().zip(set.iter_contains(&mut at)).filter_map(|(v,b)| b.and_then(v)).collect();
     assert_eq!(i,[4,6]); assert_eq(at,6);

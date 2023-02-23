@@ -30,4 +30,6 @@ To implement 'membership' and 'pull/push constraints' is still an open question.
 We'll have to figure out a set of conventions that makes it managable.
 See exchange-limit.md for some thoughts on pull/push constraints.
 
+Furthermore, there might be some rules we should set around the ubits and stamp net header fields.
+
 We'll have to see how domain applications develop.

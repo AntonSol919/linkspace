@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-02-22 Wed 12:55 -->
+<!-- 2023-02-23 Thu 07:18 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Linkspace Protocol Guide</title>
@@ -21,30 +21,30 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgd2e2aad">Introduction</a></li>
-<li><a href="#orge170097">Setup</a>
+<li><a href="#org1c2f31a">Introduction</a></li>
+<li><a href="#org69d49a6">Setup</a>
 <ul>
-<li><a href="#org3ebcc11">linkspace-cli</a></li>
-<li><a href="#org8ae54d8">lkpy - linkspace python bindings</a></li>
+<li><a href="#org21f1585">linkspace-cli</a></li>
+<li><a href="#org45cd153">lkpy - linkspace python bindings</a></li>
 </ul>
 </li>
 <li><a href="#api">API overview</a></li>
-<li><a href="#point">Point</a>
+<li><a href="#Point">Point</a>
 <ul>
-<li><a href="#org24c430b">lk_datapoint</a></li>
+<li><a href="#orgaba9664">lk_datapoint</a></li>
 <li><a href="#lk_linkpoint">lk_linkpoint</a></li>
 <li><a href="#lk_keypoint">lk_keypoint</a></li>
-<li><a href="#orgcda6fee">Notes</a></li>
+<li><a href="#org5e1ea65">Notes</a></li>
 </ul>
 </li>
 <li><a href="#ABE">ABE</a>
 <ul>
-<li><a href="#org1c294e1">Parsing</a></li>
-<li><a href="#org14bc583">lk_eval</a>
+<li><a href="#orgc9633b8">Parsing</a></li>
+<li><a href="#org6fdb2f4">lk_eval</a>
 <ul>
-<li><a href="#org3d94205">Subexpressions</a></li>
-<li><a href="#org5045dff">Scope &amp; context</a></li>
-<li><a href="#orgf06c836">Usage notes</a></li>
+<li><a href="#org23c2cb6">Subexpressions</a></li>
+<li><a href="#org9f72821">Scope &amp; context</a></li>
+<li><a href="#org027eb39">Usage notes</a></li>
 <li><a href="#abe-help">Help</a></li>
 </ul>
 </li>
@@ -52,7 +52,7 @@
 <li><a href="#lk_split_abe">lk_split_abe</a></li>
 <li><a href="#ABELNS">LNS</a>
 <ul>
-<li><a href="#org1c259a2">LNS - Local mode</a></li>
+<li><a href="#orgf560691">LNS - Local mode</a></li>
 </ul>
 </li>
 </ul>
@@ -63,10 +63,10 @@
 <li><a href="#lk_query_print">lk_query_print</a></li>
 <li><a href="#lk_query_parse">lk_query_parse</a></li>
 <li><a href="#lk_query_push">lk_query_push</a></li>
-<li><a href="#orgb549a52">More on predicates</a></li>
+<li><a href="#orga495a51">More on predicates</a></li>
 </ul>
 </li>
-<li><a href="#linkspace">Linkspace</a>
+<li><a href="#Linkspace">Linkspace</a>
 <ul>
 <li><a href="#lk_open">lk_open</a></li>
 <li><a href="#lk_save">lk_save</a></li>
@@ -77,7 +77,7 @@
 <li><a href="#lk_close_watch">lk_close_watch</a></li>
 </ul>
 </li>
-<li><a href="#conventions">Conventions</a>
+<li><a href="#Conventions">Conventions</a>
 <ul>
 <li><a href="#lk_status_set">lk_status_set</a></li>
 <li><a href="#lk_status_poll">lk_status_poll</a></li>
@@ -97,9 +97,9 @@ This is a living document, it is not yet finished, things are broken, and is kep
 Sometimes the <a href="../cargo-doc/liblinkspace/index.html">liblinkspace</a> docs is ahead of this guide.<br>
 </p>
 
-<div id="outline-container-orgd2e2aad" class="outline-2">
-<h2 id="orgd2e2aad">Introduction</h2>
-<div class="outline-text-2" id="text-orgd2e2aad">
+<div id="outline-container-org1c2f31a" class="outline-2">
+<h2 id="org1c2f31a">Introduction</h2>
+<div class="outline-text-2" id="text-org1c2f31a">
 <p>
 The Linkspace Protocol provides a structure to build multi user applications.
 <a href="../cargo-doc/liblinkspace/index.html">liblinkspace</a> implements this protocol.
@@ -111,7 +111,7 @@ If those words mean little you should begin at <a href="../../eli5.html">eli5</a
 </p>
 
 <p>
-Projects such as Git, Bittorrents, Matrix, Mastadon, IPFS, and various blockchains already proof that addressing content is a powerfull abstraction.
+Projects such as Git, Bittorrents, Matrix, Mastadon, IPFS, and various blockchains already proof that addressing content is a powerful abstraction.
 It sidesteps or solves a number of difficulties inherent in organizing data as a stream in multi user applications.
 When the content in such a system includes objects that link other content by its hash the system can be classified as a supernet.
 </p>
@@ -140,32 +140,32 @@ The Linkspace Protocol is best understood as 4 ideas.
 </p>
 
 <ul class="org-ul">
-<li><a href="#point">Point</a> - Three types of packets</li>
+<li><a href="#Point">Point</a> - Three types of packets</li>
 <li><a href="#ABE">ABE</a> - (Byte) templating</li>
 <li><a href="#Query">Query</a> - Query for selecting packets</li>
-<li><a href="#linkspace">Linkspace</a> - Packet index and callbacks</li>
+<li><a href="#Linkspace">Linkspace</a> - Packet index and callbacks</li>
 </ul>
 
 <p>
 A big addition compared to similar systems is the split between domains and groups.
 It seperates the responsibility of 'User Interface &amp; Data Structure' with the 'Members and the exchange of data'.
-This split, and other standard problems, are supported by a set of (growing) <a href="#conventions">Conventions</a>.
+This split, and other standard problems, are supported by a set of (growing) <a href="#Conventions">Conventions</a>.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge170097" class="outline-2">
-<h2 id="orge170097">Setup</h2>
-<div class="outline-text-2" id="text-orge170097">
+<div id="outline-container-org69d49a6" class="outline-2">
+<h2 id="org69d49a6">Setup</h2>
+<div class="outline-text-2" id="text-org69d49a6">
 <p>
 This guide uses Python and (Bash) CLI snipets.
 You can get the latest version from <a href="https://github.com/AntonSol919/linkspace">GitHub</a>
 </p>
 </div>
 
-<div id="outline-container-org3ebcc11" class="outline-3">
-<h3 id="org3ebcc11">linkspace-cli</h3>
-<div class="outline-text-3" id="text-org3ebcc11">
+<div id="outline-container-org21f1585" class="outline-3">
+<h3 id="org21f1585">linkspace-cli</h3>
+<div class="outline-text-3" id="text-org21f1585">
 <p>
 <code>make install-lk</code> or:
 </p>
@@ -181,7 +181,7 @@ cargo install --path .
 </pre>
 </div>
 
-<pre class="example" id="org5d7392b">
+<pre class="example" id="orgc5e9d6e">
 error: unexpected argument '--version' found
 
 Usage: lk [OPTIONS] &lt;COMMAND&gt;
@@ -192,9 +192,9 @@ For more information, try '--help'.
 </div>
 
 
-<div id="outline-container-org8ae54d8" class="outline-3">
-<h3 id="org8ae54d8">lkpy - linkspace python bindings</h3>
-<div class="outline-text-3" id="text-org8ae54d8">
+<div id="outline-container-org45cd153" class="outline-3">
+<h3 id="org45cd153">lkpy - linkspace python bindings</h3>
+<div class="outline-text-3" id="text-org45cd153">
 <p>
 <code>make install-lkpy</code> or: 
 </p>
@@ -225,7 +225,7 @@ It consists of the following functions:
 </p>
 
 <ul class="org-ul">
-<li><a href="#point">Point</a> creation
+<li><a href="#Point">Point</a> creation
 <ul class="org-ul">
 <li><a href="#datapoint-py">lk_datapoint</a></li>
 <li><a href="#lk_linkpoint">lk_linkpoint</a></li>
@@ -234,7 +234,7 @@ It consists of the following functions:
 
 <li><a href="#ABE">ABE</a> - ascii byte expressions - a language for manipulating and templating bytes
 <ul class="org-ul">
-<li><a href="#org14bc583">lk_eval</a></li>
+<li><a href="#org6fdb2f4">lk_eval</a></li>
 <li><a href="#lk_encode">lk_encode</a></li>
 </ul></li>
 
@@ -246,7 +246,7 @@ It consists of the following functions:
 <li><a href="#lk_query_print">lk_query_print</a></li>
 </ul></li>
 
-<li><a href="#linkspace">Linkspace</a> - Locally indexed packets and new packet processing functions
+<li><a href="#Linkspace">Linkspace</a> - Locally indexed packets and new packet processing functions
 <ul class="org-ul">
 <li><a href="#lk_open">lk_open</a></li>
 <li><a href="#lk_save">lk_save</a></li>
@@ -256,7 +256,7 @@ It consists of the following functions:
 <li><a href="#lk_process_while">lk_process_while</a></li>
 </ul></li>
 
-<li><a href="#conventions">Conventions</a> - functions
+<li><a href="#Conventions">Conventions</a> - functions
 <ul class="org-ul">
 <li><a href="#lk_status_set">lk_status_set</a></li>
 <li><a href="#lk_status_poll">lk_status_poll</a></li>
@@ -268,9 +268,9 @@ It consists of the following functions:
 </div>
 
 
-<div id="outline-container-point" class="outline-2">
-<h2 id="point">Point</h2>
-<div class="outline-text-2" id="text-point">
+<div id="outline-container-Point" class="outline-2">
+<h2 id="Point">Point</h2>
+<div class="outline-text-2" id="text-Point">
 <p class="verse">
 <a href="../cargo-doc/liblinkspace/point/index.html">Rust docs</a><br>
 </p>
@@ -295,19 +295,19 @@ Writing an application is the art of defining a relationship between the points.
 
 
 
-<div id="outline-container-org24c430b" class="outline-3">
-<h3 id="org24c430b">lk_datapoint</h3>
-<div class="outline-text-3" id="text-org24c430b">
+<div id="outline-container-orgaba9664" class="outline-3">
+<h3 id="orgaba9664">lk_datapoint</h3>
+<div class="outline-text-3" id="text-orgaba9664">
 </div>
 <ul class="org-ul">
-<li><a id="org19ead42"></a>Bash<br>
-<div class="outline-text-5" id="text-org19ead42">
+<li><a id="org915e17c"></a>Bash<br>
+<div class="outline-text-5" id="text-org915e17c">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n "Hello, Sol" | lk data | lk printf "{hash:str}\n{data}"
 </pre>
 </div>
 
-<pre class="example" id="org4a91ac0">
+<pre class="example" id="org08560ea">
 RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0
 Hello, Sol
 </pre>
@@ -326,7 +326,7 @@ lk_eval2str("{hash:str}\\n{data}",datap)
 </pre>
 </div>
 
-<pre class="example" id="org3a9df2d">
+<pre class="example" id="orgef36ae5">
 RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0
 Hello, Sol
 </pre>
@@ -411,8 +411,8 @@ Furthermore, If no group was provided it defaults to <code>{#:pub}</code><br>
 </div>
 
 <ul class="org-ul">
-<li><a id="orga8f067c"></a>Bash<br>
-<div class="outline-text-5" id="text-orga8f067c">
+<li><a id="orgaf13764"></a>Bash<br>
+<div class="outline-text-5" id="text-orgaf13764">
 <p>
 The command <code>lk link</code> can build linkpoint packets and output's them to stdout by default.
 When cli commands deal with (domain,group,path) tuples the are set in the first argument as <code>DOMAIN:GROUP:PATH</code>.
@@ -429,10 +429,10 @@ Two links are added with the tags <code>first_tag_1</code> and <code>another_tag
 </div>
 </li>
 
-<li><a id="org80f932c"></a>Python<br>
-<div class="outline-text-5" id="text-org80f932c">
+<li><a id="org93b8d1a"></a>Python<br>
+<div class="outline-text-5" id="text-org93b8d1a">
 <p>
-The library requires the actual bytes. We can get them directly from fields or evaluate a string with <a href="#org14bc583">lk_eval</a>.
+The library requires the actual bytes. We can get them directly from fields or evaluate a string with <a href="#org6fdb2f4">lk_eval</a>.
 </p>
 <div class="org-src-container">
 <pre class="src src-python">ptr1 = lk_eval("{b:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0}")
@@ -472,8 +472,8 @@ A key point is a linkpoint with an additional publickey and signature.
 
 
 <ul class="org-ul">
-<li><a id="org4b29548"></a>Bash<br>
-<div class="outline-text-5" id="text-org4b29548">
+<li><a id="org1c9901f"></a>Bash<br>
+<div class="outline-text-5" id="text-org1c9901f">
 <div class="org-src-container">
 <label class="org-src-name"><span class="listing-number">Listing 1: </span>Setup an instance and generate a key</label><pre class="src src-bash">export LINKSPACE=/tmp/linkspace
 lk --init key --insecure --password "" 
@@ -490,8 +490,8 @@ The CLI also accepts <code>lk link --sign</code> instead of <code>lk keypoint</c
 </p>
 </div>
 </li>
-<li><a id="org6a43cc6"></a>Python<br>
-<div class="outline-text-5" id="text-org6a43cc6">
+<li><a id="org577ae6e"></a>Python<br>
+<div class="outline-text-5" id="text-org577ae6e">
 <div class="org-src-container">
 <pre class="src src-python">key = lk_key("me","my secret");
 linkp = lk_keypoint(key=key,domain=b"example")
@@ -509,9 +509,9 @@ such that you can later reference it as <code>{@local:NAME}</code> ( <a href="#A
 </div>
 
 
-<div id="outline-container-orgcda6fee" class="outline-3">
-<h3 id="orgcda6fee">Notes</h3>
-<div class="outline-text-3" id="text-orgcda6fee">
+<div id="outline-container-org5e1ea65" class="outline-3">
+<h3 id="org5e1ea65">Notes</h3>
+<div class="outline-text-3" id="text-org5e1ea65">
 <p>
 Groups conceptually indicate the intended set of recipients and practically the method of data exchange.
 Domains conceptually indicate the activity, and practically the application used to present an interface to the user.
@@ -572,9 +572,9 @@ For instance, they could demand the bytes are valid UTF8 containing one emoji an
 </p>
 </div>
 
-<div id="outline-container-org1c294e1" class="outline-3">
-<h3 id="org1c294e1">Parsing</h3>
-<div class="outline-text-3" id="text-org1c294e1">
+<div id="outline-container-orgc9633b8" class="outline-3">
+<h3 id="orgc9633b8">Parsing</h3>
+<div class="outline-text-3" id="text-orgc9633b8">
 <ul class="org-ul">
 <li>Most printable ascii letters are as is.</li>
 <li>The external delimiters <code>'\n'</code> (newline) and <code>'\t'</code> (tab) are invalid characters.</li>
@@ -587,9 +587,9 @@ For instance, they could demand the bytes are valid UTF8 containing one emoji an
 </div>
 </div>
 
-<div id="outline-container-org14bc583" class="outline-3">
-<h3 id="org14bc583">lk_eval</h3>
-<div class="outline-text-3" id="text-org14bc583">
+<div id="outline-container-org6fdb2f4" class="outline-3">
+<h3 id="org6fdb2f4">lk_eval</h3>
+<div class="outline-text-3" id="text-org6fdb2f4">
 <p>
 ABE is evaluated by substituting an expressions ( <code>{..}</code> ) with its result.
 For example in <code>{u8:97}</code>, the function 'u8' parses "97" and prints it.
@@ -623,17 +623,17 @@ skip to the next chapter <a href="#Query">Query</a> and return here for referenc
 </div>
 
 
-<div id="outline-container-org3d94205" class="outline-4">
-<h4 id="org3d94205">Subexpressions</h4>
-<div class="outline-text-4" id="text-org3d94205">
+<div id="outline-container-org23c2cb6" class="outline-4">
+<h4 id="org23c2cb6">Subexpressions</h4>
+<div class="outline-text-4" id="text-org23c2cb6">
 <p>
 A list of functions/evaluators be found by evaluating <a href="#abe-help">{help}</a>.
 </p>
 </div>
 
 <ul class="org-ul">
-<li><a id="orgb9463fe"></a>Functions<br>
-<div class="outline-text-5" id="text-orgb9463fe">
+<li><a id="orgdcf7839"></a>Functions<br>
+<div class="outline-text-5" id="text-orgdcf7839">
 <ul class="org-ul">
 <li><code>{fn}</code></li>
 <li><code>{fn:arg0}</code></li>
@@ -683,8 +683,8 @@ The vast majority of functions do not care.<br>
 </div>
 </li>
 
-<li><a id="org8b8c08c"></a>Evaluators<br>
-<div class="outline-text-5" id="text-org8b8c08c">
+<li><a id="orgc0d7ea8"></a>Evaluators<br>
+<div class="outline-text-5" id="text-orgc0d7ea8">
 <p>
 The second type of operation is calling an evaluator.
 Whereas functions are called after their arguments are evaluated.
@@ -709,9 +709,9 @@ The most common usecase for evaluators is extending the scope.
 </ul>
 </div>
 
-<div id="outline-container-org5045dff" class="outline-4">
-<h4 id="org5045dff">Scope &amp; context</h4>
-<div class="outline-text-4" id="text-org5045dff">
+<div id="outline-container-org9f72821" class="outline-4">
+<h4 id="org9f72821">Scope &amp; context</h4>
+<div class="outline-text-4" id="text-org9f72821">
 <p>
 Functions and evaluators are defined in a scope.
 The standard scope contains functions to manipulate bytes.
@@ -720,8 +720,8 @@ Some scopes require a context.
 </div>
 
 <ul class="org-ul">
-<li><a id="org36badb6"></a>Packet scope<br>
-<div class="outline-text-5" id="text-org36badb6">
+<li><a id="org67c964e"></a>Packet scope<br>
+<div class="outline-text-5" id="text-org67c964e">
 <p>
 By providing a packet, the packet scope is added.
 This adds operations to evaluate packet fields such as <code>hash</code>, <code>group</code>, <code>path</code> etc.
@@ -737,10 +737,10 @@ It evaluates the inner scope for each link with the with an additional <code>tag
 </div>
 </li>
 
-<li><a id="orgbbb075e"></a>bash<br>
-<div class="outline-text-5" id="text-orgbbb075e">
+<li><a id="org643feae"></a>bash<br>
+<div class="outline-text-5" id="text-org643feae">
 <p>
-<a id="orgee67f6b"></a>
+<a id="orgddfb8cd"></a>
 <code>printf</code> is similar to <code>eval</code> except that it reads packets from stdin and uses them as context.
 </p>
 <div class="org-src-container">
@@ -750,15 +750,15 @@ It evaluates the inner scope for each link with the with an additional <code>tag
 </div>
 </li>
 
-<li><a id="org37dab10"></a>python<br>
-<div class="outline-text-5" id="text-org37dab10">
+<li><a id="orgc47ed86"></a>python<br>
+<div class="outline-text-5" id="text-orgc47ed86">
 <div class="org-src-container">
 <pre class="src src-python">datap = lk_datapoint(b"hello")
 lk_eval2str("{data} or in base64 {data/?b}",datap)
 </pre>
 </div>
 
-<pre class="example" id="org82284ca">
+<pre class="example" id="org4137e26">
 hello or in base64 aGVsbG8
 </pre>
 
@@ -781,9 +781,9 @@ Having a linkspace instance in the scope ( <a href="#lk_open">lk_open</a> does t
 </ul>
 </div>
 
-<div id="outline-container-orgf06c836" class="outline-4">
-<h4 id="orgf06c836">Usage notes</h4>
-<div class="outline-text-4" id="text-orgf06c836">
+<div id="outline-container-org027eb39" class="outline-4">
+<h4 id="org027eb39">Usage notes</h4>
+<div class="outline-text-4" id="text-org027eb39">
 <p>
 ABE expressions evaluate into a list of [ (bytes,?sep) ].
 Sometimes each element has a different meaning, e.g. [ ( domain , : ) , (group , _) ] in the CLI arguments.
@@ -830,21 +830,21 @@ A full list of active scopes can be viewed with the <code>help</code> function.
 The following naming conventions are used:<br>
 <br>
 - ending with '?' is a predicate to check a property.<br>
-- starting with '?' is a basic reverse operation , e.g. ?a, the less powerfull <a href="#lk_encode">lk_encode</a> ( This is different but related to [lk_encode], the more powerfull reverse op)<br>
+- starting with '?' is a basic reverse operation , e.g. ?a, the less powerful <a href="#lk_encode">lk_encode</a> ( This is different but related to [lk_encode], the more powerful reverse op)<br>
 - b_RADIX_ ( b2, b8, b16 ) 'b' defaults to base64 radix<br>
 - u_SIZE_  ( u8, .., u128 ) parse decimal into big endian bytes. ?u interpret as big endian print to decimal<br>
 </p>
 </div>
 
 <ul class="org-ul">
-<li><a id="orga11dbef"></a>python<br>
-<div class="outline-text-5" id="text-orga11dbef">
+<li><a id="org375a26c"></a>python<br>
+<div class="outline-text-5" id="text-org375a26c">
 <div class="org-src-container">
 <pre class="src src-python">lk_eval2str("{help}",lk_linkpoint())
 </pre>
 </div>
 
-<pre class="example" id="orge5a2d88">
+<pre class="example" id="org997309c">
 ==scopes==
 # bytes
 Byte padding/trimming and ascii-byte reflection functions
@@ -1040,8 +1040,8 @@ Translate bytes into abe such that <code>lk_eval(lk_encode(X)) == X</code>
 </p>
 </div>
 <ul class="org-ul">
-<li><a id="orgc41c376"></a>python<br>
-<div class="outline-text-5" id="text-orgc41c376">
+<li><a id="orgd756032"></a>python<br>
+<div class="outline-text-5" id="text-orgd756032">
 <div class="org-src-container">
 <pre class="src src-python">data = bytes([123,255,0,2])
 abe = lk_encode(data)
@@ -1084,9 +1084,9 @@ See the <a href="../../lns.html">lns.html</a> for info.
 </p>
 </div>
 
-<div id="outline-container-org1c259a2" class="outline-4">
-<h4 id="org1c259a2">LNS - Local mode</h4>
-<div class="outline-text-4" id="text-org1c259a2">
+<div id="outline-container-orgf560691" class="outline-4">
+<h4 id="orgf560691">LNS - Local mode</h4>
+<div class="outline-text-4" id="text-orgf560691">
 <p>
 You can add keynames to the local index, allowing you to reference <code>{@local:my_identity}</code> or <code>{#local:friends}</code>
 By default <a href="#lk_key">lk_key</a> sets up the <code>{@local:me}</code> identity.
@@ -1117,12 +1117,12 @@ or as a filter function.
 <h3 id="lk_query">lk_query</h3>
 <div class="outline-text-3" id="text-lk_query">
 <p>
-Queries are newline seperated.
+Queries are newline separated.
 Predicates are <a href="#ABE">ABE</a> a 3-tuple <code>field ':' test-operation ':' value</code> and constrain the set of accepted packets.
 Options are context dependent and start with ':'
 </p>
 
-<pre class="example" id="org4f93de7">
+<pre class="example" id="org5119cd1">
 group:=:{#:pub}
 domain:=:example
 data_size:&lt;=:{u16:256}
@@ -1236,14 +1236,14 @@ The CLI has various alliasses that can act as a guide in creating queries by usi
 </div>
 
 <ul class="org-ul">
-<li><a id="orge37726d"></a>bash<br>
-<div class="outline-text-5" id="text-orge37726d">
+<li><a id="org788abb7"></a>bash<br>
+<div class="outline-text-5" id="text-org788abb7">
 <div class="org-src-container">
 <label class="org-src-name"><span class="listing-number">Listing 2: </span>A query that matches keypoints with domain 'my' , group '{#:pub}' , path with 2 components starting with  '/hello'</label><pre class="src src-bash">lk print-query "my:{#:pub}:/hello:*" --signed
 </pre>
 </div>
 
-<pre class="example" id="org8a0169f">
+<pre class="example" id="orgb1271be">
 :mode:tree-desc
 :watch:default
 type:1:{b2:00000111}
@@ -1278,7 +1278,7 @@ The last argument sets wether to create abe expressions or stick to abtext
 </pre>
 </div>
 
-<pre class="example" id="orgf4b5bd8">
+<pre class="example" id="orge2e560f">
 type:1:{b2:00000010}
 group:=:{b:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0}
 path_len:&lt;:{u8:2}
@@ -1315,9 +1315,9 @@ Add a single statement to a query without encoding the final field
 </div>
 </div>
 
-<div id="outline-container-orgb549a52" class="outline-3">
-<h3 id="orgb549a52">More on predicates</h3>
-<div class="outline-text-3" id="text-orgb549a52">
+<div id="outline-container-orga495a51" class="outline-3">
+<h3 id="orga495a51">More on predicates</h3>
+<div class="outline-text-3" id="text-orga495a51">
 <p class="verse">
 <code>group</code> requires 32 bytes but will try to parse base64.<br>
 <code>domain</code> requires 16 bytes but will pre-pad with 0 if to few are given<br>
@@ -1398,8 +1398,8 @@ The stamp and ubits are usually set by the exchange process. e.g. <a href="#anyh
 </div>
 
 <ul class="org-ul">
-<li><a id="org1a02a34"></a>NetFlags<br>
-<div class="outline-text-5" id="text-org1a02a34">
+<li><a id="org981b5ba"></a>NetFlags<br>
+<div class="outline-text-5" id="text-org981b5ba">
 <p>
 For instance, the anyhost exchange example has:
 The server receivng thread sets ubits to a value identiying the client.
@@ -1420,9 +1420,9 @@ The full list of addressable fields is the same as in the ABE packet scope:
 </div>
 
 
-<div id="outline-container-linkspace" class="outline-2">
-<h2 id="linkspace">Linkspace</h2>
-<div class="outline-text-2" id="text-linkspace">
+<div id="outline-container-Linkspace" class="outline-2">
+<h2 id="Linkspace">Linkspace</h2>
+<div class="outline-text-2" id="text-Linkspace">
 <p class="verse">
 <a href="../cargo-doc/liblinkspace/linkspace/index.html">Rust docs</a><br>
 </p>
@@ -1486,9 +1486,9 @@ You can nest calling <code>lk_watch</code> and <code>lk_read</code>.
 </div>
 
 
-<div id="outline-container-conventions" class="outline-2">
-<h2 id="conventions">Conventions</h2>
-<div class="outline-text-2" id="text-conventions">
+<div id="outline-container-Conventions" class="outline-2">
+<h2 id="Conventions">Conventions</h2>
+<div class="outline-text-2" id="text-Conventions">
 <p class="verse">
 <a href="../cargo-doc/liblinkspace/linkspace/conventions.html">Rust docs</a><br>
 </p>
@@ -1611,8 +1611,8 @@ See <a href="#ABELNS">abe#lns</a> and <a href="../../lns.html">LNS</a>.
 
 
 <ul class="org-ul">
-<li><a id="orgab780ee"></a>Why Big Endian?<br>
-<div class="outline-text-5" id="text-orgab780ee">
+<li><a id="org4af5c70"></a>Why Big Endian?<br>
+<div class="outline-text-5" id="text-org4af5c70">
 <p>
 The tree index is in the expected order when using the numbers as path components.
 E.g. <code>lk linkpoint ::/some/dir/{now}</code> will come after <code>lk linkpoint ::/some/dir/{now:-1D}</code> because <code>now &gt; (now - one day)</code>
@@ -1620,16 +1620,16 @@ E.g. <code>lk linkpoint ::/some/dir/{now}</code> will come after <code>lk linkpo
 </div>
 </li>
 
-<li><a id="org146dcc7"></a>Why can't I own a group? / I'm not in control of the user! / Anybody in my group can leak data from it!?<br>
-<div class="outline-text-5" id="text-org146dcc7">
+<li><a id="org16e10e5"></a>Why can't I own a group? / I'm not in control of the user! / Anybody in my group can leak data from it!?<br>
+<div class="outline-text-5" id="text-org16e10e5">
 <p>
 I don't make the rules, i just make them obvious.
 </p>
 </div>
 </li>
 
-<li><a id="org9c33500"></a>I want to add advertisements to my domain app/Every user of my domain app needs X from my server.<br>
-<div class="outline-text-5" id="text-org9c33500">
+<li><a id="orgc6a4d30"></a>I want to add advertisements to my domain app/Every user of my domain app needs X from my server.<br>
+<div class="outline-text-5" id="text-orgc6a4d30">
 <p>
 You hardcode a public key into the app, and also publish a group exchange service.
 There are two primary ways to centralize information.
@@ -1638,8 +1638,8 @@ Either they connect over the public group, or you can connect over their-key XOR
 </div>
 </li>
 
-<li><a id="org8b7cbf8"></a>A domain can write outside of its own domain space.<br>
-<div class="outline-text-5" id="text-org8b7cbf8">
+<li><a id="org7d9d0cc"></a>A domain can write outside of its own domain space.<br>
+<div class="outline-text-5" id="text-org7d9d0cc">
 <p>
 Yes, the current API has no restriction.
 The best thing i think would be to build a wasm runtime interface and restrict access entirely.
@@ -1648,8 +1648,8 @@ That will take some time before we reached that point.
 </div>
 </li>
 
-<li><a id="org4418eeb"></a>Why not use an SQL backend? / Why invent queries?<br>
-<div class="outline-text-5" id="text-org4418eeb">
+<li><a id="orgdbb5262"></a>Why not use an SQL backend? / Why invent queries?<br>
+<div class="outline-text-5" id="text-orgdbb5262">
 <p>
 That is a complex question.
 First off, if all you want is SQL queries it is relativly straight forward to stream packets into a SQL table and query them.
@@ -1667,13 +1667,13 @@ I've tried.
 <p>
 Queries have two desirable properties.
 You can do a form of algebra on them with concatenation and equality.
-They're powerfull enough for where they're used.
+They're powerful enough for where they're used.
 </p>
 </div>
 </li>
 
-<li><a id="orgfaa24a1"></a>Will it handle spam?<br>
-<div class="outline-text-5" id="text-orgfaa24a1">
+<li><a id="orgb610ce8"></a>Will it handle spam?<br>
+<div class="outline-text-5" id="text-orgb610ce8">
 <p>
 You can require proof of work or a proof of association.
 POW is as simple as adding a predicate on the hash.
@@ -1708,8 +1708,8 @@ Building the collage is done by adding all images to a base image in 'create' or
 </div>
 
 <ul class="org-ul">
-<li><a id="orgd227c1e"></a>placing images<br>
-<div class="outline-text-5" id="text-orgd227c1e">
+<li><a id="org3a31ed8"></a>placing images<br>
+<div class="outline-text-5" id="text-org3a31ed8">
 <p>
 TODO: Should probably add a 'prev' pointer to indicate what the user currently has.
 </p>
@@ -1739,8 +1739,8 @@ lk link "imgboard:$GROUP:/$BOARD" \
 </div>
 </li>
 
-<li><a id="org0d88376"></a>viewing images<br>
-<div class="outline-text-5" id="text-org0d88376">
+<li><a id="org54209e5"></a>viewing images<br>
+<div class="outline-text-5" id="text-org54209e5">
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash
 set -euo pipefail
@@ -1768,8 +1768,8 @@ echo "$BOARD: $START_STAMP"
 </div>
 </li>
 
-<li><a id="org29d468c"></a>streaming images<br>
-<div class="outline-text-5" id="text-org29d468c">
+<li><a id="orgda384fb"></a>streaming images<br>
+<div class="outline-text-5" id="text-orgda384fb">
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash -x 
 set -euo pipefail
@@ -1817,8 +1817,8 @@ Eventually the client will add a bloom filter and counter to the query.
 </div>
 
 <ul class="org-ul">
-<li><a id="org305dc47"></a>anyhost client<br>
-<div class="outline-text-5" id="text-org305dc47">
+<li><a id="orgf04ff27"></a>anyhost client<br>
+<div class="outline-text-5" id="text-orgf04ff27">
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash
 set -euo pipefail
@@ -1893,8 +1893,8 @@ wait -n
 </div>
 </li>
 
-<li><a id="org8d57896"></a>handshake<br>
-<div class="outline-text-5" id="text-org8d57896">
+<li><a id="org231ef74"></a>handshake<br>
+<div class="outline-text-5" id="text-org231ef74">
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash
 set -euo pipefail
@@ -1921,8 +1921,8 @@ exec ${@:2}
 </div>
 </li>
 
-<li><a id="org976a9cf"></a>anyhost server<br>
-<div class="outline-text-5" id="text-org976a9cf">
+<li><a id="orgcab6b4b"></a>anyhost server<br>
+<div class="outline-text-5" id="text-orgcab6b4b">
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash
 set -euo pipefail
@@ -2001,7 +2001,7 @@ wait -n
 </div>
 </div></div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-02-22 Wed 12:55</p>
+<p class="date">Created: 2023-02-23 Thu 07:18</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

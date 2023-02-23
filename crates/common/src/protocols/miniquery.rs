@@ -6,7 +6,7 @@
 /**
 A request-reply optimized for pulling specific hashes or the latest on a given path without parsing any request header.
 Can essential emulate http like request and replies.
-Mostl usefull for publicly facing services.
+Mostl useful for publicly facing services.
 
 Servers should operate on port 2023 serving UDP and TCP requests
 

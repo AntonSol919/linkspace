@@ -239,6 +239,6 @@ pub fn setup_local_key(
 
     let writer = lk.env().get_writer()?;
     save_pkts(writer, &pkts)?;
-    tracing::debug!(?pkts, "Writen local lns claim");
+    tracing::debug!(?pkts, "Written local lns claim");
     Ok(pubkey.into())
 }

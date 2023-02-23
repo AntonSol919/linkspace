@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing, Out, WriteDestSpec},
-    predicate_aliasses::{ExtWatchCLIOpts, WithFiles},
+    predicate_aliases::{ExtWatchCLIOpts, WithFiles},
     prelude::{query_mode::Mode, TypedABE, *},
 };
 
@@ -28,9 +28,9 @@ impl DGPDWatchCLIOpts {
             .dgpd
             .filter(|_| !self.bare)
             .map(|dgpd| dgpd.predicate_exprs());
-        let aliasses = self.watch_opts.opts.aliasses.as_predicates();
+        let aliases = self.watch_opts.opts.aliases.as_predicates();
         let exprs = self.watch_opts.opts.exprs.into_iter();
-        let it = dgpd.into_iter().flatten().chain(aliasses).map(Into::into);
+        let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
         for e in it.chain(exprs){
             tracing::trace!(?e, "add expr");
             let e = e.eval(&ctx)?;
@@ -113,7 +113,7 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
     }
     if let Some(query) = cli_query.into_query(&common)? {
         let rt = common.runtime()?;
-        let span = debug_span!("Userland watch");
+        let span = debug_span!("linkspace-cli watch");
         let out = common.multi_writer(write);
         rt.watch_query(&query, out, span)?;
         let _ = rt.run_while(None, None);

@@ -49,4 +49,4 @@ pub mod static_env;
 
 pub mod dgp;
 pub mod eval;
-pub mod predicate_aliasses;
+pub mod predicate_aliases;
