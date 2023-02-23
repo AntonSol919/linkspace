@@ -22,7 +22,7 @@ lk_query_parse(<span class="kw-2">&amp;mut </span>query,query_str)<span class="q
 
 <span class="comment">// You can add a single statement directly
 </span>lk_query_push(<span class="kw-2">&amp;mut </span>query,<span class="string">&quot;create&quot;</span>,<span class="string">&quot;&lt;&quot;</span>, <span class="kw-2">&amp;*</span>now())<span class="question-mark">?</span>;
-<span class="comment">// They are effectilvy merged if they overlap
+<span class="comment">// They are effectively merged if they overlap
 </span>lk_query_push(<span class="kw-2">&amp;mut </span>query,<span class="string">&quot;create&quot;</span>,<span class="string">&quot;&lt;&quot;</span>,<span class="kw-2">&amp;</span>lk_eval(<span class="string">&quot;{now:-1D}&quot;</span>,<span class="prelude-val">None</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
 
 <span class="comment">// to inspect it

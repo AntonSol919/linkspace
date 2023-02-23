@@ -824,7 +824,7 @@
 #![doc = <span class="string">r#&quot;
 
 The functions re-exported below is essentially the entire liblinkspace interface.
-Bindings in other languges follow the same pattern.
+Bindings in other languages follow the same pattern.
 
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
@@ -855,7 +855,7 @@ Some internals structs defs are currently leaking and will be removed.
 
 <span class="doccomment">/// Callbacks stored in a [Linkspace] instance. use [misc::cb] to impl from function
 </span><span class="kw">pub trait </span>PktHandler {
-    <span class="comment">// if returns some, periodcially check to see if the handler can be closed.
+    <span class="comment">// if returns some, periodically check to see if the handler can be closed.
     //fn checkup(&amp;mut self) -&gt; Option&lt;ControlFlow&lt;()&gt;&gt;{None}
     </span><span class="doccomment">/// Handles an event.
     </span><span class="kw">fn </span>handle_pkt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt;;
@@ -1022,7 +1022,7 @@ See guide#ABE to understand its use and indepth explanation.
 
     Optionally add a `pkt` as a context.
     Refuses &#39;\n&#39; and &#39;\t&#39;, and returns delimiters &#39;:&#39; and &#39;/&#39; as plain bytes.
-    See [lk_split_abe] for different delimiter behaviour
+    See [lk_split_abe] for different delimiter behavior
 
     ```
     # use liblinkspace::{*,prelude::*,abe::*};
@@ -1100,10 +1100,10 @@ See guide#ABE to understand its use and indepth explanation.
     assert_eq!(lk_encode(&amp;bytes,&quot;&quot;), r#&quot;\0\0\0\x08&quot;#);
     assert_eq!(lk_encode(&amp;bytes,&quot;u32&quot;), &quot;{u32:8}&quot;);
 
-    // This function can also be called with the encode &#39;/?&#39; efunc
+    // This function can also be called with the encode &#39;/?&#39; evaluator
     assert_eq!(lk_eval(r#&quot;{/?:\0\0\0{u8:8}:u32}&quot;#,None)?,b&quot;{u32:8}&quot;);
 
-    // the options are a list of &#39;/&#39; seperated functions
+    // the options are a list of &#39;/&#39; separated functions
     // In this example &#39;u32&#39; wont fit, LNS &#39;#&#39; lookup will succeed, if not the encoding would be base64
 
     let mut public_grp = PUBLIC_GROUP;
@@ -1224,7 +1224,7 @@ See guide#ABE to understand its use and indepth explanation.
 
     // You can add a single statement directly
     lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;, &amp;*now())?;
-    // They are effectilvy merged if they overlap
+    // They are effectively merged if they overlap
     lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;,&amp;lk_eval(&quot;{now:-1D}&quot;,None)?)?;
 
     // to inspect it

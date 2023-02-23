@@ -7,10 +7,10 @@ This function can also be used as the evaluator ‘{/?:..}’.</p>
 <span class="macro">assert_eq!</span>(lk_encode(<span class="kw-2">&amp;</span>bytes,<span class="string">&quot;&quot;</span>), <span class="string">r#&quot;\0\0\0\x08&quot;#</span>);
 <span class="macro">assert_eq!</span>(lk_encode(<span class="kw-2">&amp;</span>bytes,<span class="string">&quot;u32&quot;</span>), <span class="string">&quot;{u32:8}&quot;</span>);
 
-<span class="comment">// This function can also be called with the encode &#39;/?&#39; efunc
+<span class="comment">// This function can also be called with the encode &#39;/?&#39; evaluator
 </span><span class="macro">assert_eq!</span>(lk_eval(<span class="string">r#&quot;{/?:\0\0\0{u8:8}:u32}&quot;#</span>,<span class="prelude-val">None</span>)<span class="question-mark">?</span>,<span class="string">b&quot;{u32:8}&quot;</span>);
 
-<span class="comment">// the options are a list of &#39;/&#39; seperated functions
+<span class="comment">// the options are a list of &#39;/&#39; separated functions
 // In this example &#39;u32&#39; wont fit, LNS &#39;#&#39; lookup will succeed, if not the encoding would be base64
 
 </span><span class="kw">let </span><span class="kw-2">mut </span>public_grp = PUBLIC_GROUP;
