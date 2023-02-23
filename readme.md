@@ -8,11 +8,11 @@
 
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
-[The Linkspace Protocol](http://83.172.162.31/index.html)  is supernet with the following highlights:
+[The Linkspace Protocol](https://antonsol919.github.io/linkspace/index.html)  is supernet with the following highlights:
 - Small and powerfull API
 - Fast ( Blake3, no json/b64 encoding, well aligned fields )
 - Path ( url like ) addressable packets.
-- group/domain split
+  - group/domain split
 
 To write applications for a supernet requires a different perspective compared to managing sockets.
 The challenge is defining a super structure that can work across time and space with noisy incomplete data.
@@ -20,7 +20,7 @@ The challenge is defining a super structure that can work across time and space 
 In return a supernet provides a lot of usefull properties including:
 Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifyable, (offline)availble, etc.
 
-If you don't know those words checkout [ELI5](http://83.172.162.31/eli5.html) for a more gentle introduction to the general idea.
+If you don't know those words checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) for a more gentle introduction to the general idea.
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
 Expect unimplemented feature, half baked ideas , rought edges, and the occasional bug.
@@ -33,11 +33,11 @@ The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinks
 A linkspace instance is a directory containing a database and auxiliary data.
 Multiple applications use it at the same time.
 
-Its suggested to start at the [guide](http://83.172.162.31/docs/guide/index.html) ( or build it locally with `make docs`)
+Its suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) ( or build it locally with `make docs`)
 
 Or jump straight to a section:
-- [Point](http://83.172.162.31/docs/guide/index.html#point) creation
-- [ABE](http://83.172.162.31/docs/guide/index.html#abe) - ascii byte expressions - a language for manipulating and templating bytes
-- [Query](http://83.172.162.31/docs/guide/index.html#query) - Addressing and filtering of packets with predicates and options
-- [Linkspace](http://83.172.162.31/docs/guide/index.html#linkspace) instance - Locally indexed packets and new packet processing functions
-- [Conventions](http://83.172.162.31/docs/guide/index.html#conventions) instance - Locally indexed packets and new packet processing functions
+- [Point](https://antonsol919.github.io/linkspace/docs/guide/index.html#point) creation
+- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#abe) - ascii byte expressions - a language for manipulating and templating bytes
+- [Query](https://antonsol919.github.io/linkspace/docs/guide/index.html#query) - Addressing and filtering of packets with predicates and options
+- [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#linkspace) instance - Locally indexed packets and new packet processing functions
+- [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#conventions) instance - Locally indexed packets and new packet processing functions
