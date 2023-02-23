@@ -9,6 +9,7 @@
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 [The Linkspace Protocol](https://antonsol919.github.io/linkspace/index.html)  is supernet with the following highlights:
+
 - Small and powerful API
 - Fast (Blake3, no JSON/Base64 encoding, well aligned fields)
 - Path (URL like) addressable packets.

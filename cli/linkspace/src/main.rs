@@ -65,7 +65,7 @@ const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
         } = f.info();
         let _ = write!(st, "{name: <12} - {help} e.g. {example}");
         if implies.is_empty() {
-            let _ = write!(st, " [{implies}]");
+            //let _ = write!(st, " [{implies}]");
         }
         let _ = writeln!(st, "");
     }
@@ -94,7 +94,7 @@ lk link :: --write db --write stdout --write stderr --write file:./file
 Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
-#[clap(author, about)]
+#[clap(author, about,version)]
 struct Cli {
     #[clap(flatten)]
     common: CommonOpts,
