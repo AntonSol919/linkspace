@@ -240,4 +240,4 @@ Join the quest for world domination.
 Consider this your invitation.  
   
 
-[^1]: I'ts not the password, but a hash function run multiple times so i'ts not at risk of being copied if the index is compromised.
+[^1]: It is not the password, but a hash function run multiple times so i'ts not at risk of being copied if the index is compromised.
