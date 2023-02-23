@@ -43,11 +43,28 @@ A communication protocol where the method of exchange is an extraneous concern.
 e.g. git, bitcoin, nostr, the linkspace protocol</code></pre>
 <p>In a supernet anybody can talk <em>about</em> data, instead of
 talking <em>at</em> a server.</p>
-<p><a href="https://antonsol919.github.io/linkspace/index.html">The
-Linkspace Protocol</a> is supernet with the following highlights: -
-Small and powerful API - Fast (Blake3, no JSON/Base64 encoding, well
-aligned fields) - Path (URL like) addressable packets. - Group/Domain
-split</p>
+<p>The Linkspace Protocol is supernet with the following highlights:</p>
+<ul>
+<li>Small and powerful API</li>
+<li>Fast (Blake3, no JSON/Base64 encoding, well aligned fields)</li>
+<li>Path (URL like) addressable packets.</li>
+<li>Group/Domain split</li>
+</ul>
+<p>To write applications for a supernet requires a different perspective
+compared to managing sockets. The challenge is defining a super
+structure that can work across time and space with noisy incomplete
+data.</p>
+<p>In return a supernet provides a lot of useful properties including:
+Serverless, lockin-resistant, lockout-resistant, extensible, scalable,
+accountable, privacy, replaceability, verifiable, (offline)available,
+etc.</p>
+<p>Checkout <a href="./eli5.html">ELI5</a> if the words so far mean
+little to you, or you want an oversimplified introduction to the general
+idea.</p>
+<p>The packet format and index is stable, but the API and various
+conventions are still in the early stages. Expect unimplemented feature,
+half-baked ideas, rough edges, and the occasional bug. See the ./dev
+folder for more.</p>
       </div>
 	</body>
 </html>
