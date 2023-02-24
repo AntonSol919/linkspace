@@ -125,6 +125,7 @@ pub fn lk_keystr(key: &SigningKey, password: &[u8]) -> String {
 pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<SigningKey> {
     Ok(SigningKey(liblinkspace::key::lk_keyopen(id, password)?))
 }
+
 #[pyfunction]
 pub fn lk_key(
     lk: &Linkspace,
@@ -201,8 +202,8 @@ pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>) -> anyhow::Result<String> {
     Ok(String::from_utf8(out)?)
 }
 #[pyfunction]
-pub fn lk_encode(bytes: &[u8], options: &str) -> anyhow::Result<String> {
-    Ok(liblinkspace::abe::lk_encode(bytes, options))
+pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> {
+    Ok(liblinkspace::abe::lk_encode(bytes, options.unwrap_or("")))
 }
 
 #[pyclass(unsendable)]
@@ -249,6 +250,10 @@ pub fn lk_query_parse(
         .join("\n");
     let changed = varctx::lk_query_parse(ctx(pptr(pkt)), &mut query.0, &pstr)?;
     Ok(changed)
+}
+#[pyfunction]
+pub fn lk_query_push(query: &mut Query, field: &str,op:&str,bytes:&[u8]) -> LkResult<bool>{
+    liblinkspace::lk_query_push(&mut query.0, field,op,bytes)
 }
 #[pyfunction]
 #[pyo3(signature =(query,as_expr=false))]
@@ -369,6 +374,7 @@ fn lkpy(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(crate::lk_query, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_query_parse, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_query_push, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_query_print, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_query_clear, m)?)?;
 

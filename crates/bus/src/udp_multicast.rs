@@ -37,9 +37,9 @@ impl UdpIPC {
     }
     pub fn send(&self, bytes: &[u8]) -> std::io::Result<()> {
         let (sock, addr) = &*self.tx;
-        let writen = sock.send_to(bytes, addr)?;
-        tracing::trace!("Writing {:?}", writen);
-        if writen != bytes.len() {
+        let written = sock.send_to(bytes, addr)?;
+        tracing::trace!("Writing {:?}", written);
+        if written != bytes.len() {
             todo!("Fragmenting")
         }
         Ok(())

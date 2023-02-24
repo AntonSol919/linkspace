@@ -18,7 +18,7 @@
 #![doc = r#"
 
 The functions re-exported below is essentially the entire liblinkspace interface.
-Bindings in other languges follow the same pattern.
+Bindings in other languages follow the same pattern.
 
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
@@ -49,7 +49,7 @@ pub use prelude::SigningKey;
 
 /// Callbacks stored in a [Linkspace] instance. use [misc::cb] to impl from function
 pub trait PktHandler {
-    // if returns some, periodcially check to see if the handler can be closed.
+    // if returns some, periodically check to see if the handler can be closed.
     //fn checkup(&mut self) -> Option<ControlFlow<()>>{None}
     /// Handles an event.
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
@@ -216,7 +216,7 @@ pub mod abe {
 
     Optionally add a `pkt` as a context.
     Refuses '\n' and '\t', and returns delimiters ':' and '/' as plain bytes.
-    See [lk_split_abe] for different delimiter behaviour
+    See [lk_split_abe] for different delimiter behavior
 
     ```
     # use liblinkspace::{*,prelude::*,abe::*};
@@ -294,10 +294,10 @@ pub mod abe {
     assert_eq!(lk_encode(&bytes,""), r#"\0\0\0\x08"#);
     assert_eq!(lk_encode(&bytes,"u32"), "{u32:8}");
 
-    // This function can also be called with the encode '/?' efunc
+    // This function can also be called with the encode '/?' evaluator
     assert_eq!(lk_eval(r#"{/?:\0\0\0{u8:8}:u32}"#,None)?,b"{u32:8}");
 
-    // the options are a list of '/' seperated functions
+    // the options are a list of '/' separated functions
     // In this example 'u32' wont fit, LNS '#' lookup will succeed, if not the encoding would be base64
 
     let mut public_grp = PUBLIC_GROUP;
@@ -418,7 +418,7 @@ pub mod query {
 
     // You can add a single statement directly
     lk_query_push(&mut query,"create","<", &*now())?;
-    // They are effectilvy merged if they overlap
+    // They are effectively merged if they overlap
     lk_query_push(&mut query,"create","<",&lk_eval("{now:-1D}",None)?)?;
 
     // to inspect it

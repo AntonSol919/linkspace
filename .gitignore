@@ -8,3 +8,4 @@
 **/.env/
 **/.*
 **/cargo-doc
+**/*.html

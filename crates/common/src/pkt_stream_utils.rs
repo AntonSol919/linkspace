@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 /// Utility for buffering data packets untill a spoint references them.
-/// Usefull for filtering unlinked datapackets
+/// Useful for filtering unlinked datapackets
 use linkspace_core::{
     pkt::{NetPkt, NetPktBox},
     prelude::{utils::PktHashSet, LkHash, B64},

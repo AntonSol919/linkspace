@@ -284,7 +284,7 @@ bitflags! {
     /// Only the _POINT combinations are valid in a packet.
     pub struct PktTypeFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
-        /// Implementations can ignore this, mostly usefull for importing many datablocks.
+        /// Implementations can ignore this, mostly useful for importing many datablocks.
         const EMPTY = 0b00000000;
         const ANY_PKT = 0b00000001;
         const DATA = 0b00000001;

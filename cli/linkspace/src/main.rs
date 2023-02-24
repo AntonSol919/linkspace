@@ -65,7 +65,7 @@ const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
         } = f.info();
         let _ = write!(st, "{name: <12} - {help} e.g. {example}");
         if implies.is_empty() {
-            let _ = write!(st, " [{implies}]");
+            //let _ = write!(st, " [{implies}]");
         }
         let _ = writeln!(st, "");
     }
@@ -94,7 +94,7 @@ lk link :: --write db --write stdout --write stderr --write file:./file
 Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
-#[clap(author, about)]
+#[clap(author, about,version)]
 struct Cli {
     #[clap(flatten)]
     common: CommonOpts,
@@ -145,7 +145,7 @@ enum Command {
         opts: String,
     },
 
-    /// query - print full query from common aliasses
+    /// query - print full query from common aliases
     #[clap(alias="pq",alias="print-predicate",before_help=QUERY_HELP.to_string())]
     PrintQuery {
         #[clap(flatten)]
@@ -468,7 +468,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Pull { write, mut watch } => {
             let ctx = common.eval_ctx();
-            watch.watch_opts.opts.aliasses.watch = true;
+            watch.watch_opts.opts.aliases.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.watch_predicates(&ctx)?;
             let req = liblinkspace::conventions::lk_pull_req(&query.into())?;

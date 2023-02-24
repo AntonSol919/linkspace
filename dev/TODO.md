@@ -50,7 +50,7 @@ tryout lns as stages, each stage does not require to be in path .
 {#:hello:world:this} == {&#:{#:hello:world}:this} == {&#:{&#:{#:hello}:world}:this}
 
 - pktpredicates add comp[0-8]
-- predicate-aliasses impls
+- predicate-aliases impls
  --links
 
 - tree branch iterator options.

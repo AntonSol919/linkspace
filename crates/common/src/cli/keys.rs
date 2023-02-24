@@ -22,7 +22,7 @@ pub struct KeyOpts {
     /// use utf8 encoding for password instead of ABE
     #[clap(short, long)]
     utf8_password: bool,
-    // todo should accept 'colon:seperated:ids'
+    // todo should accept 'colon:separated:ids'
     #[clap(short, long, env = "LINKSPACE_KEY", default_value = "me")]
     name: String,
     /// use specific enckey str - will not lookup / generate

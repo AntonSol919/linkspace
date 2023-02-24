@@ -338,9 +338,9 @@ use ApplyResult as AR;
 #[derive(Error)]
 pub enum EvalError {
     #[error("evaluator err :  {} {}",as_abtxt_e(.0),.1)]
-    Reval(Vec<u8>, ApplyErr),
+    SubEval(Vec<u8>, ApplyErr),
     #[error("no such e-func : '/{}'",as_abtxt_e(.0))]
-    NoSuchReval(Vec<u8>),
+    NoSuchSubEval(Vec<u8>),
     #[error("no such func : {}",as_abtxt_e(.0))]
     NoSuchFunc(Vec<u8>),
     #[error("func error : {} : {}",as_abtxt_e(.0), .1)]
@@ -644,10 +644,10 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             let inner_abl = match ls.as_slice() {
                 [ABE::Ctr(Ctr::FSlash), ref tail @ ..] => {
                     let (id, rest): (&[u8], &[ABE]) = match tail {
-                        [] => return Err(EvalError::Other("missing efunc name".into())),
+                        [] => return Err(EvalError::Other("missing eval name".into())),
                         [ABE::Expr(Expr::Lst(_)), ..] => {
                             return Err(EvalError::Other(
-                                "var efunc name resolution disabled".into(),
+                                "var eval name resolution disabled".into(),
                             ))
                         }
                         [ABE::Ctr(Ctr::Colon), ref rest @ ..] => {
@@ -661,9 +661,9 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     };
                     dbgprintln!("Eval({})", as_abtxt_e(id));
                     match ctx.scope.lookup_eval(id, rest, &ctx.scope) {
-                        ApplyResult::None => return Err(EvalError::NoSuchReval(id.to_vec())),
+                        ApplyResult::None => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Ok(b) => return Ok(ABItem::Bytes(b)),
-                        ApplyResult::Err(e) => return Err(EvalError::Reval(id.to_vec(), e)),
+                        ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
                     }
                 }
                 [ABE::Expr(Expr::Lst(_)), ..] => {
