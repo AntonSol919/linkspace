@@ -63,7 +63,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     let lk : Linkspace = common.runtime()?.into();
     let c= common.clone();
 
-    let mut data_reader = common.open_read(&data)?;
+    let mut data_reader = common.open_read(data.as_ref())?;
     lk_status_set(&lk, status, move |_,domain,group,path,link| {
         let mut buf = vec![];
         let data = data_reader(&c.eval_ctx().dynr(),&mut buf)?;

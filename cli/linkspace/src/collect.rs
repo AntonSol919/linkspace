@@ -92,7 +92,7 @@ impl Collector {
         };
         let links = std::mem::take(&mut self.links);
         let mut data = vec![];
-        let pkt = crate::point::build(
+        let pkt = crate::point::build_with_reader(
             common,
             &self.c_opts.build,
             &self.dgs,
@@ -173,7 +173,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         links: initial_links.clone(),
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
-        reader: common.open_read(&c_opts.build.data)?,
+        reader: common.open_read(c_opts.build.data.as_ref())?,
         dgs,
         buf: vec![],
         c_opts,

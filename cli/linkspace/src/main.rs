@@ -21,7 +21,7 @@ use std::{
     process::ExitCode,
 };
 
-use anyhow::{ensure, Context};
+use anyhow::{ensure };
 use liblinkspace::query::PredicateType;
 use linkspace_common::{
     cli::{
@@ -38,7 +38,7 @@ use linkspace_common::{
         predicate_type::PredInfo,
         query_mode::{Mode, Order, Table},
         *,
-    },
+    }, predicate_aliases::ExtWatchCLIOpts,
 };
 use tracing_subscriber::EnvFilter;
 use watch::{DGPDWatchCLIOpts, CLIQuery};
@@ -180,9 +180,11 @@ enum Command {
     },
     /// runtime - alias for: watch --mode hash-asc -- hash:=:HASH
     WatchHash {
+        hash: HashExpr,
         #[clap(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        hash: HashExpr,
+        #[clap(flatten)]
+        rest : ExtWatchCLIOpts 
     },
     /// runtime - alias for: watch --mode log-desc
     WatchLog {
@@ -215,15 +217,7 @@ enum Command {
     Collect(collect::Collect),
 
     /// filter a stream of packets based on a query
-    Filter {
-        #[clap(flatten)]
-        query: watch::CLIQuery,
-        #[clap(long, short, default_value = "stdout")]
-        write: Vec<WriteDestSpec>,
-        /// destination for filtered packets
-        #[clap(short = 'f', long, default_value = "null")]
-        write_false: Vec<WriteDestSpec>,
-    },
+    Filter(filter::Filter) ,
     /// deduplicate packets based on hash
     Dedup {
         #[clap(long, default_value_t = 256)]
@@ -389,12 +383,13 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                 }
             }
         }
-        Command::WatchHash { hash, write } => {
-            let env = common.env()?;
-            let hash = hash.eval(&common.eval_ctx())?;
-            let r = env.get_reader()?;
-            let pkt = r.read(&hash)?.context("Pkt not in db")?;
-            common.write_multi_dest(&mut common.open(&write)?, &pkt.pkt, None)?;
+        Command::WatchHash { hash, write, rest } => {
+            let mut cquery = CLIQuery::default();
+            cquery.mode = Some(Mode::HASH_ASC);
+            cquery.opts.watch_opts = rest;
+            let hpred = abev!( "hash" : "=" : +(hash.0.clone()));
+            cquery.opts.watch_opts.exprs.push( hpred.into());
+            watch::watch(common, cquery, write)?;
         }
         Command::WatchTree { mut query, asc, write } => {
             if let Some(dgpd) = &mut query.opts.dgpd {
@@ -420,9 +415,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             write
         )?,
         Command::Watch { watch, write } => watch::watch(common, watch,write)?,
-        Command::Filter { query, write_false, write } => {
-            filter::select(query, write,write_false, common)?
-        }
+        Command::Filter(filter) => filter::select(common, filter)?,
         Command::Eval { json, abe } => {
             let abe = parse_abe(&abe)?;
             let ctx = common.eval_ctx();
@@ -468,9 +461,9 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Pull { write, mut watch } => {
             let ctx = common.eval_ctx();
-            watch.watch_opts.opts.aliases.watch = true;
+            watch.watch_opts.aliases.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
-            let query = watch.watch_predicates(&ctx)?;
+            let query = watch.into_query(&ctx)?;
             let req = liblinkspace::conventions::lk_pull_req(&query.into())?;
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;

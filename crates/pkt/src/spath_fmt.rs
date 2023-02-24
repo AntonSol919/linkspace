@@ -91,6 +91,10 @@ impl TryFrom<ABList> for SPathBuf {
 
 impl ABEValidator for SPathBuf {
     fn check(mut b: &[ABE]) -> Result<(), MatchError> {
+        if b.len() == 1 {
+            abe::ast::as_expr(&b[0])?;
+            return Ok(())
+        }
         while !b.is_empty() {
             let (_, next) = take_ctr_expr(b, is_fslash)?;
             b = next;

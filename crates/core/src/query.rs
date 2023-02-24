@@ -61,14 +61,8 @@ pub enum KnownOptions {
     Watch,
     /// try and attach linked pkts. takes a list of HASH,decimal idx range, or ~tag expr
     Follow,
-    /// prepend the request if possible
-    Echo,
-    /// append the request on finish
-    EchoClose,
-    /*
-    /// set a specific hash to start at
-    Start
-    */
+    /// (not supported by lk_watch) - append the request on finish - ignores the first callback Break to deliver the request on dropping
+    NotifyClose,
 }
 impl KnownOptions {
     //todo make static
@@ -77,7 +71,7 @@ impl KnownOptions {
     }
     pub fn iter_all() -> impl Iterator<Item = Self> {
         use KnownOptions::*;
-        [Mode, Watch, Follow, Echo, EchoClose].into_iter()
+        [Mode, Watch, Follow, NotifyClose ].into_iter()
     }
 }
 

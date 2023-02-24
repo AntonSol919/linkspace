@@ -5,12 +5,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::thread::JoinHandle;
 
-use anyhow::Context;
+use anyhow::{ Context};
 use linkspace_common::{
-    cli::{clap, clap::Args, opts::CommonOpts, tracing},
+    cli::{clap, clap::Args, opts::CommonOpts, tracing  },
     core::pull::read_pull_pkt,
     prelude::*,
-    runtime::{handlers::EchoOpt, threads::run_untill_spawn_thread},
+    runtime::{handlers::NotifyClose, threads::run_untill_spawn_thread},
 };
 
 use crate::watch::PrintABE;
@@ -30,12 +30,15 @@ pub struct MultiWatch {
     /// Continue after closing stdin
     #[clap(short, long)]
     linger: bool,
-    //adato:PathBuf
+
+    #[clap(flatten)]
+    constraint: OrConstrait,
 }
 
 pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Result<()> {
     let linger = multi_watch.linger;
     let rx = common.runtime()?.clone();
+
     let ctx = Arc::new((common, multi_watch));
     let handle: JoinHandle<anyhow::Result<()>> =
         run_untill_spawn_thread(rx.clone(), move |spawner| -> anyhow::Result<()> {
@@ -68,21 +71,45 @@ pub fn setup_watch(
     (common, mv): &(CommonOpts, MultiWatch),
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
-    if mv.full_ctx {
-        let _ = read_pull_pkt(&mut query, pkt, &*rx.get_reader(), &common.eval_ctx())?;
+    let (full, core) = (common.eval_ctx(), core_ctx());
+    let ctx = if mv.full_ctx {
+        full.dynr()
     } else {
-        let _ = read_pull_pkt(&mut query, pkt, &*rx.get_reader(), &core_ctx())?;
+        core.dynr()
+    };
+    let _ = read_pull_pkt(&mut query, pkt, &*rx.get_reader(), ctx)?;
+    
+    let mut ok = mv.constraint.or.is_empty();
+    for opt in mv.constraint.or.iter(){
+        if query.parse(opt.as_bytes(), &full.dynr()).is_ok(){
+            ok = true;
+            break;
+        }
     }
-    if mv.print.do_print()  {
-        mv.print.print_query(&query,&mut std::io::stdout())?;
+    anyhow::ensure!(ok,"cant find valid set");
+
+
+    if mv.print.do_print() {
+        mv.print.print_query(&query, &mut std::io::stdout())?;
         return Ok(());
     }
     let span = debug_span!("multi-watch", origin=%pkt.hash());
     let cb = common.stdout_writer();
-
-    match EchoOpt::new(cb, &query, pkt) {
-        Ok(c) => rx.watch_query(&query, c, span)?,
-        Err(c) => rx.watch_query(&query, c, span)?,
-    };
+    let cb = NotifyClose::new(cb, &query, pkt);
+    rx.watch_query(&query, cb, span)?;
     Ok(())
 }
+
+#[derive(Args, Clone)]
+#[group(skip)]
+pub struct OrConstrait {
+    /** Add one or more query constraints. e.g. --or 'group:=:{#:pub}\ndomain:=:example' --or "domain:=:{hello}"
+
+    Queries will have the additional predicate/options added and will be ignored if they result in the empty set.
+    NOTE: This means a query without any group or domain would imply the first option
+
+    **/
+    #[clap(long)]
+    pub or: Vec<String>,
+}
+

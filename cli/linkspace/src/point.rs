@@ -34,11 +34,9 @@ pub fn build<'o>(
     build_opts: &'o PointOpts,
     dgs: &'o DGP,
     links: &'o [Link],
-    data_buf: &'o mut Vec<u8>,
-    data_source: &mut Reader,
+    data: &'o [u8],
 ) -> anyhow::Result<NetPktParts<'o>> {
     let ctx = common.eval_ctx();
-    let data = (data_source)(&ctx.dynr(), data_buf)?;
     let stamp = build_opts
         .create
         .as_ref()
@@ -63,17 +61,30 @@ pub fn build<'o>(
     ))
 }
 
+pub fn build_with_reader<'o>(
+    common: &CommonOpts,
+    build_opts: &'o PointOpts,
+    dgs: &'o DGP,
+    links: &'o [Link],
+    data_buf: &'o mut Vec<u8>,
+    data_source: &mut Reader,
+) -> anyhow::Result<NetPktParts<'o>> {
+    let ctx = common.eval_ctx();
+    let data = (data_source)(&ctx.dynr(), data_buf)?;
+    build(common, build_opts, dgs, links, data)
+}
+
 pub fn linkpoint(
     mut common: CommonOpts,
     opts: PointOpts,
     dest: &mut [WriteDest],
 ) -> anyhow::Result<()> {
     let ctx = common.eval_ctx();
-    let mut reader = common.open_read(&opts.data)?;
+    let mut reader = common.open_read(opts.data.as_ref())?;
     let links: Vec<_> = opts.link.iter().map(|v| v.eval(&ctx)).try_collect()?;
     let dgs = opts.dgs.eval(&ctx)?;
     let mut buf = vec![];
-    let pkt = build(&common, &opts, &dgs, &links, &mut buf, &mut reader)?;
+    let pkt = build_with_reader(&common, &opts, &dgs, &links, &mut buf, &mut reader)?;
     common.mut_write_private().get_or_insert(true);
     common.write_multi_dest(dest, &pkt, None)?;
     Ok(())

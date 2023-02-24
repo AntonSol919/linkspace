@@ -180,7 +180,7 @@ impl CommonOpts {
             .filter_map(|v| v.open(&ctx).transpose())
             .try_collect()
     }
-    pub fn open_read(&self, r: &Option<ReadSource>) -> anyhow::Result<Reader> {
+    pub fn open_read(&self, r: Option<&ReadSource>) -> anyhow::Result<Reader> {
         ReadSource::into_reader(r, self.io.inp, &self.eval_ctx())
     }
     pub fn write_dest(

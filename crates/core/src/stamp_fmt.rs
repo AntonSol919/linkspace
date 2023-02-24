@@ -244,10 +244,11 @@ impl FromStr for DurationStr {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct StampEF;
+#[derive(Copy, Clone, Debug,Default)]
+pub struct StampEF{pub fixed_now: Option<Stamp>}
 impl StampEF {
-    pub fn apply(mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
+    pub fn now(&self) -> Stamp { self.fixed_now.unwrap_or_else(linkspace_pkt::now)}
+    pub fn apply(&self,mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
         let mut result = None;
         while result.is_none() && !args.is_empty() {
             (stamp, args) = match args {
@@ -262,7 +263,7 @@ impl StampEF {
                 ),
                 [b"2delta", rest @ ..] => {
                     args = rest;
-                    result = Some(delta_stamp(linkspace_pkt::now(), stamp).into_bytes());
+                    result = Some(delta_stamp(self.now(), stamp).into_bytes());
                     break;
                 }
                 [b"2y6", rest @ ..] => {
@@ -291,6 +292,7 @@ impl StampEF {
         Ok(result.unwrap_or_else(|| stamp.0.to_vec()))
     }
 }
+
 impl EvalScopeImpl for StampEF {
     fn about(&self) -> (String, String) {
         (
@@ -304,10 +306,10 @@ arguments consists of ( [+-][YMWDhmslu]usize : )* (str | 2delta | 2y6)?
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         crate::eval::fncs!([
             (@C "s",0..=16,None,"if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0",
-             |_,i:&[&[u8]],init,_| if init {StampEF::apply(Stamp::ZERO,i) } else {StampEF::apply(Stamp::try_from(i[0])?,&i[1..])},none),
-            ("now",0..=16,Some(true),"current systemtime",|_,i:&[&[u8]]| StampEF::apply(linkspace_pkt::now(),i)),
-            ("epoch",0..=16,Some(true),"unix epoch / zero time",|_,i:&[&[u8]]| StampEF::apply(Stamp::ZERO,i)),
-            ("s++",0..=16,Some(true),"max stamp",|_,i:&[&[u8]]| StampEF::apply(Stamp::MAX,i))
+             |s:&Self,i:&[&[u8]],init,_| if init {s.apply(Stamp::ZERO,i) } else {s.apply(Stamp::try_from(i[0])?,&i[1..])},none),
+            ("now",0..=16,Some(true),"current systemtime",|s:&Self,i:&[&[u8]]| s.apply(s.now(),i)),
+            ("epoch",0..=16,Some(true),"unix epoch / zero time",|s:&Self,i:&[&[u8]]| s.apply(Stamp::ZERO,i)),
+            ("s++",0..=16,Some(true),"max stamp",|s:&Self,i:&[&[u8]]| s.apply(Stamp::MAX,i))
         ])
     }
 }

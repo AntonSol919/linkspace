@@ -6,12 +6,11 @@
 use super::Linkspace;
 pub use linkspace_core::matcher::matcher2::BareWatch;
 use linkspace_core::{
-    pkt::NetPkt,
-    query::{KnownOptions, Query},
+    pkt::NetPkt, query::Query,
 };
 use linkspace_pkt::{
-    reroute::{ReroutePkt, ShareArcPkt},
-    NetFlags, NetPktArc, PointExt,
+    reroute::{ReroutePkt},
+    NetFlags, PointExt, NetPktBox,
 };
 use std::ops::{ControlFlow, Try};
 
@@ -65,46 +64,31 @@ where
     }
 }
 
-pub struct EchoOpt<F> {
+/// Warning - The notify will be done regardless of the handle_pkt break return;
+pub struct NotifyClose<F> {
     pub inner: F,
-    pub echo_close: Option<NetPktArc>,
-    pub echo: Option<NetPktArc>,
+    pub origin: Option<NetPktBox>,
 }
-impl<F> EchoOpt<F> {
-    pub fn new(inner: F, query: &Query, pkt: &dyn NetPkt) -> Result<Self, F> {
-        let arc = ShareArcPkt::new(pkt);
-        let echo = query
-            .get_known_opt(KnownOptions::Echo)
-            .map(|_| arc.as_netarc());
-        let echo_close = query
-            .get_known_opt(KnownOptions::EchoClose)
-            .map(|_| arc.as_netarc());
-        if echo.is_none() && echo_close.is_none() {
-            Err(inner)
-        } else {
-            Ok(EchoOpt {
-                inner,
-                echo_close,
-                echo,
-            })
+impl<F> NotifyClose<F> {
+    pub fn new(inner: F, q:&Query, origin: &dyn NetPkt) -> Self {
+        let origin = if q.get_known_opt(linkspace_core::query::KnownOptions::NotifyClose).is_some(){
+            Some(origin.as_netbox())
+        } else { None};
+        NotifyClose {
+            inner,
+            origin
         }
     }
+    
 }
 
-impl<F: PktStreamHandler> PktStreamHandler for EchoOpt<F> {
-    fn handle_pkt(&mut self, pkt: &dyn NetPkt, rx: &Linkspace) -> ControlFlow<()> {
-        if let Some(echo) = self.echo.take() {
-            self.inner.handle_pkt(&echo, rx).map_break(|_| {
-                self.echo_close.take();
-            })?;
-        }
-        self.inner.handle_pkt(pkt, rx).map_break(|()| {
-            self.echo_close.take();
-        })
+impl<F: PktStreamHandler> PktStreamHandler for NotifyClose<F> {
+    fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
+        self.inner.handle_pkt(pkt, &lk)
     }
 
     fn stopped(&mut self, _watch: BareWatch, _rx: &Linkspace, _reason: StopReason) {
-        if let Some(echo) = self.echo_close.take() {
+        if let Some(echo) = self.origin.take(){
             self.inner.handle_pkt(&echo, _rx);
         }
         self.inner.stopped(_watch, _rx, _reason)

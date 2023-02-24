@@ -250,7 +250,12 @@ impl PktPredicates {
                     FieldEnum::PointSizeF => {
                         self.pkt_size.try_add(op, U16::try_from(val)?.get())?
                     }
-                    FieldEnum::PktHashF => self.hash.try_add(op, LkHash::try_from(val)?.into())?,
+                    FieldEnum::PktHashF => {
+                        self.hash.try_add(op, LkHash::try_from(val)?.into())?;
+                        if op == TestOp::Equal {
+                            self.state.i_query.try_add(TestOp::Equal, 0u32.into())?;
+                        }
+                    },
                     FieldEnum::DomainF => self
                         .domain
                         .try_add(op, Domain::try_from(val)?.uint().get())?,

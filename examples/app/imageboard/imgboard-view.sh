@@ -14,7 +14,7 @@ lk watch --index "imgboard:$GROUP:/$BOARD" -- "create:>=:{u64:$START_STAMP}" \
         Y=${REF:8:8}
         IMG_HASH=${REF: -43}
         echo "Placing $IMG_HASH at $X , $Y"
-        lk watch-hash $IMG_HASH \
+        lk watch-hash $IMG_HASH --ttl 5s \
             | lk printf "{data}" --delimiter "" \
             | magick composite -geometry +$X+$Y - PNG32:$BOARD.png PNG32:$BOARD.png
     done

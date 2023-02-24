@@ -46,8 +46,8 @@ pub struct Rewrite {
     #[clap(flatten)]
     pub key: KeyOpts,
 
-    #[clap(long)]
-    pub data: Option<ReadSource>,
+    #[clap(long,default_value="abe-live:{data}")]
+    pub data: ReadSource,
     #[clap(long, default_value_t, value_enum)]
     pub error_mode: ErrorMode,
 }
@@ -121,8 +121,8 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
         key.identity(&common, true)?;
     }
     let inp = common.inp_reader()?;
-
-    let mut reader = common.open_read(&data)?;
+    let data = Some(data.clone());
+    let mut reader = common.open_read(data.as_ref())?;
     let mut write = common.open(&write)?;
     let mut forward = common.open(&forward)?;
     for p in inp {

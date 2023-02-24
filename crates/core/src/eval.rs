@@ -29,7 +29,7 @@ pub type EvalStd = (
 pub const fn std_ctx_v(_version: &str) -> EvalCtx<EvalStd> {
     EvalCtx {
         scope: (
-            ((core_scope(), EScope(StaticLNS)), EScope(StampEF)),
+            ((core_scope(), EScope(StaticLNS)), EScope(StampEF{fixed_now:None})),
             EScope(SPathFncs),
         ),
     }

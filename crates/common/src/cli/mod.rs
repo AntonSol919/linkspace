@@ -155,12 +155,12 @@ impl WriteDestSpec {
 /// --data stdin:pkt
 /// --data stdin:pkt:{data}
 /// --data "stdin:pkt:{data} and {create:str}"
-/// --data repeat:stdin:pkt
+/// --data stdin-live:pkt
 /// --data "abe:The time at start {now}"
-/// --data "repeat:abe:The time is {now}"
+/// --data "abe-live:The time is {now}"
 /// --data file:{/:./some/path}  read once
-/// --data repeat:file:{/:./some/path} read every time
-/// --data repeat:file:{/:./some/path}:pkt:The hash {hash:str}" read every time
+/// --data file-live:{/:./some/path} read every time
+/// --data file-live:{/:./some/path}:pkt:The hash {hash:str}" read every time
 #[derive(Clone, Debug, Default)]
 pub enum ReadAs {
     #[default]
@@ -169,25 +169,25 @@ pub enum ReadAs {
 }
 #[derive(Clone, Debug)]
 pub struct ReadSource {
-    live: bool,
-    source: DataSource,
-    read_as: ReadAs,
+    pub live: bool,
+    pub source: DataSource,
+    pub read_as: ReadAs,
 }
 impl FromStr for ReadSource {
     type Err = anyhow::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(st: &str) -> Result<Self, Self::Err> {
         use abe::ast::*;
-        let (live, s) = match s.strip_suffix("-live") {
-            Some(s) => (true, s),
-            None => (false, s),
+        let (kind,expr) = st.split_once(':').unwrap_or((st,""));
+        let (live, kind) = match kind.strip_suffix("-live") {
+            Some(kind) => (true,kind),
+            None => (false, kind),
         };
         let mut read_as = ReadAs::Raw;
-        let abe = parse_abe(s)?;
+        let abe = parse_abe(expr)?;
         let mut it = abe.split(|v| v.is_colon());
-        let source_b = as_bytes(single(it.next().context("missing source")?)?)?;
-        let source = match source_b {
-            b"abe" => {
+        let source = match kind {
+            "abe" => {
                 let expr = it.as_slice().to_vec();
                 tracing::debug!(live, ?expr, ?read_as, "setup source");
                 return Ok(ReadSource {
@@ -196,9 +196,9 @@ impl FromStr for ReadSource {
                     read_as,
                 });
             }
-            b"-" if !live => DataSource::Stdin,
-            b"stdout" => DataSource::Stdin,
-            b"file" => {
+            "-" if !live => DataSource::Stdin,
+            "stdout" => DataSource::Stdin,
+            "file" => {
                 let name = it.next().context("missing filename")?.to_vec();
                 DataSource::File(name.into())
             }
@@ -238,10 +238,19 @@ pub type Reader = Box<
         + Send
         + Sync,
 >;
+pub fn no_reader() -> Reader{
+    Box::new(|_,v| Ok(&*v))
+}
+pub fn read2vec(reader: &mut Reader,ctx: &EvalCtx<&dyn Scope>) -> anyhow::Result<Vec<u8>>{
+    let mut buf = vec![];
+    (reader)(ctx,&mut buf)?;
+    Ok(buf)
+}
+
 
 impl ReadSource {
     pub fn into_reader(
-        opt: &Option<Self>,
+        opt: Option<&Self>,
         opts: InOpts,
         ctx: &EvalCtx<impl Scope>,
     ) -> anyhow::Result<Reader> {
@@ -250,7 +259,7 @@ impl ReadSource {
             None => Ok(Box::new(|_, v| Ok(v))),
         }
     }
-    fn reader(&self, opts: InOpts, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Reader> {
+    pub fn reader(&self, opts: InOpts, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Reader> {
         Ok(match (&self.source, &self.read_as, &self.live) {
             (DataSource::Stdin, ReadAs::Raw, true) => {
                 let mut buf = [0; MAX_DATA_SIZE];
@@ -352,3 +361,5 @@ fn read_prep<'p>(
         None => Ok(pkt.as_point().data().into()),
     }
 }
+
+
