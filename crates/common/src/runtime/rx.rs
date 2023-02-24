@@ -415,6 +415,9 @@ impl Linkspace {
         let span = debug_span!(parent:&span,"query", preds=%q.predicates);
         let mut counter = 0;
         let check_db = q.predicates.state.check_db();
+        if let Some(wid) = watch_id.as_ref() {
+            self.close(wid); // this is not ideal. But other close semantics seem worse.
+        }
         if check_db {
             let local_span = tracing::debug_span!(parent: &span, "DB Callback").entered();
             tracing::trace!(?mode);
