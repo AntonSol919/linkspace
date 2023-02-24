@@ -33,6 +33,7 @@ Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably w
 
 - [internal] core::matcher cleanup
 - [internal] core::env cleanup
+- [internal] DGPDExpr should impl ABEValidator and be split up into two types . One where the spath length is know and one where it can be dynamic
 - [internal] PktPredicates.index(RuleType) -> &mut dyn FieldPred
 - [internal] :mode:hash-* iteration should use set_info
 - [internal] Normalize lingo around abe "seperators" and "ctr characters" -- have to pick one
