@@ -10,7 +10,7 @@ use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing  },
     core::pull::read_pull_pkt,
     prelude::*,
-    runtime::{handlers::NotifyClose, threads::run_untill_spawn_thread},
+    runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
 
 use crate::watch::PrintABE;
@@ -41,7 +41,7 @@ pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Resul
 
     let ctx = Arc::new((common, multi_watch));
     let handle: JoinHandle<anyhow::Result<()>> =
-        run_untill_spawn_thread(rx.clone(), move |spawner| -> anyhow::Result<()> {
+        run_until_spawn_thread(rx.clone(), move |spawner| -> anyhow::Result<()> {
             let inp = ctx.0.inp_reader().context("reader open failed")?;
             for pkt in inp {
                 tracing::debug!(?pkt, "inp packet");

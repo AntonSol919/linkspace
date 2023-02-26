@@ -21,12 +21,13 @@ pub fn as_systime(stamp: Stamp) -> std::time::SystemTime {
     std::time::UNIX_EPOCH + Duration::from_micros(stamp.get())
 }
 pub fn as_instance(stamp: Stamp) -> Instant {
-    let instant = Instant::now(); // this seems dumb required 'now' twice.
-    match now().get().overflowing_sub(stamp.get()) {
-        //now gt stamp
-        (v, false) => instant - Duration::from_micros(v),
-        // now lt stamp
-        (v, true) => instant + Duration::from_micros(v),
+    // this seems dumb required 'now' twice.
+    let now = now().get();
+    let to = stamp.get();
+    if now > to {
+        Instant::now() - Duration::from_micros(now-to)
+    }else {
+        Instant::now() + Duration::from_micros(to-now)
     }
 }
 pub fn as_duration(stamp: Stamp) -> Duration {

@@ -3,8 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::consts::LOCAL_ONLY_GROUP;
-use crate::consts::PUBLIC_GROUP;
+use crate::consts::PRIVATE;
+use crate::consts::PUBLIC;
 use crate::consts::TEST_GROUP_ID;
 pub use crate::stamp_fmt::StampEF;
 pub use linkspace_pkt::abe::eval::*;
@@ -48,8 +48,8 @@ impl EvalScopeImpl for StaticLNS {
         &[
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"0" => ApplyResult::Ok(LOCAL_ONLY_GROUP.0.to_vec()),
-                    b"pub" => ApplyResult::Ok(PUBLIC_GROUP.0.to_vec()),
+                    b"0" => ApplyResult::Ok(PRIVATE.0.to_vec()),
+                    b"pub" => ApplyResult::Ok(PUBLIC.0.to_vec()),
                     b"test" => ApplyResult::Ok(TEST_GROUP_ID.0.to_vec()),
                     _ => ApplyResult::None,
                 },
@@ -62,9 +62,9 @@ impl EvalScopeImpl for StaticLNS {
                 },
                 to_abe: |_, i, _| {
                     let g = GroupID::try_fit_slice(i).ok()?;
-                    let b = if g == LOCAL_ONLY_GROUP {
+                    let b = if g == PRIVATE {
                         "{#:0}"
-                    } else if g == PUBLIC_GROUP {
+                    } else if g == PUBLIC {
                         "{#:pub}"
                     } else if g == *TEST_GROUP_ID {
                         "{#:test}"
@@ -76,7 +76,7 @@ impl EvalScopeImpl for StaticLNS {
             },
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"none" => ApplyResult::Ok(LOCAL_ONLY_GROUP.0.to_vec()),
+                    b"none" => ApplyResult::Ok(PRIVATE.0.to_vec()),
                     _ => ApplyResult::None,
                 },
                 info: ScopeFuncInfo {
@@ -114,9 +114,9 @@ impl EvalScopeImpl for StaticLNS {
 fn _rev_lookup(i: &[&[u8]], group_mode: Option<bool>) -> ApplyResult {
     let b = B64::try_fit_slice(i[0])?;
     match b {
-        b if b == PUBLIC_GROUP => Ok(b"{#:pub}".to_vec()),
+        b if b == PUBLIC => Ok(b"{#:pub}".to_vec()),
         b if b == *TEST_GROUP_ID => Ok(b"{#:test}".to_vec()),
-        b if b == LOCAL_ONLY_GROUP => match group_mode {
+        b if b == PRIVATE => match group_mode {
             Some(false) => Ok(b"{@:none}".to_vec()),
             _ => Ok(b"{#:0}".to_vec()),
         },

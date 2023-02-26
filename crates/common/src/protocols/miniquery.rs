@@ -23,7 +23,7 @@ pub const MINIQ_PORT: u16 = 2023;
 pub const MINIQ: Domain = bytefmt::abx(b"miniq-protocol");
 
 pub fn packedq_pull_path(domain: Domain, path: &IPath) -> NetPktBox {
-    packedq_pull_path2(PUBLIC_GROUP, domain, None, path)
+    packedq_pull_path2(PUBLIC, domain, None, path)
 }
 pub fn packedq_pull_path2(
     group: GroupID,
@@ -57,7 +57,7 @@ pub fn packedq_pull(hashes: &[Ptr]) -> NetPktParts {
         )
     };
     linkpoint(
-        PUBLIC_GROUP,
+        PUBLIC,
         MINIQ,
         IPath::empty(),
         &[],

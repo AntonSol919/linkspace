@@ -7,7 +7,7 @@ fi
 START_STAMP=${2:-"0"} # If no stamp is given we begin at 0, i.e. unix epoch in microseconds
 
 # We select everything with a create field greater or equal to $START_STAMP
-lk watch --index "imgboard:$GROUP:/$BOARD" -- "create:>=:{u64:$START_STAMP}" \
+lk watch --index "imageboard:$GROUP:/$BOARD" -- "create:>=:{u64:$START_STAMP}" \
     | lk printf "{/links:{tag:str} {ptr:str}}" \
     | while read REF; do
         X=${REF:0:8}

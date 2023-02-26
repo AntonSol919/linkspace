@@ -47,7 +47,7 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
     let pkt = lk_linkpoint(
         EXCHANGE_DOMAIN,
-        LOCAL_ONLY_GROUP,
+        PRIVATE,
         &pull_path,
         &[],
         data.as_bytes(),

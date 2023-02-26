@@ -71,7 +71,7 @@ lk keypoint lns:{#:pub}:/request/com/YOUR_NAME > lnsreq.lkp
 
 Keep the file lnskey safe.
 Email the lnsreq.lkp file to AntonSol919+lns at gmail.com  
-I will accept /request/free untill some asshole decides to claim the dictionary.
+I will accept /request/free until some asshole decides to claim the dictionary.
 After which I'll probably make it a little more difficult.
 
 Get a pull request accepted, and you get a :dev name.

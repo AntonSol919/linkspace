@@ -168,7 +168,7 @@ impl CommonOpts {
     }
     pub fn check_private(&self, pkt: impl NetPkt) -> Option<impl NetPkt> {
         let write_private = self.write_private().unwrap_or(false);
-        if !write_private && pkt.as_point().group() == Some(&LOCAL_ONLY_GROUP) {
+        if !write_private && pkt.as_point().group() == Some(&PRIVATE) {
             tracing::warn!(pkt=%pkt_fmt(&pkt),"Skip writing private (null) group");
             return None;
         }

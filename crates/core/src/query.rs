@@ -168,10 +168,13 @@ impl Query {
     pub fn hash_eq(h: linkspace_pkt::LkHash) -> Self {
         let mut predicates = PktPredicates::default();
         predicates.hash.add(TestOp::Equal, h.into());
-        Query {
+        predicates.state.i_query.add(TestOp::Equal,0u32.into());
+        let mut q= Query {
             predicates,
-            options: Default::default(),
-        }
+            options: Default::default()
+        };
+        q.add_option(&KnownOptions::Mode.to_string(), &[Mode::HASH_ASC.to_string().as_bytes()]);
+        q
     }
     /// does not restrict depth
     pub fn dgpk(domain: Domain, group: GroupID, prefix: IPathBuf, key: PubKey) -> Self {

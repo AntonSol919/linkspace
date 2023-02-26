@@ -30,7 +30,7 @@ macro_rules! predty {
             ),*
         }
         impl PredicateType{
-            pub const ALL : [PredicateType;23] = [$(PredicateType::$fname),*];
+            pub const ALL : [PredicateType;24] = [$(PredicateType::$fname),*];
             pub fn try_from_id(id:&[u8]) -> Option<Self> {
                 $( if id == $name.as_bytes() { return Some(PredicateType::$fname);})*
                     None
@@ -61,7 +61,8 @@ predty!( enum PredicateType {
     Hash => ("hash",DATA,"{b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}","the point hash"),
     Group => ("group",LINK,"{#:pub}","group id"),
     Domain => ("domain",LINK,"{a:example}","domain - if fewer then 16 bytes, prepadded with \0"),
-    Prefix => ("prefix",LINK,"/hello/world","exact packet prefix - only accepts '=' op"),
+    Prefix => ("prefix",LINK,"/hello/world","path prefix - only accepts '=' op"),
+    Path => ("path",LINK,"/hello/world","exact path - only accepts '=' op"),
     Pubkey => ("pubkey",SIGNATURE,"{@local:me}","public key used to sign point"),
     Create => ("create",LINK,"{now:-1H}","the create stamp"),
     PathLen => ("path_len",LINK,"{u8:0}","the total number of path components - max 8"),

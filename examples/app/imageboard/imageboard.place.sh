@@ -14,7 +14,7 @@ IMG_HASH=$(\
         | lk printf "{hash:str}")
 TAG=$(printf "%08d%08d" $X $Y)
 
-lk link "imgboard:$GROUP:/$BOARD" \
+lk link "imageboard:$GROUP:/$BOARD" \
    -l $TAG:$IMG_HASH "$@" \
    --write db --write stdout \
     | lk printf

@@ -90,7 +90,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
     let mut first = true;
     for p in inp {
         let pkt = p?;
-        if !write_private && pkt.group() == Some(&LOCAL_ONLY_GROUP) {
+        if !write_private && pkt.group() == Some(&PRIVATE) {
             continue;
         }
 

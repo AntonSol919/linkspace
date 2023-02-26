@@ -83,7 +83,7 @@ pub struct PollStatus {
     timeout: DurationStr,
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
-    /// Output multiple replies (untill last_req+duration)
+    /// Output multiple replies (until last_req+duration)
     #[clap(short,long)]
     multi: bool,
     /// only output query before quiting

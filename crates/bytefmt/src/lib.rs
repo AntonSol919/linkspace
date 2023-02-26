@@ -608,10 +608,7 @@ pub const fn core_scope() -> EvalCore {
 }
 pub const fn core_ctx() -> EvalCoreCtx {
     EvalCtx {
-        scope: (
-            (EScope(BytesFE), EScope(UIntFE), EScope(B64EvalFnc)),
-            (EScope(Help), EScope(LogicOps), EScope(Encode)),
-        ),
+        scope: core_scope()
     }
 }
 

@@ -145,7 +145,7 @@ impl eframe::App for KletsApp {
                             } else {
                                 Some(Path::new(&path))
                             };
-                            match Klets::init(path, PUBLIC_GROUP, id, pass) {
+                            match Klets::init(path, PUBLIC, id, pass) {
                                 Ok(klets) => {
                                     *error = String::new();
                                     let painter = ctx.load_texture(

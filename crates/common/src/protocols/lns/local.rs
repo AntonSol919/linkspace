@@ -33,7 +33,7 @@ respectivly
 **/
 pub fn build_local_lns_points(path: &SPath, links: &[Link], data: &[u8]) -> Vec<NetPktBox> {
     let path = LOCAL_CLAIM_PREFIX.idx().try_join(path).unwrap();
-    let claim = linkpoint(LOCAL_ONLY_GROUP, LNS, &*path, links, data, now(), ()).as_netbox();
+    let claim = linkpoint(PRIVATE, LNS, &*path, links, data, now(), ()).as_netbox();
     let lookup_link = [Link::new("origin", claim.hash())];
     let lookup_path_data: Vec<u8> = claim.get_ipath().ipath_bytes().to_vec();
     let mut pkts = vec![claim];
@@ -45,7 +45,7 @@ pub fn build_local_lns_points(path: &SPath, links: &[Link], data: &[u8]) -> Vec<
             let v = lookup_path_data.clone();
             links.map(move |link| {
                 let path = path.clone().append(&*link.ptr);
-                linkpoint(LOCAL_ONLY_GROUP, LNS, &path, &lookup_link, &v, now(), ()).as_netbox()
+                linkpoint(PRIVATE, LNS, &path, &lookup_link, &v, now(), ()).as_netbox()
             })
         });
     pkts.extend(lookups);
@@ -63,7 +63,7 @@ pub fn get_local_claims<'o>(
     path: &SPath,
 ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'o>>> {
     let path = LOCAL_CLAIM_PREFIX.try_join(path)?;
-    let q = PktPredicates::from_gdp(LOCAL_ONLY_GROUP, LNS, &path).create_before(now())?;
+    let q = PktPredicates::from_gdp(PRIVATE, LNS, &path).create_before(now())?;
     Ok(reader.query_tree(Order::Desc, &q))
 }
 pub fn get_lookup_entry<'o>(
@@ -74,7 +74,7 @@ pub fn get_lookup_entry<'o>(
     let path = LOCAL_CLAIM_LOOKUP_PREFIX
         .to_owned()
         .extend_from_iter(&[&[kind as u8] as &[u8], &bytes])?;
-    let q = PktPredicates::from_gdp(LOCAL_ONLY_GROUP, LNS, &path).create_before(now())?;
+    let q = PktPredicates::from_gdp(PRIVATE, LNS, &path).create_before(now())?;
     Ok(reader
         .query_tree(Order::Desc, &q)
         .next()
@@ -89,7 +89,7 @@ pub fn get_lookup_entries<'o>(
         .to_owned()
         .extend_from_iter(&[&[kind as u8] as &[u8], &bytes])
         .unwrap();
-    let q = PktPredicates::from_gdp(LOCAL_ONLY_GROUP, LNS, &path)
+    let q = PktPredicates::from_gdp(PRIVATE, LNS, &path)
         .create_before(now())
         .unwrap();
     reader.query_tree(Order::Desc, &q)

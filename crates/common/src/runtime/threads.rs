@@ -28,7 +28,7 @@ pub fn attach(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         .unwrap();
     rx
 }
-pub fn run_untill<O, Fut>(
+pub fn run_until<O, Fut>(
     rx: Linkspace,
     fnc: impl FnOnce(Linkspace) -> Fut,
 ) -> Result<O, SpawnError>
@@ -49,7 +49,7 @@ where
     })?;
     Ok(local.run_until(fut))
 }
-pub fn run_untill_spawn_thread<Fnc, R: Send + 'static>(
+pub fn run_until_spawn_thread<Fnc, R: Send + 'static>(
     rx: Linkspace,
     fnc: Fnc,
 ) -> Result<std::thread::JoinHandle<R>, SpawnError>
@@ -58,7 +58,7 @@ where
 {
     let (tx, mut recv) = unbounded::<RxFunc>();
     let handle = std::thread::spawn(move || fnc(tx));
-    run_untill(rx, |r| async move {
+    run_until(rx, |r| async move {
         loop {
             match recv.next().await {
                 Some(func) => (func)(r.clone()),

@@ -236,7 +236,7 @@ enum Command {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
     },
-    /// queue datapackets untill a linkpoint with a matching link is received
+    /// queue datapackets until a linkpoint with a matching link is received
     DataFilter {
         #[clap(short, long, default_value = "4090")]
         buffer_size: usize,

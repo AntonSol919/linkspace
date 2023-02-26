@@ -59,7 +59,7 @@ pub fn parse_netpkt(
         pkt.check::<false>()?
     };
 
-    if !allow_private && pkt.group() == Some(&LOCAL_ONLY_GROUP) {
+    if !allow_private && pkt.group() == Some(&PRIVATE) {
         return Err(Error::PrivateGroup);
     }
     Ok(Some(UnalignedPkt(pkt)))
@@ -114,7 +114,7 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
             pkt.check::<false>()
         };
         try_opt!(check);
-        if !self.allow_private && pkt.group() == Some(&LOCAL_ONLY_GROUP) {
+        if !self.allow_private && pkt.group() == Some(&PRIVATE) {
             return Some(Err(Error::PrivateGroup));
         }
         if self.hop {

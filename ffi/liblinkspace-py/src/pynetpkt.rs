@@ -33,7 +33,7 @@ impl<'o> From<RecvPktPtr<'o>> for Pkt {
 #[pymethods]
 impl Pkt {
     pub fn __str__(&self) -> String {
-        String::from_utf8(lk_eval("{pkt}", Some(self.0.netpktptr())).unwrap()).unwrap()
+        String::from_utf8(lk_eval("{pkt}", self.0.netpktptr() as &dyn NetPkt).unwrap()).unwrap()
     }
     pub fn __getitem__<'p>(&self, py: Python<'p>, field: &str) -> anyhow::Result<&'p PyBytes> {
         let field = FieldEnum::from_str(field)?;
@@ -236,16 +236,22 @@ impl Links {
 
 /// Link for a linkpoint
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 #[repr(C)]
 pub struct Link {
-    #[pyo3(get)]
     pub tag: [u8; 16],
-    #[pyo3(get)]
     pub ptr: [u8; 32],
 }
 #[pymethods]
 impl Link {
+    #[getter]
+    fn ptr<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+        PyBytes::new(py, &self.ptr)
+    }
+    #[getter]
+    fn tag<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+        PyBytes::new(py, &self.tag)
+    }
     #[new]
     fn new(py: Python, tag: &PyAny, ptr: &PyAny) -> anyhow::Result<Self> {
         let tag_b = PyByteArray::from(py, tag)?;

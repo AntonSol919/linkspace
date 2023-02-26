@@ -1110,6 +1110,7 @@ impl EvalScopeImpl for BytesFE {
     }
 }
 
+
 #[derive(Copy, Clone, Debug)]
 pub struct LogicOps;
 impl EvalScopeImpl for LogicOps {
@@ -1161,7 +1162,7 @@ impl EvalScopeImpl for LogicOps {
     }
     fn list_eval(&self) -> &[ScopeEval<&Self>] {
         &[
-            eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate untill valid return. Empty is valid, use {_/minsize?} to error on empty",
+            eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
                   |_,i:&[ABE],scope:&dyn Scope|{
                       let mut it = i.split(|v| v.is_colon());
                       if !it.next().ok_or("missing expr")?.is_empty(){ return Err("expected ':EXPR'".into())};
@@ -1365,5 +1366,30 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
                 }
             },
         }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct UserInp<'o>(pub [Option<&'o [u8]>;8]);
+impl<'o> UserInp<'o>{
+    pub fn try_fit(v: &'o [&'o [u8]]) -> Option<Self>{
+        if v.len() > 8 { return None}
+        let mut it = v.iter().copied();
+        Some(UserInp([
+            it.next(),it.next(),it.next(),it.next(),
+            it.next(),it.next(),it.next(),it.next()
+        ]))
+    }
+}
+impl<'o> EvalScopeImpl for UserInp<'o>{
+    fn about(&self) -> (String, String) {
+        ("user input list".into(), "Provide values, access with {0} {1} .. {7} ".into())
+    }
+    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
+        fncs!([
+            ( "0" , 0..=0, "user val", |t:&Self,_| Ok(t.0[0].ok_or("no 0 value")?.to_vec())),
+            ( "1" , 0..=0, "user val", |t:&Self,_| Ok(t.0[1].ok_or("no 1 value")?.to_vec())),
+            ( "2" , 0..=0, "user val", |t:&Self,_| Ok(t.0[2].ok_or("no 2 value")?.to_vec()))
+        ])
     }
 }

@@ -92,8 +92,8 @@ impl<R: Fn() -> std::io::Result<Linkspace>> ReadHash<R> {
             .get(1)
             .map(|v| GroupID::try_fit_bytes_or_b64(v))
             .transpose()?
-            .unwrap_or(PUBLIC_GROUP);
-        if group == LOCAL_ONLY_GROUP {
+            .unwrap_or(PUBLIC);
+        if group == PRIVATE {
             // TODO replace with ctx.options
             if !std::env::var("LK_PRIVATE")?.parse::<bool>()? {
                 return Err(

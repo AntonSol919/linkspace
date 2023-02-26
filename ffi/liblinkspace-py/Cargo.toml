@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 anyhow = "1.0.69"
 liblinkspace = { path = "../../crates/liblinkspace"}
 pyo3 = { version = "0.18.1", features = ["extension-module","anyhow"] }
+ref-cast = "1.0.14"
 smallvec = {version="1.10.0",features=["const_new","const_generics","write"]}
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }

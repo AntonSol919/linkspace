@@ -8,6 +8,8 @@ echo Serving $GROUP $PORT
 
 trap "kill -- -$$" EXIT
 
+lk set-status exchange $GROUP process anyhost-client --data "abe:OK\nPID:$$\nwe're hosting" &
+
 socat tcp-listen:$PORT,fork exec:"handshake.sh serve serve_io.sh",fdout=4
 
 

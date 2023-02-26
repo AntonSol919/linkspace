@@ -36,7 +36,7 @@ pub mod prelude {
         bytefmt::{endian_types, AB, B64},
         core::{env::queries::RecvPktPtr},
         pkt::{
-            ab, as_abtxt, ipath1, ipath_buf, now, try_ab, Domain,  GroupID, LkHash, IPath,
+            ab, as_abtxt, ipath1, ipath_buf,spath_buf, now, try_ab, Domain,  GroupID, LkHash, IPath,
             IPathBuf, IPathC, Link, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PktTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
@@ -205,12 +205,15 @@ ABE is a byte templating language.
 See guide#ABE to understand its use and indepth explanation.
  **/
 pub mod abe {
+    use self::ctx::UserData;
+
     use super::*;
     pub use linkspace_common::pkt::repr::{DEFAULT_PKT};
     use linkspace_common::{
         abe::abtxt::as_abtxt,
         prelude::{abtxt::CtrChar, ast::split_abe},
     };
+
     /**
     Evaluate an expression and return the bytes
 
@@ -252,8 +255,8 @@ pub mod abe {
 
     A list of functions can be found with ```lk_eval("{help}")```
     **/
-    pub fn lk_eval(expr: &str, pkt: Option<&dyn NetPkt>) -> LkResult<Vec<u8>> {
-        varctx::lk_eval(ctx::ctx(pkt), expr)
+    pub fn lk_eval<'o>(expr: &str, udata: impl Into<UserData<'o>>) -> LkResult<Vec<u8>> {
+        varctx::lk_eval(ctx::ctx(udata.into())?, expr)
     }
     /**
     Exec callback for each expr between control characters (':', '/', '\n', '\t').
@@ -310,12 +313,12 @@ pub mod abe {
     this variant also swallows bad options, see [lk_try_encode] to avoid doing so.
     **/
     pub fn lk_encode(bytes: &[u8], options: &str) -> String {
-        varctx::lk_try_encode(ctx::ctx(None), bytes, options)
+        varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options)
             .unwrap_or_else(|_v| as_abtxt(bytes).to_string())
     }
     /// [lk_encode] with Err on wrong options
     pub fn lk_try_encode(bytes: &[u8], options: &str) -> LkResult<String> {
-        Ok(varctx::lk_try_encode(ctx::ctx(None), bytes, options)?)
+        Ok(varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options)?)
     }
     /*
     /// set default lk_eval context usually set by [lk_open] and
@@ -330,10 +333,13 @@ pub mod abe {
         #[thread_local]
         pub static LK_EVAL_CTX_RT: RefCell<Option<Linkspace>> = RefCell::new(None);
 
+        use anyhow::Context;
         use linkspace_common::abe::eval::{EvalCtx, Scope};
-        use linkspace_common::prelude::NetPkt;
+        use linkspace_common::prelude::{NetPkt, UserInp, EScope};
         use linkspace_common::runtime::Linkspace;
         use std::cell::RefCell;
+
+        use crate::LkResult;
         type StdCtx<'o> = impl Scope + 'o;
         /// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         pub struct LkCtx<'o>(pub(crate) InlineCtx<'o>);
@@ -345,8 +351,42 @@ pub mod abe {
             Empty,
         }
 
-        pub fn ctx<'o>(pkt: Option<&'o dyn NetPkt>) -> LkCtx<'o> {
-            _ctx(None, pkt)
+        #[derive(Copy,Clone)]
+        #[repr(C)]
+        /// User config for setting additional context to evaluation.
+        pub struct UserData<'o> {
+            pub pkt: Option<&'o dyn NetPkt>,
+            pub inp: Option<&'o[&'o [u8]]>
+        }
+        impl From<()> for UserData<'static>{
+            fn from(_: ()) -> Self {
+                UserData { pkt:None,inp:None}
+            }
+        }
+        impl<'o> From<&'o dyn NetPkt> for UserData<'o>{
+            fn from(pkt: &'o dyn NetPkt) -> Self {
+                UserData { pkt:Some(pkt),inp:None}
+            }
+        }
+        impl<'o> From<(&'o dyn NetPkt,&'o [&'o [u8]])> for UserData<'o>{
+            fn from((p,i): (&'o dyn NetPkt,&'o [&'o [u8]])) -> Self {
+                UserData { pkt:Some(p), inp:Some(i)}
+            }
+        }
+
+        impl<'o,const N:usize> From<&'o [&'o [u8];N]> for UserData<'o>{
+            fn from(inp: &'o [&'o [u8];N]) -> Self {
+                UserData { inp:Some(inp),pkt:None}
+            }
+        }
+        impl<'o> From<&'o [&'o [u8]]> for UserData<'o>{
+            fn from(inp: &'o [&'o [u8]]) -> Self {
+                UserData { inp:Some(inp),pkt:None}
+            }
+        }
+
+        pub fn ctx<'o>(udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
+            _ctx(None, udata)
         }
         pub const fn core_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Core)
@@ -354,11 +394,15 @@ pub mod abe {
         pub const fn empty_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Empty)
         }
-        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, pkt: Option<&'o dyn NetPkt>) -> LkCtx<'o> {
-            _ctx(Some(lk), pkt)
+        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata:UserData<'o>) -> LkResult<LkCtx<'o>> {
+            _ctx(Some(lk), udata)
         }
-        // the basic context.
-        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, pkt: Option<&'o dyn NetPkt>) -> LkCtx<'o> {
+        /// lk:None => get threadlocal Lk . Some(None) => no linkspace
+        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata : UserData<'o>) -> LkResult<LkCtx<'o>> {
+            let inp_ctx = udata.inp
+                .map(|v| UserInp::try_fit(v).context("Too many inp values"))
+                .transpose()?
+                .map(EScope);
             use linkspace_common::core::eval::EVAL0_1;
             use linkspace_common::eval::std_ctx_v;
             use linkspace_common::pkt::eval::opt_pkt_ctx;
@@ -369,9 +413,12 @@ pub mod abe {
                 }
                 .ok_or_else(|| std::io::Error::other("No runtime argument given"))
             };
-            LkCtx(InlineCtx::Std(
-                opt_pkt_ctx(std_ctx_v(get, EVAL0_1), pkt.map(|v| v as &dyn NetPkt)).scope,
-            ))
+            Ok(LkCtx(InlineCtx::Std(
+                (
+                    opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
+                    inp_ctx
+                ),
+            )))
         }
         impl<'o> LkCtx<'o> {
             pub(crate) fn as_dyn(&self) -> EvalCtx<&(dyn Scope + 'o)> {
@@ -442,10 +489,16 @@ pub mod query {
     pub use linkspace_common::core::query::KnownOptions;
     use linkspace_common::prelude::{ExtPredicate, PktPredicates};
 
+    use crate::abe::ctx::UserData;
+
     use super::*;
-    /// Create a new [Query]
-    pub fn lk_query() -> Query {
-        Query(Default::default())
+    /// Create a new [Query]. Optionally copy from a template 
+    pub fn lk_query(copy_from:Option<&Query>) -> Query {
+        copy_from.map(|v| v.clone()).unwrap_or_default()
+    }
+    /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count.
+    pub fn lk_hash_query(hash:LkHash) -> Query {
+        Query( linkspace_common::core::query::Query::hash_eq(hash))
     }
     /// Add a single statement to a [Query], potentially skipping an encode step.
     ///
@@ -467,8 +520,8 @@ pub mod query {
         Ok(changed)
     }
     /// Add multiple ABE encoded statements to a [Query]
-    pub fn lk_query_parse(query: &mut Query, expr: &str) -> LkResult<bool> {
-        varctx::lk_query_parse(crate::abe::ctx::ctx(None), query, expr)
+    pub fn lk_query_parse<'o>(query: &mut Query, expr: &str,udata:impl Into<UserData<'o>>) -> LkResult<bool> {
+        varctx::lk_query_parse(crate::abe::ctx::ctx(udata.into())?, query, expr)
     }
     /// Clear a [Query] for reuse
     pub fn lk_query_clear(query: &mut Query) {
@@ -526,7 +579,7 @@ pub mod key {
     ) -> LkResult<SigningKey> {
         let name = if name.is_empty() { "me" } else { name };
         let e = ["{local:{:", name, "}::*=:enckey/readhash:data}"].concat();
-        match crate::lk_eval(&e, None) {
+        match crate::lk_eval(&e, ()) {
             Ok(b) => {
                 let st = std::str::from_utf8(&b)?;
                 Ok(linkspace_common::identity::decrypt(st, password)?)
@@ -696,17 +749,23 @@ pub mod linkspace {
     will return when:
     - max_wait has elapsed between new packets - return false
       e.g. lk_eval("{s:+1M}") or 0u64 to ignore
-    - untill time has been reached - returns false
+    - until time has been reached - returns false
       e.g. lk_eval("{now:+1M}") or 0u64 to ignore
     - no more watch callbacks exists - returns true
     **/
-    pub fn lk_process_while(lk: &Linkspace, max_wait: Stamp, untill: Stamp) -> LkResult<bool> {
+    pub fn lk_process_while(lk: &Linkspace, d_max_wait: Stamp, at_until: Stamp) -> LkResult<bool> {
         let max_wait =
-            (max_wait != Stamp::ZERO).then_some(std::time::Duration::from_micros(max_wait.get()));
-        let untill = (untill != Stamp::ZERO).then(|| pkt::as_instance(untill).into());
-        lk.0.run_while(max_wait, untill)
+            (d_max_wait != Stamp::ZERO).then_some(std::time::Duration::from_micros(d_max_wait.get()));
+
+        let until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
+        lk.0.run_while(max_wait, until)
     }
 
+    pub fn lk_list_watches(lk:&Linkspace,cb: &mut dyn FnMut(&[u8],&Query)){
+        for el in lk.0.dbg_watches().0.entries(){
+            cb(&el.id,Query::from_impl(&*el.query))
+        }
+    }
     pub struct LkInfo<'o> {
         pub path: &'o std::path::Path,
     }
@@ -721,12 +780,12 @@ pub mod linkspace {
 pub mod conventions;
 pub use conventions::lk_pull;
 
-pub use consts::{PUBLIC_GROUP,LOCAL_ONLY_GROUP};
+pub use consts::{PUBLIC,PRIVATE};
 pub mod consts {
     pub use linkspace_common::core::consts::pkt_consts::*;
     pub use linkspace_common::core::consts::{
-        PUBLIC_GROUP,
-        LOCAL_ONLY_GROUP,
+        PUBLIC,
+        PRIVATE,
         EXCHANGE_DOMAIN
     };
     
@@ -778,11 +837,12 @@ pub mod misc {
 
 /// Functions with a custom eval context
 pub mod varctx {
+
     use super::*;
     use crate::abe::ctx::LkCtx;
 
     pub fn lk_eval(ctx: LkCtx, expr: &str) -> LkResult<Vec<u8>> {
-        use linkspace_common::abe::{eval::eval, parse_abe};
+        use linkspace_common::abe::{eval::{eval}, parse_abe};
         let expr = parse_abe(expr)?;
         let val = eval(&ctx.as_dyn(), &expr)?;
         Ok(val.concat())
