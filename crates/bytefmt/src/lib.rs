@@ -33,7 +33,7 @@ use abe::{
     abtxt::{as_abtxt_e, ABTxtError, MAX_STR},
     ast::{as_bytes, no_ctrs, MatchError},
     cut_prefix_nulls, cut_prefixeq,
-    eval::{ABList, ApplyResult, EScope, EvalScopeImpl, ScopeFunc},
+    eval::{ABList, ApplyResult, EScope, EvalScopeImpl, ScopeFunc, Comment},
     fit_back, fncs, thiserror, ABEValidator, FitSliceErr, ToABE, ABE,
 };
 
@@ -589,14 +589,14 @@ impl EvalScopeImpl for B64EvalFnc {
 use abe::eval::{BytesFE, Encode, EvalCtx, Help, LogicOps, UIntFE};
 pub type EvalCore = (
     (EScope<BytesFE>, EScope<UIntFE>, EScope<B64EvalFnc>),
-    (EScope<Help>, EScope<LogicOps>, EScope<Encode>),
+    ((EScope<Comment>,EScope<Help>), EScope<LogicOps>, EScope<Encode>),
 );
 pub type EvalCoreCtx = EvalCtx<EvalCore>;
 pub const EVAL_SCOPE: EvalCore = core_scope();
 pub const fn core_scope() -> EvalCore {
     (
         (EScope(BytesFE), EScope(UIntFE), EScope(B64EvalFnc)),
-        (EScope(Help), EScope(LogicOps), EScope(Encode)),
+        ((EScope(Comment),EScope(Help)), EScope(LogicOps), EScope(Encode)),
     )
 }
 pub const fn core_ctx() -> EvalCoreCtx {

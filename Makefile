@@ -24,9 +24,8 @@ git-checkin: homepage docs
 
 publish: git-checkin docs/guide/index.html
 	rsync -rvrkP ./homepage/ ./build/homepage
-	git branch --no-track publish c9072d8 || echo branch ok
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
-	git checkout publish
+	git checkout -b publish
 	rsync -rvrkP ./build/homepage/ ./
 	echo 'Publish Commit $(cat ./build/PUBLISH_HEAD)'
 

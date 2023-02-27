@@ -897,7 +897,7 @@ You can nest calling ~lk_watch~ and ~lk_read~.
 :CUSTOM_ID: Conventions
 :END:
 #+BEGIN_VERSE
-[[../cargo-doc/liblinkspace/linkspace/conventions.html][Rust docs]]
+[[../cargo-doc/liblinkspace/conventions/index.html][Rust docs]]
 #+END_VERSE
 
 Conventions are functions built on top of the other linkspace functions.

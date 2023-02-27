@@ -1369,6 +1369,24 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
     }
 }
 
+#[derive(Copy,Clone)]
+pub struct Comment;
+impl EvalScopeImpl for Comment{
+    fn about(&self) -> (String, String) {
+        ("comment function / void function. evaluates to nothing".into(), "".into())
+    }
+
+    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
+        &[
+            fnc!("C",1..=16,"the comment function. all arguments are ignored. evaluates to ''",|_,_| Ok(vec![]))
+        ]
+    }
+
+    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+        &[]
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct ArgV<'o>(pub [Option<&'o [u8]>;8]);
 impl<'o> ArgV<'o>{

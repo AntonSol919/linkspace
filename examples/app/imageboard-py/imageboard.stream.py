@@ -29,6 +29,7 @@ else:
 
 query = lk_query()
 query_string = """
+
 group:=:[#:pub]
 domain:=:imageboard
 path:=:/[0]
