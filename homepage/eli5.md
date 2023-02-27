@@ -7,10 +7,8 @@ Somewhere between 15 and 40 should do. Still a challenge;
 The 15-year-old would be confused by analogies about printers or papers.
 The 40y old has mastered the skill of "Print to PDF" and resists learning anything new.
 
-The concepts described here should improve how you understand the digital world.
-Its both an over simplification, and still difficult.
-But I believe it is the minimum you _need_ in order to understand what the digital world _is_ and where we can take it.
-The consequences are for yourself to figure out.
+The goal is to give a basic model for thinking about the digital space in case you percieve it as a collection of 'apps'.
+If you're already comfortable working with git or building webservers, this introduction is not for you. 
 
 ## How does our current web work?
 
@@ -29,11 +27,9 @@ For example:
 - Dave opened our app
 - Alice is looking for a taxi
 
-Next, in the dark holes off the silicon where we trapped lighting to dance to our whims an idea will power on.  
-The exact idea is irrelevant.  
-We're interested in the general outline.  
-What they have in common is they ```read_index <-> process <-> insert_index```;  
-and interact with other ideas doing the same.
+The hosts has setup many processes that operate on the events. 
+The exact goal, language, or how it is activated is irrelevant. 
+Their basic functionality revolves around ```read_index <-> process <-> insert_index```;  
 
 ## The index
 
@@ -50,36 +46,31 @@ An index looks something like this:
 | /private/file2     | ...          |
 
 The ```read_index``` reads /work/file1 and returns ```Hello world```.  
-Your device might automatically pick a program to open the data with.  
-But you can pick different programs, the data itself stays the same.  
+Your device automatically pick a program to open the data with.  
+But you can pick a different program to use the data in. 
 
-```read_index``` can also read /hello/ and return:
-
-```
-[file1, presentation, otherfile, subdir/file2]
-```
-
-The things text "/hello/file1" and "/world/file2" go by many names.
+These text things "/hello/file1" and "/world/file2" go by many names.
 Paths, URLs, Identifiers, channels, etc.
 The important thing is they allow us to organize in a hierarchy of sorted names.
+We didn't always use this idea. 
+But it has been extremely succesfull. 
 It's a useful middle ground between how computers work and how humans think.
 I will call it a path.
 
-The events the host receives and writes down are also written to the index.  
-They are simply in order and flat.  
-It is flat and ordered by time:
+The events the host receives are also written to the index.  
+They are simply in-order of time, and without nested entries.
 
-| Path           | Data                        |
-|----------------|-----------------------------|
-| log/event0000  | Alice shares a new image    |
+| Path          | Data                        |
+|---------------|-----------------------------|
+| log/event0000 | Alice shares a new image    |
 | log/event0001 | Bob wants to buy a car      |
-| log/event0002  | Charlie is advertising spam |
-| log/event0003  | Dave opened our app        |
-| log/event0004  | Alice is looking for a taxi |
+| log/event0002 | Charlie is advertising spam |
+| log/event0003 | Dave opened our app         |
+| log/event0004 | Alice is looking for a taxi |
 
 ## In The Loop
 
-Now that you know what an index is we can talk about the ```read_index <-> process <-> write_index``` loop.
+Now that we have the index we can talk about the ```read_index <-> process <-> write_index``` loop.
 
 A process:
 
@@ -90,54 +81,45 @@ A process:
 - return to wait
 
 A typical process is a utility for others.
-It creates commonly used sorted lists in the index.
+What it writes, other processes will read. 
+
 This makes it faster and easy to find specific stuff.
 They might create:
 
-| Path                        | Data                        |
-|-----------------------------|-----------------------------|
-| /by-person/alice/event0000  | Alice shares a new image    |
-| /by-person/alice/event0004  | Alice is looking for a taxi |
+| Writen by process A        | Data                        |
+|----------------------------|-----------------------------|
+| /by-person/alice/event0000 | Alice shares a new image    |
+| /by-person/alice/event0004 | Alice is looking for a taxi |
+
+| Writen by process B        | Data                        |
 | /log-without-spam/event0000 | Alice shares a new image    |
 | /log-without-spam/event0001 | Bob wants to buy a car      |
 | /log-without-spam/event0003 | Dave opened our app         |
 | /log-without-spam/event0003 | Alice is looking for a taxi |
 
-Note that its common to think of "moving" or "deleting" paths from the index.  
-If you take one thing away it should be this:  
-The index is explicitly **NOT** about "moving" or "deleting" entries.
-We can pretend to do so in various ways.
-But they do not translate well to reality.
-By assuming it is possible to "move" and "delete" we miscommunicate about what is happening.
-We invented them in a different time for a different world.
+It is common to think of deleting or moving data. 
+But this is usually not what really happens. 
 
-The closest real ability is to "forget".
-Be warned that in a network it is hard to forget.
 The effect of "moving" or "deleting" are achieved by creating new entries.
 For instance, "log-without-spam" is a copy of "log" without "event0002".
 
-This ```read_index <-> process <-> write_index``` loop describes the hosts you know.
+The features you're familiar with in many of your apps are implemented through this loop. 
+Things like:
 
-- Timelines
+- The timeline of posts
 - Popularity ranking / recommendation lists
 - Supply and demand for price calculations
 - Find the result for your search.
 
 ## The graphical user interface
 
-Talking to the host is done in arcane incantations, channeled through lightning, hidden from view.
-For guests like us, the browser and apps paint the shapes we like.
-With them, we interact with the index of the host.
+The app you use to talk to the host has two parts. 
+The paintings of buttons and text it creates, and the communication in bits and bytes.
 
-It feels like a 'place'.  
-People naturally care about the place.  
-Less so the hidden lightning.  
-We've come to see them as one whole.  
+The designer works hard to make it feel like a 'place'.  
+A single whole you should care about. 
 
 But they are two different things.  
-In theory we as guests can split the two.  
-Take one experience and use it elsewhere.  
-We've sadly stopped doing that.  
 In part because the hosts want to have their place in and between our lives.
 
 ## What is a Hash?
@@ -147,8 +129,8 @@ The number is special.
 If we both get the same number, we have read the same data.  
 
 This is useful when we want to talk about data.
-It is a unique name for things.
-This way computers can compare things.
+It is a practically unique for every piece of data. 
+With this number multiple computers can compare things.
 
 It is the difference between sending:
 
@@ -156,14 +138,14 @@ It is the difference between sending:
 - ```Have you seen BmtvS303a3hcPF2OvtCcNAna0mW1mwUzgyGgSB84tZU ?```
 
 Large hosts do this all the time.
-They use multiple computers all over the world to make things faster.
+They use computers spread out over the world to make things faster.
 It is too expensive for those computers to agree on the order that things happen.
 But they can agree on the hash of what happened.
 
 ## What is a public key?
 
-Most hosts provide guests with accounts.  
-It identifies you to the host.  
+Hosts usually give the option to get an account.
+It identifies you to the host, and somethimes to others. 
 It's very simple to implement if nobody can access the index.  
 
 | Path                  | Data             |
@@ -174,11 +156,11 @@ It's very simple to implement if nobody can access the index.
 | /account/bob/pass     | ...              |
 | /account/charlie/pass | ...              |
 
-Alice can proof herself to the host, and so can bob.  
+Alice can proof herself to the host, and so can bob.
 But this is archaic in two ways.
 
 - We are sending the host the password when we register
-- When alice and bob want to talk, this _specific_ host has to _always_ be there and validate their identity.
+- If alice and bob want to know for sure they are talking to eachother , this _specific_ host has to _always_ play middleman to validate their identity.
 
 Public key cryptography provides a math solution.
 Anybody at anytime can run an algorithm to pick two numbers.
@@ -189,13 +171,14 @@ The private key can create 'signatures' that proof that they were present when t
 Without the private key you can _not_ proof that you have created a public key.
 
 With public key cryptography:
-- The host no longer receives your secret password.
-- If alice and bob want to talk, they need to share public keys once through _any_ host at _any_ time in the past.
+
+- The host no longer receives a secret password.
+- If alice and bob want to know for sure they are talking to eachother, they need to share public keys once through _any_ host at _any_.
 
 # What is the Linkspace Protocol?
 
-Now that we know about the index, hashes, and public keys,
-we can talk about the future of the internet.
+Now that we know about the index, hashes, and public keys, we can talk about the future of the internet.
+
 In linkspace all events:
 
 - are hashed,
@@ -204,10 +187,10 @@ In linkspace all events:
 - can have a path,
 - can be signed with a public key.
 
-The hash is generated: It allows everybody to talk about things without ambiguity.
-The group is added from context, it signals the people you intend to share with (for example the #:pub public group)
-The domain is chosen by a developer. It is put before the path. It signals what interface to use and what the paths mean.
-The path is set by a domain application, so others can interact with events.
+The hash is generated: It allows everybody to efficiently talk _about_ things.
+You set a group, and your device makes sures only the members of that group can get the data.
+The domain is chosen by a developer. It is put before the path. It signals what app to use and what the events mean.
+The path is set by a application.
 The signature is created from the user's public key.
 It allows us to identify each other.
 
@@ -215,29 +198,21 @@ It allows us to identify each other.
 
 ```read_index``` and ```write_index``` are democratized.
 
-Hosting the index is no longer special.  
-The user interface could operate in any group.  
-No lockin, no lockout.  
+Hosting part of an index is a generic utility.
+Any computer can do it.
 
 That is not to say everything is shared all the time.  
-A [process] might be done by dedicated systems.  
+A [process] might be done by dedicated systems.
 Special groups can be made with specific sharing rules.  
-The user interface can set constraints.  
 
-However, the public hosts that are just a place to share what guests create are fucked.
+However, the public hosts that are just a place to share what guests do need to step up their game.
 Instead of dictating rules, they must compete.
 Guests can move to a better host and still talk with the people they know.
-
-We might even combine guest systems and be our own hosts.
 
 ## Closing thoughts
 
 In short, the time of digital dictatorships and fiefdoms is ending.
 Please help kill them.
 Support the project by [registering](./lns.html) a public key name.
-
-Join the quest for world domination.
-Consider this your invitation.  
-  
 
 [^1]: It is not the password, but a hash function run multiple times so i'ts not at risk of being copied if the index is compromised.
