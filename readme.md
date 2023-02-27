@@ -19,9 +19,9 @@ To write applications for a supernet requires a different perspective compared t
 The challenge is defining a super structure that can work across time and space with noisy incomplete data.
 
 In return a supernet provides a lot of useful properties including:
-Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifiable, (offline)available, etc.
+Always available, no startup costs, everything is the backup, you set the TOS, etc[^1].
 
-Checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) if the words so far mean little to you, or you want an oversimplified introduction to the general idea.
+Checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) if the words so far mean little to you, or you want a simplified introduction to the general idea.
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
 Expect unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
@@ -37,8 +37,12 @@ Multiple applications use it at the same time.
 It is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) (or build it locally with `make docs`)
 
 Or jump straight to a section:
+
 - [Point](https://antonsol919.github.io/linkspace/docs/guide/index.html#Point) creation
 - [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) - ascii byte expressions - a language for manipulating and templating bytes
 - [Query](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) - Addressing and filtering of packets with predicates and options
 - [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#Linkspace) instance - Locally indexed packets and new packet processing functions
 - [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions) instance - Locally indexed packets and new packet processing functions
+
+
+[^1]: Serverless, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy etc.
