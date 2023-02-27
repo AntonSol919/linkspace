@@ -24,11 +24,11 @@ pub struct LocalLNS<R> {
     pub rt: R,
 }
 /**
-create a linkpoint claim lns:{#:0}:('local'/..path) with `links` and `data`
+create a linkpoint claim lns:[#:0]:('local'/..path) with `links` and `data`
 for every link.tag ending with @ or # create a lookup entry under
-lns:{#:0}:/lookup/local/@/{link.ptr} [("origin",{hash of claim})]
+lns:[#:0]:/lookup/local/@/[link.ptr] [("origin",[hash of claim])]
 and
-lns:{#:0}:/lookup/local/#/{link.ptr} [("origin",{hash of claim})]
+lns:[#:0]:/lookup/local/#/[link.ptr] [("origin",[hash of claim])]
 respectivly
 **/
 pub fn build_local_lns_points(path: &SPath, links: &[Link], data: &[u8]) -> Vec<NetPktBox> {
@@ -108,7 +108,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> LocalLNS<R> {
             let path = claim.get_ipath();
             let mut it = path.iter();
             let _local_comp = it.next();
-            ApplyResult::Ok(format!("{{@local:{}}}", abl(it)).into_bytes())
+            ApplyResult::Ok(format!("[@local:{}]", abl(it)).into_bytes())
         } else {
             ApplyResult::None
         }
@@ -170,13 +170,13 @@ impl<R: Fn() -> std::io::Result<Linkspace>> eval::EvalScopeImpl for LocalLNS<R> 
     }
     fn list_funcs(&self) -> &[linkspace_core::prelude::ScopeFunc<&Self>] {
         &[
-            fnc!( @C "local",1..=16,Some(true),"[namecomp*] - get the entire local lns packet and fowards arg to pkt scope",
+            fnc!( @C "local",1..=16,Some(true),"(namecomp)* - get the entire local lns packet and fowards arg to pkt scope",
                    |this:&Self,args:&[&[u8]],_,scope| this.local_pkt(args,scope),none),
             fnc!(
                 "#local",
                 1..=7,
                 Some(true),
-                "[namecomp*] - get the associated local lns group name",
+                "(namecomp)* - get the associated local lns group name",
                 |this: &Self, args: &[&[u8]]| this.local_tag_ptr(args, TagSuffix::Group),
                 |this: &Self, phash: &[u8], _| this.lookup_claim(TagSuffix::Group, phash)
             ),
@@ -184,7 +184,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> eval::EvalScopeImpl for LocalLNS<R> 
                 "@local",
                 1..=7,
                 Some(true),
-                "[namecomp*] - get the associated local lns group name",
+                "(namecomp)* - get the associated local lns group name",
                 |this: &Self, args: &[&[u8]]| this.local_tag_ptr(args, TagSuffix::Pubkey),
                 |this: &Self, phash: &[u8], _| this.lookup_claim(TagSuffix::Pubkey, phash)
             ),
@@ -194,7 +194,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> eval::EvalScopeImpl for LocalLNS<R> 
     fn list_eval(&self) -> &[ScopeEval<&Self>] {
         &[eval_fnc!(
             "local",
-            "namecmp*::{EXPR} evaluate expr with pkt scope of local",
+            "namecmp*::[EXPR] evaluate expr with pkt scope of local",
             |this: &Self, abe: &[ABE], scope: &dyn Scope| {
                 let brk = abe.iter().position(|v| v.is_colon());
                 let default = linkspace_core::eval::abev!({ "pkt" });

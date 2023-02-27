@@ -847,7 +847,7 @@ macro_rules! fnc {
                          let st : Option<String> = $to_abe(bytes,options);
                          match st {
                              None => $crate::eval::ApplyResult::None,
-                             Some(st) => $crate::eval::ApplyResult::Ok(format!("{{{}:{}}}",$id,st).into_bytes())
+                             Some(st) => $crate::eval::ApplyResult::Ok(format!("[{}:{}]",$id,st).into_bytes())
                          }
                      }
         )
@@ -1360,9 +1360,9 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
             ABE::Expr(e) => match e {
                 Expr::Bytes(b) => out.extend_from_slice(b),
                 Expr::Lst(l) => {
-                    out.push(b'{');
+                    out.push(b'[');
                     dump_abe_bytes(out, l);
-                    out.push(b'}');
+                    out.push(b']');
                 }
             },
         }

@@ -21,14 +21,14 @@ exchange GROUP process
 exchange GROUP connection PUBKEY
 exchnage GROUP pull PULL PULL_HASH
 
-A request is a packet in the form DOMAIN:{#:0}:/\fstatus/GROUP/type[/instance?] , with no data and no links.
-A reply is of the form DOMAIN:{#:0}/\status/GROUP/type/instance with some data and links.
+A request is a packet in the form DOMAIN:[#:0]:/\fstatus/GROUP/type(/instance?) , with no data and no links.
+A reply is of the form DOMAIN:[#:0]/\status/GROUP/type/instance with some data and links.
 
 A request without 'instance' is be answered by all instances.
 
 The reply must have an 'instance' set. It defaults to 'default'.
 The reply data should be either "OK\n" or "ERR\n" followed by more info.
-The reply process links can start with init:{#:0} at first and should point to previous replies after that.
+The reply process links can start with init:[#:0] at first and should point to previous replies after that.
 
 A request is only made 'once' per timeout.
 I.e. a process checks if a request was made since now-timeout, before making a new request, and returns after last_req+timeout.

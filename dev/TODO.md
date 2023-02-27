@@ -7,6 +7,8 @@
 
 # Pending API updates
 
+pull default watch_id == domain/group. lk_watch error on missing :watch
+
 misc::lk_inspect_watches
 Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably want "b:..." , u8:12, #:me
 

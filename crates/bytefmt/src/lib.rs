@@ -149,9 +149,9 @@ where
         let mode = if max_padded { MAX_STR } else { "a" };
         let st = abe::abtxt::as_abtxt(bytes);
         if self.as_ref().len() == 16 {
-            format!("{{{mode}:{st}}}")
+            format!("[{mode}:{st}]")
         } else {
-            format!("{{{mode}:{st}:{}}}", self.as_ref().len())
+            format!("[{mode}:{st}:{}]", self.as_ref().len())
         }
     }
 
@@ -398,7 +398,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn to_abe_str(&self) -> String {
-        format!("{{b:{}}}", self.b64())
+        format!("[b:{}]", self.b64())
     }
     fn to_abe(&self) -> Vec<ABE> {
         abe::abev!( { "b" : (self.b64()) } )
@@ -556,7 +556,7 @@ where
         f.write_str(&base64(self.as_ref()))
     }
 }
-/// Implements {AAAAAA/b64} and {\0\0\xff/2b64}
+/// Implements [AAAAAA/b64] and [\0\0\xff/2b64]
 #[derive(Copy, Clone, Debug)]
 pub struct B64EvalFnc;
 impl EvalScopeImpl for B64EvalFnc {
@@ -571,12 +571,12 @@ impl EvalScopeImpl for B64EvalFnc {
                |_,i:&[&[u8]],_,_| Ok(base64_decode(i[0])?),
                |_,b:&[u8],opts:&[ABE]| -> ApplyResult{
                    if opts.is_empty(){
-                       return ApplyResult::Ok(format!("{{b:{}}}",base64(b)).into_bytes());
+                       return ApplyResult::Ok(format!("[b:{}]",base64(b)).into_bytes());
                    }
                    for len_st in opts.iter().filter_map(|v| as_bytes(v).ok()){
                        let len = std::str::from_utf8(len_st)?.parse::<u32>()?;
                        if len as usize == b.len() {
-                           return ApplyResult::Ok(format!("{{b:{}}}",base64(b)).into_bytes());
+                           return ApplyResult::Ok(format!("[b:{}]",base64(b)).into_bytes());
                        }
                    }
                    ApplyResult::None
@@ -584,13 +584,6 @@ impl EvalScopeImpl for B64EvalFnc {
              )
         ])
     }
-    /*
-    fn encode(&self, options:&[ABE], bytes:&[u8]) -> Option<String> {
-        if bytes.len() == 32  || options == abev!("all"){
-            Some(format!("{{b:{}}}",base64(bytes)))
-        }else {None}
-    }
-    */
 }
 
 use abe::eval::{BytesFE, Encode, EvalCtx, Help, LogicOps, UIntFE};

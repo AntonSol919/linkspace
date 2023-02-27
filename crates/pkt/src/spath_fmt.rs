@@ -140,7 +140,7 @@ impl FromStr for SPathBuf {
 pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
     if let Ok(b) = <[u8; 32]>::try_from(seg) {
         let b64 = B64(b).to_string();
-        write!(f, "/{{b:{b64}}}")?;
+        write!(f, "/[b:{b64}]")?;
     } else if let Ok(b) = <[u8; 16]>::try_from(seg) {
         let abt = AB(b).to_abe_str();
         write!(f, "/{abt}")?;

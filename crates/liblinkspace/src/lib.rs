@@ -34,10 +34,10 @@ pub mod prelude {
     pub use super::*;
     pub use linkspace_common::{
         bytefmt::{endian_types, AB, B64},
-        core::{env::queries::RecvPktPtr},
+        core::env::queries::RecvPktPtr,
         pkt::{
-            ab, as_abtxt, ipath1, ipath_buf,spath_buf, now, try_ab, Domain,  GroupID, LkHash, IPath,
-            IPathBuf, IPathC, Link, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
+            ab, as_abtxt, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
+            IPathBuf, IPathC, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PktTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
         },
@@ -56,7 +56,7 @@ pub trait PktHandler {
     /// Called when break, finished, or replaced
     fn stopped(&mut self, query: Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32);
 }
-impl PktHandler for Box<dyn PktHandler>{
+impl PktHandler for Box<dyn PktHandler> {
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
         (**self).handle_pkt(pkt, lk)
     }
@@ -103,15 +103,15 @@ pub mod point {
     let path = ipath_buf(&[b"hello",b"world"]);
     let links = [
         Link{tag: ab(b"a datapoint"),ptr:datap.hash()},
-        Link{tag: ab(b"another tag"),ptr:PUBLIC_GROUP}
+        Link{tag: ab(b"another tag"),ptr:PUBLIC}
     ];
     let data = b"extra data for the linkpoint";
     let create = Some(U64::new(0)); // None == Some(now()).
-    let linkpoint = lk_linkpoint(ab(b"mydomain"),PUBLIC_GROUP,&path,&links,data,create)?;
+    let linkpoint = lk_linkpoint(ab(b"mydomain"),PUBLIC,&path,&links,data,create)?;
 
     assert_eq!(linkpoint.hash().to_string(), "zvyWklJrmEHBQfYBLxYh7Gh-3YOTCFRgyuXaGl6-xt8");
     assert_eq!(linkpoint.data(), data);
-    assert_eq!(*linkpoint.get_group(), PUBLIC_GROUP); 
+    assert_eq!(*linkpoint.get_group(), PUBLIC);
 
     # Ok(())}
 
@@ -198,7 +198,7 @@ pub mod point {
     }
 }
 
-pub use abe::{lk_encode, lk_eval,lk_split_abe};
+pub use abe::{lk_encode, lk_eval, lk_split_abe};
 /** ascii byte expression utilities
 
 ABE is a byte templating language.
@@ -208,7 +208,7 @@ pub mod abe {
     use self::ctx::UserData;
 
     use super::*;
-    pub use linkspace_common::pkt::repr::{DEFAULT_PKT};
+    pub use linkspace_common::pkt::repr::DEFAULT_PKT;
     use linkspace_common::{
         abe::abtxt::as_abtxt,
         prelude::{abtxt::CtrChar, ast::split_abe},
@@ -224,36 +224,53 @@ pub mod abe {
     ```
     # use liblinkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
-    assert_eq!( lk_eval( "abc" ,None)?, b"abc" );
-    assert_eq!( lk_eval( r#"\0\x01\xff"# ,None)?, &[0,1,255] ); // "\\0\\x01\\xff"
+    assert_eq!( b"abc" as &[u8]    , lk_eval( "abc" ,())?, );
+    assert_eq!( &[0u8,1,255] as &[u8], lk_eval( r#"\0\x01\xff"# ,())?,);
 
-    assert_eq!( lk_eval( r#"\n\t\:\/\\\{\}"# ,None)?, &[b'\n',b'\t',b':',b'/',b'\\',b'{',b'}']);
+    // calling functions such as 'u8'
+    assert_eq!( b"abc" as &[u8]    , lk_eval( "ab[u8:99]" ,())?, );
 
+    assert_eq!(
+               b"The '' function returns its first argument" as &[u8],
+       lk_eval( "The '' function returns its first [:argument]", ())?
+    );
 
-    assert_eq!( lk_eval( "The '' returns its first {:argument}" , None)?,b"The '' returns its first argument");
+    assert_eq!(
+               b"Bytes are joined" as &[u8],
+       lk_eval( "Bytes[: are][: joined]" , ())?
+    );
 
-    assert_eq!( lk_eval( "Bytes{: are}{: joined}" , None)?,b"Bytes are joined");
-
-    let result = lk_eval( "Nest expressions {u8:65} == {u8:{:65}} == \x41" , None)?;
+    let result = lk_eval( "Nest expressions [u8:65] == [u8:[:65]] == \x41" , ())?;
     assert_eq!(result,   b"Nest expressions A == A == A");
 
-    let result = lk_eval( "Use result as first argument with '/' {u8:65} == {:65/u8} == \x41" , None)?;
+    let result = lk_eval( "Use result as first argument with '/' [u8:65] == [:65/u8] == \x41" , ())?;
     assert_eq!(result,   b"Use result as first argument with '/' A == A == A");
 
-    let lp : NetPktBox = lk_linkpoint(ab(b"mydomain"),PUBLIC_GROUP,IPath::empty(),&[],&[],None)?;
 
-    assert_eq!( lk_eval( "{hash}" , Some(&lp))?,&*lp.hash());
-    let by_arg   = lk_eval( "{hash:str}", Some(&lp))?;
-    let by_apply = lk_eval( "{hash/?b}", Some(&lp))?;
-    let as_field = lp.hash().b64().into_bytes();
+    let result = lk_eval( "You can provide an argv [0] [1]" , &[b"like" as &[u8], b"this"])?;
+    assert_eq!(result,   b"You can provide an argv like this");
+
+    let lp : NetPktBox = lk_linkpoint(ab(b"mydomain"),PUBLIC,IPath::empty(),&[],&[],None)?;
+    let pkt: &dyn NetPkt = &lp;
+
+    assert_eq!( lk_eval( "[hash]" , pkt)?,&*pkt.hash());
+    let by_arg   = lk_eval( "[hash:str]", pkt)?;
+    let by_apply = lk_eval( "[hash/?b]",  pkt)?;
+    let as_field = pkt.hash().b64().into_bytes();
     assert_eq!( by_arg, by_apply);
     assert_eq!( by_arg, as_field);
+
+    // or provide both at once with (pkt,&[b"argv"])
+    // More options are available in [varctx]
+
+    // escaped characters
+    assert_eq!( lk_eval( r#"\n\t\:\/\\\[\]"# ,())?,  &[b'\n',b'\t',b':',b'/',b'\\',b'[',b']'] );
 
     # Ok(())
     # }
     ```
 
-    A list of functions can be found with ```lk_eval("{help}")```
+    A list of functions can be found with ```lk_eval("[help]")```
     **/
     pub fn lk_eval<'o>(expr: &str, udata: impl Into<UserData<'o>>) -> LkResult<Vec<u8>> {
         varctx::lk_eval(ctx::ctx(udata.into())?, expr)
@@ -288,23 +305,23 @@ pub mod abe {
     encode bytes as an abe that evaluate back to bytes.
 
     accepts a list of func to try and encode.
-    This function can also be used as the evaluator '{/?:..}'.
+    This function can also be used as the evaluator '[/?:..]'.
     ```
     # use liblinkspace::{*,abe::*};
     # fn main() -> LkResult{
-    let bytes= lk_eval("{u32:8}",None)?;
+    let bytes= lk_eval("[u32:8]",())?;
     assert_eq!(bytes,&[0,0,0,8]);
     assert_eq!(lk_encode(&bytes,""), r#"\0\0\0\x08"#);
-    assert_eq!(lk_encode(&bytes,"u32"), "{u32:8}");
+    assert_eq!(lk_encode(&bytes,"u32"), "[u32:8]");
 
     // This function can also be called with the encode '/?' evaluator
-    assert_eq!(lk_eval(r#"{/?:\0\0\0{u8:8}:u32}"#,None)?,b"{u32:8}");
+    assert_eq!(lk_eval(r#"[/?:\0\0\0[u8:8]:u32]"#,())?,b"[u32:8]");
 
     // the options are a list of '/' separated functions
     // In this example 'u32' wont fit, LNS '#' lookup will succeed, if not the encoding would be base64
 
-    let mut public_grp = PUBLIC_GROUP;
-    assert_eq!(lk_encode(&*public_grp,"u32/#/b"), "{#:pub}");
+    let mut public_grp = PUBLIC;
+    assert_eq!(lk_encode(&*public_grp,"u32/#/b"), "[#:pub]");
 
     # Ok(())
     # }
@@ -318,16 +335,12 @@ pub mod abe {
     }
     /// [lk_encode] with Err on wrong options
     pub fn lk_try_encode(bytes: &[u8], options: &str) -> LkResult<String> {
-        Ok(varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options)?)
+        Ok(varctx::lk_try_encode(
+            ctx::ctx(().into()).unwrap(),
+            bytes,
+            options,
+        )?)
     }
-    /*
-    /// set default lk_eval context usually set by [lk_open] and
-    pub fn lk_set_eval_ctx(rt:Option<&Linkspace>,pkt:Option<&NetPktPtr>) {
-        *LK_EVAL_CTX_RT.borrow_mut() = rt.cloned();
-        *LK_EVAL_CTX_PKT.borrow_mut() = pkt.map(|v| v.as_netarc());
-    }
-    */
-
     /// Custom context for use in [varctx]
     pub mod ctx {
         #[thread_local]
@@ -335,7 +348,7 @@ pub mod abe {
 
         use anyhow::Context;
         use linkspace_common::abe::eval::{EvalCtx, Scope};
-        use linkspace_common::prelude::{NetPkt, ArgV, EScope};
+        use linkspace_common::prelude::{ArgV, EScope, NetPkt};
         use linkspace_common::runtime::Linkspace;
         use std::cell::RefCell;
 
@@ -351,37 +364,52 @@ pub mod abe {
             Empty,
         }
 
-        #[derive(Copy,Clone)]
+        #[derive(Copy, Clone)]
         #[repr(C)]
         /// User config for setting additional context to evaluation.
         pub struct UserData<'o> {
             pub pkt: Option<&'o dyn NetPkt>,
-            pub argv: Option<&'o[&'o [u8]]>
+            pub argv: Option<&'o [&'o [u8]]>,
         }
-        impl From<()> for UserData<'static>{
+        impl From<()> for UserData<'static> {
             fn from(_: ()) -> Self {
-                UserData { pkt:None,argv:None}
+                UserData {
+                    pkt: None,
+                    argv: None,
+                }
             }
         }
-        impl<'o> From<&'o dyn NetPkt> for UserData<'o>{
+        impl<'o> From<&'o dyn NetPkt> for UserData<'o> {
             fn from(pkt: &'o dyn NetPkt) -> Self {
-                UserData { pkt:Some(pkt),argv:None}
+                UserData {
+                    pkt: Some(pkt),
+                    argv: None,
+                }
             }
         }
-        impl<'o> From<(&'o dyn NetPkt,&'o [&'o [u8]])> for UserData<'o>{
-            fn from((p,i): (&'o dyn NetPkt,&'o [&'o [u8]])) -> Self {
-                UserData { pkt:Some(p), argv:Some(i)}
+        impl<'o> From<(&'o dyn NetPkt, &'o [&'o [u8]])> for UserData<'o> {
+            fn from((p, i): (&'o dyn NetPkt, &'o [&'o [u8]])) -> Self {
+                UserData {
+                    pkt: Some(p),
+                    argv: Some(i),
+                }
             }
         }
 
-        impl<'o,const N:usize> From<&'o [&'o [u8];N]> for UserData<'o>{
-            fn from(inp: &'o [&'o [u8];N]) -> Self {
-                UserData { argv:Some(inp),pkt:None}
+        impl<'o, const N: usize> From<&'o [&'o [u8]; N]> for UserData<'o> {
+            fn from(inp: &'o [&'o [u8]; N]) -> Self {
+                UserData {
+                    argv: Some(inp),
+                    pkt: None,
+                }
             }
         }
-        impl<'o> From<&'o [&'o [u8]]> for UserData<'o>{
+        impl<'o> From<&'o [&'o [u8]]> for UserData<'o> {
             fn from(inp: &'o [&'o [u8]]) -> Self {
-                UserData { argv:Some(inp),pkt:None}
+                UserData {
+                    argv: Some(inp),
+                    pkt: None,
+                }
             }
         }
 
@@ -394,12 +422,13 @@ pub mod abe {
         pub const fn empty_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Empty)
         }
-        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata:UserData<'o>) -> LkResult<LkCtx<'o>> {
+        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
             _ctx(Some(lk), udata)
         }
         /// lk:None => get threadlocal Lk . Some(None) => no linkspace
-        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata : UserData<'o>) -> LkResult<LkCtx<'o>> {
-            let inp_ctx = udata.argv
+        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
+            let inp_ctx = udata
+                .argv
                 .map(|v| ArgV::try_fit(v).context("Too many inp values"))
                 .transpose()?
                 .map(EScope);
@@ -413,12 +442,10 @@ pub mod abe {
                 }
                 .ok_or_else(|| std::io::Error::other("No runtime argument given"))
             };
-            Ok(LkCtx(InlineCtx::Std(
-                (
-                    opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
-                    inp_ctx
-                ),
-            )))
+            Ok(LkCtx(InlineCtx::Std((
+                opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
+                inp_ctx,
+            ))))
         }
         impl<'o> LkCtx<'o> {
             pub(crate) fn as_dyn(&self) -> EvalCtx<&(dyn Scope + 'o)> {
@@ -446,31 +473,30 @@ pub mod query {
     # use liblinkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
 
-    let mut query = lk_query();
+    let mut query = lk_query(None);
 
     // Add an entire set
     let query_str = "
-
-    group:=:{#:pub}
-    domain:=:{a:hello}
+    group:=:[#:pub]
+    domain:=:[a:hello]
     prefix:=:/some/path
-
     :watch:default
     ";
-    lk_query_parse(&mut query,query_str)?;
+    lk_query_parse(&mut query,query_str,())?;
+    // Optionally with user data such as an argv
+    lk_query_parse(&mut query,"prefix:=:/some/[0]",&[b"path" as &[u8]]);
 
-    // conflicting requirements clash
-    let result = lk_query_parse(&mut query, "path_len:=:\0");
+    // conflicting predicates return an error
+    let result = lk_query_parse(&mut query, "path_len:=:\0",());
     assert!( result.is_err());
 
     // You can add a single statement directly
     lk_query_push(&mut query,"create","<", &*now())?;
-    // They are effectively merged if they overlap
-    lk_query_push(&mut query,"create","<",&lk_eval("{now:-1D}",None)?)?;
+    // Predicates get merged if they overlap
+    lk_query_push(&mut query,"create","<",&lk_eval("[now:-1D]",())?)?;
 
-    // to inspect it
+    // As you can see with
     println!("{}",lk_query_print(&query,false));
-
     # Ok(())}
     ```
 
@@ -492,13 +518,13 @@ pub mod query {
     use crate::abe::ctx::UserData;
 
     use super::*;
-    /// Create a new [Query]. Optionally copy from a template 
-    pub fn lk_query(copy_from:Option<&Query>) -> Query {
+    /// Create a new [Query]. Optionally copy from a template
+    pub fn lk_query(copy_from: Option<&Query>) -> Query {
         copy_from.map(|v| v.clone()).unwrap_or_default()
     }
     /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count.
-    pub fn lk_hash_query(hash:LkHash) -> Query {
-        Query( linkspace_common::core::query::Query::hash_eq(hash))
+    pub fn lk_hash_query(hash: LkHash) -> Query {
+        Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
     /// Add a single statement to a [Query], potentially skipping an encode step.
     ///
@@ -520,7 +546,11 @@ pub mod query {
         Ok(changed)
     }
     /// Add multiple ABE encoded statements to a [Query]
-    pub fn lk_query_parse<'o>(query: &mut Query, expr: &str,udata:impl Into<UserData<'o>>) -> LkResult<bool> {
+    pub fn lk_query_parse<'o>(
+        query: &mut Query,
+        expr: &str,
+        udata: impl Into<UserData<'o>>,
+    ) -> LkResult<bool> {
         varctx::lk_query_parse(crate::abe::ctx::ctx(udata.into())?, query, expr)
     }
     /// Clear a [Query] for reuse
@@ -568,8 +598,8 @@ pub mod key {
 
     /** linkspace stored identity
 
-    open (or generate) the key `name` which is also accessible as {@local:name}.
-    empty name defaults to 'me' ( i.e. {@local:name} )
+    open (or generate) the key `name` which is also accessible as [@local:name].
+    empty name defaults to 'me' ( i.e. [@local:name] )
     **/
     pub fn lk_key(
         linkspace: &Linkspace,
@@ -578,7 +608,7 @@ pub mod key {
         new: bool,
     ) -> LkResult<SigningKey> {
         let name = if name.is_empty() { "me" } else { name };
-        let e = ["{local:{:", name, "}::*=:enckey/readhash:data}"].concat();
+        let e = format!("[local:[:{name}]::*=:enckey/readhash:data]");
         match crate::lk_eval(&e, ()) {
             Ok(b) => {
                 let st = std::str::from_utf8(&b)?;
@@ -748,22 +778,22 @@ pub mod linkspace {
 
     will return when:
     - max_wait has elapsed between new packets - return false
-      e.g. lk_eval("{s:+1M}") or 0u64 to ignore
+      e.g. lk_eval("[s:+1M]") or 0u64 to ignore
     - until time has been reached - returns false
-      e.g. lk_eval("{now:+1M}") or 0u64 to ignore
+      e.g. lk_eval("[now:+1M]") or 0u64 to ignore
     - no more watch callbacks exists - returns true
     **/
     pub fn lk_process_while(lk: &Linkspace, d_max_wait: Stamp, at_until: Stamp) -> LkResult<bool> {
-        let max_wait =
-            (d_max_wait != Stamp::ZERO).then_some(std::time::Duration::from_micros(d_max_wait.get()));
+        let max_wait = (d_max_wait != Stamp::ZERO)
+            .then_some(std::time::Duration::from_micros(d_max_wait.get()));
 
         let until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
         lk.0.run_while(max_wait, until)
     }
 
-    pub fn lk_list_watches(lk:&Linkspace,cb: &mut dyn FnMut(&[u8],&Query)){
-        for el in lk.0.dbg_watches().0.entries(){
-            cb(&el.id,Query::from_impl(&*el.query))
+    pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
+        for el in lk.0.dbg_watches().0.entries() {
+            cb(&el.id, Query::from_impl(&*el.query))
         }
     }
     pub struct LkInfo<'o> {
@@ -780,59 +810,71 @@ pub mod linkspace {
 pub mod conventions;
 pub use conventions::lk_pull;
 
-pub use consts::{PUBLIC,PRIVATE};
+pub use consts::{PRIVATE, PUBLIC};
 pub mod consts {
     pub use linkspace_common::core::consts::pkt_consts::*;
-    pub use linkspace_common::core::consts::{
-        PUBLIC,
-        PRIVATE,
-        EXCHANGE_DOMAIN
-    };
-    
+    pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC};
 }
-pub use misc::{cb};
+pub use misc::cb;
 pub mod misc {
     use std::ops::{ControlFlow, Try};
 
     pub use linkspace_common::core::env::tree_key::TreeEntry;
     pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
     pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
-    pub use linkspace_common::pkt_reader as reader;
     pub use linkspace_common::pkt::FieldEnum;
+    pub use linkspace_common::pkt_reader as reader;
     use linkspace_common::prelude::NetPkt;
     pub use linkspace_common::runtime::handlers::StopReason;
 
     use crate::{Linkspace, PktHandler, Query};
 
-    pub struct Cb<A,B>{
+    pub struct Cb<A, B> {
         pub handle_pkt: A,
-        pub stopped:B
+        pub stopped: B,
     }
-    pub fn nop_stopped(_:Query,_:&Linkspace,_:StopReason,_:u32,_:u32){}
-    pub fn cb<A,R,E>(mut handle_pkt:A) -> Cb<impl FnMut(&dyn NetPkt, & Linkspace) -> ControlFlow<()>+'static,fn(Query,&Linkspace,StopReason,u32,u32)>
-        where
+    pub fn nop_stopped(_: Query, _: &Linkspace, _: StopReason, _: u32, _: u32) {}
+    pub fn cb<A, R, E>(
+        mut handle_pkt: A,
+    ) -> Cb<
+        impl FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()> + 'static,
+        fn(Query, &Linkspace, StopReason, u32, u32),
+    >
+    where
         R: Try<Output = (), Residual = E>,
         E: std::fmt::Debug,
-        A: for<'a,'b>FnMut(&'a dyn NetPkt,&'b Linkspace) -> R + 'static,
+        A: for<'a, 'b> FnMut(&'a dyn NetPkt, &'b Linkspace) -> R + 'static,
     {
-        Cb{handle_pkt: move |pkt:&dyn NetPkt,lk:&Linkspace| {
-            (handle_pkt)(pkt,lk).branch().map_break(|brk| {tracing::info!(?brk,"break")})
-        },stopped:nop_stopped}
+        Cb {
+            handle_pkt: move |pkt: &dyn NetPkt, lk: &Linkspace| {
+                (handle_pkt)(pkt, lk)
+                    .branch()
+                    .map_break(|brk| tracing::info!(?brk, "break"))
+            },
+            stopped: nop_stopped,
+        }
     }
 
-    impl<A,B> PktHandler for Cb<A,B> where
-        A: FnMut(&dyn NetPkt,&Linkspace) -> ControlFlow<()>,
-        B: FnMut(Query,&Linkspace,StopReason, u32, u32) // TODO could be FnOnce
-        {
+    impl<A, B> PktHandler for Cb<A, B>
+    where
+        A: FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>,
+        B: FnMut(Query, &Linkspace, StopReason, u32, u32), // TODO could be FnOnce
+    {
         fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
-            (self.handle_pkt)(pkt,lk)
+            (self.handle_pkt)(pkt, lk)
         }
 
-        fn stopped(&mut self, query: crate::Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32) {
-            (self.stopped)(query,lk,reason,total,new)
+        fn stopped(
+            &mut self,
+            query: crate::Query,
+            lk: &Linkspace,
+            reason: StopReason,
+            total: u32,
+            new: u32,
+        ) {
+            (self.stopped)(query, lk, reason, total, new)
         }
     }
-
 }
 
 /// Functions with a custom eval context
@@ -842,7 +884,7 @@ pub mod varctx {
     use crate::abe::ctx::LkCtx;
 
     pub fn lk_eval(ctx: LkCtx, expr: &str) -> LkResult<Vec<u8>> {
-        use linkspace_common::abe::{eval::{eval}, parse_abe};
+        use linkspace_common::abe::{eval::eval, parse_abe};
         let expr = parse_abe(expr)?;
         let val = eval(&ctx.as_dyn(), &expr)?;
         Ok(val.concat())

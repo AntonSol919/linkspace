@@ -78,7 +78,7 @@ impl std::str::FromStr for WriteDestSpec {
             b"buffer" => abev!([0] "buffer"),
             b"file" if !is_expr => {
                 // it is far to suprising for files with ':' to silently use that as a name.
-                // So we do this little dance to treat file:/some:thing:{hash:str} differently then file-expr:{/:./some:thing}:{hash:str}
+                // So we do this little dance to treat file:/some:thing:[hash:str] differently then file-expr:[/:./some:thing]:[hash:str]
                 let v = it.as_slice().clone().to_vec();
                 for _i in &mut it {}
                 v
@@ -91,7 +91,7 @@ impl std::str::FromStr for WriteDestSpec {
         } else {
             anyhow::ensure!(
                 it.next().is_none(),
-                "tail expr? use 'file-expr:{{/:./my/fancy/fil:name}}: abe expr {{hash:str}}' "
+                "tail expr? use 'file-expr:[/:./my/fancy/fil:name]:The hash is=[hash:str]' "
             );
             vec![]
         };
@@ -153,14 +153,14 @@ impl WriteDestSpec {
 
 /// --data stdin
 /// --data stdin:pkt
-/// --data stdin:pkt:{data}
-/// --data "stdin:pkt:{data} and {create:str}"
+/// --data stdin:pkt:[data]
+/// --data "stdin:pkt:[data] and [create:str]"
 /// --data stdin-live:pkt
-/// --data "abe:The time at start {now}"
-/// --data "abe-live:The time is {now}"
-/// --data file:{/:./some/path}  read once
-/// --data file-live:{/:./some/path} read every time
-/// --data file-live:{/:./some/path}:pkt:The hash {hash:str}" read every time
+/// --data "abe:The time at start [now]"
+/// --data "abe-live:The time is [now]"
+/// --data file:[/:./some/path]  read once
+/// --data file-live:[/:./some/path] read every time
+/// --data file-live:[/:./some/path]:pkt:The hash [hash:str]" read every time
 #[derive(Clone, Debug, Default)]
 pub enum ReadAs {
     #[default]

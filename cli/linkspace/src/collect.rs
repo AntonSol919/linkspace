@@ -53,7 +53,7 @@ pub struct Collect {
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
 
-    #[clap(alias = "ctag", long, value_enum, default_value = "{now}")]
+    #[clap(alias = "ctag", long, value_enum, default_value = "[now]")]
     collect_tag: TagExpr,
     /// Create packet after collecting max_links from incoming packets
     #[clap(long,default_value_t=MAX_LINKS_LEN-16)]

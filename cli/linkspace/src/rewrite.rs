@@ -18,8 +18,8 @@ use linkspace_common::{
 /** rewrite link and key points with alternative fields.
 
 Note that options are expressions with the current packet in scope.
-rewrite --path "{hash}/{group}"
-rewrite --create "{create:+1D}"
+rewrite --path "[hash]/[group]"
+rewrite --create "[create:+1D]"
 
 **/
 
@@ -46,7 +46,7 @@ pub struct Rewrite {
     #[clap(flatten)]
     pub key: KeyOpts,
 
-    #[clap(long,default_value="abe-live:{data}")]
+    #[clap(long,default_value="abe-live:[data]")]
     pub data: ReadSource,
     #[clap(long, default_value_t, value_enum)]
     pub error_mode: ErrorMode,

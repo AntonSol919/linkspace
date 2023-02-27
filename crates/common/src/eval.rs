@@ -97,7 +97,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> ReadHash<R> {
             // TODO replace with ctx.options
             if !std::env::var("LK_PRIVATE")?.parse::<bool>()? {
                 return Err(
-                    "prevent reading {#:0} group or set LK_PRIVATE=true to enable ( dangerous if you're evaluating external abe )"
+                    "prevent reading [#:0] group or set LK_PRIVATE=true to enable ( dangerous if you're evaluating external abe )"
                         .into());
             }
         }
@@ -130,7 +130,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> EvalScopeImpl for ReadHash<R> {
         ("database".into(),
          "get packets from the local db.
 e-funcs evaluate their args as if in pkt scope.
-funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}} == {readhash:..:group:str})".into())
+funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]] == [readhash:..:group:str])".into())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[
@@ -156,7 +156,7 @@ funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}}
                 },
                 info: ScopeFuncInfo {
                     id:  "read", init_eq: None, argc: 2..=16,to_abe:false,
-                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. {read:mydomain:{#:pub}:{//a/path}:{@:me}::data:str}, prefer eval ctx"
+                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str], prefer eval ctx"
                 },
                 to_abe:none
             },
@@ -191,7 +191,7 @@ funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}}
             },
             info: ScopeEvalInfo {
                 id: "readhash",
-                help: "HASH ':' expr [ ':' alt if not found ] ",
+                help: "HASH ':' expr (':' alt if not found) ",
             },
         }]
     }

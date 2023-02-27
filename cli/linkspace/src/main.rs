@@ -71,7 +71,7 @@ const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
     }
     st.push_str("\nThe following options are available\n\n");
     for f in KnownOptions::iter_all() {
-        let _ = writeln!(st, "\t/{f}");
+        let _ = writeln!(st, "\t:{f}");
     }
     st
 });

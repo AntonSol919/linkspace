@@ -41,7 +41,7 @@ impl EvalScopeImpl for StaticLNS {
     fn about(&self) -> (String, String) {
         (
             "static-lns".into(),
-            "static lns for local only {{#:0}} and public {{#:pub}}".into(),
+            "static lns for local only [#:0] and public [#:pub]".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -63,11 +63,11 @@ impl EvalScopeImpl for StaticLNS {
                 to_abe: |_, i, _| {
                     let g = GroupID::try_fit_slice(i).ok()?;
                     let b = if g == PRIVATE {
-                        "{#:0}"
+                        "[#:0]"
                     } else if g == PUBLIC {
-                        "{#:pub}"
+                        "[#:pub]"
                     } else if g == *TEST_GROUP_ID {
-                        "{#:test}"
+                        "[#:test]"
                     } else {
                         return ApplyResult::None;
                     };
@@ -88,37 +88,24 @@ impl EvalScopeImpl for StaticLNS {
                 },
                 to_abe: |_, i, _| {
                     if *i == [0; 32] {
-                        ApplyResult::Ok(b"{@:none}".to_vec())
+                        ApplyResult::Ok(b"[@:none]".to_vec())
                     } else {
                         ApplyResult::None
                     }
                 },
             },
-            /*
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, None),
-                info: ScopeFuncInfo { id: "?", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, Some(false)),
-                info: ScopeFuncInfo { id: "?@", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, Some(true)),
-                info: ScopeFuncInfo { id: "?#", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            */
+            
         ]
     }
 }
 fn _rev_lookup(i: &[&[u8]], group_mode: Option<bool>) -> ApplyResult {
     let b = B64::try_fit_slice(i[0])?;
     match b {
-        b if b == PUBLIC => Ok(b"{#:pub}".to_vec()),
-        b if b == *TEST_GROUP_ID => Ok(b"{#:test}".to_vec()),
+        b if b == PUBLIC => Ok(b"[#:pub]".to_vec()),
+        b if b == *TEST_GROUP_ID => Ok(b"[#:test]".to_vec()),
         b if b == PRIVATE => match group_mode {
-            Some(false) => Ok(b"{@:none}".to_vec()),
-            _ => Ok(b"{#:0}".to_vec()),
+            Some(false) => Ok(b"[@:none]".to_vec()),
+            _ => Ok(b"[#:0]".to_vec()),
         },
         _ => return ApplyResult::None,
     }

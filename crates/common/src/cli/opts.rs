@@ -87,7 +87,7 @@ pub struct IOOpts {
         alias = "private_group",
         long,
         env = "PRIVATE_GROUP",
-        help = "enable io of linkpoints in {#:0}"
+        help = "enable io of linkpoints in [#:0]"
     )]
     private: bool,
     #[clap(flatten)]
@@ -101,7 +101,7 @@ pub struct OutOpts {
     #[clap(
         long,
         env = "WRITE_PRIVATE",
-        help = "enable output of linkpoints in {#:0}"
+        help = "enable output of linkpoints in [#:0]"
     )]
     write_private: Option<bool>,
 }
@@ -110,7 +110,7 @@ pub struct InOpts {
     #[clap(
         long,
         env = "READ_PRIVATE",
-        help = "enable input of linkpoints in {#:0}"
+        help = "enable input of linkpoints in [#:0]"
     )]
     pub(crate) read_private: Option<bool>,
     #[clap(

@@ -3,7 +3,7 @@ set -euo pipefail
 
 export PORT=${PORT:-"5020"}
 echo My Key $(lk key --password "" --insecure)
-export GROUP=$(lk eval "{:$GROUP/?b}")
+export GROUP=$(lk eval "[:$GROUP/?b]")
 echo Serving $GROUP $PORT 
 
 trap "kill -- -$$" EXIT

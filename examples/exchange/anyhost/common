@@ -1,4 +1,4 @@
-export GROUP={#:pub}
+export GROUP=[#:pub]
 PATH=$PWD/bin:$PATH
 IMGAPP="$(realpath ../../app/imageboard/)"
 PATH="$IMGAPP":$PATH

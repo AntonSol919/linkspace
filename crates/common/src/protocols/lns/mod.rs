@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 /// WARN - This is a work in progress. Only [local] is currently implemented.
-/// Will impl's ABE scope/eval for {#:hello:world}, {#@:world:hello}, and {/#/hello/world}
-/// And reverse lookup for {group/#?} and {{#:hello:world}/#?}
+/// Will impl's ABE scope/eval for [#:hello:world], [#@:world:hello], and [/#/hello/world]
+/// And reverse lookup for [group/#?] and [[#:hello:world]/#?]
 pub mod local;
 /*
 LNS: linkspace name system
@@ -19,12 +19,12 @@ Once a proposal is voted it becomes accapeted-unfixed.
 If the entire chain of authorities publish sign their log a binding becomes fixed for a specific time range.
 If one of them is superceded a binding becomes accepted-superceded
 
---propose : e.g. lns:{#:pub}:/hello/world
+--propose : e.g. lns:[#:pub]:/hello/world
 
 parent : PROPOSAL_PTR - contains the lnsauth@ keys for /hello , the keys required to vote this proposal into effect
-XXXXX# : Value evaled with {#:world:hello} ( {#:...} returns the first link pointer with a tag ending in '#' )
-XXXXX@ : Value evaled with {@:world:hello} ( {@:...} returns the first link pointer with a tag ending in '@' )
-///// XXXXX> : Value evaled with {>:hello:world}
+XXXXX# : Value evaled with [#:world:hello] ( [#:...] returns the first link pointer with a tag ending in '#' )
+XXXXX@ : Value evaled with [@:world:hello] ( [@:...] returns the first link pointer with a tag ending in '@' )
+///// XXXXX> : Value evaled with [>:hello:world]
 XXXXXXXX_lnsaut@ : PUBKEY  Can authority the bitset XXXXXXXX
 [ XXXXXXXX_lnsaut@ : PUBKEY  ] *
 -- data
@@ -47,13 +47,13 @@ XXXXXXXX_accept3 : VOTE_PTR
 
 Evaluation & interpretation:
 A proposal, if enacted, associates a set of links a given lns name between two dates.
-That is, a lns group name such {#:hello:com} can get a publicly acknowledged set of links.
+That is, a lns group name such [#:hello:com] can get a publicly acknowledged set of links.
 The set of links can have arbitrary tags, but some are special.
 
-The first link with a tag ending in '#' is the default value for {#:world:hello}. This is a groupid by convention
-The first link with a tag ending in '@' is the default value for {@:world:hello}. This is a public key by convention
+The first link with a tag ending in '#' is the default value for [#:world:hello]. This is a groupid by convention
+The first link with a tag ending in '@' is the default value for [@:world:hello]. This is a public key by convention
 One or more link tags  XXXXXXXX_lnsaut@  refer to the public keys that have voting authority for subnames.
-The bit OR of all XXXXXXXX must be {a::8:\xff} ( all ones ).
+The bit OR of all XXXXXXXX must be [a::8:\xff] ( all ones ).
 
 packet's arent acknowledged if their their create stamp is in the future.
 All pointers must point to packets with their create stamp in the past of their create stamp.
@@ -74,17 +74,17 @@ reverse lookup
 
 The LNS evaluator consists of 2 systems.
 - The LNS resolver daemon is a standalone program.
-It watches for requests, verifies, and links LNS claims into the {#:0} group.
+It watches for requests, verifies, and links LNS claims into the [#:0] group.
 
-- The LNS Scope tries to resolve {#:hello:com}.
+- The LNS Scope tries to resolve [#:hello:com].
 
 The sequence of events is:
-LNS Scope tries to resolve {#:hello:com} for the first time.
+LNS Scope tries to resolve [#:hello:com] for the first time.
 
-It checks if there is a 'alive' linkpoint lns:{#:0}:/#/com/hello, if there is this claim is used.
-//By relinking {#:pub} claims into {#:0} when validate, the sccope can skip the 'expensive' validation step.
+It checks if there is a 'alive' linkpoint lns:[#:0]:/#/com/hello, if there is this claim is used.
+//By relinking [#:pub] claims into [#:0] when validate, the sccope can skip the 'expensive' validation step.
 
-If it does not exists or is no longer alive 'now' it creates linkpoint lns:{#:0}:/find/com/hello.
+If it does not exists or is no longer alive 'now' it creates linkpoint lns:[#:0]:/find/com/hello.
 By default it will wait for 1 second to see if a value is returned. This can be disabled.
 
 The resolver daemon is watching for /find:** linkpoints.

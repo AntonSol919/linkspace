@@ -103,7 +103,7 @@ pub fn setup_watch(
 #[derive(Args, Clone)]
 #[group(skip)]
 pub struct OrConstrait {
-    /** Add one or more query constraints. e.g. --or 'group:=:{#:pub}\ndomain:=:example' --or "domain:=:{hello}"
+    /** Add one or more query constraints. e.g. --or 'group:=:[#:pub]\ndomain:=:example' --or "domain:=:[hello]"
 
     Queries will have the additional predicate/options added and will be ignored if they result in the empty set.
     NOTE: This means a query without any group or domain would imply the first option

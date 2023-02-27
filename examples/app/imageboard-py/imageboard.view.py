@@ -16,27 +16,33 @@ lk = lk_open(create=True)
 query = lk_query()
 
 # You can parse multiple statements as abe.
-# In python ABE is not ideal because '{' '}' overlaps with its formatting.
-# Instead we can supply a list of user inputs addressed with {0}, {1}...,
+# The usual ABE context is available, and you can extend it with argv
 query_string = """
-group:=:{#:pub}
+group:=:[#:pub]
 domain:=:imageboard
-path:=:/{0}
-create:>=:{1/u64}
+path:=:/[0]
+create:>=:[1/u64]
 """
 lk_query_parse(query,query_string,argv=[boardname,str(create_stamp)])
+# or use templates. if you're just interested in the string
+lk_query_parse(query,f"create:>=:[:{str(create_stamp)}/u64]")
 
-# Another way to add a statement is with 'push' where the third argument is the bytes:
+# Or if you have the exact bytes
 create_b = create_stamp.to_bytes(8,byteorder='big')
+lk_query_parse(query,f"create:>=:[0]",argv=[create_b])
+# Or if you're only adding a single statement
 lk_query_push(query,"create",">=",create_b)
+
+# The query merges overlapping predicates, and errors on conflicting predicates
 
 # Query parsing is somewhat forgiving in that it allows Group, Domain, and Path two syntax's
 # Group can take the b64 no-pad string
 # Domain is 16 bytes but does not have to prepend '\0'
 # Path takes either a '/' delimited expression, or the 'spath' bytes ( as given by the spath function or pkt.spath value )
+# The other values require the exact number of bytes, in big endian when a number.
 
 # Its worth understanding why these two work. Checkout the guide
-create_abe = "{u64:"+str(create_stamp)+"}"
+create_abe = f"[u64:{str(create_stamp)}]"
 assert create_b  == lk_eval(create_abe)
 assert lk_encode(create_b,"u64") == create_abe
 
@@ -47,8 +53,8 @@ def update_image(pkt):
     for link in pkt.links:
         x = int(str(link.tag[:8],'ascii'))
         y = int(str(link.tag[8:],'ascii'))
-        q = lk_hash_query(link.ptr) # shorthand for :mode:hash-asc i:=:{u32:0} hash:=:HASH
-        lk_query_push(q,"recv","<",lk_eval("{now:+3s}"))
+        q = lk_hash_query(link.ptr) # shorthand for :mode:hash-asc i:=:[u32:0] hash:=:HASH
+        lk_query_push(q,"recv","<",lk_eval("[now:+3s]"))
 
         # we need a uniq id to register this query under.
         wid = bytearray(pkt.hash)
@@ -72,7 +78,7 @@ import pathlib
 pathlib.Path("./fragments").mkdir(parents=True, exist_ok=True)
 
 for [_,x,y,datap,parent] in image_data:
-    filename = lk_eval2str("./fragments/{hash:str}",datap)
+    filename = lk_eval2str("./fragments/[hash:str]",datap)
     try:
         with open(filename, "bx") as f:
             f.write(datap.data)

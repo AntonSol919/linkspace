@@ -181,7 +181,7 @@ pub fn build() {
     println!("Raw {:p}", raw);
     let href = unsafe { &*(raw) }.net_header_ref();
     println!("raw data {:p}", href);
-    let arced = NetPktArc::from_raw_arc(raw);
+    let arced = unsafe{NetPktArc::from_raw_arc(raw)};
     println!("arced back {:p}", arced.0);
     println!("arced back data {:p}", arced.net_header_ref());
 
