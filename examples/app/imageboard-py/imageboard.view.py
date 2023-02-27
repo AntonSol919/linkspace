@@ -1,3 +1,4 @@
+#!/bin/env python3
 from lkpy import *
 import os
 import sys
@@ -14,7 +15,7 @@ if not os.path.exists(boardfile):
 lk = lk_open(create=True)
 query = lk_query()
 
-# You can parse multiple statements as abe. 
+# You can parse multiple statements as abe.
 # In python ABE is not ideal because '{' '}' overlaps with its formatting.
 # Instead we can supply a list of user inputs addressed with {0}, {1}...,
 query_string = """
@@ -23,7 +24,7 @@ domain:=:imageboard
 path:=:/{0}
 create:>=:{1/u64}
 """
-lk_query_parse(query,query_string,[boardname,str(create_stamp)])
+lk_query_parse(query,query_string,argv=[boardname,str(create_stamp)])
 
 # Another way to add a statement is with 'push' where the third argument is the bytes:
 create_b = create_stamp.to_bytes(8,byteorder='big')

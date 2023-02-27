@@ -1,4 +1,4 @@
-
+#!/bin/env python3
 from lkpy import *
 import sys
 if len(sys.argv) < 5:

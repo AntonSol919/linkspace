@@ -61,7 +61,14 @@ impl PktHandler for PyPktStreamHandler {
             Ok(true) => ControlFlow::Continue(()),
             Ok(false) => ControlFlow::Break(()),
             Err(e) => {
-                eprintln!("{:#?}", e);
+                if let Some(f) = &self.on_err{
+                    let apkt = Pkt::from_dyn(pkt);
+                    match Python::with_gil(|py| call_cont_py(py, f, (e,apkt,&self.on_match))){
+                        Ok(true) => return ControlFlow::Continue(()),
+                        Ok(false) => {},
+                        Err(e) => tracing::warn!(?e,"Yo dog i heard i liked errors"),
+                    }
+                }else { tracing::warn!("default error handler " )}
                 return ControlFlow::Break(());
             }
         }
@@ -206,24 +213,24 @@ pub fn lk_eval<'a>(
     py: Python<'a>,
     expr: &str,
     pkt: Option<&Pkt>,
-    inp: Option<&PyAny>,
+    argv: Option<&PyAny>,
 ) -> anyhow::Result<&'a PyBytes> {
-    let inp: Vec<&[u8]> = inp
+    let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
         .transpose()?
         .unwrap_or_default();
-    let udata = UserData{inp: Some(&inp), pkt: pptr(pkt)};
+    let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
     let bytes = liblinkspace::varctx::lk_eval(uctx, expr )?;
     Ok(PyBytes::new(py, &*bytes))
 }
 #[pyfunction]
-pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, inp: Option<&PyAny>) -> anyhow::Result<String> {
-    let inp: Vec<&[u8]> = inp
+pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>) -> anyhow::Result<String> {
+    let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
         .transpose()?
         .unwrap_or_default();
-    let udata = UserData{inp: Some(&inp), pkt: pptr(pkt)};
+    let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
     let out= liblinkspace::varctx::lk_eval(uctx, expr )?;
     Ok(String::from_utf8(out)?)
@@ -273,13 +280,13 @@ pub fn lk_query_parse(
     query: &mut Query,
     statements: &str,
     pkt: Option<&Pkt>,
-    inp: Option<&PyAny>,
+    argv: Option<&PyAny>,
 ) -> anyhow::Result<bool> {
-    let inp: Vec<&[u8]> = inp
+    let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
         .transpose()?
         .unwrap_or_default();
-    let udata = UserData{inp: Some(&inp), pkt: pptr(pkt)};
+    let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
     let changed = liblinkspace::varctx::lk_query_parse(uctx,&mut query.0, &statements)?;
     Ok(changed)
@@ -302,11 +309,11 @@ fn call_cont_py(
     py: Python,
     func: &Py<PyFunction>,
     args: impl IntoPy<Py<PyTuple>>,
-) -> anyhow::Result<bool> {
+) -> PyResult<bool> {
     let result = func.call1(py, args)?;
     let as_bool = result.extract::<bool>(py);
     match as_bool {
-        Ok(b) => Ok(b) as anyhow::Result<bool>,
+        Ok(b) => Ok(b) as PyResult<bool>,
         Err(_) => Ok(true),
     }
 }
@@ -512,6 +519,7 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_process_while, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_key, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_pull, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_status_poll, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 

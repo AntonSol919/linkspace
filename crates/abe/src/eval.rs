@@ -1370,18 +1370,18 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct UserInp<'o>(pub [Option<&'o [u8]>;8]);
-impl<'o> UserInp<'o>{
+pub struct ArgV<'o>(pub [Option<&'o [u8]>;8]);
+impl<'o> ArgV<'o>{
     pub fn try_fit(v: &'o [&'o [u8]]) -> Option<Self>{
         if v.len() > 8 { return None}
         let mut it = v.iter().copied();
-        Some(UserInp([
+        Some(ArgV([
             it.next(),it.next(),it.next(),it.next(),
             it.next(),it.next(),it.next(),it.next()
         ]))
     }
 }
-impl<'o> EvalScopeImpl for UserInp<'o>{
+impl<'o> EvalScopeImpl for ArgV<'o>{
     fn about(&self) -> (String, String) {
         ("user input list".into(), "Provide values, access with {0} {1} .. {7} ".into())
     }

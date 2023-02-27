@@ -1,3 +1,4 @@
+#!/bin/env python3
 from lkpy import *
 import os
 import sys
@@ -32,7 +33,21 @@ group:=:{#:pub}
 domain:=:imageboard
 path:=:/{0}
 create:>=:{now:-1D}
+:watch:{0}
 """
-lk_query_parse(query,query_string,inp=[boardname])
+lk_query_parse(query,query_string,argv=[boardname])
 
-print(lk_query_print(query))
+#the exchange process is responsible to gather the data
+lk_pull(lk,query)
+
+#we just wait for every packet and redraw the painting starting at the 'create' stamp
+script_dir = os.path.dirname(os.path.realpath(__file__))
+os.system(f"{script_dir}/imageboard.view.py {boardname} 0")
+
+def update_img(pkt):
+    create = lk_eval2str("{create:str}",pkt)
+    os.system(f"{script_dir}/imageboard.view.py {boardname} {create}")
+
+lk_query_parse(query,"i_index:<:{u32:0}") # we only care for new stuff
+lk_watch(lk,query, update_img)
+lk_process_while(lk)

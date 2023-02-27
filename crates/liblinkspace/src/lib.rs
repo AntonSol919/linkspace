@@ -335,7 +335,7 @@ pub mod abe {
 
         use anyhow::Context;
         use linkspace_common::abe::eval::{EvalCtx, Scope};
-        use linkspace_common::prelude::{NetPkt, UserInp, EScope};
+        use linkspace_common::prelude::{NetPkt, ArgV, EScope};
         use linkspace_common::runtime::Linkspace;
         use std::cell::RefCell;
 
@@ -356,32 +356,32 @@ pub mod abe {
         /// User config for setting additional context to evaluation.
         pub struct UserData<'o> {
             pub pkt: Option<&'o dyn NetPkt>,
-            pub inp: Option<&'o[&'o [u8]]>
+            pub argv: Option<&'o[&'o [u8]]>
         }
         impl From<()> for UserData<'static>{
             fn from(_: ()) -> Self {
-                UserData { pkt:None,inp:None}
+                UserData { pkt:None,argv:None}
             }
         }
         impl<'o> From<&'o dyn NetPkt> for UserData<'o>{
             fn from(pkt: &'o dyn NetPkt) -> Self {
-                UserData { pkt:Some(pkt),inp:None}
+                UserData { pkt:Some(pkt),argv:None}
             }
         }
         impl<'o> From<(&'o dyn NetPkt,&'o [&'o [u8]])> for UserData<'o>{
             fn from((p,i): (&'o dyn NetPkt,&'o [&'o [u8]])) -> Self {
-                UserData { pkt:Some(p), inp:Some(i)}
+                UserData { pkt:Some(p), argv:Some(i)}
             }
         }
 
         impl<'o,const N:usize> From<&'o [&'o [u8];N]> for UserData<'o>{
             fn from(inp: &'o [&'o [u8];N]) -> Self {
-                UserData { inp:Some(inp),pkt:None}
+                UserData { argv:Some(inp),pkt:None}
             }
         }
         impl<'o> From<&'o [&'o [u8]]> for UserData<'o>{
             fn from(inp: &'o [&'o [u8]]) -> Self {
-                UserData { inp:Some(inp),pkt:None}
+                UserData { argv:Some(inp),pkt:None}
             }
         }
 
@@ -399,8 +399,8 @@ pub mod abe {
         }
         /// lk:None => get threadlocal Lk . Some(None) => no linkspace
         fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata : UserData<'o>) -> LkResult<LkCtx<'o>> {
-            let inp_ctx = udata.inp
-                .map(|v| UserInp::try_fit(v).context("Too many inp values"))
+            let inp_ctx = udata.argv
+                .map(|v| ArgV::try_fit(v).context("Too many inp values"))
                 .transpose()?
                 .map(EScope);
             use linkspace_common::core::eval::EVAL0_1;
