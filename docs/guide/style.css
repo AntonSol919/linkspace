@@ -78,10 +78,12 @@ th {
 }
 
 .ctabs > [type=radio]:checked + label , .ctabs > div {
+    box-shadow:1.0px 1.9px 1.9px hsl(0deg 0% 0% / 0.47);
     background: #fff;
     border: 1px solid #222 ;
 }
 .ctabs > div {
+    box-shadow: 4.8px 9.6px 9.6px hsl(0deg 0% 0% / 0.35);
     display: none;
     padding: 20px 30px 30px;
     width: 100%;
