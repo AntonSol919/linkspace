@@ -42,8 +42,7 @@ impl KeyOpts {
             match &self.enckey {
                 Some(enckey) => Ok(crate::identity::decrypt(enckey, &password_bytes)?),
                 None => {
-                    let e =
-                        String::new() + "{local:{:" + &self.name + "}::*=:enckey/readhash:data}";
+                    let e = format!("[local:[:{}]::*=:enckey/readhash:data]",&self.name);
                     let enckey = String::from_utf8(
                         common
                             .eval(&e)?
@@ -132,7 +131,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
     let enckey = match key.enckey.clone() {
         Some(k) => Some(k),
         None => {
-            // Equivelant to {local:+name+::l>:enckey::data}
+            // Equivelant to [local:+name+::l>:enckey::data]
             let r = rt.env().get_reader()?;
             match local::get_local_claim(&r, &path)? {
                 None => None,

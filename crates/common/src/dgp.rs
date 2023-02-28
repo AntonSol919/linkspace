@@ -3,6 +3,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+
+
+/*
+TODO rewrite.
+This is rather messy as its old code missing some insights gained later.
+*/
+
 use abe::ast::{is_empty, Ctr};
 use anyhow::{bail, Context};
 use linkspace_core::{
@@ -10,8 +18,6 @@ use linkspace_core::{
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
-/// domain + group + path ( DGP's ) are common enough to have their own abe expr form.
-/// The structures here impl FromStr such as "a_domain:{#:a:group}:/a/path"
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -34,7 +40,7 @@ impl DGPExpr {
     }
     pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGP> {
         let domain = self.domain.eval(ctx);
-        let group = self.group.eval_default(PUBLIC_GROUP, ctx);
+        let group = self.group.eval_default(PUBLIC, ctx);
         let path = self.path.eval(ctx)?.try_idx();
         match (domain, group, path) {
             (Ok(domain), Ok(group), Ok(path)) => Ok(DGP {
@@ -117,6 +123,7 @@ impl FromStr for DGPExpr {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
         let ast = parse_abe(s)?;
+
         let (dgp, rest) = try_take_dgp(&ast)?;
         is_empty(rest)?;
         Ok(dgp)
@@ -129,8 +136,16 @@ pub struct DGPDExpr {
     pub subsegment_limit: u8,
 }
 impl DGPDExpr {
-    pub fn predicate_exprs(self) -> impl Iterator<Item = Vec<ABE>> {
+    pub fn predicate_exprs(self) -> anyhow::Result<impl Iterator<Item = Vec<ABE>>> {
         let mut prefix_rule = None;
+        if self.subsegment_limit != MAX_PATH_LEN as u8{
+            if !self.dgp.path.is_empty() && !self.dgp.path.0.iter().any(|v| v.is_fslash()) {
+                anyhow::bail!("can't use subrange expr with an evaluated spath ( dont know its length ).
+Must add ':**' and manually set -- path_len ...")
+            }
+        }
+
+
         if self.subsegment_limit < MAX_PATH_LEN as u8 {
             let prefix_len = self
                 .dgp
@@ -143,7 +158,7 @@ impl DGPDExpr {
             let exclude = prefix_len.saturating_add(self.subsegment_limit).min(8) + 1;
             prefix_rule = Some(abev!("path_len" : "<" : +(U8(exclude).to_abe())));
         }
-        self.dgp.as_test_exprs().chain(prefix_rule)
+        Ok(self.dgp.as_test_exprs().chain(prefix_rule))
     }
 }
 
@@ -166,6 +181,7 @@ pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
     if group.is_empty() {
         group = default_group_expr();
     }
+
     let path = it.next().unwrap_or_default().try_into()?;
     Ok((
         DGPExpr {
@@ -178,6 +194,7 @@ pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
 }
 
 pub fn dgpd(ast: &[ABE]) -> anyhow::Result<DGPDExpr> {
+
     let (dgp, rest) = try_take_dgp(ast)?;
     let mut subsegment_limit = 0;
     if !rest.is_empty() {
@@ -195,6 +212,7 @@ impl FromStr for DGPDExpr {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
+
         let ast = parse_abe(s)?;
         dgpd(&ast)
     }

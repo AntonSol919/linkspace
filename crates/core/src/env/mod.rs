@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // the db is duck type compatible between inmem and lmdb
 use crate::consts::PUBLIC_GROUP_PKT;
-use linkspace_pkt::{NetPkt, Stamp};
+use linkspace_pkt::{NetPkt, Stamp };
 use std::{
     fmt::Debug,
     io,

@@ -30,7 +30,7 @@ macro_rules! predty {
             ),*
         }
         impl PredicateType{
-            pub const ALL : [PredicateType;23] = [$(PredicateType::$fname),*];
+            pub const ALL : [PredicateType;24] = [$(PredicateType::$fname),*];
             pub fn try_from_id(id:&[u8]) -> Option<Self> {
                 $( if id == $name.as_bytes() { return Some(PredicateType::$fname);})*
                     None
@@ -58,29 +58,30 @@ macro_rules! predty {
 }
 
 predty!( enum PredicateType {
-    Hash => ("hash",DATA,"{b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}","the point hash"),
-    Group => ("group",LINK,"{#:pub}","group id"),
-    Domain => ("domain",LINK,"{a:example}","domain - if fewer then 16 bytes, prepadded with \0"),
-    Prefix => ("prefix",LINK,"/hello/world","exact packet prefix - only accepts '=' op"),
-    Pubkey => ("pubkey",SIGNATURE,"{@local:me}","public key used to sign point"),
-    Create => ("create",LINK,"{now:-1H}","the create stamp"),
-    PathLen => ("path_len",LINK,"{u8:0}","the total number of path components - max 8"),
-    LinksLen => ("links_len",LINK,"{u16:0}","the number of links in a packet"),
-    DataSize => ("data_size",LINK,"{u16:0}","the byte size of the data field"),
-    Recv => ("recv",DATA,"{now:+1D}","the recv time of a packet"),
-    IBranch => ("i_branch",LINK,"{u32:0}","total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise"),
-    IIndex  => ("i_index",EMPTY,"{u32:0}","total packets read from local index"),
-    INew  => ("i_new",EMPTY,"{u32:0}","total newly received packets"),
-    I => ("i",EMPTY,"{u32:0}","total matched packets"),
-    Hop => ("hop",EMPTY,"{u16:5}","(mutable) number of hops"),
-    Stamp => ("stamp",EMPTY,"{now}","(mutable) variable stamp"),
-    Ubits0 => ("ubits0",EMPTY,"{u32:0}","(mutable) user defined bits"),
-    Ubits1 => ("ubits1",EMPTY,"{u32:0}","(mutable) user defined bits"),
-    Ubits2 => ("ubits2",EMPTY,"{u32:0}","(mutable) user defined bits"),
-    UBits3 => ("ubits3",EMPTY,"{u32:0}","(mutable) user defined bits"),
-    Type => ("type",EMPTY,"{b2:00000001}","the field type bits - implied by other predicates"),
-    Netflags => ("netflags",EMPTY,"{b2:00000000}","(mutable) netflags"),
-    PointSize => ("point_size",DATA,"{u16:4}","exact point size - (netpkt_size - 32b header - 32b hash)")
+    Hash => ("hash",DATA,"[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]","the point hash"),
+    Group => ("group",LINK,"[#:pub]","group id"),
+    Domain => ("domain",LINK,"[a:example]","domain - if fewer then 16 bytes, prepadded with \0"),
+    Prefix => ("prefix",LINK,"/hello/world","path prefix - only accepts '=' op"),
+    Path => ("path",LINK,"/hello/world","exact path - only accepts '=' op"),
+    Pubkey => ("pubkey",SIGNATURE,"[@:me:local]","public key used to sign point"),
+    Create => ("create",LINK,"[now:-1H]","the create stamp"),
+    PathLen => ("path_len",LINK,"[u8:0]","the total number of path components - max 8"),
+    LinksLen => ("links_len",LINK,"[u16:0]","the number of links in a packet"),
+    DataSize => ("data_size",LINK,"[u16:0]","the byte size of the data field"),
+    Recv => ("recv",DATA,"[now:+1D]","the recv time of a packet"),
+    IBranch => ("i_branch",LINK,"[u32:0]","total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise"),
+    IIndex  => ("i_index",EMPTY,"[u32:0]","total packets read from local index"),
+    INew  => ("i_new",EMPTY,"[u32:0]","total newly received packets"),
+    I => ("i",EMPTY,"[u32:0]","total matched packets"),
+    Hop => ("hop",EMPTY,"[u16:5]","(mutable) number of hops"),
+    Stamp => ("stamp",EMPTY,"[now]","(mutable) variable stamp"),
+    Ubits0 => ("ubits0",EMPTY,"[u32:0]","(mutable) user defined bits"),
+    Ubits1 => ("ubits1",EMPTY,"[u32:0]","(mutable) user defined bits"),
+    Ubits2 => ("ubits2",EMPTY,"[u32:0]","(mutable) user defined bits"),
+    UBits3 => ("ubits3",EMPTY,"[u32:0]","(mutable) user defined bits"),
+    Type => ("type",EMPTY,"[b2:00000001]","the field type bits - implied by other predicates"),
+    Netflags => ("netflags",EMPTY,"[b2:00000000]","(mutable) netflags"),
+    PointSize => ("point_size",DATA,"[u16:4]","exact point size - (netpkt_size - 32b header - 32b hash)")
 });
 impl From<PredicateType> for RuleType {
     fn from(val: PredicateType) -> Self {

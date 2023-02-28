@@ -11,16 +11,16 @@ fn btree_sanity<S:SyncDB>(store: BTreeStore<S>) -> anyhow::Result<()>{
     {
         let domain1 = as_domain(b"a");
         let spath = spath_str("/hello").expect("parse spath");
-        let a1 = spoint_ref(PUBLIC_GROUP,domain1,&spath,&[],Stamp::new(10),());
-        let a2 = spoint_ref(PUBLIC_GROUP,domain1,&spath,&[],Stamp::new(11),());
+        let a1 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(10),());
+        let a2 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(11),());
         store.get_writer().write_many_iter([a1,a2])?;
     }
     assert_eq!(store.get_reader().dump().count(),2," has two spoints");
     {
         let domain1 = as_domain(b"b");
         let spath = spath_str("/hello").expect("parse spath");
-        let a1 = spoint_ref(PUBLIC_GROUP,domain1,&spath,&[],Stamp::new(10),());
-        let a2 = spoint_ref(PUBLIC_GROUP,domain1,&spath,&[],Stamp::new(11),());
+        let a1 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(10),());
+        let a2 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(11),());
         store.get_writer().write_many_iter([a1,a2])?;
     }
 
@@ -35,7 +35,7 @@ fn btree_sanity<S:SyncDB>(store: BTreeStore<S>) -> anyhow::Result<()>{
       // let data = unsafe{memmap2::Mmap::map(&file)}.unwrap();
         let mut bytes = vec![0;170*MAX_PKT_SIZE];
         rand::rngs::mock::StepRng::new(1, 1).fill_bytes(&mut bytes);
-        let ((hash,_kind),_is_new) = checkin_bytes(&mut store.get_writer(), &*bytes, ().into(), Some((PUBLIC_GROUP,as_domain(b"domaintest")))).unwrap().unwrap();
+        let ((hash,_kind),_is_new) = checkin_bytes(&mut store.get_writer(), &*bytes, ().into(), Some((PUBLIC,as_domain(b"domaintest")))).unwrap().unwrap();
         let reader = store.get_reader();
         let pkt = reader.read(&hash).unwrap().expect("HashJust written");
         for r in pkt.body().get_links(){

@@ -8,10 +8,11 @@ use std::str::FromStr;
 
 use liblinkspace::misc::FieldEnum;
 use liblinkspace::prelude::*;
-use pyo3::types::PyByteArray;
 use pyo3::{basic::CompareOp, prelude::*, types::PyBytes};
 
 use misc::{RecvPkt, ReroutePkt};
+
+use crate::bytelike;
 #[pyclass(mapping)]
 #[derive(Clone)]
 pub struct Pkt(pub(crate) ReroutePkt<RecvPkt<NetPktArc>>);
@@ -33,7 +34,7 @@ impl<'o> From<RecvPktPtr<'o>> for Pkt {
 #[pymethods]
 impl Pkt {
     pub fn __str__(&self) -> String {
-        String::from_utf8(lk_eval("{pkt}", Some(self.0.netpktptr())).unwrap()).unwrap()
+        String::from_utf8(lk_eval("[pkt]", self.0.netpktptr() as &dyn NetPkt).unwrap()).unwrap()
     }
     pub fn __getitem__<'p>(&self, py: Python<'p>, field: &str) -> anyhow::Result<&'p PyBytes> {
         let field = FieldEnum::from_str(field)?;
@@ -236,22 +237,26 @@ impl Links {
 
 /// Link for a linkpoint
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 #[repr(C)]
 pub struct Link {
-    #[pyo3(get)]
     pub tag: [u8; 16],
-    #[pyo3(get)]
     pub ptr: [u8; 32],
 }
 #[pymethods]
 impl Link {
+    #[getter]
+    fn ptr<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+        PyBytes::new(py, &self.ptr)
+    }
+    #[getter]
+    fn tag<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+        PyBytes::new(py, &self.tag)
+    }
     #[new]
-    fn new(py: Python, tag: &PyAny, ptr: &PyAny) -> anyhow::Result<Self> {
-        let tag_b = PyByteArray::from(py, tag)?;
-        let tag = unsafe { tag_b.as_bytes() };
-        let ptr_b = PyByteArray::from(py, ptr)?;
-        let ptr = unsafe { ptr_b.as_bytes() };
+    fn new(tag: &PyAny, ptr: &PyAny) -> anyhow::Result<Self> {
+        let tag = bytelike(tag)?;
+        let ptr = bytelike(ptr)?;
         Ok(Link {
             tag: Tag::try_fit_byte_slice(tag)?.0,
             ptr: LkHash::try_fit_bytes_or_b64(ptr)?.0,

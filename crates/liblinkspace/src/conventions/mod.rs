@@ -11,7 +11,7 @@ use anyhow::Context;
 use linkspace_common::prelude::EXCHANGE_DOMAIN;
 
 use super::*;
-/** pull requests create a linkpoint in {f:exchange}:{#:0}:/pull/{query.group}/{query.domain}/{query.id}
+/** pull requests create a linkpoint in \[f:exchange\]:\[#:0\]:/pull/\[query.group\]/\[query.domain\]/\[query.id\]
 
 Pull queries must have the predicates 'domain:=:..' and 'group:=:..'.
 It is up to an exchange process to fulfill the query.
@@ -47,7 +47,7 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
     let pkt = lk_linkpoint(
         EXCHANGE_DOMAIN,
-        LOCAL_ONLY_GROUP,
+        PRIVATE,
         &pull_path,
         &[],
         data.as_bytes(),

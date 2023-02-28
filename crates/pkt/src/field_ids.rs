@@ -480,7 +480,7 @@ impl FieldEnum {
             FieldEnum::CreateF => CreateF::get_ptr(pkt).to_abe_str(),
             FieldEnum::PubKeyF => PubKeyF::get_ptr(pkt).to_abe_str(),
             FieldEnum::SignatureF => SignatureF::get_ptr(pkt).to_abe_str(),
-            FieldEnum::DataF => format!("{{:{}}}", AB(pkt.as_point().data())),
+            FieldEnum::DataF => format!("[:{}]", AB(pkt.as_point().data())),
             FieldEnum::LinksLenF => U16::new(LinksLenF::get_val(pkt)).to_abe_str(),
             FieldEnum::DataSizeF => U16::new(DataSizeF::get_val(pkt)).to_abe_str(),
         };

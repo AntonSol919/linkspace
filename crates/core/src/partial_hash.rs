@@ -118,7 +118,7 @@ impl fmt::Display for PartialHash {
 
 #[test]
 fn comp() {
-    let id: LkHash = crate::consts::PUBLIC_GROUP;
+    let id: LkHash = crate::consts::PUBLIC;
     let b = id.b64();
     println!("ORIGINAL {}", b);
     let tid: LkHash = id;

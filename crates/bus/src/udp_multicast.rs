@@ -19,7 +19,7 @@ pub struct UdpIPC {
 }
 impl UdpIPC {
     pub fn new(port: u16) -> UdpIPC {
-        tracing::debug!(" Using port {}", port);
+        tracing::debug!(" Using port {} for ipc", port);
         let (rx, tx) = setup_socket(port);
         UdpIPC {
             port,

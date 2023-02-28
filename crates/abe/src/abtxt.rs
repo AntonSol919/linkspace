@@ -41,8 +41,8 @@ impl CtrChar {
     pub fn try_from_char(b: u8) -> Option<CtrChar> {
         Some(match b {
             b'/' => CtrChar::ForwardSlash,
-            b'{' => CtrChar::OpenBracket,
-            b'}' => CtrChar::CloseBracket,
+            b'[' => CtrChar::OpenBracket,
+            b']' => CtrChar::CloseBracket,
             b':' => CtrChar::Colon,
             b'\n' => CtrChar::Newline,
             b'\t' => CtrChar::Tab,
@@ -55,8 +55,8 @@ impl CtrChar {
             CtrChar::Colon => b':',
             CtrChar::Newline => b'\n',
             CtrChar::Tab => b'\t',
-            CtrChar::OpenBracket => b'{',
-            CtrChar::CloseBracket => b'}',
+            CtrChar::OpenBracket => b'[',
+            CtrChar::CloseBracket => b']',
         }
     }
 
@@ -91,8 +91,8 @@ pub(crate) fn next_byte(
     let byte = *b;
     let ctr = match b {
         b'/' => CtrChar::ForwardSlash,
-        b'{' => CtrChar::OpenBracket,
-        b'}' => CtrChar::CloseBracket,
+        b'[' => CtrChar::OpenBracket,
+        b']' => CtrChar::CloseBracket,
         b':' => CtrChar::Colon,
         b'\n' => CtrChar::Newline,
         b'\t' => CtrChar::Tab,
@@ -106,8 +106,8 @@ pub(crate) fn next_byte(
                     rest = &rest[2..];
                     byte
                 }
-                b'}' => b'}',
-                b'{' => b'{',
+                b']' => b']',
+                b'[' => b'[',
                 b'n' => b'\n',
                 b'r' => b'\r',
                 b':' => b':',
@@ -266,9 +266,9 @@ pub const ESCAPE_LOOKUP: [&str; 256] = {
             "\\\\"
         } else if idx == b'/' as usize {
             "\\/"
-        } else if idx == b'{' as usize {
+        } else if idx == b'[' as usize {
             "\\{"
-        } else if idx == b'}' as usize {
+        } else if idx == b']' as usize {
             "\\}"
         } else if idx >= 0x20 && idx <= 0x7e {
             let st = std::slice::from_ref(&ARR_IDX[idx]);
@@ -319,5 +319,5 @@ fn enc() {
     let v = as_abtxt_e(st.as_bytes());
     assert_eq!(v, r#"hello\xf0\x9f\x8c\x8d"#);
 
-    assert_eq!(cut_prefix_nulls(&[0, 0, 1, 2]), &[1, 2])
+    assert_eq!(crate::cut_prefix_nulls(&[0, 0, 1, 2]), &[1, 2])
 }

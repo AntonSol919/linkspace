@@ -447,6 +447,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloomhash"
+version = "0.1.0"
+
+[[package]]
 name = "bstr"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2277,6 +2281,7 @@ dependencies = [
  "anyhow",
  "liblinkspace",
  "pyo3",
+ "ref-cast",
  "smallvec",
  "tracing",
  "tracing-subscriber",
@@ -3219,6 +3224,26 @@ dependencies = [
  "getrandom 0.2.8",
  "redox_syscall",
  "thiserror",
+]
+
+[[package]]
+name = "ref-cast"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c78fb8c9293bcd48ef6fce7b4ca950ceaf21210de6e105a883ee280c0f7b9ed"
+dependencies = [
+ "ref-cast-impl",
+]
+
+[[package]]
+name = "ref-cast-impl"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f9c0c92af03644e4806106281fe2e068ac5bc0ae74a707266d06ea27bccee5f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

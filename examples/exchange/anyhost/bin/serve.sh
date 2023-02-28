@@ -3,10 +3,12 @@ set -euo pipefail
 
 export PORT=${PORT:-"5020"}
 echo My Key $(lk key --password "" --insecure)
-export GROUP=$(lk eval "{:$GROUP/?b}")
+export GROUP=$(lk eval "[:$GROUP/?b]")
 echo Serving $GROUP $PORT 
 
 trap "kill -- -$$" EXIT
+
+lk set-status exchange $GROUP process anyhost-client --data "abe:OK\nPID:$$\nwe're hosting" &
 
 socat tcp-listen:$PORT,fork exec:"handshake.sh serve serve_io.sh",fdout=4
 

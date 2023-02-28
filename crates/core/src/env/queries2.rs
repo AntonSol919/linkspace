@@ -242,6 +242,7 @@ impl<C: super::db::Cursors> IReadTxn<C> {
         nth_pkt: &'o mut u32,
     ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'o>>> {
         tracing::debug!(?mode,%pred);
+
         match mode.table {
             Table::Hash => {
                 let it = self.query_hash(mode.order, pred);

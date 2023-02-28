@@ -5,11 +5,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing, Out, WriteDestSpec},
-    predicate_aliases::{ExtWatchCLIOpts, WithFiles},
+    predicate_aliases::{ExtWatchCLIOpts },
     prelude::{query_mode::Mode, TypedABE, *},
 };
 
-#[derive(Debug, Args, Clone)]
+#[derive(Debug, Args, Clone,Default)]
 #[group(skip)]
 pub struct DGPDWatchCLIOpts {
     #[clap(long, short)]
@@ -17,35 +17,31 @@ pub struct DGPDWatchCLIOpts {
     #[clap(required_unless_present("bare"))]
     pub dgpd: Option<DGPDExpr>,
     #[clap(flatten)]
-    pub watch_opts: WithFiles<ExtWatchCLIOpts>,
+    pub watch_opts: ExtWatchCLIOpts,
 }
 
 impl DGPDWatchCLIOpts {
-    pub fn watch_predicates(self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+    pub fn into_query(self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
         tracing::trace!("Collecting predicates");
         let mut query = Query::default();
         let dgpd = self
             .dgpd
             .filter(|_| !self.bare)
-            .map(|dgpd| dgpd.predicate_exprs());
-        let aliases = self.watch_opts.opts.aliases.as_predicates();
-        let exprs = self.watch_opts.opts.exprs.into_iter();
+            .map(|dgpd| dgpd.predicate_exprs()).transpose()?;
+        let aliases = self.watch_opts.aliases.as_predicates();
+        let exprs = self.watch_opts.exprs.into_iter();
         let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
         for e in it.chain(exprs){
             tracing::trace!(?e, "add expr");
             let e = e.eval(&ctx)?;
             query.add(vec![e])?;
         }
-        for file in self.watch_opts.file.iter() {
-            let inp = std::fs::read_to_string(file)?;
-            query.parse(inp.as_bytes(), &ctx)?;
-        }
         Ok(query)
     }
 }
 
 
-#[derive(Args,Clone,Copy)]
+#[derive(Args,Clone,Copy,Default)]
 #[group(skip)]
 pub struct PrintABE{
     /// print the query
@@ -67,7 +63,7 @@ impl PrintABE {
     }
 }
 
-#[derive(Args)]
+#[derive(Args,Default)]
 #[group(skip)]
 pub struct CLIQuery {
     #[clap(flatten)]
@@ -83,7 +79,7 @@ impl CLIQuery {
     // FIXME: printing here is confusing
     pub fn into_query(self, common: &CommonOpts) -> anyhow::Result<Option<Query>> {
         let ctx = common.eval_ctx();
-        let mut select = self.opts.watch_predicates(&ctx)?;
+        let mut select = self.opts.into_query(&ctx)?;
         let inner_mode = select.mode().transpose()?;
         if inner_mode.is_none() || inner_mode != self.mode {
             let st = self.mode.unwrap_or_default().to_string();
@@ -120,3 +116,4 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
     };
     Ok(())
 }
+

@@ -53,7 +53,7 @@ pub struct Collect {
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
 
-    #[clap(alias = "ctag", long, value_enum, default_value = "{now}")]
+    #[clap(alias = "ctag", long, value_enum, default_value = "[now]")]
     collect_tag: TagExpr,
     /// Create packet after collecting max_links from incoming packets
     #[clap(long,default_value_t=MAX_LINKS_LEN-16)]
@@ -92,7 +92,7 @@ impl Collector {
         };
         let links = std::mem::take(&mut self.links);
         let mut data = vec![];
-        let pkt = crate::point::build(
+        let pkt = crate::point::build_with_reader(
             common,
             &self.c_opts.build,
             &self.dgs,
@@ -173,7 +173,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         links: initial_links.clone(),
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
-        reader: common.open_read(&c_opts.build.data)?,
+        reader: common.open_read(c_opts.build.data.as_ref())?,
         dgs,
         buf: vec![],
         c_opts,

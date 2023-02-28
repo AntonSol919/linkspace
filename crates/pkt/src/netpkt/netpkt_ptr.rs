@@ -230,6 +230,6 @@ pub fn build() {
     let raw = NetPktFatPtr::into_raw_box(sp);
     let h2 = unsafe { &*raw }.hash();
     assert_eq!(h, h2);
-    let b = NetPktFatPtr::from_raw_box(raw);
+    let b = unsafe{NetPktFatPtr::from_raw_box(raw)};
     assert_eq!(h, b.hash())
 }

@@ -60,7 +60,7 @@ macro_rules! as_scopefn {
                 id: $name,
                 init_eq: Some(true),
                 argc: 0..=1,
-                help: concat!("?(str|abe) - get ", $name, " field from netpkt"),
+                help: concat!("?(str|abe) - netpkt.", $name ),
                 to_abe: false,
             },
         }
@@ -134,7 +134,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             |links: &Self, abe: &[ABE], scope| {
                 let abe = match abe {
                     &[ABE::Ctr(Ctr::Colon), ref r @ ..] => r,
-                    _ => Err(EvalError::Other("links expects :{{..}}".into()))?,
+                    _ => Err(EvalError::Other("links expects :[..]".into()))?,
                 };
                 let mut out = vec![];
                 for link in links.0 {
@@ -229,4 +229,15 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
             )
         ])
     }
+}
+
+#[test]
+fn pktfmt() {
+    let pkt = datapoint(b"hello", ());
+    let ctx = core_ctx();
+    let ctx = pkt_ctx(ctx, &pkt);
+    let abe = abe::parse_abe("[pkt] [data]").unwrap();
+    let st = eval(&ctx,&abe).unwrap().concat();
+    let v = std::str::from_utf8(&st).unwrap();
+    panic!("OK {v}")
 }

@@ -91,6 +91,10 @@ impl TryFrom<ABList> for SPathBuf {
 
 impl ABEValidator for SPathBuf {
     fn check(mut b: &[ABE]) -> Result<(), MatchError> {
+        if b.len() == 1 {
+            abe::ast::as_expr(&b[0])?;
+            return Ok(())
+        }
         while !b.is_empty() {
             let (_, next) = take_ctr_expr(b, is_fslash)?;
             b = next;
@@ -136,7 +140,7 @@ impl FromStr for SPathBuf {
 pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
     if let Ok(b) = <[u8; 32]>::try_from(seg) {
         let b64 = B64(b).to_string();
-        write!(f, "/{{b:{b64}}}")?;
+        write!(f, "/[b:{b64}]")?;
     } else if let Ok(b) = <[u8; 16]>::try_from(seg) {
         let abt = AB(b).to_abe_str();
         write!(f, "/{abt}")?;
@@ -310,7 +314,7 @@ impl EvalScopeImpl for SPathFncs {
     fn about(&self) -> (String, String) {
         (
             "path".into(),
-            r"spath and ipath utls. Usually you'll want {//some/path}".into(),
+            r"spath and ipath utils. Usually [//some/path] is the most readable".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -383,7 +387,7 @@ impl EvalScopeImpl for SPathFncs {
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Ok(p.unwrap())
                 },
-                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. {//some/spath/val} creates the byte for /some/spath/val" }
+                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. [//some/spath/val] creates the byte for /some/spath/val" }
             }
         ]
     }

@@ -50,29 +50,7 @@ impl StampFmt {
     }
 }
 
-/// tropical year date from micro's since 1970, with year being 356days + 6*60*60 seconds, and months being 30 days
-/// i.e. not comparable to a calender at all, but with an exact repr for Stamp's.
-pub fn ty6_date(stamp: Stamp) -> String {
-    let mut micros = stamp.get() as u128;
-    let times = [
-        Duration::SECOND.checked_mul(60 * 60 * 24 * 372).unwrap(),
-        Duration::SECOND.checked_mul(60 * 60 * 24 * 31).unwrap(),
-        Duration::SECOND.checked_mul(60 * 60 * 24).unwrap(),
-        Duration::SECOND.checked_mul(60 * 60).unwrap(),
-        Duration::SECOND.checked_mul(60).unwrap(),
-        Duration::SECOND,
-        Duration::MICROSECOND,
-    ];
-    let [mut year, mon, day, hour, minute, second, micros] = times.map(|v| {
-        let r = micros / v.as_micros();
-        micros *= v.as_micros();
-        r as i64
-    });
-    year += 11970;
-    format!("{year:0>6}-{mon:0>2}-{day:0>2} {hour:0>2}:{minute:0>2}:{second:0>2} {micros:0>6}Y6")
-}
-
-pub const DELTA_FORMATS: &[(&str, Duration)] = &[
+pub const DELTA_FORMATS: [(&str, Duration);9] = [
     (
         "Y",
         Duration::SECOND
@@ -244,10 +222,11 @@ impl FromStr for DurationStr {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct StampEF;
+#[derive(Copy, Clone, Debug,Default)]
+pub struct StampEF{pub fixed_now: Option<Stamp>}
 impl StampEF {
-    pub fn apply(mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
+    pub fn now(&self) -> Stamp { self.fixed_now.unwrap_or_else(linkspace_pkt::now)}
+    pub fn apply(&self,mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
         let mut result = None;
         while result.is_none() && !args.is_empty() {
             (stamp, args) = match args {
@@ -260,14 +239,19 @@ impl StampEF {
                     checked_stamp_sub(stamp, parse_duration_str(r)?).ok_or("stamp underflow")?,
                     args,
                 ),
-                [b"2delta", rest @ ..] => {
+                [b"ticks", rest @ ..] => {
                     args = rest;
-                    result = Some(delta_stamp(linkspace_pkt::now(), stamp).into_bytes());
+                    result = Some(delta_stamp(Stamp::ZERO,stamp).into_bytes());
                     break;
-                }
-                [b"2y6", rest @ ..] => {
+                },
+                [b"val", rest @ ..] => {
                     args = rest;
-                    result = Some(ty6_date(stamp).into_bytes());
+                    result = Some(delta_stamp_p(Stamp::ZERO,stamp,9,9).into_bytes());
+                    break;
+                },
+                [b"delta", rest @ ..] => {
+                    args = rest;
+                    result = Some(delta_stamp(self.now(), stamp).into_bytes());
                     break;
                 }
                 [b"str", rest @ ..] => {
@@ -278,7 +262,7 @@ impl StampEF {
                     let st: String = dt
                         .ok()
                         .and_then(|dt| dt.format(&default).ok())
-                        .unwrap_or_else(|| ty6_date(stamp));
+                        .unwrap_or_else(|| delta_stamp_p(Stamp::ZERO,stamp,9,9));
                     result = Some(st.into_bytes());
                     break;
                 }
@@ -291,12 +275,13 @@ impl StampEF {
         Ok(result.unwrap_or_else(|| stamp.0.to_vec()))
     }
 }
+
 impl EvalScopeImpl for StampEF {
     fn about(&self) -> (String, String) {
         (
             "stamp".into(),
             r#"utilities for stamp values (big endian u64 microsecond since unix epoch)
-arguments consists of ( [+-][YMWDhmslu]usize : )* (str | 2delta | 2y6)?
+arguments consists of ( [+-][YMWDhmslu]usize : )* (str | delta | ticks | val)?
 "#
             .into(),
         )
@@ -304,10 +289,10 @@ arguments consists of ( [+-][YMWDhmslu]usize : )* (str | 2delta | 2y6)?
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         crate::eval::fncs!([
             (@C "s",0..=16,None,"if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0",
-             |_,i:&[&[u8]],init,_| if init {StampEF::apply(Stamp::ZERO,i) } else {StampEF::apply(Stamp::try_from(i[0])?,&i[1..])},none),
-            ("now",0..=16,Some(true),"current systemtime",|_,i:&[&[u8]]| StampEF::apply(linkspace_pkt::now(),i)),
-            ("epoch",0..=16,Some(true),"unix epoch / zero time",|_,i:&[&[u8]]| StampEF::apply(Stamp::ZERO,i)),
-            ("s++",0..=16,Some(true),"max stamp",|_,i:&[&[u8]]| StampEF::apply(Stamp::MAX,i))
+             |s:&Self,i:&[&[u8]],init,_| if init {s.apply(Stamp::ZERO,i) } else {s.apply(Stamp::try_from(i[0])?,&i[1..])},none),
+            ("now",0..=16,Some(true),"current systemtime",|s:&Self,i:&[&[u8]]| s.apply(s.now(),i)),
+            ("epoch",0..=16,Some(true),"unix epoch / zero time",|s:&Self,i:&[&[u8]]| s.apply(Stamp::ZERO,i)),
+            ("s++",0..=16,Some(true),"max stamp",|s:&Self,i:&[&[u8]]| s.apply(Stamp::MAX,i))
         ])
     }
 }

@@ -847,7 +847,7 @@ macro_rules! fnc {
                          let st : Option<String> = $to_abe(bytes,options);
                          match st {
                              None => $crate::eval::ApplyResult::None,
-                             Some(st) => $crate::eval::ApplyResult::Ok(format!("{{{}:{}}}",$id,st).into_bytes())
+                             Some(st) => $crate::eval::ApplyResult::Ok(format!("[{}:{}]",$id,st).into_bytes())
                          }
                      }
         )
@@ -1110,6 +1110,7 @@ impl EvalScopeImpl for BytesFE {
     }
 }
 
+
 #[derive(Copy, Clone, Debug)]
 pub struct LogicOps;
 impl EvalScopeImpl for LogicOps {
@@ -1161,7 +1162,7 @@ impl EvalScopeImpl for LogicOps {
     }
     fn list_eval(&self) -> &[ScopeEval<&Self>] {
         &[
-            eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate untill valid return. Empty is valid, use {_/minsize?} to error on empty",
+            eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
                   |_,i:&[ABE],scope:&dyn Scope|{
                       let mut it = i.split(|v| v.is_colon());
                       if !it.next().ok_or("missing expr")?.is_empty(){ return Err("expected ':EXPR'".into())};
@@ -1359,11 +1360,59 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
             ABE::Expr(e) => match e {
                 Expr::Bytes(b) => out.extend_from_slice(b),
                 Expr::Lst(l) => {
-                    out.push(b'{');
+                    out.push(b'[');
                     dump_abe_bytes(out, l);
-                    out.push(b'}');
+                    out.push(b']');
                 }
             },
         }
+    }
+}
+
+#[derive(Copy,Clone)]
+pub struct Comment;
+impl EvalScopeImpl for Comment{
+    fn about(&self) -> (String, String) {
+        ("comment function / void function. evaluates to nothing".into(), "".into())
+    }
+
+    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
+        &[
+            fnc!("C",1..=16,"the comment function. all arguments are ignored. evaluates to ''",|_,_| Ok(vec![]))
+        ]
+    }
+
+    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+        &[]
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ArgV<'o>(pub [Option<&'o [u8]>;8]);
+impl<'o> ArgV<'o>{
+    pub fn try_fit(v: &'o [&'o [u8]]) -> Option<Self>{
+        if v.len() > 8 { return None}
+        let mut it = v.iter().copied();
+        Some(ArgV([
+            it.next(),it.next(),it.next(),it.next(),
+            it.next(),it.next(),it.next(),it.next()
+        ]))
+    }
+}
+impl<'o> EvalScopeImpl for ArgV<'o>{
+    fn about(&self) -> (String, String) {
+        ("user input list".into(), "Provide values, access with {0} {1} .. {7} ".into())
+    }
+    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
+        fncs!([
+            ( "0" , 0..=0,Some(false), "argv[0]", |t:&Self,_| Ok(t.0[0].ok_or("no 0 value")?.to_vec())),
+            ( "1" , 0..=0,Some(false), "argv[1]", |t:&Self,_| Ok(t.0[1].ok_or("no 1 value")?.to_vec())),
+            ( "2" , 0..=0,Some(false), "argv[2]", |t:&Self,_| Ok(t.0[2].ok_or("no 2 value")?.to_vec())),
+            ( "3" , 0..=0,Some(false), "argv[3]", |t:&Self,_| Ok(t.0[3].ok_or("no 3 value")?.to_vec())),
+            ( "4" , 0..=0,Some(false), "argv[4]", |t:&Self,_| Ok(t.0[4].ok_or("no 4 value")?.to_vec())),
+            ( "5" , 0..=0,Some(false), "argv[5]", |t:&Self,_| Ok(t.0[5].ok_or("no 5 value")?.to_vec())),
+            ( "6" , 0..=0,Some(false), "argv[6]", |t:&Self,_| Ok(t.0[6].ok_or("no 6 value")?.to_vec())),
+            ( "7" , 0..=0,Some(false), "argv[7]", |t:&Self,_| Ok(t.0[7].ok_or("no 7 value")?.to_vec()))
+        ])
     }
 }

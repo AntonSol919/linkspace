@@ -4,8 +4,12 @@
 - Semantics around removing packets form the local index
 - Add predicate type that fails if the field already contains another constraintpredicate
 - Error packets. (Users must be able to 'fill' a hash entry with a error packet indicating they do not want it.)
+- Integrate/Standardize bloom options for queries?
 
 # Pending API updates
+
+pull default watch_id == domain/group. lk_watch error on missing :watch
+Probably should error on lk_watch without :watch
 
 misc::lk_inspect_watches
 Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably want "b:..." , u8:12, #:me
@@ -18,6 +22,7 @@ Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably w
 
 # Improvements - Things pending impl
 
+- Create folder import/export example (Update cli/impex)
 - Bloom filter(+count) query option
 - Enable {@:me:local} lns name resolution (impl in LocalNS)
 - :follow:TAG/HASH predicates
@@ -28,11 +33,14 @@ Incongruity ABE '?' {/?..} returns ABE str, {u16:2/?u} returns val -> probably w
 - :end:HASH option to break on pull request
 - :start:HASH option
 - status_pull should probably take an optional max_age, this allows checking if any process ever set a status without setting the timeout to max.
+- allow multiple instances to be open
+
 
 - Packed queries: They're transmitted as text, but they can be packed into bytes.
 
 - [internal] core::matcher cleanup
 - [internal] core::env cleanup
+- [internal] DGPDExpr should impl ABEValidator and be split up into two types . One where the spath length is know and one where it can be dynamic
 - [internal] PktPredicates.index(RuleType) -> &mut dyn FieldPred
 - [internal] :mode:hash-* iteration should use set_info
 - [internal] Normalize lingo around abe "seperators" and "ctr characters" -- have to pick one

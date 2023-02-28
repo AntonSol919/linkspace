@@ -21,7 +21,7 @@ pub type RTCtx<GT> = EvalCtx<(EvalStd, RTScope<GT>)>;
 
 pub const fn rt_scope<'o, GT>(rt: GT) -> RTScope<GT>
 where
-    GT: 'o + Fn() -> std::io::Result<Linkspace> + Copy,
+    GT: 'o + Fn() -> anyhow::Result<Linkspace> + Copy,
 {
     let conf = EScope(Conf(rt));
     let readhash = EScope(ReadHash(rt));
@@ -37,14 +37,14 @@ pub fn rt_ctx<'o, GT>(
     rt: GT,
 ) -> EvalCtx<(impl Scope + 'o, RTScope<GT>)>
 where
-    GT: 'o + Fn() -> std::io::Result<Linkspace> + Copy,
+    GT: 'o + Fn() -> anyhow::Result<Linkspace> + Copy,
 {
     ctx.scope(rt_scope(rt))
 }
 
 pub const fn std_ctx_v<'o, GT>(rt: GT, version: &str) -> RTCtx<GT>
 where
-    GT: 'o + Fn() -> std::io::Result<Linkspace> + Copy,
+    GT: 'o + Fn() -> anyhow::Result<Linkspace> + Copy,
 {
     EvalCtx {
         scope: (linkspace_core::eval::std_ctx_v(version).scope, rt_scope(rt)),
@@ -54,7 +54,7 @@ where
 #[derive(Copy, Clone)]
 pub struct Conf<R>(R);
 
-impl<R: Fn() -> std::io::Result<Linkspace>> EvalScopeImpl for Conf<R> {
+impl<R: Fn() -> anyhow::Result<Linkspace>> EvalScopeImpl for Conf<R> {
     fn about(&self) -> (String, String) {
         (
             "config".into(),
@@ -84,7 +84,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> EvalScopeImpl for Conf<R> {
 
 #[derive(Copy, Clone)]
 pub struct ReadHash<GT>(GT);
-impl<R: Fn() -> std::io::Result<Linkspace>> ReadHash<R> {
+impl<R: Fn() -> anyhow::Result<Linkspace>> ReadHash<R> {
     // TODO this allows access to private
     fn read_dgpk(&self, inp: &[&[u8]], scope: &dyn Scope) -> Result<Vec<u8>, ApplyErr> {
         let domain = Domain::try_fit_byte_slice(inp[0])?;
@@ -92,12 +92,12 @@ impl<R: Fn() -> std::io::Result<Linkspace>> ReadHash<R> {
             .get(1)
             .map(|v| GroupID::try_fit_bytes_or_b64(v))
             .transpose()?
-            .unwrap_or(PUBLIC_GROUP);
-        if group == LOCAL_ONLY_GROUP {
+            .unwrap_or(PUBLIC);
+        if group == PRIVATE {
             // TODO replace with ctx.options
             if !std::env::var("LK_PRIVATE")?.parse::<bool>()? {
                 return Err(
-                    "prevent reading {#:0} group or set LK_PRIVATE=true to enable ( dangerous if you're evaluating external abe )"
+                    "prevent reading [#:0] group or set LK_PRIVATE=true to enable ( dangerous if you're evaluating external abe )"
                         .into());
             }
         }
@@ -125,12 +125,12 @@ impl<R: Fn() -> std::io::Result<Linkspace>> ReadHash<R> {
         }
     }
 }
-impl<R: Fn() -> std::io::Result<Linkspace>> EvalScopeImpl for ReadHash<R> {
+impl<R: Fn() -> anyhow::Result<Linkspace>> EvalScopeImpl for ReadHash<R> {
     fn about(&self) -> (String, String) {
         ("database".into(),
          "get packets from the local db.
 e-funcs evaluate their args as if in pkt scope.
-funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}} == {readhash:..:group:str})".into())
+funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]] == [readhash:..:group:str])".into())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[
@@ -156,7 +156,7 @@ funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}}
                 },
                 info: ScopeFuncInfo {
                     id:  "read", init_eq: None, argc: 2..=16,to_abe:false,
-                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. {read:mydomain:{#:pub}:{//a/path}:{@:me}::data:str}, prefer eval ctx"
+                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str], prefer eval ctx"
                 },
                 to_abe:none
             },
@@ -191,7 +191,7 @@ funcs evaluate as if {/[func + args]:{rest}}. (e.g. {/readhash:HASH:{group:str}}
             },
             info: ScopeEvalInfo {
                 id: "readhash",
-                help: "HASH ':' expr [ ':' alt if not found ] ",
+                help: "HASH ':' expr (':' alt if not found) ",
             },
         }]
     }

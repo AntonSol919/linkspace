@@ -54,13 +54,13 @@ impl LinkspaceOpts {
         Ok(eval(&self.eval_ctx(), &parse_abe(v)?)?)
     }
     pub fn fake_eval_ctx(
-    ) -> crate::eval::RTCtx<impl Fn() -> std::io::Result<Linkspace> + Copy + 'static> {
-        crate::eval::std_ctx_v(|| Err(std::io::Error::other("no linkspace set")), EVAL0_1)
+    ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'static> {
+        crate::eval::std_ctx_v(|| anyhow::bail!("no linkspace instance "), EVAL0_1)
     }
     pub fn eval_ctx<'o>(
         &'o self,
-    ) -> crate::eval::RTCtx<impl Fn() -> std::io::Result<Linkspace> + Copy + 'o> {
-        crate::eval::std_ctx_v(|| self.runtime_io(), EVAL0_1)
+    ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'o> {
+        crate::eval::std_ctx_v(|| self.runtime_io().context("could not open linkspace instance"), EVAL0_1)
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.root()?.join("keys"))
@@ -87,7 +87,7 @@ pub struct IOOpts {
         alias = "private_group",
         long,
         env = "PRIVATE_GROUP",
-        help = "enable io of linkpoints in {#:0}"
+        help = "enable io of linkpoints in [#:0]"
     )]
     private: bool,
     #[clap(flatten)]
@@ -101,7 +101,7 @@ pub struct OutOpts {
     #[clap(
         long,
         env = "WRITE_PRIVATE",
-        help = "enable output of linkpoints in {#:0}"
+        help = "enable output of linkpoints in [#:0]"
     )]
     write_private: Option<bool>,
 }
@@ -110,7 +110,7 @@ pub struct InOpts {
     #[clap(
         long,
         env = "READ_PRIVATE",
-        help = "enable input of linkpoints in {#:0}"
+        help = "enable input of linkpoints in [#:0]"
     )]
     pub(crate) read_private: Option<bool>,
     #[clap(
@@ -168,7 +168,7 @@ impl CommonOpts {
     }
     pub fn check_private(&self, pkt: impl NetPkt) -> Option<impl NetPkt> {
         let write_private = self.write_private().unwrap_or(false);
-        if !write_private && pkt.as_point().group() == Some(&LOCAL_ONLY_GROUP) {
+        if !write_private && pkt.as_point().group() == Some(&PRIVATE) {
             tracing::warn!(pkt=%pkt_fmt(&pkt),"Skip writing private (null) group");
             return None;
         }
@@ -180,7 +180,7 @@ impl CommonOpts {
             .filter_map(|v| v.open(&ctx).transpose())
             .try_collect()
     }
-    pub fn open_read(&self, r: &Option<ReadSource>) -> anyhow::Result<Reader> {
+    pub fn open_read(&self, r: Option<&ReadSource>) -> anyhow::Result<Reader> {
         ReadSource::into_reader(r, self.io.inp, &self.eval_ctx())
     }
     pub fn write_dest(

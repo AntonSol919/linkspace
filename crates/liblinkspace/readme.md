@@ -15,15 +15,18 @@ In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 - Path (URL like) addressable packets.
 - Group/Domain split
 
+
 To write applications for a supernet requires a different perspective compared to managing sockets.
 The challenge is defining a super structure that can work across time and space with noisy incomplete data.
+Or treat it as a shared folder. That works as well.
 
 In return a supernet provides a lot of useful properties including:
-Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifiable, (offline)available, etc.
+Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant etc.
 
-Checkout [ELI5](https://antonsol919.github.io/linkspace/eli5.html) if the words so far mean little to you, or you want an oversimplified introduction to the general idea.
+Checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're familiar with git and web-servers.
+Checkout [ELI5](https://antonsol919.github.io/linkspace/docs/guide/eli5.html) if the words so far mean little to you.
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
-Expect unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
+Expect some unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
 
-I suggest you start at the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html)
+

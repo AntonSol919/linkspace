@@ -358,9 +358,9 @@ impl Display for Expr {
                 Ok(())
             }
             Expr::Lst(l) => {
-                f.write_char('{')?;
+                f.write_char('[')?;
                 l.iter().try_for_each(|e| Display::fmt(e, f))?;
-                f.write_char('}')
+                f.write_char(']')
             }
         }
     }

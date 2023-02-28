@@ -18,7 +18,7 @@ lazy_static! {
     pub static ref PUBLIC_GROUP_PKT: NetPktBox =
         datapoint(b"Hello, Sol", NetPktHeader::EMPTY).as_netbox();
     pub static ref SINGLE_LINK_PKT: NetPktBox = linkpoint(
-        LOCAL_ONLY_GROUP,
+        PRIVATE,
         ab(b""),
         IPath::empty(),
         &[Link {
@@ -31,9 +31,9 @@ lazy_static! {
     )
     .as_netbox();
 }
-pub const LOCAL_ONLY_GROUP: LkHash = B64([0; 32]);
+pub const PRIVATE: LkHash = B64([0; 32]);
 pub const PUBLIC_GROUP_B64: &str = "RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0";
-pub const PUBLIC_GROUP: LkHash = B64([
+pub const PUBLIC: LkHash = B64([
     68, 61, 229, 180, 232, 94, 27, 128, 171, 6, 234, 212, 50, 123, 103, 133, 159, 15, 181, 158,
     178, 1, 129, 127, 11, 91, 171, 40, 102, 116, 4, 29,
 ]);
@@ -43,7 +43,7 @@ pub static EXCHANGE_DOMAIN: Domain = abx(b"exchange");
 
 #[test]
 fn correct_public_ids() {
-    assert_eq!(PUBLIC_GROUP, PUBLIC_GROUP_PKT.hash());
+    assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.hash());
     assert_eq!(PUBLIC_GROUP_B64, PUBLIC_GROUP_PKT.hash().b64());
     let p = PUBLIC_GROUP_PKT.as_netparts().fields;
     match p {
@@ -53,7 +53,7 @@ fn correct_public_ids() {
 }
 pub fn static_pkts() -> Vec<NetPktBox> {
     let links = [
-        Link::new("pub", PUBLIC_GROUP),
+        Link::new("pub", PUBLIC),
         Link::new("test", *TEST_GROUP_ID),
     ];
     let mut list = vec![];
@@ -62,11 +62,11 @@ pub fn static_pkts() -> Vec<NetPktBox> {
         let spath = ipath_buf(&[b"staticpkt", sp_segm.as_bytes()]);
         for stamp in [Stamp::ZERO, Stamp::MAX] {
             list.push(
-                linkpoint(PUBLIC_GROUP, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
+                linkpoint(PUBLIC, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
             );
             list.push(
                 keypoint(
-                    PUBLIC_GROUP,
+                    PUBLIC,
                     ab(b"test"),
                     &spath,
                     &links,
@@ -80,7 +80,7 @@ pub fn static_pkts() -> Vec<NetPktBox> {
         }
         for stamp in [Stamp::new(1), Stamp::new(u64::MAX - 1)] {
             list.push(
-                linkpoint(PUBLIC_GROUP, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
+                linkpoint(PUBLIC, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
             );
         }
     }

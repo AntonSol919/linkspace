@@ -3,8 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::consts::LOCAL_ONLY_GROUP;
-use crate::consts::PUBLIC_GROUP;
+use crate::consts::PRIVATE;
+use crate::consts::PUBLIC;
 use crate::consts::TEST_GROUP_ID;
 pub use crate::stamp_fmt::StampEF;
 pub use linkspace_pkt::abe::eval::*;
@@ -29,7 +29,7 @@ pub type EvalStd = (
 pub const fn std_ctx_v(_version: &str) -> EvalCtx<EvalStd> {
     EvalCtx {
         scope: (
-            ((core_scope(), EScope(StaticLNS)), EScope(StampEF)),
+            ((core_scope(), EScope(StaticLNS)), EScope(StampEF{fixed_now:None})),
             EScope(SPathFncs),
         ),
     }
@@ -41,33 +41,33 @@ impl EvalScopeImpl for StaticLNS {
     fn about(&self) -> (String, String) {
         (
             "static-lns".into(),
-            "static lns for local only {{#:0}} and public {{#:pub}}".into(),
+            "static lns for local only [#:0] and public [#:pub]".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"0" => ApplyResult::Ok(LOCAL_ONLY_GROUP.0.to_vec()),
-                    b"pub" => ApplyResult::Ok(PUBLIC_GROUP.0.to_vec()),
+                    b"0" => ApplyResult::Ok(PRIVATE.0.to_vec()),
+                    b"pub" => ApplyResult::Ok(PUBLIC.0.to_vec()),
                     b"test" => ApplyResult::Ok(TEST_GROUP_ID.0.to_vec()),
                     _ => ApplyResult::None,
                 },
                 info: ScopeFuncInfo {
                     id: "#",
                     init_eq: Some(true),
-                    argc: 1..=1,
+                    argc: 1..=16,
                     help: "resolve #:0 , #:pub, and #:test without a db",
                     to_abe: true,
                 },
                 to_abe: |_, i, _| {
                     let g = GroupID::try_fit_slice(i).ok()?;
-                    let b = if g == LOCAL_ONLY_GROUP {
-                        "{#:0}"
-                    } else if g == PUBLIC_GROUP {
-                        "{#:pub}"
+                    let b = if g == PRIVATE {
+                        "[#:0]"
+                    } else if g == PUBLIC {
+                        "[#:pub]"
                     } else if g == *TEST_GROUP_ID {
-                        "{#:test}"
+                        "[#:test]"
                     } else {
                         return ApplyResult::None;
                     };
@@ -76,49 +76,36 @@ impl EvalScopeImpl for StaticLNS {
             },
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"none" => ApplyResult::Ok(LOCAL_ONLY_GROUP.0.to_vec()),
+                    b"none" => ApplyResult::Ok(PRIVATE.0.to_vec()),
                     _ => ApplyResult::None,
                 },
                 info: ScopeFuncInfo {
                     id: "@",
                     init_eq: Some(true),
-                    argc: 1..=1,
+                    argc: 1..=16,
                     help: "resolve @:none",
                     to_abe: true,
                 },
                 to_abe: |_, i, _| {
                     if *i == [0; 32] {
-                        ApplyResult::Ok(b"{@:none}".to_vec())
+                        ApplyResult::Ok(b"[@:none]".to_vec())
                     } else {
                         ApplyResult::None
                     }
                 },
             },
-            /*
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, None),
-                info: ScopeFuncInfo { id: "?", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, Some(false)),
-                info: ScopeFuncInfo { id: "?@", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            ScopeFunc{
-                apply: |_,i,_,_| rev_lookup(i, Some(true)),
-                info: ScopeFuncInfo { id: "?#", init_eq: None, argc: 1..=1, help: "static reverse lookup '#' and '@' without a db" },
-            },
-            */
+            
         ]
     }
 }
 fn _rev_lookup(i: &[&[u8]], group_mode: Option<bool>) -> ApplyResult {
     let b = B64::try_fit_slice(i[0])?;
     match b {
-        b if b == PUBLIC_GROUP => Ok(b"{#:pub}".to_vec()),
-        b if b == *TEST_GROUP_ID => Ok(b"{#:test}".to_vec()),
-        b if b == LOCAL_ONLY_GROUP => match group_mode {
-            Some(false) => Ok(b"{@:none}".to_vec()),
-            _ => Ok(b"{#:0}".to_vec()),
+        b if b == PUBLIC => Ok(b"[#:pub]".to_vec()),
+        b if b == *TEST_GROUP_ID => Ok(b"[#:test]".to_vec()),
+        b if b == PRIVATE => match group_mode {
+            Some(false) => Ok(b"[@:none]".to_vec()),
+            _ => Ok(b"[#:0]".to_vec()),
         },
         _ => return ApplyResult::None,
     }

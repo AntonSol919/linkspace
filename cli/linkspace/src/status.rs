@@ -63,7 +63,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     let lk : Linkspace = common.runtime()?.into();
     let c= common.clone();
 
-    let mut data_reader = common.open_read(&data)?;
+    let mut data_reader = common.open_read(data.as_ref())?;
     lk_status_set(&lk, status, move |_,domain,group,path,link| {
         let mut buf = vec![];
         let data = data_reader(&c.eval_ctx().dynr(),&mut buf)?;
@@ -83,7 +83,7 @@ pub struct PollStatus {
     timeout: DurationStr,
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
-    /// Output multiple replies (untill last_req+duration)
+    /// Output multiple replies (until last_req+duration)
     #[clap(short,long)]
     multi: bool,
     /// only output query before quiting

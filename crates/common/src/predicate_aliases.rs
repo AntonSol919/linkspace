@@ -3,48 +3,15 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::path::PathBuf;
-
 use abe::{convert::AnyABE };
-use anyhow::Context;
 use clap::Args;
 use linkspace_core::{
     predicate::exprs::{ QScope},
-    prelude::*,
+    prelude::{*, predicate_type::PredicateType},
 };
 
-#[derive(Debug, Clone, Default, Args)]
-#[group(skip)]
-pub struct WithFiles<R: clap::FromArgMatches + clap::Args> {
-    #[clap(long)]
-    pub file: Vec<PathBuf>,
-    #[clap(flatten)]
-    pub opts: R,
-}
 
-impl<R: clap::FromArgMatches + clap::Args> WithFiles<R> {
-    pub fn lines(&self) -> anyhow::Result<impl Iterator<Item = anyhow::Result<AnyABE>> + '_> {
-        let files = self
-            .file
-            .iter()
-            .map(|v| {
-                std::fs::read_to_string(v)
-                    .with_context(|| v.to_string_lossy().to_string())
-                    .map(|a| (v, a))
-            })
-            .try_collect::<Vec<_>>()?;
-        Ok(files.into_iter().flat_map(|(path, data)| {
-            data.lines()
-                .enumerate()
-                .map(|(i, line)| {
-                    line.parse()
-                        .with_context(|| format!("{}:{}  {}", path.to_string_lossy(), i, line))
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-        }))
-    }
-}
+
 
 #[derive(Debug, Clone,   Default, Args)]
 #[group(skip)]
@@ -97,9 +64,13 @@ pub struct PredicateAliases {
     /// Add :follow option
     pub follow: bool,
 
+    #[clap(long)]
+    /// add recv:<:{now:+..} 
+    pub ttl : Option<String>
 }
 
 impl PredicateAliases {
+    // TODO use PredicateType instead of RuleType
     pub fn as_predicates(self) -> impl Iterator<Item = Vec<ABE>> {
         let PredicateAliases {
             max,
@@ -112,7 +83,8 @@ impl PredicateAliases {
             max_new,
             watch,
             watch_id,
-            follow
+            follow,
+            ttl,
         } = self;
         let signed = signed
             .then(||
@@ -138,10 +110,12 @@ impl PredicateAliases {
         let watch = watch_id.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
             .map(|v| abev!( : (KnownOptions::Watch.to_string()) : +(v)).into());
 
+        let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}).into());
 
         let follow = follow.then(|| abev!(: (KnownOptions::Follow.to_string())));
 
         watch.into_iter()
+            .chain(ttl)
             .chain(follow)
             .chain(signed)
             .chain(unsigned)

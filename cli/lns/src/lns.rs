@@ -43,7 +43,7 @@ impl NaamStatus {
         let mut links = self.proposal.get_links().to_vec();
         links.push(Link::new("bind", *self.binding.hash()));
         links.push(Link::new("proposal", *self.proposal.hash()));
-        linkpoint(LOCAL_ONLY_GROUP, NAAM, &name, &links, *self.proposal.get_create_stamp(),&[], ()).as_netbox()
+        linkpoint(PRIVATE, NAAM, &name, &links, *self.proposal.get_create_stamp(),&[], ()).as_netbox()
     }
 }
 fn vote_by_rootkeys(proposal:NetPktBox) -> anyhow::Result<NaamStatus>{
@@ -113,7 +113,7 @@ fn split_first_if_eq<'o>(sp:&'o SPath,expect:&str) -> anyhow::Result<&'o SPath>{
 pub const NAAM : Domain = as_domain(b"naam");
 fn propose(name: &SPath,links:&[Link],until:Stamp) -> anyhow::Result<NetPktBox>{
     let spath = PROPOSAL.concat(name)?.try_idx()?;
-    Ok(linkpoint(PUBLIC_GROUP, NAAM, &spath, links, until,&[], ()).as_netbox())
+    Ok(linkpoint(PUBLIC, NAAM, &spath, links, until,&[], ()).as_netbox())
 }
 
 fn vote(key: &SigningKey, proposal: &(impl NetPkt+?Sized),key_bind_authority:&NaamStatus) -> anyhow::Result<NetPktBox>{
@@ -126,7 +126,7 @@ fn vote(key: &SigningKey, proposal: &(impl NetPkt+?Sized),key_bind_authority:&Na
         Link::new("auth_proposal",key_bind_authority.proposal.hash()),
         Link::new("auth_bind",key_bind_authority.binding.hash())
     ];
-    Ok(keypoint(&key, PUBLIC_GROUP, NAAM, &vote_spath, &links, now(),&[], ()).as_netbox())
+    Ok(keypoint(&key, PUBLIC, NAAM, &vote_spath, &links, now(),&[], ()).as_netbox())
 }
 
 fn bind(proposal : &NetPktPtr,mut votes: Vec<&(impl NetPkt+?Sized)>) -> anyhow::Result<NetPktBox>{
@@ -144,7 +144,7 @@ fn bind(proposal : &NetPktPtr,mut votes: Vec<&(impl NetPkt+?Sized)>) -> anyhow::
     let stamp = votes.iter().map(|p| *p.point().get_create_stamp()).max_by_key(|v| v.get()).ok_or(anyhow!("TODO no stamp"))?;
     let name = split_first_if_eq(proposal.get_spath(), "proposal")?;
     let bind_spath = NAAM_SP.concat(name).unwrap().try_idx()?;
-    Ok(linkpoint(PUBLIC_GROUP, NAAM, &bind_spath, &links, stamp,&[], ()).as_netbox())
+    Ok(linkpoint(PUBLIC, NAAM, &bind_spath, &links, stamp,&[], ()).as_netbox())
 }
 
 fn get_local(name: &SPath,r:&ReadTxn) -> anyhow::Result<NetPktBox>{
@@ -195,7 +195,7 @@ lazy_static::lazy_static!{
         tag
     };
     pub static ref PUBLIC_ROOT : Vec<Link> =
-        vec![Link::new("group",PUBLIC_GROUP),Link::new("pkt",PUBLIC_GROUP)].into_iter().chain(
+        vec![Link::new("group",PUBLIC),Link::new("pkt",PUBLIC)].into_iter().chain(
         AUTH_KEYS.iter().map(|s| Link{tag: *VETO_KEY_TAG,pointer:s.pubkey().into()})).collect();
     pub static ref ROOT_BINDING : NaamStatus = {
         let proposal = propose(SPath::empty(), &*PUBLIC_ROOT,Stamp::MAX).unwrap();
@@ -205,7 +205,7 @@ lazy_static::lazy_static!{
                     Link::new("proposal",proposal.hash()),
                     Link::new("auth_proposal",proposal.hash()),
                 ];
-                (k.pubkey().into(),keypoint(&k, PUBLIC_GROUP, NAAM, &*VOTE, &links, now(),&[], ()).as_netbox())
+                (k.pubkey().into(),keypoint(&k, PUBLIC, NAAM, &*VOTE, &links, now(),&[], ()).as_netbox())
             })
             .collect::<HashMap<PubKey,_>>();
         let binding = bind(&proposal,votes.values().map(|v|&**v).collect::<Vec<_>>()).unwrap();
