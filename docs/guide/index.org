@@ -48,7 +48,7 @@ e.g. git, bitcoin, nostr, the linkspace protocol
 #+END_VERSE
 
 The supernet paradigm is a trade-off.
-Instead of processing ordered streams of network data, an application is a function over the partial watch of (potentially noisy) interlinked state.
+Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 
 The Linkspace Protocol is best understood as 4 ideas.
 
@@ -61,9 +61,8 @@ A big addition compared to similar systems is the split between domains and grou
 It separates the responsibility of 'User Interface & Data Structure' with the 'Members and the exchange of data'.
 This split and other standard problems, are supported by a set of (growing) [[Conventions]].
 
-There are a number of ideas that built on each other.
-To see what they allow you to do checkout the [[#imageboard][imageboard]] example
-
+You can checkout the [[#imageboard][imageboard]] example to see it in action.
+But bare with me as a some stuff is still in development.
 
 * Setup
 
