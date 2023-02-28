@@ -31,5 +31,5 @@ publish: git-checkin docs/guide/index.html
 
 # ensure our index.html is up to date.
 docs/guide/index.html: docs/guide/index.org
-	echo "TODO: Currently not able to make guide/index.html"
+	echo "TODO: Currently not able to make guide/index.html outside of emacs"
 	exit 1

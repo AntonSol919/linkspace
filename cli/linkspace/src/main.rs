@@ -141,7 +141,7 @@ enum Command {
     #[clap(alias = "n")]
     Encode {
         /// a set of '/' delimited options
-        #[clap(default_value = "@/#/@local/#local/b:32:64")]
+        #[clap(default_value = "@/#/b:32:64")]
         opts: String,
     },
 

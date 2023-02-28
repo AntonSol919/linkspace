@@ -6,7 +6,7 @@
 use std::sync::LazyLock;
 
 use bytefmt::abe::{parse_abe, ABE};
-/// default fmt in many cases and output for '[pkt]'
+/// default fmt in many cases and output for `[pkt]`
 pub static DEFAULT_PKT: &str = "\
 type\\t[type:str]\\n\
 hash\\t[hash:str]\\n\

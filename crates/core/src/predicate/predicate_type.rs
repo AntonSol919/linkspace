@@ -63,7 +63,7 @@ predty!( enum PredicateType {
     Domain => ("domain",LINK,"[a:example]","domain - if fewer then 16 bytes, prepadded with \0"),
     Prefix => ("prefix",LINK,"/hello/world","path prefix - only accepts '=' op"),
     Path => ("path",LINK,"/hello/world","exact path - only accepts '=' op"),
-    Pubkey => ("pubkey",SIGNATURE,"[@local:me]","public key used to sign point"),
+    Pubkey => ("pubkey",SIGNATURE,"[@:me:local]","public key used to sign point"),
     Create => ("create",LINK,"[now:-1H]","the create stamp"),
     PathLen => ("path_len",LINK,"[u8:0]","the total number of path components - max 8"),
     LinksLen => ("links_len",LINK,"[u16:0]","the number of links in a packet"),

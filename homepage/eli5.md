@@ -8,7 +8,7 @@ The 15-year-old would be confused by analogies about printers or papers.
 The 40y old has mastered the skill of "Print to PDF" and resists learning anything new.
 
 The goal is to give a basic model for thinking about the digital space in case you percieve it as a collection of 'apps'.
-If you're already comfortable working with git or building webservers, this introduction is not for you. 
+If you're already comfortable working with git or building webservers, you can jump into the [Guide](./docs/guide/index.html).
 
 ## How does our current web work?
 
@@ -91,14 +91,15 @@ They might create:
 | /by-person/alice/event0000 | Alice shares a new image    |
 | /by-person/alice/event0004 | Alice is looking for a taxi |
 
-| Writen by process B        | Data                        |
+| Writen by process B         | Data                        |
+|-----------------------------|-----------------------------|
 | /log-without-spam/event0000 | Alice shares a new image    |
 | /log-without-spam/event0001 | Bob wants to buy a car      |
 | /log-without-spam/event0003 | Dave opened our app         |
 | /log-without-spam/event0003 | Alice is looking for a taxi |
 
-It is common to think of deleting or moving data. 
-But this is usually not what really happens. 
+It is common to think of deleting or moving data.  
+But this is not what really happens.  
 
 The effect of "moving" or "deleting" are achieved by creating new entries.
 For instance, "log-without-spam" is a copy of "log" without "event0002".
@@ -114,13 +115,14 @@ Things like:
 ## The graphical user interface
 
 The app you use to talk to the host has two parts. 
-The paintings of buttons and text it creates, and the communication in bits and bytes.
+The painting of buttons or texts, and the communication in bits and bytes.
 
 The designer works hard to make it feel like a 'place'.  
-A single whole you should care about. 
+A single whole you should care about.  
 
 But they are two different things.  
-In part because the hosts want to have their place in and between our lives.
+The hosts trade you this comfort for a perpetual grant to exploit you and your communication.  
+Or it is as they claim; for your own protection.  
 
 ## What is a Hash?
 
@@ -177,7 +179,7 @@ With public key cryptography:
 
 # What is the Linkspace Protocol?
 
-Now that we know about the index, hashes, and public keys, we can talk about the future of the internet.
+Now that we know about the index, hashes, and public keys, we can talk about what I think the internet ought to be.
 
 In linkspace all events:
 
@@ -188,9 +190,8 @@ In linkspace all events:
 - can be signed with a public key.
 
 The hash is generated: It allows everybody to efficiently talk _about_ things.
-You set a group, and your device makes sures only the members of that group can get the data.
-The domain is chosen by a developer. It is put before the path. It signals what app to use and what the events mean.
-The path is set by a application.
+You set a group, it exists because we say it does, and your device exchanges with the members of that group.
+The domain is chosen by a developer. It signals what app to use, and how the events are organized.
 The signature is created from the user's public key.
 It allows us to identify each other.
 
@@ -198,20 +199,32 @@ It allows us to identify each other.
 
 ```read_index``` and ```write_index``` are democratized.
 
-Hosting part of an index is a generic utility.
-Any computer can do it.
+It can be moved; hosted where it makes sense to you.
 
 That is not to say everything is shared all the time.  
 A [process] might be done by dedicated systems.
 Special groups can be made with specific sharing rules.  
 
-However, the public hosts that are just a place to share what guests do need to step up their game.
-Instead of dictating rules, they must compete.
-Guests can move to a better host and still talk with the people they know.
+However, we force the public 'platforms' to change.  
+Their value as _just_ a place to connect people is gone.  
+Instead of dictating rules, they must compete.  
+They need to provide value on your terms.  
+If not, another system can take over where we left off.  
+
+And we get to build new (social) contracts:  
+Discussions on scientific papers with the data and code linked in.  
+Social Media apps working over Bluetooth, WiFi, etc.  
+Public service announcements signed to prevent AI generated lies.  
+Incompany communication tools, expandable by any developer.  
+A taxi or hotel 'markets' with a operated by locals at a fraction of the current markup,  
+Gradual expansion of the interop in supply chains.  
+
+With far less code than you're expecting.
 
 ## Closing thoughts
 
-In short, the time of digital dictatorships and fiefdoms is ending.
+The Linkspace Protocol is free for everybody, anytime, anywhere.
+The time of digital dictatorships and fiefdoms is ending.
 Please help kill them.
 Support the project by [registering](./lns.html) a public key name.
 

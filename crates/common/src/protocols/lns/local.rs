@@ -3,9 +3,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/// Impl's ABE scope/eval for {+:hello:world}, {+@:world:hello}, and {/+/hello/world}
+
 use std::fmt::Debug;
 
+use anyhow::Context;
 use linkspace_core::{
     eval,
     prelude::{query_mode::Order, *},
@@ -95,8 +96,8 @@ pub fn get_lookup_entries<'o>(
     reader.query_tree(Order::Desc, &q)
 }
 
-impl<R: Fn() -> std::io::Result<Linkspace>> LocalLNS<R> {
-    fn lookup_claim(&self, kind: TagSuffix, bytes: &[u8]) -> ApplyResult {
+impl<R: Fn() -> anyhow::Result<Linkspace>> LocalLNS<R> {
+    pub fn lookup_claim(&self, kind: TagSuffix, bytes: &[u8]) -> ApplyResult {
         let hash = LkHash::try_fit_bytes_or_b64(bytes).ok()?;
         let reader = (self.rt)()?.env().get_reader()?;
         let lookup_lp = get_lookup_entry(&reader, kind, hash.0)??;
@@ -108,7 +109,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> LocalLNS<R> {
             let path = claim.get_ipath();
             let mut it = path.iter();
             let _local_comp = it.next();
-            ApplyResult::Ok(format!("[@local:{}]", abl(it)).into_bytes())
+            ApplyResult::Ok(format!("[@:{}:local]", abl(it)).into_bytes())
         } else {
             ApplyResult::None
         }
@@ -140,7 +141,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> LocalLNS<R> {
         drop(reader);
         r
     }
-    fn local_tag_ptr(&self, args: &[&[u8]], tag: TagSuffix) -> Result<Vec<u8>, ApplyErr> {
+    pub fn local_tag_ptr(&self, args: &[&[u8]], tag: TagSuffix) -> Result<Vec<u8>, ApplyErr> {
         let empty = args.iter().position(|v| v.is_empty());
         let (path_b, rest) = if let Some(i) = empty {
             (&args[..i], &args[i + 1..])
@@ -164,7 +165,7 @@ impl<R: Fn() -> std::io::Result<Linkspace>> LocalLNS<R> {
         Ok(link.ptr.to_vec())
     }
 }
-impl<R: Fn() -> std::io::Result<Linkspace>> eval::EvalScopeImpl for LocalLNS<R> {
+impl<R: Fn() -> anyhow::Result<Linkspace>> eval::EvalScopeImpl for LocalLNS<R> {
     fn about(&self) -> (String, String) {
         ("local-lns".into(), "".into())
     }
@@ -224,9 +225,9 @@ pub fn setup_local_key(
     id: &str,
     enckey: &str,
     data: &[u8],
-) -> std::io::Result<PubKey> {
+) -> anyhow::Result<PubKey> {
     let pubkey =
-        crate::identity::pubkey(enckey).map_err(|_e| std::io::Error::other("bad enckey"))?;
+        crate::identity::pubkey(enckey).context("can't read encrypted format")?;
     let path = spath_buf(&[id.as_bytes()]);
     let encrypted_private_key = datapoint(enckey.as_bytes(), ()).as_netbox();
     let links = [

@@ -314,7 +314,7 @@ impl EvalScopeImpl for SPathFncs {
     fn about(&self) -> (String, String) {
         (
             "path".into(),
-            r"spath and ipath utls. Usually you'll want {//some/path}".into(),
+            r"spath and ipath utils. Usually [//some/path] is the most readable".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -387,7 +387,7 @@ impl EvalScopeImpl for SPathFncs {
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Ok(p.unwrap())
                 },
-                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. {//some/spath/val} creates the byte for /some/spath/val" }
+                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. [//some/spath/val] creates the byte for /some/spath/val" }
             }
         ]
     }

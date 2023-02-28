@@ -440,7 +440,7 @@ pub mod abe {
                     None => LK_EVAL_CTX_RT.borrow().as_ref().cloned(),
                     Some(v) => v.cloned(),
                 }
-                .ok_or_else(|| std::io::Error::other("No runtime argument given"))
+                .ok_or_else(|| anyhow::anyhow!("no linkspace instance was set"))
             };
             Ok(LkCtx(InlineCtx::Std((
                 opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
@@ -598,8 +598,8 @@ pub mod key {
 
     /** linkspace stored identity
 
-    open (or generate) the key `name` which is also accessible as [@local:name].
-    empty name defaults to 'me' ( i.e. [@local:name] )
+    open (or generate) the key `name` which is also accessible as \[@:name:local\].
+    empty name defaults to 'me' ( i.e. \[@:name:local\] )
     **/
     pub fn lk_key(
         linkspace: &Linkspace,

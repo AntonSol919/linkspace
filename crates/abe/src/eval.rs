@@ -1405,9 +1405,14 @@ impl<'o> EvalScopeImpl for ArgV<'o>{
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
-            ( "0" , 0..=0, "user val", |t:&Self,_| Ok(t.0[0].ok_or("no 0 value")?.to_vec())),
-            ( "1" , 0..=0, "user val", |t:&Self,_| Ok(t.0[1].ok_or("no 1 value")?.to_vec())),
-            ( "2" , 0..=0, "user val", |t:&Self,_| Ok(t.0[2].ok_or("no 2 value")?.to_vec()))
+            ( "0" , 0..=0,Some(false), "argv[0]", |t:&Self,_| Ok(t.0[0].ok_or("no 0 value")?.to_vec())),
+            ( "1" , 0..=0,Some(false), "argv[1]", |t:&Self,_| Ok(t.0[1].ok_or("no 1 value")?.to_vec())),
+            ( "2" , 0..=0,Some(false), "argv[2]", |t:&Self,_| Ok(t.0[2].ok_or("no 2 value")?.to_vec())),
+            ( "3" , 0..=0,Some(false), "argv[3]", |t:&Self,_| Ok(t.0[3].ok_or("no 3 value")?.to_vec())),
+            ( "4" , 0..=0,Some(false), "argv[4]", |t:&Self,_| Ok(t.0[4].ok_or("no 4 value")?.to_vec())),
+            ( "5" , 0..=0,Some(false), "argv[5]", |t:&Self,_| Ok(t.0[5].ok_or("no 5 value")?.to_vec())),
+            ( "6" , 0..=0,Some(false), "argv[6]", |t:&Self,_| Ok(t.0[6].ok_or("no 6 value")?.to_vec())),
+            ( "7" , 0..=0,Some(false), "argv[7]", |t:&Self,_| Ok(t.0[7].ok_or("no 7 value")?.to_vec()))
         ])
     }
 }

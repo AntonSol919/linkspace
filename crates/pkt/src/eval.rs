@@ -60,7 +60,7 @@ macro_rules! as_scopefn {
                 id: $name,
                 init_eq: Some(true),
                 argc: 0..=1,
-                help: concat!("?(str|abe) - get ", $name, " field from netpkt"),
+                help: concat!("?(str|abe) - netpkt.", $name ),
                 to_abe: false,
             },
         }

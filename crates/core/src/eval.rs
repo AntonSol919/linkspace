@@ -56,7 +56,7 @@ impl EvalScopeImpl for StaticLNS {
                 info: ScopeFuncInfo {
                     id: "#",
                     init_eq: Some(true),
-                    argc: 1..=1,
+                    argc: 1..=16,
                     help: "resolve #:0 , #:pub, and #:test without a db",
                     to_abe: true,
                 },
@@ -82,7 +82,7 @@ impl EvalScopeImpl for StaticLNS {
                 info: ScopeFuncInfo {
                     id: "@",
                     init_eq: Some(true),
-                    argc: 1..=1,
+                    argc: 1..=16,
                     help: "resolve @:none",
                     to_abe: true,
                 },

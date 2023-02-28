@@ -156,7 +156,7 @@ impl eframe::App for KletsApp {
                                     state.push(Box::new(Body::new(painter)));
                                     init.path = lk_info(&klets.lk).path.to_owned();
                                     init.id =
-                                        lk_encode(&*klets.key.pubkey(), "@/@local/#/#local/b");
+                                        lk_encode(&*klets.key.pubkey(), "@/#/b");
                                     return Ok(Common {
                                         init,
                                         klets,

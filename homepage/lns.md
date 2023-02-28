@@ -1,4 +1,4 @@
-# LNS
+# LNS - Lovely Name System
 
 LNS provides a way for publicly naming groups and public keys.
 Groups look like:
