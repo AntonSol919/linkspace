@@ -36,19 +36,23 @@
     <footer>
     </footer>
     <div id="main">
-<h1 id="lns">LNS</h1>
+<h1 id="lns---lovely-name-system">LNS - Lovely Name System</h1>
 <p>LNS provides a way for publicly naming groups and public keys. Groups
 look like:</p>
 <ul>
-<li>#:lns:org</li>
+<li>#:pub</li>
 <li>#:myfancystore:com</li>
+<li>#:friendsofbob:local</li>
 </ul>
 <p>Pubkeys like:</p>
 <ul>
 <li>@:john:lns:org</li>
 <li>@:alice:my:fancystore:com</li>
+<li>@:john:local</li>
+<li>@:me:local</li>
 </ul>
-<p>:com, :dev, :local and :free registars are reserved.<br />
+<p>:com, :dev, :free, :local, and :pub registars are
+special/reserved.<br />
 To apply for a new top level registar contact me directly.</p>
 <p>LNS is not fully implemented yet.<br />
 You can take a peek on how it will integrate with linkspace in the <a
@@ -65,8 +69,8 @@ Every registration can carry additional links &amp; data.</p>
 <h3 id="do-i-require-a-registration">Do I require a registration?</h3>
 <p>Nothing in linkspace requires a registration.<br />
 Everything can be done without.<br />
-You can setup a root {#:…:local} key simple enough.<br />
-Registrations allow you to pick names to be known by publicly for
+You can setup a root [#:…:local] key simple enough.<br />
+Registrations allow you to pick a name to be known publicly for
 everybody.</p>
 <h3 id="how-much-is-a-registration">How much is a registration?</h3>
 <p>:free is free. First come first served.<br />
@@ -75,11 +79,9 @@ everybody.</p>
 For others read on</p>
 <h3 id="can-i-become-a-top-level-registar">Can I become a top level
 registar?</h3>
-<p>Yes. I am looking for people hyped enough to make this my full time
-job.<br />
-Top level names are leased on a first come first served bases of a 1000
-euro p/m (12000 euro a year). Alternative deals are negotiable. Just
-ask.<br />
+<p>Yes. I am looking for people to do so. Top level names are leased on
+a first come first served bases, no constraints, for a 1000 euro p/m
+(12000 euro a year). Alternative deals are negotiable. Just ask.<br />
 I’ll throw in some goodwill consulting if you ever decide to disrupt
 some industry.</p>
 <h3 id="can-i-buy-with-crypto-why-not-use-crypto-to-do-x-y-z">Can I buy
@@ -97,10 +99,10 @@ recovery. If all you want is to fund the project contact me directly
 and:</p>
 <pre class="terminal"><code>make install-lk
 lk --init key | tee lnskey
-lk keypoint lns:{#:pub}:/request/com/YOUR_NAME &gt; lnsreq.lkp</code></pre>
+lk keypoint lns:[#:pub]:/request/com/YOUR_NAME &gt; lnsreq.lkp</code></pre>
 <p>Keep the file lnskey safe. Email the lnsreq.lkp file to
 AntonSol919+lns at gmail.com<br />
-I will accept /request/free untill some asshole decides to claim the
+I will accept /request/free until some asshole decides to claim the
 dictionary. After which I’ll probably make it a little more
 difficult.</p>
 <p>Get a pull request accepted, and you get a :dev name.</p>

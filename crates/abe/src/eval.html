@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-02-28 Tue 09:44 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="author" content="R.A. Sol" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<p>
+<i>/ Copyright Anton Sol
+/</i>
+<i>/ This Source Code Form is subject to the terms of the Mozilla Public
+/</i> License, v. 2.0. If a copy of the MPL was not distributed with this
+<i>/ file, You can obtain one at <a href="https://mozilla.org/MPL/2.0">https://mozilla.org/MPL/2.0</a></i>.
+<i><b>*
+This stuff is a mess.
+*</b></i>
+use std::fmt::Write;
+</p>
+
+<p>
+use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display};
+use std::{collections::HashSet, convert::Infallible, ops::FromResidual, str::FromStr};
+use thiserror::Error;
+</p>
+
+<p>
+use crate::abtxt::as<sub>abtxt</sub>;
+use crate::abtxt::{as<sub>abtxt</sub><sub>e</sub>, MAX<sub>STR</sub>};
+use crate::{ast::*, cut<sub>ending</sub><sub>nulls2</sub>, cut<sub>prefix</sub><sub>nulls</sub>};
+</p>
+
+<p>
+const fn as<sub>str</sub>(o: Option&lt;Ctr&gt;) -&gt; &amp;'static str {
+    match o {
+        Some(Ctr::Colon) =&gt; ":",
+        Some(Ctr::FSlash) =&gt; "<i>",
+        None =&gt; "",
+    }
+}
+/</i> would benefit from Vec&lt;(TinyVec&lt;32&gt;,..)
+pub enum ABItem&lt;B = Vec&lt;u8&gt;&gt; {
+    Ctr(Ctr),
+    Bytes(B),
+}
+impl From&lt;ABItem&gt; for ABE {
+    fn from(value: ABItem) -&gt; Self {
+        match value {
+            ABItem::Ctr(c) =&gt; ABE::Ctr(c),
+            ABItem::Bytes(b) =&gt; ABE::Expr(Expr::Bytes(b)),
+        }
+    }
+}
+</p>
+
+<p>
+macro<sub>rules</sub>! dbgprintln {
+    ($(\(arg:tt)*) => {{
+        if false{eprintln!(\)($arg)*)}
+    }};
+}
+</p>
+
+<p>
+<i><b>* a list of (bytes,ctr) components.
+It is an error for the lst to be empty.
+*</b></i>
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ABList {
+    pub lst: Vec&lt;(Vec&lt;u8&gt;, Option&lt;Ctr&gt;)&gt;,
+}
+impl From&lt;ABList&gt; for Vec&lt;u8&gt; {
+    fn from(v: ABList) -&gt; Self {
+        v.concat()
+    }
+}
+impl From&lt;Vec&lt;u8&gt;&gt; for ABList {
+    fn from(value: Vec&lt;u8&gt;) -&gt; Self {
+        ABList {
+            lst: vec![(value, None)],
+        }
+    }
+}
+impl From&lt;ABList&gt; for Vec&lt;ABE&gt; {
+    fn from(val: ABList) -&gt; Self {
+        val.items().map(|i| i.into()).collect()
+    }
+}
+pub type ABLIter = impl Iterator&lt;Item = ABE&gt;;
+impl IntoIterator for ABList {
+    type Item = ABE;
+    type IntoIter = ABLIter;
+    fn into<sub>iter</sub>(self) -&gt; Self::IntoIter {
+        self.items().map(|i| i.into())
+    }
+}
+</p>
+
+<p>
+impl From&lt;&amp;[u8]&gt; for ABList {
+    fn from(b: &amp;[u8]) -&gt; Self {
+        Self::default().push<sub>bytes</sub>(b)
+    }
+}
+impl FromIterator&lt;ABItem&gt; for ABList {
+    fn from<sub>iter</sub>&lt;T: IntoIterator&lt;Item = ABItem&gt;&gt;(iter: T) -&gt; Self {
+        iter.into<sub>iter</sub>().fold(ABList::default(), |a, i| a.push(i))
+    }
+}
+pub fn abl&lt;I: IntoIterator&lt;Item = A&gt;, A: AsRef&lt;[u8]&gt;&gt;(bytes: I) -&gt; ABList {
+    abld(bytes, Ctr::Colon)
+}
+pub fn ablf&lt;I: IntoIterator&lt;Item = A&gt;, A: AsRef&lt;[u8]&gt;&gt;(bytes: I) -&gt; ABList {
+    abld(bytes, Ctr::FSlash)
+}
+pub fn abld&lt;I: IntoIterator&lt;Item = A&gt;, A: AsRef&lt;[u8]&gt;&gt;(bytes: I, delimiter: Ctr) -&gt; ABList {
+    let mut lst: Vec&lt;_&gt; = bytes
+        .into<sub>iter</sub>()
+        .map(|b| (b.as<sub>ref</sub>().to<sub>vec</sub>(), Some(delimiter)))
+        .collect();
+    if let Some((_, c)) = lst.last<sub>mut</sub>() {
+        *c = None;
+    }
+    ABList { lst }
+}
+</p>
+
+<p>
+impl Display for ABList {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        for (bytes, ctr) in &amp;self.lst {
+            f.write<sub>str</sub>(&amp;as<sub>abtxt</sub>(bytes))?;
+            f.write<sub>str</sub>(as<sub>str</sub>(*ctr))?;
+        }
+        Ok(())
+    }
+}
+</p>
+
+<p>
+impl Debug for ABList {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        struct ABDebug&lt;I&gt;(I, Option&lt;Ctr&gt;);
+        impl&lt;I: AsRef&lt;[u8]&gt;&gt; Debug for ABDebug&lt;I&gt; {
+            fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+                f.write<sub>str</sub>(&amp;as<sub>abtxt</sub><sub>e</sub>(self.0.as<sub>ref</sub>()))
+            }
+        }
+        f.debug<sub>list</sub>()
+            .entries(self.lst.iter().map(|(v, c)| (ABDebug(v, *c), c)))
+            .finish()
+    }
+}
+impl Default for ABList {
+    fn default() -&gt; Self {
+        Self {
+            lst: vec![(vec![], None)],
+        }
+    }
+}
+pub fn iter<sub>test</sub>() {
+    fn a() -&gt; ABList {
+        ABList::default()
+    }
+    #[track<sub>caller</sub>]
+    fn eq(a: &amp;ABList, b: &amp;[Vec&lt;&amp;[u8]&gt;]) {
+        let b = b
+            .iter()
+            .map(|v: &amp;Vec&lt;_&gt;| (v[0], v[1..].to<sub>vec</sub>()))
+            .collect::&lt;Vec&lt;(&amp;[u8], Vec&lt;&amp;[u8]&gt;)&gt;&gt;();
+        assert<sub>eq</sub>!(a.iter<sub>fslash</sub>().collect::&lt;Vec&lt;(&amp;[u8], Vec&lt;&amp;[u8]&gt;)&gt;&gt;(), b)
+    }
+    eq(&amp;a(), &amp;[vec![&amp;[]]]);
+    eq(&amp;a().push<sub>ctr</sub>(Ctr::Colon), &amp;[vec![&amp;[], &amp;[]]]);
+    eq(&amp;a().push<sub>ctr</sub>(Ctr::FSlash), &amp;[vec![&amp;[]], vec![&amp;[]]]);
+    eq(
+        &amp;a().push<sub>ctr</sub>(Ctr::FSlash).push<sub>bytes</sub>(b"cc"),
+        &amp;[vec![&amp;[]], vec![b"cc"]],
+    );
+    eq(
+        &amp;a().push<sub>ctr</sub>(Ctr::Colon).push<sub>bytes</sub>(b"aa"),
+        &amp;[vec![&amp;[], b"aa"]],
+    );
+    let f = a()
+        .push<sub>bytes</sub>(b"aa")
+        .push<sub>ctr</sub>(Ctr::Colon)
+        .push<sub>bytes</sub>(b"bb")
+        .push<sub>ctr</sub>(Ctr::FSlash)
+        .push<sub>bytes</sub>(b"cc")
+        .push<sub>ctr</sub>(Ctr::Colon)
+        .push<sub>bytes</sub>(b"dd");
+</p>
+
+<p>
+    eq(&amp;f, &amp;[vec![b"aa", b"bb"], vec![b"cc", b"dd"]]);
+}
+impl ABList {
+    <i>**
+    Return an iterator over colon delim vecs:
+    Key take away is that every returned item (vec) has at least a head, but the head can be empty
+    aa:bb/cc:dd =&gt; [aa,bb] , [cc,dd]
+    aa/cc =&gt; [aa],[cc]
+    aa</i> =&gt; [aa],[ [] ]
+    aa =&gt; [aa]
+    aa: =&gt; [aa, [] ]
+    :aa =&gt; [[],aa ]
+    /cc =&gt; [ [] ] , [cc]
+    /  =&gt;  [ [] ] , [ [] ]  ( 2 items )
+</p>
+<pre class="example">
+=&gt; [ [] , [] ] ( 1 items with 2 empty elem )
+</pre>
+
+<p>
+'' (empty) <code>&gt; [ [] ]
+    **/
+    fn iter_fslash(&amp;self) -&gt; impl Iterator&lt;Item = (&amp;[u8], Vec&lt;&amp;[u8]&gt;)&gt; {
+        let it = self.lst.split_inclusive(|(_, c)| *c =</code> Some(Ctr::FSlash));
+    it.map(|ls| {
+        let mut it = ls.iter().map(|(b, _c)| b.as<sub>slice</sub>());
+        (it.next().unwrap(), it.collect())
+    })
+}
+pub fn inner(&amp;self) -&gt; &amp;[(Vec&lt;u8&gt;, Option&lt;Ctr&gt;)] {
+    &amp;self.lst
+}
+</p>
+
+<p>
+pub fn items(self) -&gt; impl Iterator&lt;Item = ABItem&gt; {
+    self.lst.into<sub>iter</sub>().flat<sub>map</sub>(|(a, b)| {
+        if a.is<sub>empty</sub>() {
+            None
+        } else {
+            Some(ABItem::Bytes(a))
+        }
+        .into<sub>iter</sub>()
+        .chain(b.map(ABItem::Ctr))
+    })
+}
+pub fn item<sub>refs</sub>(&amp;self) -&gt; impl Iterator&lt;Item = ABItem&lt;&amp;[u8]&gt;&gt; {
+    self.lst.iter().flat<sub>map</sub>(|(a, b)| {
+        if a.is<sub>empty</sub>() {
+            None
+        } else {
+            Some(ABItem::Bytes(a.as<sub>slice</sub>()))
+        }
+        .into<sub>iter</sub>()
+        .chain(b.map(ABItem::Ctr))
+    })
+}
+pub fn push(self, item: ABItem) -&gt; Self {
+    match item {
+        ABItem::Ctr(c) <code>&gt; self.push_ctr(c),
+            ABItem::Bytes(b) =&gt; self.push_bytes(b.as_ref()),
+        }
+    }
+    pub fn push_bytes(mut self, b: &amp;[u8]) -&gt; Self {
+        self.lst.last_mut().unwrap().0.extend_from_slice(b);
+        self
+    }
+    pub fn push_ctr(mut self, ctr: Ctr) -&gt; Self {
+        self.lst.last_mut().unwrap().1 = Some(ctr);
+        self.lst.push((vec![], None));
+        self
+    }
+    pub fn into_exact_bytes(mut self) -&gt; Result&lt;Vec&lt;u8&gt;, Self&gt; {
+        if self.lst.len() =</code> 1 {
+        Ok(self.lst.pop().unwrap().0)
+    } else {
+        Err(self)
+    }
+}
+pub fn as<sub>exact</sub><sub>bytes</sub>(&amp;self) -&gt; Result&lt;&amp;[u8], &amp;Self&gt; {
+    if self.lst.len() == 1 {
+        Ok(&amp;self.lst[0].0)
+    } else {
+        Err(self)
+    }
+}
+pub fn take<sub>prefix</sub><sub>bytes</sub>(&amp;mut self, v: usize) -&gt; Vec&lt;u8&gt; {
+    let (a, _) = self.lst.first<sub>mut</sub>().unwrap();
+    let v = a.split<sub>off</sub>(v);
+    std::mem::replace(a, v)
+}
+</p>
+
+<p>
+<i>/</i> Merges (bytes, ctr) into a sequence of bytes.
+<i>/</i> this destroys ctr byte information. i.e.  [("<i>",:)] becomes /: and reparsing becomes [("",</i>),("",:)]
+<i>/</i> Use display to print propery escaped values.
+pub fn concat(mut self) -&gt; Vec&lt;u8&gt; {
+    if let ([(bytes, ctr)], rest) = self.lst.split<sub>at</sub><sub>mut</sub>(1) {
+        bytes.extend<sub>from</sub><sub>slice</sub>(as<sub>str</sub>(*ctr).as<sub>bytes</sub>());
+        for (b, c) in rest {
+            bytes.extend<sub>from</sub><sub>slice</sub>(b);
+            bytes.extend<sub>from</sub><sub>slice</sub>(as<sub>str</sub>(*c).as<sub>bytes</sub>());
+        }
+    } else {
+        unreachable!()
+    }
+    self.lst.into<sub>iter</sub>().next().unwrap().0
+}
+</p>
+
+<p>
+pub fn bytes<sub>2</sub>(&amp;self) -&gt; impl Iterator&lt;Item = &amp;[u8]&gt; {
+    self.lst
+        .iter()
+        .flat<sub>map</sub>(|(b, ctr)| [b.as<sub>slice</sub>(), as<sub>str</sub>(*ctr).as<sub>bytes</sub>()])
+        .filter(|v| !v.is<sub>empty</sub>())
+}
+</p>
+
+<p>
+    pub fn is<sub>empty</sub>(&amp;self) -&gt; bool {
+        self.lst.is<sub>empty</sub>() || self.as<sub>exact</sub><sub>bytes</sub>().map(|v| v.is<sub>empty</sub>()).unwrap<sub>or</sub>(false)
+    }
+}
+pub type ApplyErr = Box&lt;dyn std::error::Error + Send + Sync + 'static&gt;;
+pub enum ApplyResult {
+    None,
+    Ok(Vec&lt;u8&gt;),
+    Err(ApplyErr),
+}
+impl ApplyResult {
+    pub fn into<sub>opt</sub>(self) -&gt; Option&lt;Result&lt;Vec&lt;u8&gt;, ApplyErr&gt;&gt; {
+        match self {
+            ApplyResult::None =&gt; None,
+            ApplyResult::Ok(v) =&gt; Some(Ok(v)),
+            ApplyResult::Err(e) =&gt; Some(Err(e)),
+        }
+    }
+    pub fn arg<sub>err</sub>&lt;X: AsRef&lt;[u8]&gt;&gt;(args: impl IntoIterator&lt;Item = X&gt;, expect: &amp;str) -&gt; Self {
+        ApplyResult::Err(format!("expect {expect} but got {:?}", abl(args)).into())
+    }
+}
+impl FromResidual&lt;Option&lt;Infallible&gt;&gt; for ApplyResult {
+    fn from<sub>residual</sub>(<sub>residual</sub>: Option&lt;Infallible&gt;) -&gt; Self {
+        AR::None
+    }
+}
+impl&lt;V: Into&lt;ApplyErr&gt;&gt; From&lt;Option&lt;Result&lt;Vec&lt;u8&gt;, V&gt;&gt;&gt; for ApplyResult {
+    fn from(v: Option&lt;Result&lt;Vec&lt;u8&gt;, V&gt;&gt;) -&gt; Self {
+        match v {
+            Some(v) =&gt; v.map<sub>err</sub>(Into::into).into(),
+            None =&gt; AR::None,
+        }
+    }
+}
+impl&lt;V: Into&lt;ApplyErr&gt;&gt; FromResidual&lt;Result&lt;Infallible, V&gt;&gt; for ApplyResult {
+    fn from<sub>residual</sub>(residual: Result&lt;Infallible, V&gt;) -&gt; Self {
+        AR::Err(residual.unwrap<sub>err</sub>().into())
+    }
+}
+</p>
+
+<p>
+impl From&lt;Result&lt;Vec&lt;u8&gt;, ApplyErr&gt;&gt; for ApplyResult {
+    fn from(v: Result&lt;Vec&lt;u8&gt;, ApplyErr&gt;) -&gt; Self {
+        match v {
+            Ok(o) =&gt; AR::Ok(o),
+            Err(e) =&gt; AR::Err(e),
+        }
+    }
+}
+impl ApplyResult {
+    pub fn or<sub>else</sub>(self, map: impl FnOnce() -&gt; ApplyResult) -&gt; Self {
+        if matches!(self, AR::None) {
+            map()
+        } else {
+            self
+        }
+    }
+}
+use ApplyResult as AR;
+</p>
+
+<p>
+#[derive(Error)]
+pub enum EvalError {
+    #[error("evaluator err :  {} {}",as<sub>abtxt</sub><sub>e</sub>(.0),.1)]
+    SubEval(Vec&lt;u8&gt;, ApplyErr),
+    #[error("no such e-func : '/{}'",as<sub>abtxt</sub><sub>e</sub>(.0))]
+    NoSuchSubEval(Vec&lt;u8&gt;),
+    #[error("no such func : {}",as<sub>abtxt</sub><sub>e</sub>(.0))]
+    NoSuchFunc(Vec&lt;u8&gt;),
+    #[error("func error : {} : {}",as<sub>abtxt</sub><sub>e</sub>(.0), .1)]
+    Func(Vec&lt;u8&gt;, ApplyErr),
+    #[error("other error {}",.0)]
+    Other(String),
+}
+</p>
+
+<p>
+impl std::fmt::Debug for EvalError {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
+    }
+}
+</p>
+
+<p>
+pub type Describer&lt;'cb&gt; = &amp;'cb mut dyn FnMut(
+    &amp;str,
+    &amp;str,
+    &amp;mut dyn Iterator&lt;Item = ScopeFuncInfo&gt;,
+    &amp;mut dyn Iterator&lt;Item = ScopeEvalInfo&gt;,
+);
+pub trait Scope {
+    fn lookup<sub>eval</sub>(&amp;self, _id: &amp;[u8], _abe: &amp;[ABE], _ctx: &amp;dyn Scope) -&gt; ApplyResult {
+        ApplyResult::None
+    }
+    fn lookup<sub>apply</sub>(
+        &amp;self,
+        id: &amp;[u8],
+        inp<sub>and</sub><sub>args</sub>: &amp;[&amp;[u8]],
+        init: bool,
+        ctx: &amp;dyn Scope,
+    ) -&gt; ApplyResult;
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult;
+    fn describe(&amp;self, cb: Describer) {
+        cb("todo", "", &amp;mut std::iter::empty(), &amp;mut std::iter::empty())
+    }
+}
+#[derive(Copy, Clone)]
+pub struct EScope&lt;T&gt;(pub T);
+impl&lt;T: EvalScopeImpl&gt; Scope for EScope&lt;T&gt; {
+    fn lookup<sub>apply</sub>(&amp;self, id: &amp;[u8], inp: &amp;[&amp;[u8]], init: bool, ctx: &amp;dyn Scope) -&gt; ApplyResult {
+        for ScopeFunc { apply, info, .. } in self.0.list<sub>funcs</sub>() {
+            if info.id.as<sub>bytes</sub>() <code>= id {
+                if info.init_eq.is_some() &amp;&amp; info.init_eq !</code> Some(init) {
+                    return ApplyResult::Err("function can not be applied this way".into());
+                }
+                if !info.argc.contains(&amp;inp.len()) {
+                    return ApplyResult::arg<sub>err</sub>(inp, &amp;format!("between {:?}", info.argc));
+                }
+                return apply(&amp;self.0, inp, init, ctx);
+            }
+        }
+        ApplyResult::None
+    }
+</p>
+
+<p>
+fn describe(&amp;self, cb: Describer) {
+    let mut fncx = self.0.list<sub>funcs</sub>().iter().map(|v| v.info.clone());
+    let mut evls = self.0.list<sub>eval</sub>().iter().map(|v| v.info);
+    let (name, info) = self.0.about();
+    cb(&amp;name, &amp;info, &amp;mut fncx, &amp;mut evls);
+}
+fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], funcs: &amp;dyn Scope) -&gt; ApplyResult {
+    if let Some(e) = self
+        .0
+        .list<sub>eval</sub>()
+        .iter()
+        .find(|i| i.info.id.as<sub>bytes</sub>() == id)
+    {
+        return (e.apply)(&amp;self.0, abe, funcs);
+    }
+    ApplyResult::None
+}
+</p>
+
+<p>
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        for ScopeFunc { to<sub>abe</sub>, info, .. } in self.0.list<sub>funcs</sub>() {
+            if info.to<sub>abe</sub> &amp;&amp; info.id.as<sub>bytes</sub>() == id {
+                return to<sub>abe</sub>(&amp;self.0, bytes, options);
+            }
+        }
+        AR::None
+    }
+}
+pub trait EvalScopeImpl {
+    fn about(&amp;self) -&gt; (String, String) {
+        ("".into(), "".into())
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        &amp;[]
+    }
+    fn list<sub>eval</sub>(&amp;self) -&gt; &amp;[ScopeEval&lt;&amp;Self&gt;] {
+        &amp;[]
+    }
+}
+#[derive(Clone)]
+pub struct ScopeFunc&lt;T&gt; {
+    pub apply: fn(T, &amp;[&amp;[u8]], bool, &amp;dyn Scope) -&gt; ApplyResult,
+    pub to<sub>abe</sub>: fn(T, &amp;[u8], &amp;[ABE]) -&gt; ApplyResult,
+    pub info: ScopeFuncInfo,
+}
+#[derive(Clone)]
+pub struct ScopeFuncInfo {
+    pub id: &amp;'static str,
+    pub init<sub>eq</sub>: Option&lt;bool&gt;,
+    pub to<sub>abe</sub>: bool,
+    pub argc: std::ops::RangeInclusive&lt;usize&gt;,
+    pub help: &amp;'static str,
+}
+pub struct ScopeEval&lt;T&gt; {
+    pub apply: fn(T, &amp;[ABE], &amp;dyn Scope) -&gt; ApplyResult,
+    pub info: ScopeEvalInfo,
+}
+#[derive(Copy, Clone)]
+pub struct ScopeEvalInfo {
+    pub id: &amp;'static str,
+    pub help: &amp;'static str,
+}
+</p>
+
+<p>
+impl Scope for () {
+    fn lookup<sub>apply</sub>(
+        &amp;self,
+        _id: &amp;[u8],
+        _args: &amp;[&amp;[u8]],
+        _init: bool,
+        _ctx: &amp;dyn Scope,
+    ) -&gt; ApplyResult {
+        AR::None
+    }
+</p>
+
+<p>
+fn lookup<sub>eval</sub>(&amp;self, _id: &amp;[u8], _abe: &amp;[ABE], _scopes: &amp;dyn Scope) -&gt; ApplyResult {
+    AR::None
+}
+</p>
+
+<p>
+fn describe(&amp;self, cb: Describer) {
+    cb("()", "", &amp;mut std::iter::empty(), &amp;mut std::iter::empty())
+}
+</p>
+
+<p>
+    fn encode(&amp;self, _id: &amp;[u8], _options: &amp;[ABE], _bytes: &amp;[u8]) -&gt; ApplyResult {
+        AR::None
+    }
+}
+impl&lt;A: Scope&gt; Scope for Option&lt;A&gt; {
+    fn lookup<sub>apply</sub>(
+        &amp;self,
+        id: &amp;[u8],
+        inpt<sub>and</sub><sub>args</sub>: &amp;[&amp;[u8]],
+        init: bool,
+        ctx: &amp;dyn Scope,
+    ) -&gt; ApplyResult {
+        self.as<sub>ref</sub>()
+            .map(|x| x.lookup<sub>apply</sub>(id, inpt<sub>and</sub><sub>args</sub>, init, ctx))
+            .unwrap<sub>or</sub>(ApplyResult::None)
+    }
+    fn describe(&amp;self, cb: Describer) {
+        match self {
+            Some(s) =&gt; s.describe(cb),
+            None =&gt; cb(
+                &amp;format!("Unset&lt;{}&gt;", std::any::type<sub>name</sub>::&lt;A&gt;()),
+                "",
+                &amp;mut std::iter::empty(),
+                &amp;mut std::iter::empty(),
+            ),
+        }
+    }
+    fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], scopes: &amp;dyn Scope) -&gt; ApplyResult {
+        self.as<sub>ref</sub>()
+            .map(|x| x.lookup<sub>eval</sub>(id, abe, scopes))
+            .unwrap<sub>or</sub>(ApplyResult::None)
+    }
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        self.as<sub>ref</sub>()
+            .map(|v| v.encode(id, options, bytes))
+            .unwrap<sub>or</sub>(AR::None)
+    }
+}
+</p>
+
+<p>
+impl Scope for &amp;dyn Scope {
+    fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], scopes: &amp;dyn Scope) -&gt; ApplyResult {
+        (**self).lookup<sub>eval</sub>(id, abe, scopes)
+    }
+    fn lookup<sub>apply</sub>(
+        &amp;self,
+        id: &amp;[u8],
+        inpt<sub>and</sub><sub>args</sub>: &amp;[&amp;[u8]],
+        init: bool,
+        ctx: &amp;dyn Scope,
+    ) -&gt; ApplyResult {
+        (**self).lookup<sub>apply</sub>(id, inpt<sub>and</sub><sub>args</sub>, init, ctx)
+    }
+</p>
+
+<p>
+fn describe(&amp;self, cb: Describer) {
+    (**self).describe(cb)
+}
+</p>
+
+<p>
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        (**self).encode(id, options, bytes)
+    }
+}
+impl&lt;A: Scope&gt; Scope for &amp;A {
+    fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], scopes: &amp;dyn Scope) -&gt; ApplyResult {
+        (**self).lookup<sub>eval</sub>(id, abe, scopes)
+    }
+</p>
+
+<p>
+    fn lookup<sub>apply</sub>(&amp;self, id: &amp;[u8], args: &amp;[&amp;[u8]], init: bool, ctx: &amp;dyn Scope) -&gt; ApplyResult {
+        (**self).lookup<sub>apply</sub>(id, args, init, ctx)
+    }
+    fn describe(&amp;self, cb: Describer) {
+        (**self).describe(cb)
+    }
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        (**self).encode(id, options, bytes)
+    }
+}
+impl&lt;A: Scope, B: Scope&gt; Scope for (A, B) {
+    #[inline(always)]
+    fn lookup<sub>apply</sub>(&amp;self, id: &amp;[u8], args: &amp;[&amp;[u8]], init: bool, ctx: &amp;dyn Scope) -&gt; ApplyResult {
+        self.0
+            .lookup<sub>apply</sub>(id, args, init, ctx)
+            .or<sub>else</sub>(|| self.1.lookup<sub>apply</sub>(id, args, init, ctx))
+    }
+    fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], scope: &amp;dyn Scope) -&gt; ApplyResult {
+        self.0
+            .lookup<sub>eval</sub>(id, abe, scope)
+            .or<sub>else</sub>(|| self.1.lookup<sub>eval</sub>(id, abe, scope))
+    }
+    fn describe(&amp;self, cb: Describer) {
+        self.0.describe(cb);
+        self.1.describe(cb);
+    }
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        self.0
+            .encode(id, options, bytes)
+            .or<sub>else</sub>(|| self.1.encode(id, options, bytes))
+    }
+}
+impl&lt;A: Scope, B: Scope, C: Scope&gt; Scope for (A, B, C) {
+    #[inline(always)]
+    fn lookup<sub>apply</sub>(&amp;self, id: &amp;[u8], args: &amp;[&amp;[u8]], init: bool, ctx: &amp;dyn Scope) -&gt; ApplyResult {
+        ((&amp;self.0, &amp;self.1), &amp;self.2).lookup<sub>apply</sub>(id, args, init, ctx)
+    }
+    fn lookup<sub>eval</sub>(&amp;self, id: &amp;[u8], abe: &amp;[ABE], scope: &amp;dyn Scope) -&gt; ApplyResult {
+        ((&amp;self.0, &amp;self.1), &amp;self.2).lookup<sub>eval</sub>(id, abe, scope)
+    }
+</p>
+
+<p>
+fn describe(&amp;self, cb: Describer) {
+    self.0.describe(cb);
+    self.1.describe(cb);
+    self.2.describe(cb);
+}
+</p>
+
+<p>
+    fn encode(&amp;self, id: &amp;[u8], options: &amp;[ABE], bytes: &amp;[u8]) -&gt; ApplyResult {
+        self.0
+            .encode(id, options, bytes)
+            .or<sub>else</sub>(|| self.1.encode(id, options, bytes))
+            .or<sub>else</sub>(|| self.2.encode(id, options, bytes))
+    }
+}
+</p>
+
+<p>
+#[derive(Copy, Clone, Default)]
+pub struct EvalCtx&lt;SCOPE&gt; {
+    pub scope: SCOPE,
+}
+</p>
+
+<p>
+impl&lt;B: Scope&gt; EvalCtx&lt;B&gt; {
+    pub fn scope&lt;F2: Scope&gt;(self, e: F2) -&gt; EvalCtx&lt;(B, F2)&gt; {
+        EvalCtx {
+            scope: (self.scope, e),
+        }
+    }
+    pub fn pre<sub>scope</sub>&lt;F2: Scope&gt;(self, e: F2) -&gt; EvalCtx&lt;(F2, B)&gt; {
+        EvalCtx {
+            scope: (e, self.scope),
+        }
+    }
+    pub fn reref(&amp;self) -&gt; EvalCtx&lt;&amp;B&gt; {
+        EvalCtx { scope: &amp;self.scope }
+    }
+    pub fn dynr(&amp;self) -&gt; EvalCtx&lt;&amp;dyn Scope&gt; {
+        EvalCtx { scope: &amp;self.scope }
+    }
+    pub fn boxed&lt;'b&gt;(self) -&gt; EvalCtx&lt;Box&lt;dyn Scope + 'b&gt;&gt;
+    where
+        B: 'b,
+    {
+        EvalCtx {
+            scope: Box::new(self.scope),
+        }
+    }
+}
+</p>
+
+<p>
+fn match<sub>expr</sub>(depth: usize, ctx: &amp;EvalCtx&lt;impl Scope&gt;, expr: &amp;ABE) -&gt; Result&lt;ABItem, EvalError&gt; {
+    match expr {
+        ABE::Ctr(c) =&gt; {
+            dbgprintln!("Match Ctr({c})  (depth={depth})");
+            Ok(ABItem::Ctr(*c))
+        }
+        ABE::Expr(Expr::Bytes(b)) =&gt; {
+            dbgprintln!("Match bytes({}) (depth={depth})", as<sub>abtxt</sub><sub>e</sub>(b));
+            Ok(ABItem::Bytes(b.to<sub>vec</sub>()))
+        }
+        ABE::Expr(Expr::Lst(ls)) =&gt; {
+            dbgprintln!("Match lst[{}] (depth={depth})", ls.len());
+            let inner<sub>abl</sub> = match ls.as<sub>slice</sub>() {
+                [ABE::Ctr(Ctr::FSlash), ref tail @ ..] =&gt; {
+                    let (id, rest): (&amp;[u8], &amp;[ABE]) = match tail {
+                        [] =&gt; return Err(EvalError::Other("missing eval name".into())),
+                        [ABE::Expr(Expr::Lst(<span class="underline">)), ..] =&gt; {
+                            return Err(EvalError::Other(
+                                "var eval name resolution disabled".into(),
+                            ))
+                        }
+                        [ABE::Ctr(Ctr::Colon), ref rest @ ..] =&gt; {
+                            let mut result = vec![];
+                            dump<sub>abe</sub><sub>bytes</sub>(&amp;mut result, rest);
+                            return Ok(ABItem::Bytes(result));
+                        }
+                        <i>/ enable {/</i>&#x2026;}
+                        [ABE::Ctr(Ctr::FSlash), ..] =&gt; (&amp;[], tail),
+                        [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] =&gt; (id, r),
+                    };
+                    dbgprintln!("Eval({})", as<sub>abtxt</sub><sub>e</sub>(id));
+                    match ctx.scope.lookup<sub>eval</sub>(id, rest, &amp;ctx.scope) {
+                        ApplyResult::None =&gt; return Err(EvalError::NoSuchSubEval(id.to<sub>vec</sub>())),
+                        ApplyResult::Ok(b) =&gt; return Ok(ABItem::Bytes(b)),
+                        ApplyResult::Err(e) =&gt; return Err(EvalError::SubEval(id.to<sub>vec</sub>(), e)),
+                    }
+                }
+                [ABE::Expr(Expr::Lst(</span>)), ..] =&gt; {
+                    Err(EvalError::Other("var name resolution disabled".into()))?
+                }
+                _ =&gt; _eval(depth + 1, ctx, ls)?,
+            };
+</p>
+
+<p>
+            fn call(
+                scope: &amp;impl Scope,
+                id: &amp;[u8],
+                input<sub>and</sub><sub>args</sub>: &amp;[&amp;[u8]],
+                init: bool,
+            ) -&gt; Result&lt;Vec&lt;u8&gt;, EvalError&gt; {
+                dbgprintln!(
+                    "Call({init},id={},inp={:?} )",
+                    as<sub>abtxt</sub><sub>e</sub>(id),
+                    input<sub>and</sub><sub>args</sub>
+                );
+                match scope.lookup<sub>apply</sub>(id, input<sub>and</sub><sub>args</sub>, init, &amp;scope) {
+                    ApplyResult::None <code>&gt; Err(EvalError::NoSuchFunc(id.to_vec())),
+                    ApplyResult::Ok(b) =&gt; Ok(b),
+                    ApplyResult::Err(e) =&gt; Err(EvalError::Func(id.to_vec(), e)),
+                }
+            }
+            let it = inner_abl
+                .lst
+                .split_inclusive(|(_, c)| *c =</code> Some(Ctr::FSlash));
+            let mut calls = it.map(|ls| ls.iter().map(|(b, _c)| b.as<sub>slice</sub>()));
+            let mut stack = [&amp;[] as &amp;[u8]; 16];
+            let mut init<sub>id</sub><sub>args</sub> = match calls.next() {
+                None =&gt; return Err(EvalError::Other("empty {{}} not enabled".into())),
+                Some(v) =&gt; v,
+            };
+            let mut id = init<sub>id</sub><sub>args.next</sub>().unwrap<sub>or</sub>(&amp;[]);
+            let argc = stack
+                .iter<sub>mut</sub>()
+                .zip(&amp;mut init<sub>id</sub><sub>args</sub>)
+                .fold(0, |i, (slot, slice)| {
+                    *slot = slice;
+                    i + 1
+                });
+            if init<sub>id</sub><sub>args.next</sub>().is<sub>some</sub>() {
+                return Err(EvalError::Other("more than 16 args not supported".into()));
+            }
+            let args = &amp;stack[..argc];
+            dbgprintln!("Start: '{}' - {:?} ", as<sub>abtxt</sub><sub>e</sub>(id), args);
+            let mut bytes = call(&amp;ctx.scope, id, args, true)?;
+            for mut id<sub>and</sub><sub>args</sub> in calls {
+                stack = [&amp;[] as &amp;[u8]; 16];
+                id = id<sub>and</sub><sub>args.next</sub>().unwrap<sub>or</sub>(&amp;[]);
+                stack[0] = bytes.as<sub>slice</sub>();
+                let argc =
+                    1 + stack[1..]
+                        .iter<sub>mut</sub>()
+                        .zip(&amp;mut id<sub>and</sub><sub>args</sub>)
+                        .fold(0, |i, (slot, slice)| {
+                            *slot = slice;
+                            i + 1
+                        });
+                if id<sub>and</sub><sub>args.next</sub>().is<sub>some</sub>() {
+                    return Err(EvalError::Other("more than 16 args not supported".into()));
+                }
+                let args = &amp;stack[..argc];
+                dbgprintln!(
+                    "'{}' -&gt; '{}' :: {:?} ::",
+                    as<sub>abtxt</sub><sub>e</sub>(&amp;bytes),
+                    as<sub>abtxt</sub><sub>e</sub>(id),
+                    args
+                );
+                bytes = call(&amp;ctx.scope, id, args, false)?;
+            }
+            Ok(ABItem::Bytes(bytes))
+        }
+    }
+}
+</p>
+
+<p>
+pub fn eval(ctx: &amp;EvalCtx&lt;impl Scope&gt;, abe: &amp;[ABE]) -&gt; std::result::Result&lt;ABList, EvalError&gt; {
+    dbgprintln!("init ({})", print<sub>abe</sub>(abe));
+    match _eval(0, ctx, abe) {
+        Ok(l) =&gt; {
+            dbgprintln!("result ({})", l);
+            Ok(l)
+        }
+        Err(e) =&gt; {
+            dbgprintln!("result Err({})", e);
+            Err(e)
+        }
+    }
+}
+pub fn _eval(
+    depth: usize,
+    ctx: &amp;EvalCtx&lt;impl Scope&gt;,
+    abe: &amp;[ABE],
+) -&gt; std::result::Result&lt;ABList, EvalError&gt; {
+    abe.iter()
+        .map(|expr| match<sub>expr</sub>(depth, ctx, expr))
+        .try<sub>collect</sub>()
+}
+</p>
+
+<p>
+#[derive(Error, Debug)]
+pub enum EncodeError {
+    #[error("option encoding error expected [ scope [:{{opts}}]? ]*  ")]
+    OptionError,
+    #[error("option parse error{}",.0)]
+    ParseError(#[source] ASTParseError),
+    #[error("scope '{}' encode {}",.0,.1)]
+    ScopeEncode(String, ApplyErr),
+}
+</p>
+
+<p>
+<i>/</i> Encode bytes with scopes given as "scope1:{opts}/scope2:{opts}/"
+<i>/</i> :scope/{opts}:
+<i>/</i> e.g. lns:{known}/b64/uint will attempt to encode bytes through locally known lns, otherwise use b64, and finnally attempt uint
+pub fn encode(
+    ctx: &amp;EvalCtx&lt;impl Scope&gt;,
+    bytes: &amp;[u8],
+    options: &amp;str,
+) -&gt; std::result::Result&lt;String, EncodeError&gt; {
+    let lst = parse<sub>abe</sub>(options).map<sub>err</sub>(EncodeError::ParseError)?;
+    encode<sub>abe</sub>(ctx, bytes, &amp;lst)
+}
+pub fn encode<sub>abe</sub>(
+    ctx: &amp;EvalCtx&lt;impl Scope&gt;,
+    bytes: &amp;[u8],
+    options: &amp;[ABE],
+) -&gt; std::result::Result&lt;String, EncodeError&gt; {
+    let mut it = options.split(|v| v.is<sub>fslash</sub>());
+    if options.is<sub>empty</sub>() {
+        it.next();
+    }
+    for scope<sub>opts</sub> in it {
+        let (func<sub>id</sub>, mut args) = take<sub>first</sub>(scope<sub>opts</sub>).map<sub>err</sub>(|_| EncodeError::OptionError)?;
+        if !args.is<sub>empty</sub>() {
+            args = strip<sub>prefix</sub>(args, is<sub>colon</sub>).map<sub>err</sub>(|_| EncodeError::OptionError)?;
+        }
+        let func<sub>id</sub> = as<sub>bytes</sub>(func<sub>id</sub>).map<sub>err</sub>(|_| EncodeError::OptionError)?;
+        //eprintln!("Try {}",as<sub>abtxt</sub>(func<sub>id</sub>));
+        match ctx.scope.encode(func<sub>id</sub>, args, bytes) {
+            ApplyResult::None <code>&gt; {}
+            ApplyResult::Ok(r) =&gt; {
+                debug_assert!(
+                    eval(ctx, &amp;parse_abe_b(&amp;r).expect("bug: encode fmt"))
+                        .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &amp;as_abtxt(&amp;r)))
+                        .as_exact_bytes()
+                        .expect("bug: encode multi")
+                        =</code> bytes,
+                    "bug: eval(encode)"
+                );
+                let st = String::from<sub>utf8</sub>(r).unwrap();
+                //eprintln!("ok {st}");
+                return Ok(st);
+            }
+            ApplyResult::Err(e) =&gt; {
+                return Err(EncodeError::ScopeEncode(as<sub>abtxt</sub><sub>e</sub>(func<sub>id</sub>).to<sub>string</sub>(), e))
+            }
+        }
+    }
+    Ok(as<sub>abtxt</sub>(bytes).to<sub>string</sub>())
+}
+</p>
+
+<p>
+#[macro<sub>export</sub>]
+macro<sub>rules</sub>! eval<sub>fnc</sub> {
+    ( $id:expr, $help:literal,$fnc:expr) =&gt; {
+        $crate::eval::ScopeEval {
+            info: $crate::eval::ScopeEvalInfo {
+                id: $id,
+                help: $help,
+            },
+            apply: |a, b: &amp;[ABE], c| -&gt; $crate::eval::ApplyResult {
+                let r: Result&lt;Vec&lt;u8&gt;, $crate::eval::ApplyErr&gt; = $fnc(a, b, c);
+                $crate::eval::ApplyResult::from(r)
+            },
+        }
+    };
+}
+#[macro<sub>export</sub>]
+macro<sub>rules</sub>! fnc {
+    ( $id:expr, $argc:expr, $help:literal,$fnc:expr, { id : $to<sub>abe</sub>:expr}) =&gt; {
+        $crate::fnc!($id,$argc,None,$help,$fnc,
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,bytes:&amp;[u8],options:&amp;[$crate::ABE]</td>
+<td class="org-left">-&gt; $crate::eval::ApplyResult{</td>
+</tr>
+</tbody>
+</table>
+<p>
+                     let st : Option&lt;String&gt; = $to<sub>abe</sub>(bytes,options);
+                     match st {
+                         None =&gt; $crate::eval::ApplyResult::None,
+                         Some(st) =&gt; $crate::eval::ApplyResult::Ok(format!("[{}:{}]",$id,st).into<sub>bytes</sub>())
+                     }
+                 }
+    )
+};
+</p>
+
+<p>
+    ( $id:expr, $argc:expr, $help:literal,$fnc:expr) =&gt; {
+        $crate::fnc!($id,$argc,None,$help,$fnc)
+    };
+    ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr ) =&gt; {
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,<sub>init</sub>:bool,<sub>ctx</sub>:&amp;dyn $crate::eval::Scope| $fnc(a,b), $crate::eval::none)
+    };
+    ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to<sub>abe</sub>:expr ) =&gt; {
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,<sub>init</sub>:bool,<sub>ctx</sub>:&amp;dyn $crate::eval::Scope| $fnc(a,b), $to<sub>abe</sub>)
+    };
+    ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, none) =&gt; {
+        $crate::eval::ScopeFunc{
+            info: $crate::eval::ScopeFuncInfo { id: $id, init<sub>eq</sub>: $init, argc: $argc, help: $help, to<sub>abe</sub>: false},
+            apply: |a,b:&amp;[&amp;[u8]],init:bool,ctx:&amp;dyn $crate::eval::Scope| -&gt; $crate::eval::ApplyResult {
+                let r : Result&lt;Vec&lt;u8&gt;,$crate::eval::ApplyErr&gt; = $fnc(a,b,init,ctx);
+                $crate::eval::ApplyResult::from(r)
+            },
+            to<sub>abe</sub>:none
+        }
+    };
+    ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to<sub>abe</sub>:expr) =&gt; {
+        $crate::eval::ScopeFunc{
+            info: $crate::eval::ScopeFuncInfo { id: $id, init<sub>eq</sub>: $init, argc: $argc, help: $help, to<sub>abe</sub>: true },
+            apply: |a,b:&amp;[&amp;[u8]],init:bool,ctx:&amp;dyn $crate::eval::Scope| -&gt; $crate::eval::ApplyResult {
+                let r : Result&lt;Vec&lt;u8&gt;,$crate::eval::ApplyErr&gt; = $fnc(a,b,init,ctx);
+                $crate::eval::ApplyResult::from(r)
+            },
+            to<sub>abe</sub>:$to<sub>abe</sub>
+        }
+    };
+}
+</p>
+
+<p>
+pub fn none&lt;T&gt;(<sub>t</sub>: &amp;T, _bytes: &amp;[u8], _opts: &amp;[ABE]) -&gt; ApplyResult {
+    ApplyResult::None
+}
+</p>
+
+<p>
+#[macro<sub>export</sub>]
+macro<sub>rules</sub>! fncs {
+    ( [$( ( $($fni:tt)* ) ),* ] ) <code>&gt; {
+        &amp;[ $( $crate::fnc!($($fni)*) ),*]
+    };
+}
+pub fn parse_b&lt;T: FromStr&gt;(b: &amp;[u8]) -&gt; Result&lt;T, ApplyErr&gt;
+where
+    &lt;T as FromStr&gt;::Err: std::error::Error + Send + Sync + 'static,
+{
+    Ok(std::str::from_utf8(b)?.parse()?)
+}
+pub fn carry_add_be(bytes: &amp;mut [u8], val: &amp;[u8]) -&gt; bool {
+    debug_assert!(bytes.len() =</code> val.len());
+    let mut carry = false;
+    let mut idx = bytes.len() - 1;
+    loop {
+        let (ni, nc) = bytes[idx].carrying<sub>add</sub>(val[idx], carry);
+        bytes[idx] = ni;
+        carry = nc;
+        if idx <code>= 0 {
+            break;
+        }
+        idx -</code> 1;
+    }
+    carry
+}
+pub fn carry<sub>sub</sub><sub>be</sub>(bytes: &amp;mut [u8], val: &amp;[u8]) -&gt; bool {
+    debug<sub>assert</sub>!(bytes.len() <code>= val.len());
+    let mut carry = false;
+    let mut idx = bytes.len() - 1;
+    loop {
+        let (ni, nc) = bytes[idx].borrowing_sub(val[idx], carry);
+        bytes[idx] = ni;
+        carry = nc;
+        if idx =</code> 0 {
+            break;
+        }
+        idx -= 1;
+    }
+    carry
+}
+</p>
+
+<p>
+#[derive(Copy, Clone, Debug)]
+pub struct UIntFE;
+impl EvalScopeImpl for UIntFE {
+    fn about(&amp;self) -&gt; (String, String) {
+        ("UInt".into(), "Unsigned integer functions".into())
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        fncs!([
+            ( "+" , 1..=16,   "Saturating addition. Requires all inputs to be equal size",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,inp:&amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+            if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err("Mismatch length".into())}
+            let mut r = inp[0].to<sub>vec</sub>();
+            for i in &amp;inp[1..]{
+                if carry<sub>add</sub><sub>be</sub>(&amp;mut r, i){
+                    r.iter<sub>mut</sub>().for<sub>each</sub>(|v| *v = 255);
+                    return Ok(r)
+                }
+            }
+            Ok(r)
+        }
+),
+( "-" , 1..=16,   "Saturating subtraction. Requires all inputs to be equal size",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,inp:&amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+            if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err("Mismatch length".into())}
+            let mut r = inp[0].to<sub>vec</sub>();
+            for i in &amp;inp[1..]{
+                if carry<sub>sub</sub><sub>be</sub>(&amp;mut r, i){
+                    r.iter<sub>mut</sub>().for<sub>each</sub>(|v| *v = 0);
+                    return Ok(r)
+                }
+            }
+            Ok(r)
+        }
+),
+( "u8" , 1..=1,   "parse 1 byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u8&gt;(inp[0])?.to<sub>be</sub><sub>bytes</sub>().to<sub>vec</sub>()),
+   { id : |b:&amp;[u8],_| b.try<sub>into</sub>().ok().map(u8::from<sub>be</sub><sub>bytes</sub>).map(|t| t.to<sub>string</sub>()) }
+),
+( "u16" , 1..=1,  "parse 2 byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u16&gt;(inp[0])?.to<sub>be</sub><sub>bytes</sub>().to<sub>vec</sub>()),
+   { id : |b:&amp;[u8],_| b.try<sub>into</sub>().ok().map(u16::from<sub>be</sub><sub>bytes</sub>).map(|t| t.to<sub>string</sub>()) }
+),
+( "u32" , 1..=1,  "parse 4 byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u32&gt;(inp[0])?.to<sub>be</sub><sub>bytes</sub>().to<sub>vec</sub>()),
+   { id : |b:&amp;[u8],_| b.try<sub>into</sub>().ok().map(u32::from<sub>be</sub><sub>bytes</sub>).map(|t| t.to<sub>string</sub>()) }
+),
+( "u64" , 1..=1,  "parse 8 byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u64&gt;(inp[0])?.to<sub>be</sub><sub>bytes</sub>().to<sub>vec</sub>()),
+   { id : |b:&amp;[u8],_| b.try<sub>into</sub>().ok().map(u64::from<sub>be</sub><sub>bytes</sub>).map(|t| t.to<sub>string</sub>()) }
+),
+( "u128" , 1..=1, "parse 16 byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u128&gt;(inp[0])?.to<sub>be</sub><sub>bytes</sub>().to<sub>vec</sub>()) ,
+   { id : |b:&amp;[u8],_| b.try<sub>into</sub>().ok().map(u128::from<sub>be</sub><sub>bytes</sub>).map(|t| t.to<sub>string</sub>()) }
+),
+( "?u" , 1..=1, "Print big endian bytes as decimal",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,inp:&amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+      let val = inp[0];
+      if val.len() &gt; 16 { return Err("ints larger than 16 bytes (fixme)".into())}
+      let mut v = [0;16];
+      v[16-val.len()..].copy<sub>from</sub><sub>slice</sub>(val);
+      Ok(u128::from<sub>be</sub><sub>bytes</sub>(v).to<sub>string</sub>().into<sub>bytes</sub>())
+  }
+  ),
+( "lu" , 1..=1, "parse little endian byte (upto 16)",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,inp:&amp;[&amp;[u8]]</td>
+<td class="org-left">Ok(cut<sub>ending</sub><sub>nulls2</sub>(&amp;parse<sub>b</sub>::&lt;u128&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>()).to<sub>vec</sub>())</td>
+</tr>
+</tbody>
+</table>
+<p>
+),
+( "lu8" , 1..=1, "parse 1 little endian byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u8&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>().to<sub>vec</sub>()) ),
+( "lu16" , 1..=1, "parse 2 little endian byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u16&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>().to<sub>vec</sub>()) ),
+( "lu32" , 1..=1, "parse 4 little endian byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u32&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>().to<sub>vec</sub>()) ),
+( "lu64" , 1..=1, "parse 8 little endian byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u64&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>().to<sub>vec</sub>()) ),
+( "lu128" , 1..=1, "parse 16 little endian byte", |<sub>,inp</sub>:&amp;[&amp;[u8]]| Ok(parse<sub>b</sub>::&lt;u128&gt;(inp[0])?.to<sub>le</sub><sub>bytes</sub>().to<sub>vec</sub>()) ),
+( "?lu",1..=1,"print little endian number",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,inp:&amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+                 let val = inp[0];
+                 if val.len() &gt; 16 { return Err("ints larger than 16 bytes (fixme)".into());}
+                 let mut v = [0;16];
+                 v[0..val.len()].copy<sub>from</sub><sub>slice</sub>(val);
+                 Ok(u128::from<sub>le</sub><sub>bytes</sub>(v).to<sub>string</sub>().into<sub>bytes</sub>())
+             })
+        ])
+    }
+}
+</p>
+
+<p>
+#[derive(Copy, Clone, Debug)]
+pub struct BytesFE;
+impl EvalScopeImpl for BytesFE {
+    fn about(&amp;self) -&gt; (String, String) {
+        (
+            "bytes".into(),
+            "Byte padding/trimming and ascii-byte reflection functions".into(),
+        )
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        fn pad(inp: &amp;[&amp;[u8]], left: bool, default<sub>pad</sub>: u8) -&gt; Result&lt;Vec&lt;u8&gt;, ApplyErr&gt; {
+            let bytes = inp[0];
+            let len = inp
+                .get(1)
+                .filter(|v| !v.is<sub>empty</sub>())
+                .map(|i| parse<sub>b</sub>(i))
+                .transpose()?
+                .unwrap<sub>or</sub>(16usize);
+            if len &lt; bytes.len() {
+                return Err(format!("exceeds length {len} ( use '<i>cut:{len}' to cut )").into());
+            };
+            let tmp<sub>pad</sub> = [default<sub>pad</sub>];
+            let padb = inp.get(2).copied().unwrap<sub>or</sub>(&amp;tmp<sub>pad</sub>);
+            if padb.len() != 1 {
+                return Err("pad byte should be a single byte".into());
+            };
+            let mut v = vec![padb[0]; len];
+            if !left {
+                &amp;mut v[0..bytes.len()]
+            } else {
+                &amp;mut v[len - bytes.len()..]
+            }
+            .copy<sub>from</sub><sub>slice</sub>(bytes);
+            Ok(v)
+        }
+        fn trim(inp: &amp;[&amp;[u8]], left: bool) -&gt; Result&lt;Vec&lt;u8&gt;, ApplyErr&gt; {
+            let bytes = inp[0];
+            let len = inp
+                .get(1)
+                .map(|i| parse<sub>b</sub>(i))
+                .transpose()?
+                .unwrap<sub>or</sub>(16usize);
+            let len = len.min(bytes.len());
+            Ok(if left {
+                &amp;bytes[..len]
+            } else {
+                &amp;bytes[bytes.len() - len..]
+            }
+            .to<sub>vec</sub>())
+        }
+        fn cut(inp: &amp;[&amp;[u8]], left: bool) -&gt; Result&lt;Vec&lt;u8&gt;, ApplyErr&gt; {
+            let bytes = inp[0];
+            let len = inp
+                .get(1)
+                .map(|i| parse<sub>b</sub>(i))
+                .transpose()?
+                .unwrap<sub>or</sub>(16usize);
+            if len &gt; bytes.len() {
+                return Err(
+                    format!("less than length {len} ( use ':p to expand before cutting')").into(),
+                );
+            };
+            Ok(if left {
+                &amp;bytes[..len]
+            } else {
+                &amp;bytes[bytes.len() - len..]
+            }
+            .to<sub>vec</sub>())
+        }
+        fn bin(inp: &amp;[&amp;[u8]], radix: u32) -&gt; Result&lt;Vec&lt;u8&gt;, ApplyErr&gt; {
+            /</i> FIXME probably want to better handle leading '000000000'
+            let st = std::str::from<sub>utf8</sub>(inp[0])?;
+            let i = u128::from<sub>str</sub><sub>radix</sub>(st, radix)?;
+            if i == 0 {
+                Ok(vec![0])
+            } else {
+                Ok(cut<sub>prefix</sub><sub>nulls</sub>(&amp;i.to<sub>be</sub><sub>bytes</sub>()).to<sub>vec</sub>())
+            }
+        }
+        fncs!([
+            ("",1..=16,"the blank fnc can be use to start an expr such as {:12/u8} which is the same as {u8:12}",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,i:&amp;[&amp;[u8]]</td>
+<td class="org-left">Ok(i.concat())),</td>
+</tr>
+</tbody>
+</table>
+<p>
+("?a",1..=1,"encode bytes into ascii-bytes format",|<sub>,i</sub>:&amp;[&amp;[u8]]| Ok(as<sub>abtxt</sub>(i[0]).into<sub>owned</sub>().into<sub>bytes</sub>())),
+("?a0",1..=1,"encode bytes into ascii-bytes format but strip prefix '0' bytes",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,i:&amp;[&amp;[u8]]</td>
+<td class="org-left">Ok(as<sub>abtxt</sub>(cut<sub>prefix</sub><sub>nulls</sub>(i[0])).into<sub>owned</sub>().into<sub>bytes</sub>())),</td>
+</tr>
+</tbody>
+</table>
+<p>
+("a",1..=3,"[bytes,length = 16,pad<sub>byte</sub> = \\0] - alias for 'pad&lt;'",|<sub>,i</sub>:&amp;[&amp;[u8]]| pad(i,true,0)),
+(MAX<sub>STR,1</sub>..=3,"same as 'a' but uses \\xff as padding ",|<sub>,i</sub>:&amp;[&amp;[u8]]| pad(i,true,255)),
+("pad&lt;",1..=3,"[bytes,length = 16,pad<sub>byte</sub> = \\0] - left pad input bytes",|<sub>,i</sub>:&amp;[&amp;[u8]]| pad(i,true,0)),
+("pad&gt;",1..=3,"[bytes,length = 16,pad<sub>byte</sub> = \\0] - right pad input bytes",|<sub>,i</sub>:&amp;[&amp;[u8]]| pad(i,false,0)),
+("cut&lt;",1..=2,"[bytes,length = 16] - left cut input bytes",|<sub>,i</sub>:&amp;[&amp;[u8]]| cut(i,true)),
+("cut&gt;",1..=2,"[bytes,length = 16] - right cut input bytes",|<sub>,i</sub>:&amp;[&amp;[u8]]| cut(i,false)),
+("trim&lt;",1..=2,"[bytes,length = 16] - left trim ( cut&lt; without error )",|<sub>,i</sub>:&amp;[&amp;[u8]]| trim(i,true)),
+("trim&gt;",1..=2,"[bytes,length = 16] - right trim ( cut&gt; without error )",|<sub>,i</sub>:&amp;[&amp;[u8]]| trim(i,false)),
+</p>
+
+<p>
+            ("b2",1..=1,"decode binary",|<sub>,i</sub>:&amp;[&amp;[u8]]| bin(i,2)),
+            ("b8",1..=1,"decode octets",|<sub>,i</sub>:&amp;[&amp;[u8]]| bin(i,8)),
+            ("b16",1..=1,"decode hex",|<sub>,i</sub>:&amp;[&amp;[u8]]| bin(i,16))
+        ])
+    }
+}
+</p>
+
+
+<p>
+#[derive(Copy, Clone, Debug)]
+pub struct LogicOps;
+impl EvalScopeImpl for LogicOps {
+    fn about(&amp;self) -&gt; (String, String) {
+        ("logic ops".into(), "ops are : &lt; &gt; = 0 1 ".into())
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        // TODO, extra crate for test<sub>ops</sub>
+        fncs!([
+            (
+                "size?",
+                3..=3,
+                "[in,OP,VAL] error unless size passes the test ( UNIMPLEMENTED )",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_, i: &amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+        let size = parse<sub>b</sub>::&lt;usize&gt;(i[2])?;
+        let bytes = i[0];
+        let blen = bytes.len();
+        match i[1] {
+            b"<code>" =&gt; {
+                            if blen !</code> size {
+                    return Err(format!("expected {size} bytes got {blen}").into());
+                } else {
+                }
+            }
+            _ =&gt; return Err("unknown op".into()),
+        };
+        Ok(i[0].to<sub>vec</sub>())
+    }
+),
+(
+    "val?",
+    3..=3,
+    "[in,OP,VAL] error unless value passes the test ( UNIMPLMENTED)",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_, i: &amp;[&amp;[u8]]</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+                let bytes = i[0];
+                match i[1] {
+                    b"<code>" =&gt; {
+                            if bytes !</code> i[2] {
+                            return Err("unequal bytes".into());
+                        } else {
+                        }
+                    }
+                    _ =&gt; return Err("unknown op".into()),
+                };
+                Ok(i[0].to<sub>vec</sub>())
+            }
+        )
+    ])
+}
+fn list<sub>eval</sub>(&amp;self) -&gt; &amp;[ScopeEval&lt;&amp;Self&gt;] {
+    &amp;[
+        eval<sub>fnc</sub>!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_,i:&amp;[ABE],scope:&amp;dyn Scope</td>
+<td class="org-left">{</td>
+</tr>
+</tbody>
+</table>
+<p>
+                      let mut it = i.split(|v| v.is<sub>colon</sub>());
+                      if !it.next().ok<sub>or</sub>("missing expr")?.is<sub>empty</sub>(){ return Err("expected ':EXPR'".into())};
+                      let mut err = vec![];
+                      for o in it{
+                          match eval(&amp;EvalCtx { scope }, o){
+                              Ok(b) =&gt; return Ok(b.concat()),
+                              Err(e) =&gt; err.push((o,e)),
+                          }
+                      }
+                      Err(format!("{err:#?}").into())
+                  }
+            )
+        ]
+    }
+}
+</p>
+
+<p>
+#[derive(Copy, Clone)]
+pub struct Encode;
+impl EvalScopeImpl for Encode {
+    fn about(&amp;self) -&gt; (String, String) {
+        (
+            "encode".into(),
+            "attempt an inverse of a set of functions".into(),
+        )
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        &amp;[ScopeFunc {
+            info: ScopeFuncInfo {
+                id: "eval",
+                init<sub>eq</sub>: None,
+                to<sub>abe</sub>: false,
+                argc: 1..=1,
+                help: "parse and evaluate",
+            },
+            apply: |_, inp, <span class="underline">, scope| {
+                let expr = parse<sub>abe</sub><sub>b</sub>(inp[0])?;
+                let ctx = EvalCtx { scope };
+                AR::Ok(eval(&amp;ctx, &amp;expr)?.concat())
+            },
+            to<sub>abe</sub>: none,
+        }]
+    }
+    fn list<sub>eval</sub>(&amp;self) -&gt; &amp;[ScopeEval&lt;&amp;Self&gt;] {
+        &amp;[
+            ScopeEval {
+                info: ScopeEvalInfo { id: "?", help: "find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]* " },
+                apply:|</span>,abe,scope|-&gt; ApplyResult{
+                    let ctx = EvalCtx{scope};
+                    let (head,abe) = take<sub>first</sub>(abe)?;
+                    is<sub>colon</sub>(head)?;
+                    let mut it = abe.split(|v| v.is<sub>colon</sub>());
+                    let id = it.next().ok<sub>or</sub>("missing argument")?;
+                    let rest = it.as<sub>slice</sub>();
+                    let bytes = eval(&amp;ctx, id)?.concat();
+                    AR::Ok(encode<sub>abe</sub>(&amp;ctx, &amp;bytes, rest)?.into<sub>bytes</sub>())
+                }
+            },
+            ScopeEval {
+                info: ScopeEvalInfo { id: "e", help: "eval inner expression list. Useful to avoid escapes: eg <a href="{/e:/some/dir:thing}:opts">{/e:/some/dir:thing}:opts</a> does not require escapes the '/' " },
+                apply:|<sub>,abe,scope</sub>|-&gt; ApplyResult{
+                    let (head,abe) = take<sub>first</sub>(abe)?;
+                    is<sub>colon</sub>(head)?;
+                    let ctx = EvalCtx{scope};
+                    ApplyResult::Ok(eval(&amp;ctx, abe)?.concat())
+                }
+            },
+        ]
+    }
+}
+</p>
+
+<p>
+#[derive(Copy, Clone)]
+pub struct Help;
+impl EvalScopeImpl for Help {
+    fn about(&amp;self) -&gt; (String, String) {
+        ("help".into(), "".into())
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        &amp;[ScopeFunc {
+            apply: |_, i: &amp;[&amp;[u8]], _, scope| {
+                ApplyResult::Ok({
+                    if let Some(id) = i.get(0) {
+                        let mut out = "".to<sub>string</sub>();
+                        scope.describe(&amp;mut |name, about, fncs, evls| {
+                            if !out.is<sub>empty</sub>() {
+                                return;
+                            }
+                            let fs: Vec&lt;_&gt; = fncs.collect();
+                            let es: Vec&lt;_&gt; = evls.collect();
+                            if fs.iter().any(|e| e.id.as<sub>bytes</sub>() == *id)
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">es.iter().any(</td>
+<td class="org-left">e</td>
+<td class="org-left">e.id.as<sub>bytes</sub>() == *id)</td>
+</tr>
+</tbody>
+</table>
+<p>
+                        {
+                            let _ = fmt<sub>describer</sub>(
+                                &amp;mut out,
+                                &amp;mut Default::default(),
+                                name,
+                                about,
+                                &amp;mut fs.into<sub>iter</sub>(),
+                                &amp;mut es.into<sub>iter</sub>(),
+                            );
+                        }
+                    });
+                    if out.is<sub>empty</sub>() {
+                        write!(&amp;mut out, "no such fnc found")?;
+                    };
+                    out.into<sub>bytes</sub>()
+                } else {
+                    EvalCtx { scope }.to<sub>string</sub>().into<sub>bytes</sub>()
+                }
+            })
+        },
+        info: ScopeFuncInfo {
+            id: "help",
+            init<sub>eq</sub>: None,
+            argc: 0..=16,
+            help: "help",
+            to<sub>abe</sub>: false,
+        },
+        to<sub>abe</sub>: none,
+    }]
+}
+fn list<sub>eval</sub>(&amp;self) -&gt; &amp;[ScopeEval&lt;&amp;Self&gt;] {
+    &amp;[eval<sub>fnc</sub>!(
+        "help",
+        "desribe current eval context",
+</p>
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">_, _, scope</td>
+<td class="org-left">{ Ok(EvalCtx { scope }.to<sub>string</sub>().into<sub>bytes</sub>()) }</td>
+</tr>
+</tbody>
+</table>
+<p>
+        )]
+    }
+}
+</p>
+
+<p>
+fn fmt<sub>describer</sub>(
+    f: &amp;mut dyn Write,
+    seen: &amp;mut HashSet&lt;&amp;'static str&gt;,
+    name: &amp;str,
+    about: &amp;str,
+    funcs: &amp;mut dyn Iterator&lt;Item = ScopeFuncInfo&gt;,
+    evals: &amp;mut dyn Iterator&lt;Item = ScopeEvalInfo&gt;,
+) -&gt; std::fmt::Result {
+    let (mut fnc<sub>head</sub>, mut evl<sub>head</sub>) = (true, true);
+    writeln!(f, "# {name}\n{about}")?;
+    for ScopeFuncInfo {
+        id,
+        init<sub>eq</sub>,
+        argc,
+        help,
+        to<sub>abe</sub>,
+    } in funcs
+    {
+        if std::mem::take(&amp;mut fnc<sub>head</sub>) {
+            writeln!(f, "## functions")?;
+        }
+        let state = if seen.insert(id) {
+            "        "
+        } else {
+            "&lt;partial&gt;"
+        };
+        let fslash = if init<sub>eq</sub> != Some(false) { "/" } else { " " };
+        let colon = if init<sub>eq</sub> != Some(true) { ":" } else { " " };
+        let encode = if to<sub>abe</sub> { "?" } else { " " };
+        writeln!(
+            f,
+            "- {id: &lt;16} {fslash}{colon}{encode} {state} {argc:?}     {help}  "
+        )?;
+    }
+    for ScopeEvalInfo { id, help } in evals {
+        if std::mem::take(&amp;mut evl<sub>head</sub>) {
+            writeln!(f, "## eval")?;
+        }
+        writeln!(f, "- {id: &lt;16} {help}  ")?;
+    }
+    writeln!(f)?;
+    Ok(())
+}
+</p>
+
+<p>
+impl&lt;A: Scope&gt; Display for EvalCtx&lt;A&gt; {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        writeln!(f, "<code>=scopes=</code>")?;
+        let mut err = Ok(());
+        let mut set = HashSet::&lt;&amp;'static str&gt;::new();
+        self.scope.describe(&amp;mut |name, about, fncs, revals| {
+            if err.is<sub>err</sub>() {
+                return;
+            }
+            err = fmt<sub>describer</sub>(f, &amp;mut set, name, about, fncs, revals);
+        });
+        err
+    }
+}
+</p>
+
+<p>
+<i>/</i> Note that this destroys context information. \/ and / resolve to the same
+pub fn dump<sub>abe</sub><sub>bytes</sub>(out: &amp;mut Vec&lt;u8&gt;, abe: &amp;[ABE]) {
+    for item in abe {
+        match item {
+            ABE::Ctr(e) =&gt; out.push(*e as u8),
+            ABE::Expr(e) =&gt; match e {
+                Expr::Bytes(b) =&gt; out.extend<sub>from</sub><sub>slice</sub>(b),
+                Expr::Lst(l) =&gt; {
+                    out.push(b'[');
+                    dump<sub>abe</sub><sub>bytes</sub>(out, l);
+                    out.push(b']');
+                }
+            },
+        }
+    }
+}
+</p>
+
+<p>
+#[derive(Copy,Clone)]
+pub struct Comment;
+impl EvalScopeImpl for Comment{
+    fn about(&amp;self) -&gt; (String, String) {
+        ("comment function / void function. evaluates to nothing".into(), "".into())
+    }
+</p>
+
+<p>
+fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+    &amp;[
+        fnc!("C",1..=16,"the comment function. all arguments are ignored. evaluates to ''",|_,_| Ok(vec![]))
+    ]
+}
+</p>
+
+<p>
+    fn list<sub>eval</sub>(&amp;self) -&gt; &amp;[ScopeEval&lt;&amp;Self&gt;] {
+        &amp;[]
+    }
+}
+</p>
+
+<p>
+#[derive(Copy, Clone, Debug)]
+pub struct ArgV&lt;'o&gt;(pub [Option&lt;&amp;'o [u8]&gt;;8]);
+impl&lt;'o&gt; ArgV&lt;'o&gt;{
+    pub fn try<sub>fit</sub>(v: &amp;'o [&amp;'o [u8]]) -&gt; Option&lt;Self&gt;{
+        if v.len() &gt; 8 { return None}
+        let mut it = v.iter().copied();
+        Some(ArgV([
+            it.next(),it.next(),it.next(),it.next(),
+            it.next(),it.next(),it.next(),it.next()
+        ]))
+    }
+}
+impl&lt;'o&gt; EvalScopeImpl for ArgV&lt;'o&gt;{
+    fn about(&amp;self) -&gt; (String, String) {
+        ("user input list".into(), "Provide values, access with {0} {1} .. {7} ".into())
+    }
+    fn list<sub>funcs</sub>(&amp;self) -&gt; &amp;[ScopeFunc&lt;&amp;Self&gt;] {
+        fncs!([
+            ( "0" , 0..=0,Some(false), "argv[0]", |t:&amp;Self,_| Ok(t.0[0].ok<sub>or</sub>("no 0 value")?.to<sub>vec</sub>())),
+            ( "1" , 0..=0,Some(false), "argv[1]", |t:&amp;Self,_| Ok(t.0[1].ok<sub>or</sub>("no 1 value")?.to<sub>vec</sub>())),
+            ( "2" , 0..=0,Some(false), "argv[2]", |t:&amp;Self,_| Ok(t.0[2].ok<sub>or</sub>("no 2 value")?.to<sub>vec</sub>())),
+            ( "3" , 0..=0,Some(false), "argv[3]", |t:&amp;Self,_| Ok(t.0[3].ok<sub>or</sub>("no 3 value")?.to<sub>vec</sub>())),
+            ( "4" , 0..=0,Some(false), "argv[4]", |t:&amp;Self,_| Ok(t.0[4].ok<sub>or</sub>("no 4 value")?.to<sub>vec</sub>())),
+            ( "5" , 0..=0,Some(false), "argv[5]", |t:&amp;Self,_| Ok(t.0[5].ok<sub>or</sub>("no 5 value")?.to<sub>vec</sub>())),
+            ( "6" , 0..=0,Some(false), "argv[6]", |t:&amp;Self,_| Ok(t.0[6].ok<sub>or</sub>("no 6 value")?.to<sub>vec</sub>())),
+            ( "7" , 0..=0,Some(false), "argv[7]", |t:&amp;Self,_| Ok(t.0[7].ok<sub>or</sub>("no 7 value")?.to<sub>vec</sub>()))
+        ])
+    }
+}
+</p>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: R.A. Sol</p>
+<p class="date">Created: 2023-02-28 Tue 09:44</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

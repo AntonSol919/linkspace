@@ -17,12 +17,13 @@ The Linkspace Protocol is supernet with the following highlights:
 
 To write applications for a supernet requires a different perspective compared to managing sockets.
 The challenge is defining a super structure that can work across time and space with noisy incomplete data.
+Or treat it as a shared folder. That works as well.
 
 In return a supernet provides a lot of useful properties including:
-Serverless, lockin-resistant, lockout-resistant, extensible, scalable, accountable, privacy, replaceability, verifiable, (offline)available, etc.
+Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant etc.
 
-Checkout [ELI5](./eli5.html) if the words so far mean little to you, or you want an oversimplified introduction to the general idea.
-Or checkout the technical [Guide](./docs/guide/index.html). 
+Checkout the [Guide](./docs/guide/index.html) if you're familiar with git and web-servers.
+Checkout [ELI5](./eli5.html) if the words so far mean little to you.
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
-Expect unimplemented feature, half-baked ideas, rough edges, and the occasional bug. ( See the ./dev folder for more. )
+Expect some unimplemented feature, half-baked ideas, rough edges, and the occasional bug.

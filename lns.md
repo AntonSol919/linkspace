@@ -1,17 +1,20 @@
-# LNS
+# LNS - Lovely Name System
 
 LNS provides a way for publicly naming groups and public keys.
 Groups look like:
 
-- #:lns:org
+- #:pub
 - #:myfancystore:com
+- #:friendsofbob:local
 
 Pubkeys like:
 
 - @:john:lns:org
 - @:alice:my:fancystore:com
+- @:john:local
+- @:me:local
 
-:com, :dev, :local and :free registars are reserved.  
+:com, :dev, :free, :local, and :pub registars are special/reserved.  
 To apply for a new top level registar contact me directly.  
 
 LNS is not fully implemented yet.  
@@ -32,8 +35,8 @@ Every registration can carry additional links & data.
 
 Nothing in linkspace requires a registration.  
 Everything can be done without.  
-You can setup a root {#:...:local} key simple enough.  
-Registrations allow you to pick names to be known by publicly for everybody.  
+You can setup a root [#:...:local] key simple enough.  
+Registrations allow you to pick a name to be known publicly for everybody.  
 
 ### How much is a registration?
 
@@ -44,8 +47,8 @@ For others read on
 
 ### Can I become a top level registar?
 
-Yes. I am looking for people hyped enough to make this my full time job.  
-Top level names are leased on a first come first served bases of a 1000 euro p/m (12000 euro a year).
+Yes. I am looking for people to do so.
+Top level names are leased on a first come first served bases, no constraints, for a 1000 euro p/m (12000 euro a year).
 Alternative deals are negotiable. Just ask.  
 I'll throw in some goodwill consulting if you ever decide to disrupt some industry.  
 
@@ -66,12 +69,12 @@ To make a reservation clone this git repository, install rust and:
 ```terminal
 make install-lk
 lk --init key | tee lnskey
-lk keypoint lns:{#:pub}:/request/com/YOUR_NAME > lnsreq.lkp
+lk keypoint lns:[#:pub]:/request/com/YOUR_NAME > lnsreq.lkp
 ```
 
 Keep the file lnskey safe.
 Email the lnsreq.lkp file to AntonSol919+lns at gmail.com  
-I will accept /request/free untill some asshole decides to claim the dictionary.
+I will accept /request/free until some asshole decides to claim the dictionary.
 After which I'll probably make it a little more difficult.
 
 Get a pull request accepted, and you get a :dev name.

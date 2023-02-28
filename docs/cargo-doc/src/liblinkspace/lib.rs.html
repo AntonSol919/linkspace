@@ -804,6 +804,108 @@
 <a href="#804" id="804">804</a>
 <a href="#805" id="805">805</a>
 <a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -824,7 +926,7 @@
 #![doc = <span class="string">r#&quot;
 
 The functions re-exported below is essentially the entire liblinkspace interface.
-Bindings in other languges follow the same pattern.
+Bindings in other languages follow the same pattern.
 
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
@@ -840,10 +942,10 @@ Some internals structs defs are currently leaking and will be removed.
     <span class="kw">pub use super</span>::<span class="kw-2">*</span>;
     <span class="kw">pub use </span>linkspace_common::{
         bytefmt::{endian_types, AB, B64},
-        core::{env::queries::RecvPktPtr},
+        core::env::queries::RecvPktPtr,
         pkt::{
-            ab, as_abtxt, ipath1, ipath_buf, now, try_ab, Domain,  GroupID, LkHash, IPath,
-            IPathBuf, IPathC, Link, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
+            ab, as_abtxt, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
+            IPathBuf, IPathC, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PktTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
         },
@@ -855,14 +957,14 @@ Some internals structs defs are currently leaking and will be removed.
 
 <span class="doccomment">/// Callbacks stored in a [Linkspace] instance. use [misc::cb] to impl from function
 </span><span class="kw">pub trait </span>PktHandler {
-    <span class="comment">// if returns some, periodcially check to see if the handler can be closed.
+    <span class="comment">// if returns some, periodically check to see if the handler can be closed.
     //fn checkup(&amp;mut self) -&gt; Option&lt;ControlFlow&lt;()&gt;&gt;{None}
     </span><span class="doccomment">/// Handles an event.
     </span><span class="kw">fn </span>handle_pkt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt;;
     <span class="doccomment">/// Called when break, finished, or replaced
     </span><span class="kw">fn </span>stopped(<span class="kw-2">&amp;mut </span><span class="self">self</span>, query: Query, lk: <span class="kw-2">&amp;</span>Linkspace, reason: StopReason, total: u32, new: u32);
 }
-<span class="kw">impl </span>PktHandler <span class="kw">for </span>Box&lt;<span class="kw">dyn </span>PktHandler&gt;{
+<span class="kw">impl </span>PktHandler <span class="kw">for </span>Box&lt;<span class="kw">dyn </span>PktHandler&gt; {
     <span class="kw">fn </span>handle_pkt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt; {
         (<span class="kw-2">**</span><span class="self">self</span>).handle_pkt(pkt, lk)
     }
@@ -909,15 +1011,15 @@ Some internals structs defs are currently leaking and will be removed.
     let path = ipath_buf(&amp;[b&quot;hello&quot;,b&quot;world&quot;]);
     let links = [
         Link{tag: ab(b&quot;a datapoint&quot;),ptr:datap.hash()},
-        Link{tag: ab(b&quot;another tag&quot;),ptr:PUBLIC_GROUP}
+        Link{tag: ab(b&quot;another tag&quot;),ptr:PUBLIC}
     ];
     let data = b&quot;extra data for the linkpoint&quot;;
     let create = Some(U64::new(0)); // None == Some(now()).
-    let linkpoint = lk_linkpoint(ab(b&quot;mydomain&quot;),PUBLIC_GROUP,&amp;path,&amp;links,data,create)?;
+    let linkpoint = lk_linkpoint(ab(b&quot;mydomain&quot;),PUBLIC,&amp;path,&amp;links,data,create)?;
 
     assert_eq!(linkpoint.hash().to_string(), &quot;zvyWklJrmEHBQfYBLxYh7Gh-3YOTCFRgyuXaGl6-xt8&quot;);
     assert_eq!(linkpoint.data(), data);
-    assert_eq!(*linkpoint.get_group(), PUBLIC_GROUP); 
+    assert_eq!(*linkpoint.get_group(), PUBLIC);
 
     # Ok(())}
 
@@ -1004,62 +1106,82 @@ Some internals structs defs are currently leaking and will be removed.
     }
 }
 
-<span class="kw">pub use </span>abe::{lk_encode, lk_eval,lk_split_abe};
+<span class="kw">pub use </span>abe::{lk_encode, lk_eval, lk_split_abe};
 <span class="doccomment">/** ascii byte expression utilities
 
 ABE is a byte templating language.
 See guide#ABE to understand its use and indepth explanation.
  **/
 </span><span class="kw">pub mod </span>abe {
+    <span class="kw">use </span><span class="self">self</span>::ctx::UserData;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">pub use </span>linkspace_common::pkt::repr::{DEFAULT_PKT};
+    <span class="kw">pub use </span>linkspace_common::pkt::repr::DEFAULT_PKT;
     <span class="kw">use </span>linkspace_common::{
         abe::abtxt::as_abtxt,
         prelude::{abtxt::CtrChar, ast::split_abe},
     };
+
     <span class="doccomment">/**
     Evaluate an expression and return the bytes
 
     Optionally add a `pkt` as a context.
     Refuses &#39;\n&#39; and &#39;\t&#39;, and returns delimiters &#39;:&#39; and &#39;/&#39; as plain bytes.
-    See [lk_split_abe] for different delimiter behaviour
+    See [lk_split_abe] for different delimiter behavior
 
     ```
     # use liblinkspace::{*,prelude::*,abe::*};
     # fn main() -&gt; LkResult{
-    assert_eq!( lk_eval( &quot;abc&quot; ,None)?, b&quot;abc&quot; );
-    assert_eq!( lk_eval( r#&quot;\0\x01\xff&quot;# ,None)?, &amp;[0,1,255] ); // &quot;\\0\\x01\\xff&quot;
+    assert_eq!( b&quot;abc&quot; as &amp;[u8]    , lk_eval( &quot;abc&quot; ,())?, );
+    assert_eq!( &amp;[0u8,1,255] as &amp;[u8], lk_eval( r#&quot;\0\x01\xff&quot;# ,())?,);
 
-    assert_eq!( lk_eval( r#&quot;\n\t\:\/\\\{\}&quot;# ,None)?, &amp;[b&#39;\n&#39;,b&#39;\t&#39;,b&#39;:&#39;,b&#39;/&#39;,b&#39;\\&#39;,b&#39;{&#39;,b&#39;}&#39;]);
+    // calling functions such as &#39;u8&#39;
+    assert_eq!( b&quot;abc&quot; as &amp;[u8]    , lk_eval( &quot;ab[u8:99]&quot; ,())?, );
 
+    assert_eq!(
+               b&quot;The &#39;&#39; function returns its first argument&quot; as &amp;[u8],
+       lk_eval( &quot;The &#39;&#39; function returns its first [:argument]&quot;, ())?
+    );
 
-    assert_eq!( lk_eval( &quot;The &#39;&#39; returns its first {:argument}&quot; , None)?,b&quot;The &#39;&#39; returns its first argument&quot;);
+    assert_eq!(
+               b&quot;Bytes are joined&quot; as &amp;[u8],
+       lk_eval( &quot;Bytes[: are][: joined]&quot; , ())?
+    );
 
-    assert_eq!( lk_eval( &quot;Bytes{: are}{: joined}&quot; , None)?,b&quot;Bytes are joined&quot;);
-
-    let result = lk_eval( &quot;Nest expressions {u8:65} == {u8:{:65}} == \x41&quot; , None)?;
+    let result = lk_eval( &quot;Nest expressions [u8:65] == [u8:[:65]] == \x41&quot; , ())?;
     assert_eq!(result,   b&quot;Nest expressions A == A == A&quot;);
 
-    let result = lk_eval( &quot;Use result as first argument with &#39;/&#39; {u8:65} == {:65/u8} == \x41&quot; , None)?;
+    let result = lk_eval( &quot;Use result as first argument with &#39;/&#39; [u8:65] == [:65/u8] == \x41&quot; , ())?;
     assert_eq!(result,   b&quot;Use result as first argument with &#39;/&#39; A == A == A&quot;);
 
-    let lp : NetPktBox = lk_linkpoint(ab(b&quot;mydomain&quot;),PUBLIC_GROUP,IPath::empty(),&amp;[],&amp;[],None)?;
 
-    assert_eq!( lk_eval( &quot;{hash}&quot; , Some(&amp;lp))?,&amp;*lp.hash());
-    let by_arg   = lk_eval( &quot;{hash:str}&quot;, Some(&amp;lp))?;
-    let by_apply = lk_eval( &quot;{hash/?b}&quot;, Some(&amp;lp))?;
-    let as_field = lp.hash().b64().into_bytes();
+    let result = lk_eval( &quot;You can provide an argv [0] [1]&quot; , &amp;[b&quot;like&quot; as &amp;[u8], b&quot;this&quot;])?;
+    assert_eq!(result,   b&quot;You can provide an argv like this&quot;);
+
+    let lp : NetPktBox = lk_linkpoint(ab(b&quot;mydomain&quot;),PUBLIC,IPath::empty(),&amp;[],&amp;[],None)?;
+    let pkt: &amp;dyn NetPkt = &amp;lp;
+
+    assert_eq!( lk_eval( &quot;[hash]&quot; , pkt)?,&amp;*pkt.hash());
+    let by_arg   = lk_eval( &quot;[hash:str]&quot;, pkt)?;
+    let by_apply = lk_eval( &quot;[hash/?b]&quot;,  pkt)?;
+    let as_field = pkt.hash().b64().into_bytes();
     assert_eq!( by_arg, by_apply);
     assert_eq!( by_arg, as_field);
+
+    // or provide both at once with (pkt,&amp;[b&quot;argv&quot;])
+    // More options are available in [varctx]
+
+    // escaped characters
+    assert_eq!( lk_eval( r#&quot;\n\t\:\/\\\[\]&quot;# ,())?,  &amp;[b&#39;\n&#39;,b&#39;\t&#39;,b&#39;:&#39;,b&#39;/&#39;,b&#39;\\&#39;,b&#39;[&#39;,b&#39;]&#39;] );
 
     # Ok(())
     # }
     ```
 
-    A list of functions can be found with ```lk_eval(&quot;{help}&quot;)```
+    A list of functions can be found with ```lk_eval(&quot;[help]&quot;)```
     **/
-    </span><span class="kw">pub fn </span>lk_eval(expr: <span class="kw-2">&amp;</span>str, pkt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt&gt;) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
-        varctx::lk_eval(ctx::ctx(pkt), expr)
+    </span><span class="kw">pub fn </span>lk_eval&lt;<span class="lifetime">&#39;o</span>&gt;(expr: <span class="kw-2">&amp;</span>str, udata: <span class="kw">impl </span>Into&lt;UserData&lt;<span class="lifetime">&#39;o</span>&gt;&gt;) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
+        varctx::lk_eval(ctx::ctx(udata.into())<span class="question-mark">?</span>, expr)
     }
     <span class="doccomment">/**
     Exec callback for each expr between control characters (&#39;:&#39;, &#39;/&#39;, &#39;\n&#39;, &#39;\t&#39;).
@@ -1091,23 +1213,23 @@ See guide#ABE to understand its use and indepth explanation.
     encode bytes as an abe that evaluate back to bytes.
 
     accepts a list of func to try and encode.
-    This function can also be used as the evaluator &#39;{/?:..}&#39;.
+    This function can also be used as the evaluator &#39;[/?:..]&#39;.
     ```
     # use liblinkspace::{*,abe::*};
     # fn main() -&gt; LkResult{
-    let bytes= lk_eval(&quot;{u32:8}&quot;,None)?;
+    let bytes= lk_eval(&quot;[u32:8]&quot;,())?;
     assert_eq!(bytes,&amp;[0,0,0,8]);
     assert_eq!(lk_encode(&amp;bytes,&quot;&quot;), r#&quot;\0\0\0\x08&quot;#);
-    assert_eq!(lk_encode(&amp;bytes,&quot;u32&quot;), &quot;{u32:8}&quot;);
+    assert_eq!(lk_encode(&amp;bytes,&quot;u32&quot;), &quot;[u32:8]&quot;);
 
-    // This function can also be called with the encode &#39;/?&#39; efunc
-    assert_eq!(lk_eval(r#&quot;{/?:\0\0\0{u8:8}:u32}&quot;#,None)?,b&quot;{u32:8}&quot;);
+    // This function can also be called with the encode &#39;/?&#39; evaluator
+    assert_eq!(lk_eval(r#&quot;[/?:\0\0\0[u8:8]:u32]&quot;#,())?,b&quot;[u32:8]&quot;);
 
-    // the options are a list of &#39;/&#39; seperated functions
+    // the options are a list of &#39;/&#39; separated functions
     // In this example &#39;u32&#39; wont fit, LNS &#39;#&#39; lookup will succeed, if not the encoding would be base64
 
-    let mut public_grp = PUBLIC_GROUP;
-    assert_eq!(lk_encode(&amp;*public_grp,&quot;u32/#/b&quot;), &quot;{#:pub}&quot;);
+    let mut public_grp = PUBLIC;
+    assert_eq!(lk_encode(&amp;*public_grp,&quot;u32/#/b&quot;), &quot;[#:pub]&quot;);
 
     # Ok(())
     # }
@@ -1116,30 +1238,29 @@ See guide#ABE to understand its use and indepth explanation.
     this variant also swallows bad options, see [lk_try_encode] to avoid doing so.
     **/
     </span><span class="kw">pub fn </span>lk_encode(bytes: <span class="kw-2">&amp;</span>[u8], options: <span class="kw-2">&amp;</span>str) -&gt; String {
-        varctx::lk_try_encode(ctx::ctx(<span class="prelude-val">None</span>), bytes, options)
+        varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options)
             .unwrap_or_else(|_v| as_abtxt(bytes).to_string())
     }
     <span class="doccomment">/// [lk_encode] with Err on wrong options
     </span><span class="kw">pub fn </span>lk_try_encode(bytes: <span class="kw-2">&amp;</span>[u8], options: <span class="kw-2">&amp;</span>str) -&gt; LkResult&lt;String&gt; {
-        <span class="prelude-val">Ok</span>(varctx::lk_try_encode(ctx::ctx(<span class="prelude-val">None</span>), bytes, options)<span class="question-mark">?</span>)
+        <span class="prelude-val">Ok</span>(varctx::lk_try_encode(
+            ctx::ctx(().into()).unwrap(),
+            bytes,
+            options,
+        )<span class="question-mark">?</span>)
     }
-    <span class="comment">/*
-    /// set default lk_eval context usually set by [lk_open] and
-    pub fn lk_set_eval_ctx(rt:Option&lt;&amp;Linkspace&gt;,pkt:Option&lt;&amp;NetPktPtr&gt;) {
-        *LK_EVAL_CTX_RT.borrow_mut() = rt.cloned();
-        *LK_EVAL_CTX_PKT.borrow_mut() = pkt.map(|v| v.as_netarc());
-    }
-    */
-
-    </span><span class="doccomment">/// Custom context for use in [varctx]
+    <span class="doccomment">/// Custom context for use in [varctx]
     </span><span class="kw">pub mod </span>ctx {
         <span class="attr">#[thread_local]
         </span><span class="kw">pub static </span>LK_EVAL_CTX_RT: RefCell&lt;<span class="prelude-ty">Option</span>&lt;Linkspace&gt;&gt; = RefCell::new(<span class="prelude-val">None</span>);
 
+        <span class="kw">use </span>anyhow::Context;
         <span class="kw">use </span>linkspace_common::abe::eval::{EvalCtx, Scope};
-        <span class="kw">use </span>linkspace_common::prelude::NetPkt;
+        <span class="kw">use </span>linkspace_common::prelude::{ArgV, EScope, NetPkt};
         <span class="kw">use </span>linkspace_common::runtime::Linkspace;
         <span class="kw">use </span>std::cell::RefCell;
+
+        <span class="kw">use </span><span class="kw">crate</span>::LkResult;
         <span class="kw">type </span>StdCtx&lt;<span class="lifetime">&#39;o</span>&gt; = <span class="kw">impl </span>Scope + <span class="lifetime">&#39;o</span>;
         <span class="doccomment">/// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         </span><span class="kw">pub struct </span>LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) InlineCtx&lt;<span class="lifetime">&#39;o</span>&gt;);
@@ -1151,8 +1272,57 @@ See guide#ABE to understand its use and indepth explanation.
             Empty,
         }
 
-        <span class="kw">pub fn </span>ctx&lt;<span class="lifetime">&#39;o</span>&gt;(pkt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt&gt;) -&gt; LkCtx&lt;<span class="lifetime">&#39;o</span>&gt; {
-            _ctx(<span class="prelude-val">None</span>, pkt)
+        <span class="attr">#[derive(Copy, Clone)]
+        #[repr(C)]
+        </span><span class="doccomment">/// User config for setting additional context to evaluation.
+        </span><span class="kw">pub struct </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
+            <span class="kw">pub </span>pkt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt&gt;,
+            <span class="kw">pub </span>argv: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]]&gt;,
+        }
+        <span class="kw">impl </span>From&lt;()&gt; <span class="kw">for </span>UserData&lt;<span class="lifetime">&#39;static</span>&gt; {
+            <span class="kw">fn </span>from(<span class="kw">_</span>: ()) -&gt; <span class="self">Self </span>{
+                UserData {
+                    pkt: <span class="prelude-val">None</span>,
+                    argv: <span class="prelude-val">None</span>,
+                }
+            }
+        }
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt&gt; <span class="kw">for </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
+            <span class="kw">fn </span>from(pkt: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt) -&gt; <span class="self">Self </span>{
+                UserData {
+                    pkt: <span class="prelude-val">Some</span>(pkt),
+                    argv: <span class="prelude-val">None</span>,
+                }
+            }
+        }
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>&gt; From&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt, <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]])&gt; <span class="kw">for </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
+            <span class="kw">fn </span>from((p, i): (<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt, <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]])) -&gt; <span class="self">Self </span>{
+                UserData {
+                    pkt: <span class="prelude-val">Some</span>(p),
+                    argv: <span class="prelude-val">Some</span>(i),
+                }
+            }
+        }
+
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>, <span class="kw">const </span>N: usize&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]; N]&gt; <span class="kw">for </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
+            <span class="kw">fn </span>from(inp: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]; N]) -&gt; <span class="self">Self </span>{
+                UserData {
+                    argv: <span class="prelude-val">Some</span>(inp),
+                    pkt: <span class="prelude-val">None</span>,
+                }
+            }
+        }
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]]&gt; <span class="kw">for </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
+            <span class="kw">fn </span>from(inp: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]]) -&gt; <span class="self">Self </span>{
+                UserData {
+                    argv: <span class="prelude-val">Some</span>(inp),
+                    pkt: <span class="prelude-val">None</span>,
+                }
+            }
+        }
+
+        <span class="kw">pub fn </span>ctx&lt;<span class="lifetime">&#39;o</span>&gt;(udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
+            _ctx(<span class="prelude-val">None</span>, udata)
         }
         <span class="kw">pub const fn </span>core_ctx() -&gt; LkCtx&lt;<span class="lifetime">&#39;static</span>&gt; {
             LkCtx(InlineCtx::Core)
@@ -1160,11 +1330,16 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">pub const fn </span>empty_ctx() -&gt; LkCtx&lt;<span class="lifetime">&#39;static</span>&gt; {
             LkCtx(InlineCtx::Empty)
         }
-        <span class="kw">pub fn </span>lk_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;, pkt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt&gt;) -&gt; LkCtx&lt;<span class="lifetime">&#39;o</span>&gt; {
-            _ctx(<span class="prelude-val">Some</span>(lk), pkt)
+        <span class="kw">pub fn </span>lk_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;, udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
+            _ctx(<span class="prelude-val">Some</span>(lk), udata)
         }
-        <span class="comment">// the basic context.
-        </span><span class="kw">fn </span>_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;&gt;, pkt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">dyn </span>NetPkt&gt;) -&gt; LkCtx&lt;<span class="lifetime">&#39;o</span>&gt; {
+        <span class="doccomment">/// lk:None =&gt; get threadlocal Lk . Some(None) =&gt; no linkspace
+        </span><span class="kw">fn </span>_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;&gt;, udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
+            <span class="kw">let </span>inp_ctx = udata
+                .argv
+                .map(|v| ArgV::try_fit(v).context(<span class="string">&quot;Too many inp values&quot;</span>))
+                .transpose()<span class="question-mark">?
+                </span>.map(EScope);
             <span class="kw">use </span>linkspace_common::core::eval::EVAL0_1;
             <span class="kw">use </span>linkspace_common::eval::std_ctx_v;
             <span class="kw">use </span>linkspace_common::pkt::eval::opt_pkt_ctx;
@@ -1175,9 +1350,10 @@ See guide#ABE to understand its use and indepth explanation.
                 }
                 .ok_or_else(|| std::io::Error::other(<span class="string">&quot;No runtime argument given&quot;</span>))
             };
-            LkCtx(InlineCtx::Std(
-                opt_pkt_ctx(std_ctx_v(get, EVAL0_1), pkt.map(|v| v <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt)).scope,
-            ))
+            <span class="prelude-val">Ok</span>(LkCtx(InlineCtx::Std((
+                opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt)).scope,
+                inp_ctx,
+            ))))
         }
         <span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>&gt; LkCtx&lt;<span class="lifetime">&#39;o</span>&gt; {
             <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_dyn(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EvalCtx&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Scope + <span class="lifetime">&#39;o</span>)&gt; {
@@ -1205,31 +1381,30 @@ See guide#ABE to understand its use and indepth explanation.
     # use liblinkspace::{*,prelude::*,abe::*};
     # fn main() -&gt; LkResult{
 
-    let mut query = lk_query();
+    let mut query = lk_query(None);
 
     // Add an entire set
     let query_str = &quot;
-
-    group:=:{#:pub}
-    domain:=:{a:hello}
+    group:=:[#:pub]
+    domain:=:[a:hello]
     prefix:=:/some/path
-
     :watch:default
     &quot;;
-    lk_query_parse(&amp;mut query,query_str)?;
+    lk_query_parse(&amp;mut query,query_str,())?;
+    // Optionally with user data such as an argv
+    lk_query_parse(&amp;mut query,&quot;prefix:=:/some/[0]&quot;,&amp;[b&quot;path&quot; as &amp;[u8]]);
 
-    // conflicting requirements clash
-    let result = lk_query_parse(&amp;mut query, &quot;path_len:=:\0&quot;);
+    // conflicting predicates return an error
+    let result = lk_query_parse(&amp;mut query, &quot;path_len:=:\0&quot;,());
     assert!( result.is_err());
 
     // You can add a single statement directly
     lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;, &amp;*now())?;
-    // They are effectilvy merged if they overlap
-    lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;,&amp;lk_eval(&quot;{now:-1D}&quot;,None)?)?;
+    // Predicates get merged if they overlap
+    lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;,&amp;lk_eval(&quot;[now:-1D]&quot;,())?)?;
 
-    // to inspect it
+    // As you can see with
     println!(&quot;{}&quot;,lk_query_print(&amp;query,false));
-
     # Ok(())}
     ```
 
@@ -1248,10 +1423,16 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="kw">pub use </span>linkspace_common::core::query::KnownOptions;
     <span class="kw">use </span>linkspace_common::prelude::{ExtPredicate, PktPredicates};
 
+    <span class="kw">use </span><span class="kw">crate</span>::abe::ctx::UserData;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="doccomment">/// Create a new [Query]
-    </span><span class="kw">pub fn </span>lk_query() -&gt; Query {
-        Query(Default::default())
+    <span class="doccomment">/// Create a new [Query]. Optionally copy from a template
+    </span><span class="kw">pub fn </span>lk_query(copy_from: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Query&gt;) -&gt; Query {
+        copy_from.map(|v| v.clone()).unwrap_or_default()
+    }
+    <span class="doccomment">/// Create a new [Query] specifically for a hash. Sets the right mode and &#39;i&#39; count.
+    </span><span class="kw">pub fn </span>lk_hash_query(hash: LkHash) -&gt; Query {
+        Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
     <span class="doccomment">/// Add a single statement to a [Query], potentially skipping an encode step.
     ///
@@ -1273,8 +1454,12 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="prelude-val">Ok</span>(changed)
     }
     <span class="doccomment">/// Add multiple ABE encoded statements to a [Query]
-    </span><span class="kw">pub fn </span>lk_query_parse(query: <span class="kw-2">&amp;mut </span>Query, expr: <span class="kw-2">&amp;</span>str) -&gt; LkResult&lt;bool&gt; {
-        varctx::lk_query_parse(<span class="kw">crate</span>::abe::ctx::ctx(<span class="prelude-val">None</span>), query, expr)
+    </span><span class="kw">pub fn </span>lk_query_parse&lt;<span class="lifetime">&#39;o</span>&gt;(
+        query: <span class="kw-2">&amp;mut </span>Query,
+        expr: <span class="kw-2">&amp;</span>str,
+        udata: <span class="kw">impl </span>Into&lt;UserData&lt;<span class="lifetime">&#39;o</span>&gt;&gt;,
+    ) -&gt; LkResult&lt;bool&gt; {
+        varctx::lk_query_parse(<span class="kw">crate</span>::abe::ctx::ctx(udata.into())<span class="question-mark">?</span>, query, expr)
     }
     <span class="doccomment">/// Clear a [Query] for reuse
     </span><span class="kw">pub fn </span>lk_query_clear(query: <span class="kw-2">&amp;mut </span>Query) {
@@ -1321,8 +1506,8 @@ See guide#ABE to understand its use and indepth explanation.
 
     <span class="doccomment">/** linkspace stored identity
 
-    open (or generate) the key `name` which is also accessible as {@local:name}.
-    empty name defaults to &#39;me&#39; ( i.e. {@local:name} )
+    open (or generate) the key `name` which is also accessible as [@local:name].
+    empty name defaults to &#39;me&#39; ( i.e. [@local:name] )
     **/
     </span><span class="kw">pub fn </span>lk_key(
         linkspace: <span class="kw-2">&amp;</span>Linkspace,
@@ -1331,8 +1516,8 @@ See guide#ABE to understand its use and indepth explanation.
         new: bool,
     ) -&gt; LkResult&lt;SigningKey&gt; {
         <span class="kw">let </span>name = <span class="kw">if </span>name.is_empty() { <span class="string">&quot;me&quot; </span>} <span class="kw">else </span>{ name };
-        <span class="kw">let </span>e = [<span class="string">&quot;{local:{:&quot;</span>, name, <span class="string">&quot;}::*=:enckey/readhash:data}&quot;</span>].concat();
-        <span class="kw">match </span><span class="kw">crate</span>::lk_eval(<span class="kw-2">&amp;</span>e, <span class="prelude-val">None</span>) {
+        <span class="kw">let </span>e = <span class="macro">format!</span>(<span class="string">&quot;[local:[:{name}]::*=:enckey/readhash:data]&quot;</span>);
+        <span class="kw">match </span><span class="kw">crate</span>::lk_eval(<span class="kw-2">&amp;</span>e, ()) {
             <span class="prelude-val">Ok</span>(b) =&gt; {
                 <span class="kw">let </span>st = std::str::from_utf8(<span class="kw-2">&amp;</span>b)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(linkspace_common::identity::decrypt(st, password)<span class="question-mark">?</span>)
@@ -1364,10 +1549,10 @@ See guide#ABE to understand its use and indepth explanation.
     }
 }
 
-<span class="kw">pub use </span>runtime::{
+<span class="kw">pub use </span>linkspace::{
     lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch, Linkspace,
 };
-<span class="kw">pub mod </span>runtime {
+<span class="kw">pub mod </span>linkspace {
     <span class="doccomment">/**
     The linkspace runtime.
 
@@ -1501,18 +1686,24 @@ See guide#ABE to understand its use and indepth explanation.
 
     will return when:
     - max_wait has elapsed between new packets - return false
-      e.g. lk_eval(&quot;{s:+1M}&quot;) or 0u64 to ignore
-    - untill time has been reached - returns false
-      e.g. lk_eval(&quot;{now:+1M}&quot;) or 0u64 to ignore
+      e.g. lk_eval(&quot;[s:+1M]&quot;) or 0u64 to ignore
+    - until time has been reached - returns false
+      e.g. lk_eval(&quot;[now:+1M]&quot;) or 0u64 to ignore
     - no more watch callbacks exists - returns true
     **/
-    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace, max_wait: Stamp, untill: Stamp) -&gt; LkResult&lt;bool&gt; {
-        <span class="kw">let </span>max_wait =
-            (max_wait != Stamp::ZERO).then_some(std::time::Duration::from_micros(max_wait.get()));
-        <span class="kw">let </span>untill = (untill != Stamp::ZERO).then(|| pkt::as_instance(untill).into());
-        lk.<span class="number">0</span>.run_while(max_wait, untill)
+    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace, d_max_wait: Stamp, at_until: Stamp) -&gt; LkResult&lt;bool&gt; {
+        <span class="kw">let </span>max_wait = (d_max_wait != Stamp::ZERO)
+            .then_some(std::time::Duration::from_micros(d_max_wait.get()));
+
+        <span class="kw">let </span>until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
+        lk.<span class="number">0</span>.run_while(max_wait, until)
     }
 
+    <span class="kw">pub fn </span>lk_list_watches(lk: <span class="kw-2">&amp;</span>Linkspace, cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>Query)) {
+        <span class="kw">for </span>el <span class="kw">in </span>lk.<span class="number">0</span>.dbg_watches().<span class="number">0</span>.entries() {
+            cb(<span class="kw-2">&amp;</span>el.id, Query::from_impl(<span class="kw-2">&amp;*</span>el.query))
+        }
+    }
     <span class="kw">pub struct </span>LkInfo&lt;<span class="lifetime">&#39;o</span>&gt; {
         <span class="kw">pub </span>path: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>std::path::Path,
     }
@@ -1527,63 +1718,76 @@ See guide#ABE to understand its use and indepth explanation.
 </span><span class="kw">pub mod </span>conventions;
 <span class="kw">pub use </span>conventions::lk_pull;
 
-<span class="kw">pub use </span>consts::{PUBLIC_GROUP,LOCAL_ONLY_GROUP};
+<span class="kw">pub use </span>consts::{PRIVATE, PUBLIC};
 <span class="kw">pub mod </span>consts {
     <span class="kw">pub use </span>linkspace_common::core::consts::pkt_consts::<span class="kw-2">*</span>;
-    <span class="kw">pub use </span>linkspace_common::core::consts::{
-        PUBLIC_GROUP,
-        LOCAL_ONLY_GROUP,
-        EXCHANGE_DOMAIN
-    };
-    
+    <span class="kw">pub use </span>linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC};
 }
-<span class="kw">pub use </span>misc::{cb};
+<span class="kw">pub use </span>misc::cb;
 <span class="kw">pub mod </span>misc {
     <span class="kw">use </span>std::ops::{ControlFlow, Try};
 
     <span class="kw">pub use </span>linkspace_common::core::env::tree_key::TreeEntry;
     <span class="kw">pub use </span>linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
     <span class="kw">pub use </span>linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
-    <span class="kw">pub use </span>linkspace_common::pkt_reader <span class="kw">as </span>reader;
     <span class="kw">pub use </span>linkspace_common::pkt::FieldEnum;
+    <span class="kw">pub use </span>linkspace_common::pkt_reader <span class="kw">as </span>reader;
     <span class="kw">use </span>linkspace_common::prelude::NetPkt;
     <span class="kw">pub use </span>linkspace_common::runtime::handlers::StopReason;
 
     <span class="kw">use crate</span>::{Linkspace, PktHandler, Query};
 
-    <span class="kw">pub struct </span>Cb&lt;A,B&gt;{
+    <span class="kw">pub struct </span>Cb&lt;A, B&gt; {
         <span class="kw">pub </span>handle_pkt: A,
-        <span class="kw">pub </span>stopped:B
+        <span class="kw">pub </span>stopped: B,
     }
-    <span class="kw">pub fn </span>nop_stopped(<span class="kw">_</span>:Query,<span class="kw">_</span>:<span class="kw-2">&amp;</span>Linkspace,<span class="kw">_</span>:StopReason,<span class="kw">_</span>:u32,<span class="kw">_</span>:u32){}
-    <span class="kw">pub fn </span>cb&lt;A,R,E&gt;(<span class="kw-2">mut </span>handle_pkt:A) -&gt; Cb&lt;<span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, &amp; Linkspace) -&gt; ControlFlow&lt;()&gt;+<span class="lifetime">&#39;static</span>,<span class="kw">fn</span>(Query,<span class="kw-2">&amp;</span>Linkspace,StopReason,u32,u32)&gt;
-        <span class="kw">where
+    <span class="kw">pub fn </span>nop_stopped(<span class="kw">_</span>: Query, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Linkspace, <span class="kw">_</span>: StopReason, <span class="kw">_</span>: u32, <span class="kw">_</span>: u32) {}
+    <span class="kw">pub fn </span>cb&lt;A, R, E&gt;(
+        <span class="kw-2">mut </span>handle_pkt: A,
+    ) -&gt; Cb&lt;
+        <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt; + <span class="lifetime">&#39;static</span>,
+        <span class="kw">fn</span>(Query, <span class="kw-2">&amp;</span>Linkspace, StopReason, u32, u32),
+    &gt;
+    <span class="kw">where
         </span>R: Try&lt;Output = (), Residual = E&gt;,
         E: std::fmt::Debug,
-        A: <span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>,<span class="lifetime">&#39;b</span>&gt;FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">dyn </span>NetPkt,<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>Linkspace) -&gt; R + <span class="lifetime">&#39;static</span>,
+        A: <span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">dyn </span>NetPkt, <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>Linkspace) -&gt; R + <span class="lifetime">&#39;static</span>,
     {
-        Cb{handle_pkt: <span class="kw">move </span>|pkt:<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt,lk:<span class="kw-2">&amp;</span>Linkspace| {
-            (handle_pkt)(pkt,lk).branch().map_break(|brk| {<span class="macro">tracing::info!</span>(<span class="question-mark">?</span>brk,<span class="string">&quot;break&quot;</span>)})
-        },stopped:nop_stopped}
+        Cb {
+            handle_pkt: <span class="kw">move </span>|pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk: <span class="kw-2">&amp;</span>Linkspace| {
+                (handle_pkt)(pkt, lk)
+                    .branch()
+                    .map_break(|brk| <span class="macro">tracing::info!</span>(<span class="question-mark">?</span>brk, <span class="string">&quot;break&quot;</span>))
+            },
+            stopped: nop_stopped,
+        }
     }
 
-    <span class="kw">impl</span>&lt;A,B&gt; PktHandler <span class="kw">for </span>Cb&lt;A,B&gt; <span class="kw">where
-        </span>A: FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt,<span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt;,
-        B: FnMut(Query,<span class="kw-2">&amp;</span>Linkspace,StopReason, u32, u32) <span class="comment">// TODO could be FnOnce
-        </span>{
+    <span class="kw">impl</span>&lt;A, B&gt; PktHandler <span class="kw">for </span>Cb&lt;A, B&gt;
+    <span class="kw">where
+        </span>A: FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt;,
+        B: FnMut(Query, <span class="kw-2">&amp;</span>Linkspace, StopReason, u32, u32), <span class="comment">// TODO could be FnOnce
+    </span>{
         <span class="kw">fn </span>handle_pkt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt; {
-            (<span class="self">self</span>.handle_pkt)(pkt,lk)
+            (<span class="self">self</span>.handle_pkt)(pkt, lk)
         }
 
-        <span class="kw">fn </span>stopped(<span class="kw-2">&amp;mut </span><span class="self">self</span>, query: <span class="kw">crate</span>::Query, lk: <span class="kw-2">&amp;</span>Linkspace, reason: StopReason, total: u32, new: u32) {
-            (<span class="self">self</span>.stopped)(query,lk,reason,total,new)
+        <span class="kw">fn </span>stopped(
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+            query: <span class="kw">crate</span>::Query,
+            lk: <span class="kw-2">&amp;</span>Linkspace,
+            reason: StopReason,
+            total: u32,
+            new: u32,
+        ) {
+            (<span class="self">self</span>.stopped)(query, lk, reason, total, new)
         }
     }
-
 }
 
 <span class="doccomment">/// Functions with a custom eval context
 </span><span class="kw">pub mod </span>varctx {
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::abe::ctx::LkCtx;
 

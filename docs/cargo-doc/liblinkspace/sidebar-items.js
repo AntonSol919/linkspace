@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["LOCAL_ONLY_GROUP","PUBLIC_GROUP"],"mod":["abe","consts","conventions","key","misc","point","prelude","query","runtime","varctx"],"struct":["SigningKey"],"trait":["PktHandler"],"type":["LkError","LkResult"]};
+window.SIDEBAR_ITEMS = {"constant":["PRIVATE","PUBLIC"],"mod":["abe","consts","conventions","key","linkspace","misc","point","prelude","query","varctx"],"struct":["SigningKey"],"trait":["PktHandler"],"type":["LkError","LkResult"]};

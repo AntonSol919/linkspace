@@ -1,46 +1,58 @@
-body{
-
-    background:#fdfdfd;
-    color:#222222;
-
-}
-.note-box{
-    margin-top:1em;
-    margin-bottom:1em;
-    max-width: 600px;
-    align-self: flex-start;
-    border-radius: 10px;
-    padding: 0.4em 0.4em;
-    margin-left:auto;
-    overflow: hidden;
-    background-color: #f6f9ff;
-    border: 1px solid #cce3f9;
-}
-.note-box::before {
-    content:"ℹ️"
+.ctabs {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 auto 20px;
 }
 
-.note-box p {
-    margin:0px;
+.ctabs > [type=radio]{
+    position: absolute;
+    opacity: 0;
 }
 
-table {
-    font-family: Arial, Helvetica, sans-serif;
-    border-collapse: collapse;
+.ctabs > label {
+    width: 100%;
+    margin:3px;
+    margin-left:0px;
+    text-align:center;
+    background: #e5e5e5;
+    cursor: pointer;
+    font-weight: bold;
+    color: #7f7f7f;
+    transition: background .3s, color .3s;
+    border: none;
+    border-radius: 0;
+}
+.ctabs > label:hover {
+    background: #d8d8d8;
+}
+
+.ctabs > [type=radio]:checked + label , .ctabs > div {
+    box-shadow:1.0px 1.9px 1.9px hsl(0deg 0% 0% / 0.47);
+    background: #fff;
+    border: 1px solid #222 ;
+}
+.ctabs > div {
+    box-shadow: 4.8px 9.6px 9.6px hsl(0deg 0% 0% / 0.35);
+    display: none;
+    padding: 20px 30px 30px;
     width: 100%;
 }
-td, th {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-tr:nth-child(even){background-color: #f2f2f2;}
-tr:hover {background-color: #ddd;}
-th {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    text-align: left;
-    background-color:#bbbbbb;
-    color: white;
+
+.ctabs > label:active {
+    background: #ccc;  
 }
 
+.ctabs > [type=radio]:checked + label + div {
+    display: block; 
+}
 
+@media (min-width: 600px) {
+    .ctabs > div{
+        order: 99;
+    }
+
+    .ctabs > label {
+        width: 8%;
+    }
+
+}

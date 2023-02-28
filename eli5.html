@@ -44,11 +44,10 @@ Somewhere between 15 and 40 should do. Still a challenge; The
 15-year-old would be confused by analogies about printers or papers. The
 40y old has mastered the skill of “Print to PDF” and resists learning
 anything new.</p>
-<p>The concepts described here should improve how you understand the
-digital world. Its both an over simplification, and still difficult. But
-I believe it is the minimum you <em>need</em> in order to understand
-what the digital world <em>is</em> and where we can take it. The
-consequences are for yourself to figure out.</p>
+<p>The goal is to give a basic model for thinking about the digital
+space in case you percieve it as a collection of ‘apps’. If you’re
+already comfortable working with git or building webservers, you can
+jump into the <a href="./docs/guide/index.html">Guide</a>.</p>
 <h2 id="how-does-our-current-web-work">How does our current web
 work?</h2>
 <p>There are hosts; systems that provide information.<br />
@@ -64,13 +63,10 @@ it.</p>
 <li>Dave opened our app</li>
 <li>Alice is looking for a taxi</li>
 </ul>
-<p>Next, in the dark holes off the silicon where we trapped lighting to
-dance to our whims an idea will power on.<br />
-The exact idea is irrelevant.<br />
-We’re interested in the general outline.<br />
-What they have in common is they
-<code>read_index &lt;-&gt; process &lt;-&gt; insert_index</code>;<br />
-and interact with other ideas doing the same.</p>
+<p>The hosts has setup many processes that operate on the events. The
+exact goal, language, or how it is activated is irrelevant. Their basic
+functionality revolves around
+<code>read_index &lt;-&gt; process &lt;-&gt; insert_index</code>;</p>
 <h2 id="the-index">The index</h2>
 <p>If you ever worked with files and folders you know the basics.<br />
 An index looks something like this:</p>
@@ -110,20 +106,16 @@ An index looks something like this:</p>
 </table>
 <p>The <code>read_index</code> reads /work/file1 and returns
 <code>Hello world</code>.<br />
-Your device might automatically pick a program to open the data
-with.<br />
-But you can pick different programs, the data itself stays the same.</p>
-<p><code>read_index</code> can also read /hello/ and return:</p>
-<pre><code>[file1, presentation, otherfile, subdir/file2]</code></pre>
-<p>The things text “/hello/file1” and “/world/file2” go by many names.
+Your device automatically pick a program to open the data with.<br />
+But you can pick a different program to use the data in.</p>
+<p>These text things “/hello/file1” and “/world/file2” go by many names.
 Paths, URLs, Identifiers, channels, etc. The important thing is they
-allow us to organize in a hierarchy of sorted names. It’s a useful
+allow us to organize in a hierarchy of sorted names. We didn’t always
+use this idea. But it has been extremely succesfull. It’s a useful
 middle ground between how computers work and how humans think. I will
 call it a path.</p>
-<p>The events the host receives and writes down are also written to the
-index.<br />
-They are simply in order and flat.<br />
-It is flat and ordered by time:</p>
+<p>The events the host receives are also written to the index.<br />
+They are simply in-order of time, and without nested entries.</p>
 <table>
 <thead>
 <tr class="header">
@@ -155,7 +147,7 @@ It is flat and ordered by time:</p>
 </tbody>
 </table>
 <h2 id="in-the-loop">In The Loop</h2>
-<p>Now that you know what an index is we can talk about the
+<p>Now that we have the index we can talk about the
 <code>read_index &lt;-&gt; process &lt;-&gt; write_index</code>
 loop.</p>
 <p>A process:</p>
@@ -166,13 +158,14 @@ loop.</p>
 <li>do [write_index] any number of times.</li>
 <li>return to wait</li>
 </ul>
-<p>A typical process is a utility for others. It creates commonly used
-sorted lists in the index. This makes it faster and easy to find
-specific stuff. They might create:</p>
+<p>A typical process is a utility for others. What it writes, other
+processes will read.</p>
+<p>This makes it faster and easy to find specific stuff. They might
+create:</p>
 <table>
 <thead>
 <tr class="header">
-<th>Path</th>
+<th>Writen by process A</th>
 <th>Data</th>
 </tr>
 </thead>
@@ -185,6 +178,16 @@ specific stuff. They might create:</p>
 <td>/by-person/alice/event0004</td>
 <td>Alice is looking for a taxi</td>
 </tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th>Writen by process B</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
 <tr class="odd">
 <td>/log-without-spam/event0000</td>
 <td>Alice shares a new image</td>
@@ -203,60 +206,48 @@ specific stuff. They might create:</p>
 </tr>
 </tbody>
 </table>
-<p>Note that its common to think of “moving” or “deleting” paths from
-the index.<br />
-If you take one thing away it should be this:<br />
-The index is explicitly <strong>NOT</strong> about “moving” or
-“deleting” entries. We can pretend to do so in various ways. But they do
-not translate well to reality. By assuming it is possible to “move” and
-“delete” we miscommunicate about what is happening. We invented them in
-a different time for a different world.</p>
-<p>The closest real ability is to “forget”. Be warned that in a network
-it is hard to forget. The effect of “moving” or “deleting” are achieved
-by creating new entries. For instance, “log-without-spam” is a copy of
-“log” without “event0002”.</p>
-<p>This <code>read_index &lt;-&gt; process &lt;-&gt; write_index</code>
-loop describes the hosts you know.</p>
+<p>It is common to think of deleting or moving data.<br />
+But this is not what really happens.</p>
+<p>The effect of “moving” or “deleting” are achieved by creating new
+entries. For instance, “log-without-spam” is a copy of “log” without
+“event0002”.</p>
+<p>The features you’re familiar with in many of your apps are
+implemented through this loop. Things like:</p>
 <ul>
-<li>Timelines</li>
+<li>The timeline of posts</li>
 <li>Popularity ranking / recommendation lists</li>
 <li>Supply and demand for price calculations</li>
 <li>Find the result for your search.</li>
 </ul>
 <h2 id="the-graphical-user-interface">The graphical user interface</h2>
-<p>Talking to the host is done in arcane incantations, channeled through
-lightning, hidden from view. For guests like us, the browser and apps
-paint the shapes we like. With them, we interact with the index of the
-host.</p>
-<p>It feels like a ‘place’.<br />
-People naturally care about the place.<br />
-Less so the hidden lightning.<br />
-We’ve come to see them as one whole.</p>
+<p>The app you use to talk to the host has two parts. The painting of
+buttons or texts, and the communication in bits and bytes.</p>
+<p>The designer works hard to make it feel like a ‘place’.<br />
+A single whole you should care about.</p>
 <p>But they are two different things.<br />
-In theory we as guests can split the two.<br />
-Take one experience and use it elsewhere.<br />
-We’ve sadly stopped doing that.<br />
-In part because the hosts want to have their place in and between our
-lives.</p>
+The hosts trade you this comfort for a perpetual grant to exploit you
+and your communication.<br />
+Or it is as they claim; for your own protection.</p>
 <h2 id="what-is-a-hash">What is a Hash?</h2>
 <p>A hash function reads something and creates a very big number.<br />
 The number is special.<br />
 If we both get the same number, we have read the same data.</p>
-<p>This is useful when we want to talk about data. It is a unique name
-for things. This way computers can compare things.</p>
+<p>This is useful when we want to talk about data. It is a practically
+unique for every piece of data. With this number multiple computers can
+compare things.</p>
 <p>It is the difference between sending:</p>
 <ul>
 <li>Gigabytes of a video to compare locally</li>
 <li><code>Have you seen BmtvS303a3hcPF2OvtCcNAna0mW1mwUzgyGgSB84tZU ?</code></li>
 </ul>
-<p>Large hosts do this all the time. They use multiple computers all
-over the world to make things faster. It is too expensive for those
-computers to agree on the order that things happen. But they can agree
-on the hash of what happened.</p>
+<p>Large hosts do this all the time. They use computers spread out over
+the world to make things faster. It is too expensive for those computers
+to agree on the order that things happen. But they can agree on the hash
+of what happened.</p>
 <h2 id="what-is-a-public-key">What is a public key?</h2>
-<p>Most hosts provide guests with accounts.<br />
-It identifies you to the host.<br />
-It’s very simple to implement if nobody can access the index.</p>
+<p>Hosts usually give the option to get an account. It identifies you to
+the host, and somethimes to others. It’s very simple to implement if
+nobody can access the index.</p>
 <table>
 <thead>
 <tr class="header">
@@ -288,12 +279,13 @@ role="doc-noteref"><sup>1</sup></a></td>
 </tr>
 </tbody>
 </table>
-<p>Alice can proof herself to the host, and so can bob.<br />
-But this is archaic in two ways.</p>
+<p>Alice can proof herself to the host, and so can bob. But this is
+archaic in two ways.</p>
 <ul>
 <li>We are sending the host the password when we register</li>
-<li>When alice and bob want to talk, this <em>specific</em> host has to
-<em>always</em> be there and validate their identity.</li>
+<li>If alice and bob want to know for sure they are talking to eachother
+, this <em>specific</em> host has to <em>always</em> play middleman to
+validate their identity.</li>
 </ul>
 <p>Public key cryptography provides a math solution. Anybody at anytime
 can run an algorithm to pick two numbers. A (PrivateKey, PublicKey)
@@ -302,14 +294,18 @@ the sun explodes (give or take a few big bangs)</p>
 <p>The private key can create ‘signatures’ that proof that they were
 present when the public key was created. Without the private key you can
 <em>not</em> proof that you have created a public key.</p>
-<p>With public key cryptography: - The host no longer receives your
-secret password. - If alice and bob want to talk, they need to share
-public keys once through <em>any</em> host at <em>any</em> time in the
-past.</p>
+<p>With public key cryptography:</p>
+<ul>
+<li>The host no longer receives a secret password.</li>
+<li>If alice and bob want to know for sure they are talking to
+eachother, they need to share public keys once through <em>any</em> host
+at <em>any</em>.</li>
+</ul>
 <h1 id="what-is-the-linkspace-protocol">What is the Linkspace
 Protocol?</h1>
 <p>Now that we know about the index, hashes, and public keys, we can
-talk about the future of the internet. In linkspace all events:</p>
+talk about what I think the internet ought to be.</p>
+<p>In linkspace all events:</p>
 <ul>
 <li>are hashed,</li>
 <li>have a group</li>
@@ -317,34 +313,38 @@ talk about the future of the internet. In linkspace all events:</p>
 <li>can have a path,</li>
 <li>can be signed with a public key.</li>
 </ul>
-<p>The hash is generated: It allows everybody to talk about things
-without ambiguity. The group is added from context, it signals the
-people you intend to share with (for example the #:pub public group) The
-domain is chosen by a developer. It is put before the path. It signals
-what interface to use and what the paths mean. The path is set by a
-domain application, so others can interact with events. The signature is
-created from the user’s public key. It allows us to identify each
-other.</p>
+<p>The hash is generated: It allows everybody to efficiently talk
+<em>about</em> things. You set a group, it exists because we say it
+does, and your device exchanges with the members of that group. The
+domain is chosen by a developer. It signals what app to use, and how the
+events are organized. The signature is created from the user’s public
+key. It allows us to identify each other.</p>
 <h2 id="consequences">Consequences</h2>
 <p><code>read_index</code> and <code>write_index</code> are
 democratized.</p>
-<p>Hosting the index is no longer special.<br />
-The user interface could operate in any group.<br />
-No lockin, no lockout.</p>
+<p>It can be moved; hosted where it makes sense to you.</p>
 <p>That is not to say everything is shared all the time.<br />
-A [process] might be done by dedicated systems.<br />
-Special groups can be made with specific sharing rules.<br />
-The user interface can set constraints.</p>
-<p>However, the public hosts that are just a place to share what guests
-create are fucked. Instead of dictating rules, they must compete. Guests
-can move to a better host and still talk with the people they know.</p>
-<p>We might even combine guest systems and be our own hosts.</p>
+A [process] might be done by dedicated systems. Special groups can be
+made with specific sharing rules.</p>
+<p>However, we force the public ‘platforms’ to change.<br />
+Their value as <em>just</em> a place to connect people is gone.<br />
+Instead of dictating rules, they must compete.<br />
+They need to provide value on your terms.<br />
+If not, another system can take over where we left off.</p>
+<p>And we get to build new (social) contracts:<br />
+Discussions on scientific papers with the data and code linked in.<br />
+Social Media apps working over Bluetooth, WiFi, etc.<br />
+Public service announcements signed to prevent AI generated lies.<br />
+Incompany communication tools, expandable by any developer.<br />
+A taxi or hotel ‘markets’ with a operated by locals at a fraction of the
+current markup,<br />
+Gradual expansion of the interop in supply chains.</p>
+<p>With far less code than you’re expecting.</p>
 <h2 id="closing-thoughts">Closing thoughts</h2>
-<p>In short, the time of digital dictatorships and fiefdoms is ending.
-Please help kill them. Support the project by <a
-href="./lns.html">registering</a> a public key name.</p>
-<p>Join the quest for world domination. Consider this your
-invitation.</p>
+<p>The Linkspace Protocol is free for everybody, anytime, anywhere. The
+time of digital dictatorships and fiefdoms is ending. Please help kill
+them. Support the project by <a href="./lns.html">registering</a> a
+public key name.</p>
 <section class="footnotes footnotes-end-of-document"
 role="doc-endnotes">
 <hr />

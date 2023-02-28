@@ -52,6 +52,9 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -65,18 +68,22 @@
 <span class="kw">use </span>linkspace_common::prelude::EXCHANGE_DOMAIN;
 
 <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<span class="doccomment">/** pull requests create a linkpoint in {f:exchange}:{#:0}:/pull/{query.group}/{query.domain}/{query.id}
+<span class="doccomment">/** pull requests create a linkpoint in [f:exchange]:[#:0]:/pull/[query.group]/[query.domain]/[query.id]
 
-It is up to an exchange process to fullfill the query.
+Pull queries must have the predicates &#39;domain:=:..&#39; and &#39;group:=:..&#39;.
+It is up to an exchange process to fulfill the query.
+The domain should be conservative with its query.
+Requesting too much can add significant overhead.
+
 You can use [lk_status_poll] to determine if a exchange is active
 **/
-</span><span class="kw">pub fn </span>lk_pull(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query, ttl: Stamp) -&gt; LkResult&lt;LkHash&gt; {
-    <span class="kw">let </span>req = lk_pull_req(query, ttl)<span class="question-mark">?</span>;
+</span><span class="kw">pub fn </span>lk_pull(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query) -&gt; LkResult&lt;LkHash&gt; {
+    <span class="kw">let </span>req = lk_pull_req(query)<span class="question-mark">?</span>;
     lk_save(lk, <span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(req.hash())
 }
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">pub fn </span>lk_pull_req(query: <span class="kw-2">&amp;</span>Query, duration: Stamp) -&gt; LkResult&lt;NetPktBox&gt; {
+</span><span class="kw">pub fn </span>lk_pull_req(query: <span class="kw-2">&amp;</span>Query ) -&gt; LkResult&lt;NetPktBox&gt; {
     <span class="kw">let </span>group: GroupID = query
         .<span class="number">0
         </span>.predicates
@@ -95,15 +102,14 @@ You can use [lk_status_poll] to determine if a exchange is active
     <span class="kw">let </span>data = query.<span class="number">0</span>.to_string();
     <span class="macro">tracing::trace!</span>(data);
     <span class="kw">let </span>pull_path = ipath_buf(<span class="kw-2">&amp;</span>[<span class="string">b&quot;pull&quot;</span>, <span class="kw-2">&amp;*</span>group, <span class="kw-2">&amp;*</span>domain, <span class="kw-2">&amp;</span>id]);
-    <span class="kw">let </span><span class="kw-2">mut </span>pkt = lk_linkpoint(
+    <span class="kw">let </span>pkt = lk_linkpoint(
         EXCHANGE_DOMAIN,
-        LOCAL_ONLY_GROUP,
+        PRIVATE,
         <span class="kw-2">&amp;</span>pull_path,
         <span class="kw-2">&amp;</span>[],
         data.as_bytes(),
         <span class="prelude-val">None</span>,
     )<span class="question-mark">?</span>;
-    pkt.net_header_mut().unwrap().stamp = now().saturating_add(duration);
     <span class="prelude-val">Ok</span>(pkt.as_netbox())
 }
 </code></pre></div>

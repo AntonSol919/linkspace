@@ -154,7 +154,26 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
 </pre><pre class="rust"><code><span class="kw">use </span>linkspace_common::prelude::{U16, pkt_fmt, U32 };
+<span class="kw">use </span>tracing::debug_span;
 
 <span class="comment">// Copyright Anton Sol
 //
@@ -176,19 +195,19 @@ exchange GROUP process
 exchange GROUP connection PUBKEY
 exchnage GROUP pull PULL PULL_HASH
 
-A request is a packet in the form DOMAIN:{#:0}:/\fstatus/GROUP/type[/instance?] , with no data and no links.
-A reply is of the form DOMAIN:{#:0}/\status/GROUP/type/instance with some data and links.
+A request is a packet in the form DOMAIN:[#:0]:/\fstatus/GROUP/type(/instance?) , with no data and no links.
+A reply is of the form DOMAIN:[#:0]/\status/GROUP/type/instance with some data and links.
 
 A request without &#39;instance&#39; is be answered by all instances.
 
 The reply must have an &#39;instance&#39; set. It defaults to &#39;default&#39;.
 The reply data should be either &quot;OK\n&quot; or &quot;ERR\n&quot; followed by more info.
-The reply process links can start with init:{#:0} at first and should point to previous replies after that.
+The reply process links can start with init:[#:0] at first and should point to previous replies after that.
 
 A request is only made &#39;once&#39; per timeout.
 I.e. a process checks if a request was made since now-timeout, before making a new request, and returns after last_req+timeout.
 **/
-</span><span class="kw">use crate</span>::{<span class="kw-2">*</span>, linkspace::lk_get_all};
+</span><span class="kw">use crate</span>::{<span class="kw-2">*</span>, linkspace::{lk_get_all, lk_watch2}};
 <span class="kw">pub const </span>STATUS_PATH: IPathC&lt;<span class="number">16</span>&gt; = ipath1(<span class="macro">concat_bytes!</span>([<span class="number">255</span>], <span class="string">b&quot;status&quot;</span>));
 
 <span class="attr">#[derive(Copy, Clone)]
@@ -198,6 +217,15 @@ I.e. a process checks if a request was made since now-timeout, before making a n
     <span class="kw">pub </span>group: GroupID,
     <span class="kw">pub </span>objtype: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8],
     <span class="kw">pub </span>instance: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>[u8]&gt;,
+}
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;o</span>&gt; std::fmt::Debug <span class="kw">for </span>LkStatus&lt;<span class="lifetime">&#39;o</span>&gt;{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        f.debug_struct(<span class="string">&quot;LkStatus&quot;</span>)
+            .field(<span class="string">&quot;domain&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.domain)
+            .field(<span class="string">&quot;group&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.group)
+            .field(<span class="string">&quot;objtype&quot;</span>, <span class="kw-2">&amp;</span>AB(<span class="kw-2">&amp;</span><span class="self">self</span>.objtype))
+            .field(<span class="string">&quot;instance&quot;</span>,<span class="kw-2">&amp;</span><span class="self">self</span>.instance.map(AB)).finish()
+    }
 }
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">pub fn </span>lk_status_path(status: LkStatus) -&gt; LkResult&lt;IPathBuf&gt; {
@@ -212,16 +240,16 @@ I.e. a process checks if a request was made since now-timeout, before making a n
 
 <span class="doccomment">/// A query that returns both requests and updates
 </span><span class="kw">pub fn </span>lk_status_request(status:LkStatus) -&gt; LkResult&lt;NetPktBox&gt;{
-    lk_linkpoint(status.domain, LOCAL_ONLY_GROUP, <span class="kw-2">&amp;</span>lk_status_path(status)<span class="question-mark">?</span>, <span class="kw-2">&amp;</span>[],<span class="kw-2">&amp;</span>[], <span class="prelude-val">None</span>)
+    lk_linkpoint(status.domain, PRIVATE, <span class="kw-2">&amp;</span>lk_status_path(status)<span class="question-mark">?</span>, <span class="kw-2">&amp;</span>[],<span class="kw-2">&amp;</span>[], <span class="prelude-val">None</span>)
 }
 
 <span class="doccomment">/// A query that returns both requests and updates
 </span><span class="kw">pub fn </span>lk_status_overwatch(status:LkStatus,max_age:Stamp) -&gt; LkResult&lt;Query&gt; {
     <span class="kw">let </span>LkStatus { domain,  ..} = status;
     <span class="kw">let </span>path = lk_status_path(status)<span class="question-mark">?</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>q = lk_query();
+    <span class="kw">let </span><span class="kw-2">mut </span>q = lk_query(<span class="prelude-val">None</span>);
     <span class="kw">let </span>create_after = now().saturating_sub(max_age);
-    lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;group&quot;</span>, <span class="string">&quot;=&quot;</span>, <span class="kw-2">&amp;*</span>LOCAL_ONLY_GROUP)<span class="question-mark">?</span>;
+    lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;group&quot;</span>, <span class="string">&quot;=&quot;</span>, <span class="kw-2">&amp;*</span>PRIVATE)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;domain&quot;</span>, <span class="string">&quot;=&quot;</span>, <span class="kw-2">&amp;*</span>domain)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;create&quot;</span>, <span class="string">&quot;&gt;&quot;</span>, <span class="kw-2">&amp;*</span>create_after)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;prefix&quot;</span>, <span class="string">&quot;=&quot;</span>, path.spath_bytes())<span class="question-mark">?</span>;
@@ -230,10 +258,12 @@ I.e. a process checks if a request was made since now-timeout, before making a n
 
 
 <span class="doccomment">/// It is up to the caller to ensure &#39;lk_process&#39; is called accodingly. Impl [PktHandler::stopped] to capture the timeout event.
-</span><span class="kw">pub fn </span>lk_status_poll(lk:<span class="kw-2">&amp;</span>Linkspace,status:LkStatus, timeout:Stamp, <span class="kw-2">mut </span>cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>) -&gt; LkResult&lt;()&gt;{
+</span><span class="kw">pub fn </span>lk_status_poll(lk:<span class="kw-2">&amp;</span>Linkspace,status:LkStatus, d_timeout:Stamp, <span class="kw-2">mut </span>cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>) -&gt; LkResult&lt;()&gt;{
+    <span class="kw">let </span>span = <span class="macro">debug_span!</span>(<span class="string">&quot;status_poll&quot;</span>,<span class="question-mark">?</span>status,<span class="question-mark">?</span>d_timeout);
+    <span class="kw">let _ </span>= span.enter();
     <span class="kw">let </span><span class="kw-2">mut </span>ok = <span class="bool-val">false</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>last_request = Stamp::ZERO;
-    <span class="kw">let </span><span class="kw-2">mut </span>query : Query= lk_status_overwatch(status, timeout)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>query : Query= lk_status_overwatch(status, d_timeout)<span class="question-mark">?</span>;
 
     lk_get_all(lk, <span class="kw-2">&amp;</span>query, <span class="kw-2">&amp;mut </span>|pkt| {
         <span class="kw">if </span>pkt.get_links().is_empty() &amp;&amp; pkt.data().is_empty() {
@@ -243,6 +273,7 @@ I.e. a process checks if a request was made since now-timeout, before making a n
         </span>}<span class="kw">else </span>{
             ok =<span class="bool-val">true</span>;
             <span class="kw">let </span>cnt = (cb).handle_pkt(pkt,lk);
+            <span class="macro">tracing::debug!</span>(<span class="string">&quot;recently replied&quot;</span>);
             cnt.is_continue()
         }
     })<span class="question-mark">?</span>;
@@ -252,20 +283,20 @@ I.e. a process checks if a request was made since now-timeout, before making a n
         last_request = <span class="kw-2">*</span>req.get_create_stamp();
         lk_save(lk,<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
     }
-    <span class="kw">let </span>wait_untill = last_request.saturating_add(timeout);
-    <span class="macro">tracing::debug!</span>(<span class="question-mark">?</span>wait_untill,<span class="string">&quot;Waiting untill&quot;</span>);
+    <span class="kw">let </span>wait_until = last_request.saturating_add(d_timeout);
+    <span class="macro">tracing::debug!</span>(<span class="question-mark">?</span>wait_until,<span class="string">&quot;Waiting until&quot;</span>);
     lk_query_push(<span class="kw-2">&amp;mut </span>query, <span class="string">&quot;data_size&quot;</span>, <span class="string">&quot;&gt;&quot;</span>, <span class="kw-2">&amp;*</span>U16::ZERO)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>query, <span class="string">&quot;links_len&quot;</span>, <span class="string">&quot;&gt;&quot;</span>, <span class="kw-2">&amp;*</span>U16::ZERO)<span class="question-mark">?</span>;
-    lk_query_push(<span class="kw-2">&amp;mut </span>query, <span class="string">&quot;recv&quot;</span>, <span class="string">&quot;&lt;&quot;</span>, <span class="kw-2">&amp;*</span>wait_untill)<span class="question-mark">?</span>;
+    lk_query_push(<span class="kw-2">&amp;mut </span>query, <span class="string">&quot;recv&quot;</span>, <span class="string">&quot;&lt;&quot;</span>, <span class="kw-2">&amp;*</span>wait_until)<span class="question-mark">?</span>;
     <span class="kw">let </span>w = [<span class="string">b&quot;status&quot; </span><span class="kw">as </span><span class="kw-2">&amp;</span>[u8],<span class="kw-2">&amp;*</span>now()].concat();
     lk_query_push(<span class="kw-2">&amp;mut </span>query, <span class="string">&quot;&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="kw-2">&amp;</span>w)<span class="question-mark">?</span>;
-    lk_watch(lk, <span class="kw-2">&amp;</span>query, cb)<span class="question-mark">?</span>;
+    lk_watch2(lk, <span class="kw-2">&amp;</span>query, cb,span)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">fn </span>is_status_reply(status:LkStatus,path:<span class="kw-2">&amp;</span>IPath,pkt:<span class="kw-2">&amp;</span>NetPktPtr) -&gt; LkResult&lt;()&gt;{
     <span class="macro">anyhow::ensure!</span>(<span class="kw-2">*</span>pkt.get_domain() == status.domain
-                    &amp;&amp; <span class="kw-2">*</span>pkt.get_group() == LOCAL_ONLY_GROUP
+                    &amp;&amp; <span class="kw-2">*</span>pkt.get_group() == PRIVATE
                     &amp;&amp; pkt.get_ipath() == path
                     &amp;&amp; !pkt.get_links().is_empty()
                     &amp;&amp; !pkt.data().is_empty()
@@ -274,19 +305,23 @@ I.e. a process checks if a request was made since now-timeout, before making a n
 }
 
 <span class="kw">pub fn </span>lk_status_set(lk:<span class="kw-2">&amp;</span>Linkspace,status:LkStatus,<span class="kw-2">mut </span>update:<span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Linkspace,Domain,GroupID,<span class="kw-2">&amp;</span>IPath,Link) -&gt; LkResult&lt;NetPktBox&gt; +<span class="lifetime">&#39;static</span>)-&gt; LkResult&lt;()&gt;{
+    <span class="kw">let </span>span = <span class="macro">debug_span!</span>(<span class="string">&quot;status_set&quot;</span>,<span class="question-mark">?</span>status);
+    <span class="kw">let _ </span>= span.enter();
     <span class="kw">let </span>LkStatus { domain, group, objtype, instance }= status;
+
     <span class="kw">let </span>objtype = objtype.to_vec();
     <span class="kw">let </span>instance = instance.or(<span class="prelude-val">Some</span>(<span class="string">b&quot;default&quot;</span>)).map(Vec::from);
     <span class="kw">let </span>status = LkStatus { instance: instance.as_deref(), domain , group, objtype:<span class="kw-2">&amp;</span>objtype};
     <span class="kw">let </span>path = lk_status_path(status)<span class="question-mark">?</span>;
-    <span class="kw">let </span>link = Link{tag:ab(<span class="string">b&quot;init&quot;</span>),ptr:LOCAL_ONLY_GROUP};
-    <span class="kw">let </span>initpkt = update(lk,status.domain, LOCAL_ONLY_GROUP, <span class="kw-2">&amp;</span>path,link)<span class="question-mark">?</span>;
+    <span class="kw">let </span>link = Link{tag:ab(<span class="string">b&quot;init&quot;</span>),ptr:PRIVATE};
+    <span class="kw">let </span>initpkt = update(lk,status.domain, PRIVATE, <span class="kw-2">&amp;</span>path,link)<span class="question-mark">?</span>;
     is_status_reply(status, <span class="kw-2">&amp;</span>path, <span class="kw-2">&amp;</span>initpkt)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>prev = initpkt.hash();
+    <span class="macro">tracing::debug!</span>(<span class="question-mark">?</span>initpkt,<span class="string">&quot;init status&quot;</span>);
     lk_save(<span class="kw-2">&amp;</span>lk,<span class="kw-2">&amp;</span>initpkt )<span class="question-mark">?</span>;
     std::mem::drop(initpkt);
 
-    <span class="kw">let </span><span class="kw-2">mut </span>q = lk_query();
+    <span class="kw">let </span><span class="kw-2">mut </span>q = lk_query(<span class="prelude-val">None</span>);
     <span class="kw">let </span>prefix = lk_status_path(LkStatus { instance:<span class="prelude-val">None</span>, ..status})<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;data_size&quot;</span>, <span class="string">&quot;=&quot;</span>, <span class="kw-2">&amp;*</span>U16::ZERO)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;links_len&quot;</span>, <span class="string">&quot;=&quot;</span>, <span class="kw-2">&amp;*</span>U16::ZERO)<span class="question-mark">?</span>;
@@ -294,17 +329,18 @@ I.e. a process checks if a request was made since now-timeout, before making a n
     <span class="comment">// We only care about new packets. Worst case a request was received and timeout between our init and this cb.
     </span>lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;i_index&quot;</span>, <span class="string">&quot;&lt;&quot;</span>, <span class="kw-2">&amp;*</span>U32::ZERO)<span class="question-mark">?</span>;
     lk_query_push(<span class="kw-2">&amp;mut </span>q, <span class="string">&quot;&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">b&quot;status-update&quot; </span><span class="kw">as </span><span class="kw-2">&amp;</span>[u8],<span class="kw-2">&amp;*</span>now()].concat())<span class="question-mark">?</span>;
-    lk_watch(<span class="kw-2">&amp;</span>lk, <span class="kw-2">&amp;</span>q, cb(<span class="kw">move </span>|pkt:<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk:<span class="kw-2">&amp;</span>Linkspace| -&gt; LkResult&lt;()&gt;{
+    lk_watch2(<span class="kw-2">&amp;</span>lk, <span class="kw-2">&amp;</span>q, cb(<span class="kw">move </span>|pkt:<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt, lk:<span class="kw-2">&amp;</span>Linkspace| -&gt; LkResult&lt;()&gt;{
         <span class="kw">let </span>status = LkStatus { instance: instance.as_deref(), domain , group, objtype:<span class="kw-2">&amp;</span>objtype};
         <span class="kw">let </span>p = pkt.get_ipath();
         <span class="kw">if </span>p.len() == path.len() &amp;&amp; p.spath() != path.as_ref() { <span class="kw">return </span><span class="prelude-val">Ok</span>(())}
         <span class="kw">let </span>link = Link{tag:ab(<span class="string">b&quot;prev&quot;</span>),ptr:prev};
-        <span class="kw">let </span>reply = update(lk,status.domain,LOCAL_ONLY_GROUP,<span class="kw-2">&amp;</span>path,link)<span class="question-mark">?</span>;
+        <span class="kw">let </span>reply = update(lk,status.domain,PRIVATE,<span class="kw-2">&amp;</span>path,link)<span class="question-mark">?</span>;
         is_status_reply(status, <span class="kw-2">&amp;</span>path, <span class="kw-2">&amp;</span>reply)<span class="question-mark">?</span>;
         prev  = reply.hash();
+        <span class="macro">tracing::debug!</span>(<span class="question-mark">?</span>reply,<span class="string">&quot;Reply status&quot;</span>);
         lk_save(lk,<span class="kw-2">&amp;</span>reply)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
-    }))<span class="question-mark">?</span>;
+    }),span)<span class="question-mark">?</span>;
     lk_process_while(<span class="kw-2">&amp;</span>lk, Stamp::MAX, Stamp::MAX)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
