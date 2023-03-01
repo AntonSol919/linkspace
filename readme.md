@@ -46,7 +46,5 @@ Or jump straight to a section:
 - [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) - ascii byte expressions - a language for manipulating and templating bytes
 - [Query](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) - Addressing and filtering of packets with predicates and options
 - [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#Linkspace) instance - Locally indexed packets and new packet processing functions
-- [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions) instance - Locally indexed packets and new packet processing functions
+- [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions)
 
-
-[^1]: 
