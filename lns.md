@@ -50,16 +50,13 @@ For others read on
 Yes. I am looking for people to do so.
 Top level names are leased on a first come first served bases, no constraints, for a 1000 euro p/m (12000 euro a year).
 Alternative deals are negotiable. Just ask.  
-I'll throw in some goodwill consulting if you ever decide to disrupt some industry.  
 
 ### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
 
 Linkspace is easy to integrate with blockchains (or even create a new blockchain).
 You are free to built on it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes I believe
-plain fiat government backed money is currently better suited for the job then
-a token representing a stake in spent electricity.
-Additionally, 1 cent transactions saves a lot of trouble w.r.t. account recovery.
+However, in an effort to put food on the table and pay taxes I prefer fiat money.
+Additionally, 1 cent transactions save a lot of trouble w.r.t. identification if you lose the private key.
 If all you want is to fund the project contact me directly (see below).
 
 ## Reserve a name
@@ -81,4 +78,4 @@ Get a pull request accepted, and you get a :dev name.
 
 First come first served[^1].
 
-[^1]: You'll have to reply within a week once I send a follow-up email. This is done on a best effort basis no rights are given.
+[^1]: You'll have to reply within a week once I send a follow-up email. This is done on a best effort basis - no rights are given.

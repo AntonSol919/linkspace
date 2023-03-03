@@ -13,6 +13,9 @@
         <a href="./index.html">Home</a>
       </li>
       <li>
+        <a href="./why.html">Why?</a>
+      </li>
+      <li>
         <a href="./eli5.html">ELI5</a>
       </li>
       <li >
@@ -36,21 +39,35 @@
     <footer>
     </footer>
     <div id="main">
+<h3 id="a-15-second-pitch">A 15-second pitch</h3>
+<p>You should leave those internet platform you think you depend on.
+Those middlemen providing you with timelines, feeds, markets, forums,
+etc. They’re troublesome and dangerous precisely because you can’t
+leave. The trade in the Terms Of Service is absurd. You should
+leave.</p>
+<p>…</p>
+<p>Now take all those reasons “why I can’t” that just entered your mind
+and forget them. It is an illusion. Eventually The Linkspace Protocol
+will make it feasible that you’ll press a button and everything will
+keep working like you expect. Except that you, and the people and
+organizations you trust, will be administrators. Operating on your
+terms.</p>
 <h1 id="explain-like-im-5">Explain Like I’m 5</h1>
-<p>This document is a simplified view of our web and how the linkspace
-protocol will change it. The title is “Explain like I’m 5” but this is a
-lie. 5-year-olds will not know enough about the world to understand.
-Somewhere between 15 and 40 should do. Still a challenge; The
-15-year-old would be confused by analogies about printers or papers. The
-40y old has mastered the skill of “Print to PDF” and resists learning
-anything new.</p>
+<p>This document is a simplified view of our web and where the linkspace
+protocol fits in. Its title is “Explain like I’m 5” but this is a lie.
+5-year-olds will not know enough about the world to understand.
+Somewhere between 15 and 40 should do. Still a challenge. The
+15-year-old would be confused by analogies about books and libraries,
+and has no reference for what came before the internet. The 40-year-old
+has mastered the skill of “Print to PDF” and naturally resists
+change.</p>
 <p>The goal is to give a basic model for thinking about the digital
 space in case you percieve it as a collection of ‘apps’. If you’re
 already comfortable working with git or building webservers, you can
 jump into the <a href="./docs/guide/index.html">Guide</a>.</p>
 <h2 id="how-does-our-current-web-work">How does our current web
 work?</h2>
-<p>There are hosts; systems that provide information.<br />
+<p>There are hosts; systems that collect and provide information.<br />
 There are guests; you in an app or the web-browser.</p>
 <p>A host has set up a process on a computer. It will receive new
 information now and then. This data is saved in order of receiving
@@ -63,9 +80,9 @@ it.</p>
 <li>Dave opened our app</li>
 <li>Alice is looking for a taxi</li>
 </ul>
-<p>The hosts has setup many processes that operate on the events. The
-exact goal, language, or how it is activated is irrelevant. Their basic
-functionality revolves around
+<p>The host is running processes that operate on the events. The exact
+goal, programming language, or how it is orchestrated is irrelevant.
+Their basic functionality revolves around
 <code>read_index &lt;-&gt; process &lt;-&gt; insert_index</code>;</p>
 <h2 id="the-index">The index</h2>
 <p>If you ever worked with files and folders you know the basics.<br />
@@ -106,7 +123,7 @@ An index looks something like this:</p>
 </table>
 <p>The <code>read_index</code> reads /work/file1 and returns
 <code>Hello world</code>.<br />
-Your device automatically pick a program to open the data with.<br />
+Your device automatically picks a program to open the data with.<br />
 But you can pick a different program to use the data in.</p>
 <p>These text things “/hello/file1” and “/world/file2” go by many names.
 Paths, URLs, Identifiers, channels, etc. The important thing is they
@@ -153,19 +170,19 @@ loop.</p>
 <p>A process:</p>
 <ul>
 <li>will wait for something to happen to the index,</li>
-<li>do [read_index] any number of times,</li>
-<li>combine and [process] the data,</li>
-<li>do [write_index] any number of times.</li>
+<li>[read_index] any number of times,</li>
+<li>[process] and combine data,</li>
+<li>[write_index] any number of times.</li>
 <li>return to wait</li>
 </ul>
 <p>A typical process is a utility for others. What it writes, other
 processes will read.</p>
-<p>This makes it faster and easy to find specific stuff. They might
-create:</p>
+<p>This makes it faster and easy to find specific stuff. For instance,
+they can create:</p>
 <table>
 <thead>
 <tr class="header">
-<th>Writen by process A</th>
+<th>Alice tracker</th>
 <th>Data</th>
 </tr>
 </thead>
@@ -183,7 +200,7 @@ create:</p>
 <table>
 <thead>
 <tr class="header">
-<th>Writen by process B</th>
+<th>Spam filter process</th>
 <th>Data</th>
 </tr>
 </thead>
@@ -207,10 +224,10 @@ create:</p>
 </tbody>
 </table>
 <p>It is common to think of deleting or moving data.<br />
-But this is not what really happens.</p>
-<p>The effect of “moving” or “deleting” are achieved by creating new
-entries. For instance, “log-without-spam” is a copy of “log” without
-“event0002”.</p>
+This is flawed.</p>
+<p>The effect of “moving” or “deleting” is done by creating new entries.
+For example; the log-without-spam is a copy of log with event0002
+deleted.</p>
 <p>The features you’re familiar with in many of your apps are
 implemented through this loop. Things like:</p>
 <ul>
@@ -221,13 +238,14 @@ implemented through this loop. Things like:</p>
 </ul>
 <h2 id="the-graphical-user-interface">The graphical user interface</h2>
 <p>The app you use to talk to the host has two parts. The painting of
-buttons or texts, and the communication in bits and bytes.</p>
+buttons or texts, and the communication in ones and zeros.</p>
 <p>The designer works hard to make it feel like a ‘place’.<br />
 A single whole you should care about.</p>
 <p>But they are two different things.<br />
 The hosts trade you this comfort for a perpetual grant to exploit you
 and your communication.<br />
-Or it is as they claim; for your own protection.</p>
+Or it is as they claim; for your own protection because you are a
+child.</p>
 <h2 id="what-is-a-hash">What is a Hash?</h2>
 <p>A hash function reads something and creates a very big number.<br />
 The number is special.<br />
@@ -283,9 +301,9 @@ role="doc-noteref"><sup>1</sup></a></td>
 archaic in two ways.</p>
 <ul>
 <li>We are sending the host the password when we register</li>
-<li>If alice and bob want to know for sure they are talking to eachother
-, this <em>specific</em> host has to <em>always</em> play middleman to
-validate their identity.</li>
+<li>If alice and bob want to know for sure they are talking to
+eachother, this <em>specific</em> host has to <em>always</em> play
+middleman to validate their identity.</li>
 </ul>
 <p>Public key cryptography provides a math solution. Anybody at anytime
 can run an algorithm to pick two numbers. A (PrivateKey, PublicKey)
@@ -304,7 +322,7 @@ at <em>any</em>.</li>
 <h1 id="what-is-the-linkspace-protocol">What is the Linkspace
 Protocol?</h1>
 <p>Now that we know about the index, hashes, and public keys, we can
-talk about what I think the internet ought to be.</p>
+talk about what the internet can be.</p>
 <p>In linkspace all events:</p>
 <ul>
 <li>are hashed,</li>
@@ -319,40 +337,51 @@ does, and your device exchanges with the members of that group. The
 domain is chosen by a developer. It signals what app to use, and how the
 events are organized. The signature is created from the user’s public
 key. It allows us to identify each other.</p>
+<p>Any sequence of events can be merged.</p>
 <h2 id="consequences">Consequences</h2>
 <p><code>read_index</code> and <code>write_index</code> are
-democratized.</p>
-<p>It can be moved; hosted where it makes sense to you.</p>
-<p>That is not to say everything is shared all the time.<br />
-A [process] might be done by dedicated systems. Special groups can be
-made with specific sharing rules.</p>
-<p>However, we force the public ‘platforms’ to change.<br />
-Their value as <em>just</em> a place to connect people is gone.<br />
+liberated.</p>
+<p>It can be moved; hosted where it makes sense to the user.</p>
+<p>That is not to say everything is shared all the time. A [process] can
+be done on specialized systems. Groups can be made with specific sharing
+rules.</p>
+<p>However, we change the concept of a public ‘platforms’.<br />
+Their current value as <em>just</em> a place to connect people is
+gone.<br />
 Instead of dictating rules, they must compete.<br />
-They need to provide value on your terms.<br />
-If not, another system can take over where we left off.</p>
-<p>And we get to build new (social) contracts:<br />
-Discussions on scientific papers with the data and code linked in.<br />
-Social Media apps working over Bluetooth, WiFi, etc.<br />
-Public service announcements signed to prevent AI generated lies.<br />
-Incompany communication tools, expandable by any developer.<br />
-A taxi or hotel ‘markets’ with a operated by locals at a fraction of the
-current markup,<br />
+Provide value in a fair trade to the user.<br />
+If not, another can take over without breaking what already is.</p>
+<p>We also get to build new (social) contracts:<br />
+Discussions on scientific papers <em>about</em> the data and code that
+is linked in.<br />
+Social Media apps working over Bluetooth, Wi-Fi, Radio etc.<br />
+Public announcements signed with keys are required to spot the AI
+generated lies.<br />
+In-house communication tools, expandable by any developer.<br />
+A taxi or hotel ‘markets’ insured and operated by locals at a fraction
+of the current markup,<br />
 Gradual expansion of the interop in supply chains.</p>
-<p>With far less code than you’re expecting.</p>
+<p>With far less complexity than you’re expecting<a href="#fn2"
+class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>.</p>
 <h2 id="closing-thoughts">Closing thoughts</h2>
-<p>The Linkspace Protocol is free for everybody, anytime, anywhere. The
-time of digital dictatorships and fiefdoms is ending. Please help kill
-them. Support the project by <a href="./lns.html">registering</a> a
+<p>The Linkspace Protocol is free for everybody, anytime, anywhere,
+forever.</p>
+<p>The time of digital dictatorships and fiefdoms is ending. Please help
+kill them. Support the project by <a href="./lns.html">registering</a> a
 public key name.</p>
 <section class="footnotes footnotes-end-of-document"
 role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>It is not the password, but a hash
-function run multiple times so i’ts not at risk of being copied if the
-index is compromised.<a href="#fnref1" class="footnote-back"
-role="doc-backlink">↩︎</a></p></li>
+<li id="fn1" role="doc-endnote"><p>Techinically this is not the
+password, but a hash function run multiple times so if done right it is
+not at risk if the index is copied.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p><a
+href="./docs/guide/index.html#state-complexity">guide#state-complexity</a>
+- but it will take time before it is simple for users.<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
       </div>
