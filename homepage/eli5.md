@@ -1,18 +1,33 @@
+### A 15-second pitch
+
+You should leave those internet platform you think you depend on.
+Those middlemen providing you with timelines, feeds, markets, forums, etc.
+They're troublesome and dangerous precisely because you can't leave.
+The trade in the Terms Of Service is absurd.
+You should leave.
+
+...
+
+Now take all those reasons "why I can't" that just entered your mind and forget them.
+It is an illusion.
+Eventually The Linkspace Protocol will make it feasible that you'll press a button and everything will keep working like you expect.
+Except that you, and the people and organizations you trust, will be administrators. Operating on your terms.
+
 # Explain Like I'm 5
 
-This document is a simplified view of our web and how the linkspace protocol will change it.
-The title is "Explain like I'm 5" but this is a lie.
+This document is a simplified view of our web and where the linkspace protocol fits in.
+Its title is "Explain like I'm 5" but this is a lie.
 5-year-olds will not know enough about the world to understand.
-Somewhere between 15 and 40 should do. Still a challenge; 
-The 15-year-old would be confused by analogies about printers or papers.
-The 40y old has mastered the skill of "Print to PDF" and resists learning anything new.
+Somewhere between 15 and 40 should do. Still a challenge. 
+The 15-year-old would be confused by analogies about books and libraries, and has no reference for what came before the internet.
+The 40-year-old has mastered the skill of "Print to PDF" and naturally resists change.
 
 The goal is to give a basic model for thinking about the digital space in case you percieve it as a collection of 'apps'.
 If you're already comfortable working with git or building webservers, you can jump into the [Guide](./docs/guide/index.html).
 
 ## How does our current web work?
 
-There are hosts; systems that provide information.  
+There are hosts; systems that collect and provide information.  
 There are guests; you in an app or the web-browser.  
 
 A host has set up a process on a computer.
@@ -27,8 +42,8 @@ For example:
 - Dave opened our app
 - Alice is looking for a taxi
 
-The hosts has setup many processes that operate on the events. 
-The exact goal, language, or how it is activated is irrelevant. 
+The host is running processes that operate on the events. 
+The exact goal, programming language, or how it is orchestrated is irrelevant. 
 Their basic functionality revolves around ```read_index <-> process <-> insert_index```;  
 
 ## The index
@@ -46,7 +61,7 @@ An index looks something like this:
 | /private/file2     | ...          |
 
 The ```read_index``` reads /work/file1 and returns ```Hello world```.  
-Your device automatically pick a program to open the data with.  
+Your device automatically picks a program to open the data with.  
 But you can pick a different program to use the data in. 
 
 These text things "/hello/file1" and "/world/file2" go by many names.
@@ -75,23 +90,23 @@ Now that we have the index we can talk about the ```read_index <-> process <-> w
 A process:
 
 - will wait for something to happen to the index,
-- do [read_index] any number of times,
-- combine and [process] the data,
-- do [write_index] any number of times.
+- [read_index] any number of times,
+- [process] and combine data,
+- [write_index] any number of times.
 - return to wait
 
 A typical process is a utility for others.
 What it writes, other processes will read. 
 
 This makes it faster and easy to find specific stuff.
-They might create:
+For instance, they can create: 
 
-| Writen by process A        | Data                        |
+| Alice tracker              | Data                        |
 |----------------------------|-----------------------------|
 | /by-person/alice/event0000 | Alice shares a new image    |
 | /by-person/alice/event0004 | Alice is looking for a taxi |
 
-| Writen by process B         | Data                        |
+| Spam filter process         | Data                        |
 |-----------------------------|-----------------------------|
 | /log-without-spam/event0000 | Alice shares a new image    |
 | /log-without-spam/event0001 | Bob wants to buy a car      |
@@ -99,12 +114,12 @@ They might create:
 | /log-without-spam/event0003 | Alice is looking for a taxi |
 
 It is common to think of deleting or moving data.  
-But this is not what really happens.  
+This is flawed.  
 
-The effect of "moving" or "deleting" are achieved by creating new entries.
-For instance, "log-without-spam" is a copy of "log" without "event0002".
+The effect of "moving" or "deleting" is done by creating new entries.
+For example; the log-without-spam is a copy of log with event0002 deleted.
 
-The features you're familiar with in many of your apps are implemented through this loop. 
+The features you're familiar with in many of your apps are implemented through this loop.
 Things like:
 
 - The timeline of posts
@@ -115,14 +130,14 @@ Things like:
 ## The graphical user interface
 
 The app you use to talk to the host has two parts. 
-The painting of buttons or texts, and the communication in bits and bytes.
+The painting of buttons or texts, and the communication in ones and zeros.
 
 The designer works hard to make it feel like a 'place'.  
 A single whole you should care about.  
 
 But they are two different things.  
 The hosts trade you this comfort for a perpetual grant to exploit you and your communication.  
-Or it is as they claim; for your own protection.  
+Or it is as they claim; for your own protection because you are a child.  
 
 ## What is a Hash?
 
@@ -162,7 +177,7 @@ Alice can proof herself to the host, and so can bob.
 But this is archaic in two ways.
 
 - We are sending the host the password when we register
-- If alice and bob want to know for sure they are talking to eachother , this _specific_ host has to _always_ play middleman to validate their identity.
+- If alice and bob want to know for sure they are talking to eachother, this _specific_ host has to _always_ play middleman to validate their identity.
 
 Public key cryptography provides a math solution.
 Anybody at anytime can run an algorithm to pick two numbers.
@@ -179,7 +194,7 @@ With public key cryptography:
 
 # What is the Linkspace Protocol?
 
-Now that we know about the index, hashes, and public keys, we can talk about what I think the internet ought to be.
+Now that we know about the index, hashes, and public keys, we can talk about what the internet can be.
 
 In linkspace all events:
 
@@ -195,37 +210,42 @@ The domain is chosen by a developer. It signals what app to use, and how the eve
 The signature is created from the user's public key.
 It allows us to identify each other.
 
+Any sequence of events can be merged.
+
 ## Consequences
 
-```read_index``` and ```write_index``` are democratized.
+```read_index``` and ```write_index``` are liberated.
 
-It can be moved; hosted where it makes sense to you.
+It can be moved; hosted where it makes sense to the user.
 
-That is not to say everything is shared all the time.  
-A [process] might be done by dedicated systems.
-Special groups can be made with specific sharing rules.  
+That is not to say everything is shared all the time.
+A [process] can be done on specialized systems.
+Groups can be made with specific sharing rules.
 
-However, we force the public 'platforms' to change.  
-Their value as _just_ a place to connect people is gone.  
+However, we change the concept of a public 'platforms'.  
+Their current value as _just_ a place to connect people is gone.  
 Instead of dictating rules, they must compete.  
-They need to provide value on your terms.  
-If not, another system can take over where we left off.  
+Provide value in a fair trade to the user.  
+If not, another can take over without breaking what already is.  
 
-And we get to build new (social) contracts:  
-Discussions on scientific papers with the data and code linked in.  
-Social Media apps working over Bluetooth, WiFi, etc.  
-Public service announcements signed to prevent AI generated lies.  
-Incompany communication tools, expandable by any developer.  
-A taxi or hotel 'markets' with a operated by locals at a fraction of the current markup,  
+We also get to build new (social) contracts:  
+Discussions on scientific papers _about_ the data and code that is linked in.  
+Social Media apps working over Bluetooth, Wi-Fi, Radio etc.  
+Public announcements signed with keys are required to spot the AI generated lies.  
+In-house communication tools, expandable by any developer.  
+A taxi or hotel 'markets' insured and operated by locals at a fraction of the current markup,  
 Gradual expansion of the interop in supply chains.  
 
-With far less code than you're expecting.
+With far less complexity than you're expecting[^2].
 
 ## Closing thoughts
 
-The Linkspace Protocol is free for everybody, anytime, anywhere.
+The Linkspace Protocol is free for everybody, anytime, anywhere, forever.
+
 The time of digital dictatorships and fiefdoms is ending.
 Please help kill them.
 Support the project by [registering](./lns.html) a public key name.
 
-[^1]: It is not the password, but a hash function run multiple times so i'ts not at risk of being copied if the index is compromised.
+[^1]: Techinically this is not the password, but a hash function run multiple times so if done right it is not at risk if the index is copied.
+[^2]: [guide#state-complexity](./docs/guide/index.html#state-complexity) - but it will take time before it is simple for users.
+

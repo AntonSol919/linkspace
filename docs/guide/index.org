@@ -50,6 +50,13 @@ e.g. git, bitcoin, nostr, the linkspace protocol
 The supernet paradigm is a trade-off.
 Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 
+#+HTML: <a id="state-complexity"></a>
+The readme contains technical properties this provides.
+However, there is one I lack a word for.
+Both the process of view-database state synchronization, and dealing with networks have this in common:
+They're well designed if they run under the assumption of incomplete/bad state.
+The linkspace protocol makes this an obvious requirement, and liblinkspace attempts to make it simple[fn:: that's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are the facts of life.]
+
 The Linkspace Protocol is best understood as 4 ideas.
 
 - [[Point]] - Three types of packets
@@ -62,7 +69,7 @@ It separates the responsibility of 'User Interface & Data Structure' with the 'M
 This split and other standard problems, are supported by a set of (growing) [[Conventions]].
 
 You can checkout the [[#imageboard][imageboard]] example to see it in action.
-But bare with me as a some stuff is still in development.
+But bare with me as some stuff is still in development.
 
 * Setup
 
