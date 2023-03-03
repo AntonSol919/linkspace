@@ -1,18 +1,3 @@
-### A 15-second pitch
-
-You should leave those internet platform you think you depend on.
-Those middlemen providing you with timelines, feeds, markets, forums, etc.
-They're troublesome and dangerous precisely because you can't leave.
-The trade in the Terms Of Service is absurd.
-You should leave.
-
-...
-
-Now take all those reasons "why I can't" that just entered your mind and forget them.
-It is an illusion.
-Eventually The Linkspace Protocol will make it feasible that you'll press a button and everything will keep working like you expect.
-Except that you, and the people and organizations you trust, will be administrators. Operating on your terms.
-
 # Explain Like I'm 5
 
 This document is a simplified view of our web and where the linkspace protocol fits in.
