@@ -3,6 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+
 use crate::consts::B64_HASH_LENGTH;
 pub use arrayvec;
 use arrayvec::ArrayString;
@@ -30,6 +32,7 @@ b64 decoding rules regarding 1 or 2 characters are ignored
 #[derive(
     Default, Debug, Clone, Copy, Eq, Hash, PartialEq, Serialize, Deserialize, PartialOrd, Ord,
 )]
+
 pub struct PartialHash(pub ArrayString<B64_HASH_LENGTH>);
 impl PartialHash {
     pub fn min() -> PartialHash {

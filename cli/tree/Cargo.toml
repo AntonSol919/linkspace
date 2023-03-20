@@ -11,3 +11,4 @@ liblinkspace = { path = "../../crates/liblinkspace"}
 linkspace-common = { path = "../../crates/common" }
 clap = "*"
 termion = "2.0.1"
+anyhow = "1.0.70"

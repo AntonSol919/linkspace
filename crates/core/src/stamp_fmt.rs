@@ -6,7 +6,7 @@
 use std::{ str::FromStr, time::Duration};
 
 use crate::pkt::abe::eval::*;
-use anyhow::{bail, Context};
+use anyhow::{bail, Context, anyhow};
 use linkspace_pkt::{checked_stamp_add, checked_stamp_sub, stamp_add, stamp_sub, Stamp};
 use serde::{Deserialize, Serialize};
 
@@ -231,12 +231,20 @@ impl StampEF {
         while result.is_none() && !args.is_empty() {
             (stamp, args) = match args {
                 [[], args @ ..] => (stamp, args),
+                [[b'+',b'+', r @ ..], args @ ..] => (
+                    checked_stamp_add(stamp, parse_duration_str(r)?).unwrap_or(Stamp::MAX),
+                    args,
+                ),
                 [[b'+', r @ ..], args @ ..] => (
-                    checked_stamp_add(stamp, parse_duration_str(r)?).ok_or("stamp overflow")?,
+                    checked_stamp_add(stamp, parse_duration_str(r)?).context("stamp overflow. use '++' for saturating add")?,
+                    args,
+                ),
+                [[b'-',b'-', r @ ..], args @ ..] => (
+                    checked_stamp_sub(stamp, parse_duration_str(r)?).unwrap_or(Stamp::ZERO),
                     args,
                 ),
                 [[b'-', r @ ..], args @ ..] => (
-                    checked_stamp_sub(stamp, parse_duration_str(r)?).ok_or("stamp underflow")?,
+                    checked_stamp_sub(stamp, parse_duration_str(r)?).context("stamp underflow. use '--' for saturating sub")?,
                     args,
                 ),
                 [b"ticks", rest @ ..] => {
@@ -266,11 +274,11 @@ impl StampEF {
                     result = Some(st.into_bytes());
                     break;
                 }
-                e => return Err(format!("unknown args '{}'", abl(e)).into()),
+                e => return Err(anyhow!("unknown args '{}'", clist(e)).into()),
             };
         }
         if !args.is_empty() {
-            return Err(format!("bad trailing args '{}'", abl(args)).into());
+            return Err(anyhow!("bad trailing args '{}'", clist(args)).into());
         }
         Ok(result.unwrap_or_else(|| stamp.0.to_vec()))
     }

@@ -10,10 +10,10 @@ use bytefmt::abe::{parse_abe, ABE};
 pub static DEFAULT_PKT: &str = "\
 type\\t[type:str]\\n\
 hash\\t[hash:str]\\n\
-group\\t[/?:[group]:#/b]\\n\
+group\\t[/~?:[group]/#/b]\\n\
 domain\\t[domain:str]\\n\
 path\\t[path:str]\\n\
-pubkey\\t[/?:[pubkey]:@/b]\\n\
+pubkey\\t[/~?:[pubkey]/@/b]\\n\
 create\\t[create:str]\\n\
 links\\t[links_len:str]\\n\
 [/links:\\t[tag:str] [ptr:str]\\n]\\n\

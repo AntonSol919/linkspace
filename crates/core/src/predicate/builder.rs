@@ -27,10 +27,24 @@ impl PktPredicates {
     pub fn path(mut self, path: impl AsRef<SPath>) -> anyhow::Result<Self> {
         let path = path.as_ref();
         ensure!(path.starts_with(&self.path_prefix), "incompatible path");
-        self.path_prefix = path.into_spathbuf().try_idx()?;
+        self.path_prefix = path.into_spathbuf().try_ipath()?;
         self.path_len
             .try_add(TestOp::Equal, *self.path_prefix.path_len())?;
         Ok(self)
+    }
+    pub fn prefix(&mut self, prefix: impl AsRef<SPath>) -> anyhow::Result<()> {
+        let sp = prefix.as_ref();
+        if self.path_prefix.starts_with(&sp) {
+            tracing::trace!(old=%self.path_prefix,new=%sp,"Current prefix already more specific")
+        } else if sp.starts_with(&self.path_prefix) {
+            let sp = sp.try_ipath()?;
+            tracing::trace!(old=%self.path_prefix,new=%sp,new_len=sp.path_len(),"Setting more specific prefix");
+            self.path_prefix = sp;
+            self.path_check()?;
+        } else {
+            anyhow::bail!("disjoin spath {:?} <> {:?}", &*sp, &*self.path_prefix);
+        };
+        Ok(())
     }
     pub fn group(mut self, g: GroupID) -> anyhow::Result<Self> {
         self.group.try_add(TestOp::Equal, g.into())?;

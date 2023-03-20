@@ -41,7 +41,7 @@ impl DGPExpr {
     pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGP> {
         let domain = self.domain.eval(ctx);
         let group = self.group.eval_default(PUBLIC, ctx);
-        let path = self.path.eval(ctx)?.try_idx();
+        let path = self.path.eval(ctx)?.try_ipath();
         match (domain, group, path) {
             (Ok(domain), Ok(group), Ok(path)) => Ok(DGP {
                 domain,

@@ -36,9 +36,9 @@ pub mod prelude {
         bytefmt::{endian_types, AB, B64},
         core::env::queries::RecvPktPtr,
         pkt::{
-            ab, as_abtxt, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
+            ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
-            NetPktHeader, NetPktParts, NetPktPtr, PktTypeFlags, Point, PointExt, Ptr, PubKey,
+            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
         },
     };
@@ -68,7 +68,6 @@ impl PktHandler for Box<dyn PktHandler> {
 
 pub use point::{lk_datapoint, lk_keypoint, lk_linkpoint};
 pub mod point {
-    use anyhow::Context;
     use std::io;
 
     use super::*;
@@ -181,15 +180,10 @@ pub mod point {
     }
 
     pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<NetPktBox> {
-        let pkt = super::misc::reader::parse_netpkt(buf, validate, allow_private)?
-            .context("incomplete pkt")?;
+        let pkt = super::misc::read::parse_netpkt(buf, validate)?
+            .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
+        anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
         Ok(pkt.as_netbox())
-    }
-
-    pub fn lk_read_ref(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<NetPktParts> {
-        let pkt = super::misc::reader::parse_netpkt(buf, validate, allow_private)?
-            .context("incomplete pkt")?;
-        Ok(unsafe { pkt.get() }.as_netparts())
     }
 
     pub fn lk_write(p: &dyn NetPkt, out: &mut dyn io::Write) -> io::Result<()> {
@@ -330,15 +324,20 @@ pub mod abe {
     this variant also swallows bad options, see [lk_try_encode] to avoid doing so.
     **/
     pub fn lk_encode(bytes: &[u8], options: &str) -> String {
-        varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options)
+        varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options,true)
             .unwrap_or_else(|_v| as_abtxt(bytes).to_string())
     }
-    /// [lk_encode] with Err on wrong options
-    pub fn lk_try_encode(bytes: &[u8], options: &str) -> LkResult<String> {
+    /** [lk_encode] with Err on:
+    - wrong options
+    - no result ( use a /: to fallback to abtxt)
+    - if !ignore_encoder_err on any encoder error
+    **/
+    pub fn lk_try_encode(bytes: &[u8], options: &str,ignore_encoder_err:bool) -> LkResult<String> {
         Ok(varctx::lk_try_encode(
             ctx::ctx(().into()).unwrap(),
             bytes,
             options,
+            ignore_encoder_err
         )?)
     }
     /// Custom context for use in [varctx]
@@ -607,37 +606,8 @@ pub mod key {
         name: &str,
         new: bool,
     ) -> LkResult<SigningKey> {
-        let name = if name.is_empty() { "me" } else { name };
-        let e = format!("[local:[:{name}]::*=:enckey/readhash:data]");
-        match crate::lk_eval(&e, ()) {
-            Ok(b) => {
-                let st = std::str::from_utf8(&b)?;
-                Ok(linkspace_common::identity::decrypt(st, password)?)
-            }
-            Err(_) => {
-                if new {
-                    use super::key::*;
-                    let key = lk_keygen();
-                    let enckey = super::key::lk_keystr(&key, password);
-                    use std::env::{args, current_dir, current_exe};
-                    let notes = format!(
-                        "exec:{:?}\ndir:{:?}\nargs:{:?}",
-                        current_exe(),
-                        current_dir(),
-                        args()
-                    );
-                    linkspace_common::protocols::lns::local::setup_local_key(
-                        &linkspace.0,
-                        name,
-                        &enckey,
-                        &notes.as_bytes(),
-                    )?;
-                    Ok(key)
-                } else {
-                    anyhow::bail!("no matching entry found")
-                }
-            }
-        }
+        super::varctx::lk_key(super::abe::ctx::ctx(().into())?,linkspace,password,name,new)
+        
     }
 }
 
@@ -823,7 +793,7 @@ pub mod misc {
     pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
     pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
     pub use linkspace_common::pkt::FieldEnum;
-    pub use linkspace_common::pkt_reader as reader;
+    pub use linkspace_common::pkt::read;
     use linkspace_common::prelude::NetPkt;
     pub use linkspace_common::runtime::handlers::StopReason;
 
@@ -882,24 +852,61 @@ pub mod varctx {
 
     use super::*;
     use crate::abe::ctx::LkCtx;
+    use linkspace_common::abe::{eval::eval, parse_abe};
 
     pub fn lk_eval(ctx: LkCtx, expr: &str) -> LkResult<Vec<u8>> {
-        use linkspace_common::abe::{eval::eval, parse_abe};
         let expr = parse_abe(expr)?;
         let val = eval(&ctx.as_dyn(), &expr)?;
         Ok(val.concat())
     }
-    pub fn lk_try_encode(ctx: LkCtx, bytes: &[u8], options: &str) -> LkResult<String> {
+    pub fn lk_try_encode(ctx: LkCtx, bytes: &[u8], options: &str,ignore_encoder_err:bool) -> LkResult<String> {
         Ok(linkspace_common::abe::eval::encode(
             &ctx.as_dyn(),
             bytes,
             options,
+            ignore_encoder_err
         )?)
     }
     /// custom ctx version of [super::lk_query_parse]
     pub fn lk_query_parse(ctx: LkCtx, pred: &mut Query, expr: &str) -> LkResult<bool> {
         let changed = pred.0.parse(expr.as_bytes(), &ctx.as_dyn())?;
         Ok(changed)
+    }
+    pub fn lk_key(
+        ctx:LkCtx,
+        linkspace: &Linkspace,
+        password: &[u8],
+        name: &str,
+        new: bool,
+    ) -> LkResult<SigningKey> {
+        use linkspace_common::protocols::lns;
+        let name = format!("{}:local",if name.is_empty(){"me"}else{name});
+        let expr = parse_abe(&name)?;
+        let name : lns::name::Name= eval(&ctx.as_dyn(), &expr)?.try_into()?;
+        match lns::lookup_enckey(&linkspace.0, &name)?{
+            Some((_,enckey)) => {
+                Ok(linkspace_common::identity::decrypt(&enckey, password)?)
+            }
+            None => {
+                if new {
+                    use super::key::*;
+                    let key = lk_keygen();
+                    let enckey = super::key::lk_keystr(&key, password);
+                    /*
+                    use std::env::{args, current_dir, current_exe};
+                    let notes = format!(
+                        "exec:{:?}\ndir:{:?}\nargs:{:?}",
+                        current_exe(),
+                        current_dir(),
+                        args()
+                    );*/
+                    lns::setup_special_keyclaim(&linkspace.0, name, &enckey, false)?;
+                    Ok(key)
+                } else {
+                    anyhow::bail!("no matching entry found")
+                }
+            }
+        }
     }
 }
 

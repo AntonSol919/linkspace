@@ -1,3 +1,4 @@
+use anyhow::ensure;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -47,7 +48,7 @@ pub type IPathExpr = TypedABE<IPathBuf>;
 impl TryFrom<ABList> for IPathBuf {
     type Error = SPathExprErr;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        Ok(SPathBuf::try_from(value)?.try_idx()?)
+        Ok(SPathBuf::try_from(value)?.try_ipath()?)
     }
 }
 impl From<SPathBuf> for ABList {
@@ -127,7 +128,7 @@ impl FromStr for IPathBuf {
     type Err = ABEError<SPathExprErr>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         spath_str(s)?
-            .try_idx()
+            .try_ipath()
             .map_err(|e| ABEError::TryFrom(e.into()))
     }
 }
@@ -326,12 +327,8 @@ impl EvalScopeImpl for SPathFncs {
                 .transpose()?
                 .unwrap_or(start + 1)
                 .max(9);
-            if start > 8 {
-                return Err("paths go have upto 8 components".into());
-            }
-            if end < start {
-                return Err("end < start".into());
-            }
+            ensure!(start <= 8 ,"paths only have upto 8 components");
+            ensure!(end >= start ,"end < start");
             Ok(start..end)
         }
         crate::abe::fncs!([
@@ -348,7 +345,7 @@ impl EvalScopeImpl for SPathFncs {
                 |_, i: &[&[u8]]| {
                     Ok(IPath::from(i[0])?
                         .range(parse_range(i)?)
-                        .idx()
+                        .ipath()
                         .ipath_bytes()
                         .to_vec())
                 }
@@ -359,7 +356,7 @@ impl EvalScopeImpl for SPathFncs {
                 "ipath select [start,?end]",
                 |_, i: &[&[u8]]| {
                     Ok(SPath::from_slice(i[0])?
-                        .idx()
+                        .ipath()
                         .range(parse_range(i)?)
                         .spath_bytes()
                         .to_vec())
@@ -385,7 +382,7 @@ impl EvalScopeImpl for SPathFncs {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
                     let p = SPathBuf::try_from(lst)?;
-                    ApplyResult::Ok(p.unwrap())
+                    ApplyResult::Value(p.unwrap())
                 },
                 info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. [//some/spath/val] creates the byte for /some/spath/val" }
             }

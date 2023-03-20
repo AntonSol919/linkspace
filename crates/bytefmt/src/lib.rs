@@ -39,7 +39,7 @@ use abe::{
 
 use std::fmt::{self, Debug, Display};
 
-pub fn as_abtxt(mut b: &[u8], cut: bool) -> std::borrow::Cow<'_, str> {
+pub fn as_abtxt_c(mut b: &[u8], cut: bool) -> std::borrow::Cow<'_, str> {
     if cut {
         b = cut_prefix_nulls(b)
     }
@@ -127,6 +127,7 @@ where
         }
     }
 }
+/*
 impl<N: PartialEq> PartialEq<str> for AB<N>
 where
     Self: FromStr,
@@ -140,29 +141,20 @@ where
         }
     }
 }
+*/
 impl<N> ToABE for AB<N>
 where
     Self: AsRef<[u8]>,
 {
-    fn to_abe_str(&self) -> String {
+    fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
         let (max_padded, bytes) = self.x_prefix_cut();
         let mode = if max_padded { MAX_STR } else { "a" };
         let st = abe::abtxt::as_abtxt(bytes);
+        let st : &str= st.borrow();
         if self.as_ref().len() == 16 {
-            format!("[{mode}:{st}]")
+            abe::abe!({ mode : st  }).for_each(out)
         } else {
-            format!("[{mode}:{st}:{}]", self.as_ref().len())
-        }
-    }
-
-    fn to_abe(&self) -> Vec<ABE> {
-        let (max_padded, st) = self.x_prefix_cut();
-        let mode = if max_padded { MAX_STR } else { "a" };
-        let len = self.as_ref().len();
-        if self.as_ref().len() == 16 {
-            abe::abev!({ mode: st })
-        } else {
-            abe::abev!( { mode : st : (len.to_string())} )
+            abe::abe!({ mode : st : (self.as_ref().len().to_string()) }).for_each(out)
         }
     }
 }
@@ -395,13 +387,10 @@ impl AsRef<[u8; 32]> for B64<[u128; 2]> {
 }
 impl<N> ToABE for B64<N>
 where
-    Self: AsRef<[u8]>,
-{
-    fn to_abe_str(&self) -> String {
-        format!("[b:{}]", self.b64())
-    }
-    fn to_abe(&self) -> Vec<ABE> {
-        abe::abev!( { "b" : (self.b64()) } )
+    Self: AsRef<[u8]>{
+
+    fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
+        abe::abe!( { "b" : (self.b64()) } ).for_each(out)
     }
 }
 
@@ -571,15 +560,15 @@ impl EvalScopeImpl for B64EvalFnc {
                |_,i:&[&[u8]],_,_| Ok(base64_decode(i[0])?),
                |_,b:&[u8],opts:&[ABE]| -> ApplyResult{
                    if opts.is_empty(){
-                       return ApplyResult::Ok(format!("[b:{}]",base64(b)).into_bytes());
+                       return ApplyResult::Value(format!("[b:{}]",base64(b)).into_bytes());
                    }
                    for len_st in opts.iter().filter_map(|v| as_bytes(v).ok()){
                        let len = std::str::from_utf8(len_st)?.parse::<u32>()?;
                        if len as usize == b.len() {
-                           return ApplyResult::Ok(format!("[b:{}]",base64(b)).into_bytes());
+                           return ApplyResult::Value(format!("[b:{}]",base64(b)).into_bytes());
                        }
                    }
-                   ApplyResult::None
+                   ApplyResult::NoValue
                }
              )
         ])

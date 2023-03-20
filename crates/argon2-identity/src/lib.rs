@@ -19,6 +19,7 @@ pub const DEFAULT_MEM_COST: u32 = 16384;
 pub const DEFAULT_TIME_COST: u32 = 4;
 
 pub const DEFAULT_COST: (u32, u32) = (DEFAULT_MEM_COST, DEFAULT_TIME_COST);
+pub const EXPENSIVE_COST: (u32, u32) = (DEFAULT_MEM_COST*2, DEFAULT_TIME_COST*2);
 pub const INSECURE_COST: (u32, u32) = (8, 1);
 
 #[derive(Error, Debug)]

@@ -8,11 +8,8 @@ use linkspace_core::{crypto::blake3, prelude::*};
 
 // This is completely made up. No testing was done.
 pub const MMAP_IF_LARGER_THEN: u64 = 1 << 26;
-lazy_static::lazy_static! {
-    pub static ref EMPTY_DATA_PKT: NetPktBox = datapoint(b"", NetPktHeader::EMPTY).as_netbox();
-    pub static ref EMPTY_DATA_HASH: LkHash = EMPTY_DATA_PKT.hash();
-}
-
+pub static EMPTY_DATA_PKT : LazyLock<NetPktBox> = LazyLock::new(||datapoint(b"", NetPktHeader::EMPTY).as_netbox());
+pub static EMPTY_DATA_HASH : LazyLock<LkHash> = LazyLock::new(|| EMPTY_DATA_PKT.hash());
 //spath!(pub const BLOB_SP = [b"\0blob"]);
 pub const BLOB_SP: ConstSPath<6> = ConstSPath::from_raw(*b"\x05\0blob");
 
@@ -33,7 +30,7 @@ pub enum Error {
 pub use std::path::Path;
 use std::{
     io::IoSlice,
-    ops::{FromResidual, Try},
+    ops::{FromResidual, Try}, sync::LazyLock,
 };
 
 pub fn datapkt_path_reader<F, R>(path: &Path, netopts: impl Into<NetOpts>, f: F) -> R
@@ -107,7 +104,7 @@ where
         return O::from_output(links[0].ptr);
     }
     let blob_hash = hasher.finalize();
-    let mut spath = BLOB_SP.to_owned().try_idx().unwrap();
+    let mut spath = BLOB_SP.to_owned().try_ipath().unwrap();
     spath
         .extend_from_iter(&[blob_hash.as_bytes() as &[u8], b"part"])
         .unwrap();

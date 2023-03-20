@@ -3,63 +3,93 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-pub mod local;
+#![feature(iterator_try_collect,once_cell)]
+/*
+TODO;
+- get name ( bootstrap )
+- claim name --group PtrExpr --noauth-pubkey PtrExpr --auth X --auth Y --until
+- vote HashPtr   (--no-verify-claim --no-verify-prev )
+*/
+
 
 use anyhow::*;
-/**
-LNS is a keypoint scheme that makes packets 'valid', at a specific path , between two timestamps.
-It's resolution is integrated into ABE.
-e.g. after registering nl/sol/rs a publickey it can be queried with `lk_eval("{@:rs:sol:nl}")`,
-and after registering a nl/sol group it can be queried with `lk_eval("{#:nl:sol}")`
-
-the '<lns' function does reverse lookup. such that {/?:{#:nl:sol}} -> /nl/sol
-
-**/
 use linkspace_common::{
     anyhow::{self},
-    cli::{clap::Parser, keys::KeyOpts, opts::CommonOpts, *},
-    prelude::*,
-};
+    cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
+    prelude::*, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, auth_tag, GROUP_TAG, public_claim::Issue }, identity,  };
 use tracing_subscriber::EnvFilter;
 
-#[derive(Parser, Debug)]
+
+
+#[derive(Parser )]
 pub struct Opts {
     #[clap(flatten)]
     common: CommonOpts,
     #[clap(subcommand)]
-    cmd: LNSCmd,
+    cmd: Cmd,
 }
 
-#[derive(Parser, Debug)]
-pub enum LNSCmd {
-    LocalGet {
-        path: SPathExpr,
+#[derive(Parser )]
+pub enum Cmd {
+    /// resolve the claim chain for a linkpoint name
+    Get{
+        name: Option<NameExpr>,
+        #[clap(long,default_value="stdout")]
+        write: Vec<WriteDestSpec>,
+        #[clap(default_value="null")]
+        write_signatures: Vec<WriteDestSpec>,
+        #[clap(long)]
+        chain:bool
     },
-    Bootstrap {
-        #[clap(default_value = "stdout")]
-        write: Vec<WriteDest>,
+    LsPubkey{
+        pubkey: Option<PubKeyExpr>
     },
-    Get {
-        path: SPathExpr,
+    LsGroup{
+        group: Option<GroupExpr>
     },
-    Propose {
-        #[clap(flatten)]
-        links: RefList,
-        name: SPathBuf,
-        #[clap(default_value = "{now:+1D}")]
-        until: StampExpr,
-        #[clap(default_value = "stdout")]
-        write: Vec<WriteDest>,
+    Ls{
+        name:NameExpr
     },
-    Vote {
+    Vote{
+        name: NameExpr,
+        claim: HashExpr,
         #[clap(flatten)]
         key: KeyOpts,
-        #[clap(short, long)]
-        key_authority: Option<PartialHash>,
-        hash: PartialHash,
-        #[clap(default_value = "stdout")]
-        write: Vec<WriteDest>,
+        #[clap(long,default_value="stdout")]
+        write: Vec<WriteDestSpec>,
+
     },
+    CreateClaim{
+        /// name of claim
+        name:NameExpr,
+        #[clap(long)]
+        /// the group id value for [#:NAME]
+        group: Option<GroupExpr>,
+        #[clap(long)]
+        /// the public key to find with [@:NAME] - becomes an authority as well (see --pubkey_noauth)
+        pubkey: Option<PubKeyExpr>,
+        /// do not give the pubkey/enckey authority status
+        #[clap(long)]
+        no_auth: bool,
+        /// implies pubkey
+        #[clap(long,conflicts_with("pubkey"))]
+        enckey:Option<String>,
+        /// Copy from pubkey
+        #[clap(long,conflicts_with_all(["enckey","pubkey"]))]
+        copy_from:Option<NameExpr>,
+
+        #[clap(long)]
+        /// desired list of authname^:pubkey authorities over [NAME + ':*'] - authname is arbitrary ('^' is inserted automatically)
+        auth: Vec<LinkExpr>,
+        #[clap(long,default_value="[now:+7D]")]
+        /// end date of this claim
+        until: StampExpr,
+        #[clap(long)]
+        allow_empty:bool,
+
+        #[clap(long,default_value="stdout")]
+        write: Vec<WriteDestSpec>
+    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -70,63 +100,136 @@ fn main() -> anyhow::Result<()> {
         .with_env_filter(env_filter)
         .with_writer(std::io::stderr)
         .init();
-    let Opts { common, cmd } = Opts::parse();
+    let Opts { mut common, cmd } = Opts::parse();
+    common.mut_write_private().get_or_insert(true);
     match cmd {
-        LNSCmd::LocalGet { path } => local::get(common, path)?,
-        _ => todo!(), /*
-                      LNSCmd::Bootstrap{write} => {
-                          *common.mut_write_private() = Some(true);
-                          let lst = ROOT_BINDING.clone().into_iter()
-                              .chain(Some(ROOT_BINDING.local_binding()))
-                              .chain(setup_rootkey_names()?.into_iter().flat_map(|v| [v.local_binding()].into_iter().chain(v.into_iter())))
-                              .chain(setup_example_bindings()?.into_iter());
-                          for p in lst {
-                              common.write_multi_dest(&write, &*p, None)?;
-                          }
-                      }
-                      LNSCmd::Get{spath} => {
-                          let env = common.env()?;
-                          let spath = spath.eval(&common.eval_ctx())?;
-                          let pkt = get_local( &spath,&env.get_reader()?)?;
-                          common.write_pkt(std::io::stdout(), &*pkt)?;
-                      },
-                      LNSCmd::Propose { name :_,links, until:_, write:_ } => {
-                          let values = links.try_into_links(&common.eval_ctx())?;
-                          ensure!(values .len() > 0,"empty proposal?");
-                          todo!()
-                              /*
-                              let pkt = propose(&name.try_idx()?, &values,until.eval_static_now()?)?;
-                          common.write_multi_dest(&dest, &*pkt,None)?;
-                              */
-                      },
-                      LNSCmd::Vote { key, hash ,key_authority, write }=>{
-                          let id = key.identity(&common, true)?;
-                          let env = common.env()?;
-                          let reader = env.get_reader()?;
-                          let proposal = reader.uniq_partial(hash).context("Proposal not found")?.map_err(|lst| anyhow!("Multiple Found {:?}",lst))?.as_netbox();
-                          let name = split_first_if_eq(proposal.get_spath(),"proposal")?;
-                          let parent = name.parent().expect("todo");
-                          let auth = match key_authority{
-                              Some(h) => {
-                                  let binding = reader.uniq_partial(h).context("Auth not found")?.map_err(|lst| anyhow!("Multiple Found {:?}",lst))?.as_netbox();
-                                  let auth_name = split_first_if_eq(binding.get_spath(), "binding")?;
-                                  ensure!(parent == auth_name,"key authority is not the parent");
-                                  todo!()
-                                      /*
-                                  let proposal_ref= binding.get_links().first_prefix(b"proposal").context("Missing auth proposal?")?;
-                                  let proposal = reader.read(&proposal_ref.pointer)?.context("Could not find authirization proposal")?.as_netbox();
-                                  NaamStatus{proposal, binding,votes:HashMap::new()}
-                                      */
-                              },
-                              None => {
-                                  get_local_naamstatus(&parent,&reader)?
-                              },
-                          };
-                          // todo PROMPT
-                          let pkt = vote(&id, &*proposal, &auth)?;
-                          common.write_multi_dest(&write, &*pkt,None)?;
-                      }
-                          */
-    }
+        Cmd::Vote { name, claim, key ,write} => {
+            let lk= common.runtime()?;
+            let ctx = common.eval_ctx();
+            let name = name.eval(&ctx)?;
+            let mut write = common.open(&write)?;
+
+            let reader =lk.get_reader();
+            let hash = claim.eval(&ctx)?;
+            let claim_pkt = reader.read(&hash)?.context("cant find claim")?;
+            let claim = Claim::from(claim_pkt)?;
+            ensure!(claim.name == name);
+            let signing = key.identity(&common, true)?;
+            let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
+            ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
+            let pkt = lns::claim::vote(&claim, &signing)?;
+            common.write_multi_dest(&mut write, &pkt, None)?;
+        }
+        Cmd::Get{name, write, write_signatures,chain } => {
+            let mut write = common.open(&write)?;
+            let mut signatures = common.open(&write_signatures)?;
+
+            let (is_ok,liveclaim) = match name {
+                None => (true,lns::public_claim::root_claim()),
+                Some(name) => {
+                    let name = name.eval(&common.eval_ctx())?;
+                    let mut issue_handler = |issue:Issue| {eprintln!("{:?}",issue); Ok(())};
+                    let r = lns::lookup_live_chain(&common.runtime()?, &name, &mut issue_handler)?;
+                    let is_ok = r.is_ok();
+                    let liveclaim = match r{
+                        Result::Ok(r) => r,
+                        Err(r) => r,
+                    };
+                    (is_ok,liveclaim)
+                },
+            };
+            let lst = if !chain { vec![&liveclaim]}else { liveclaim.list()};
+            for cl in lst.iter().rev(){
+                common.write_multi_dest(&mut write,&cl.claim.pkt, None)?;
+                if !signatures.is_empty(){
+                    for s in &cl.signatures {
+                        common.write_multi_dest(&mut signatures,&s, None)?;
+                    }
+                }
+            }
+            if !is_ok{ bail!("incomplete chain")}
+        },
+        Cmd::CreateClaim { name, group, pubkey, auth, until, write,allow_empty, no_auth, enckey,copy_from} => {
+            let mut write = common.open(&write)?;
+
+            let as_link = |tag:Tag| move |ptr:Ptr| Link::new(tag,ptr);
+            let mut links = vec![];
+            let ctx = common.eval_ctx();
+            let name = name.eval(&ctx)?;
+            let until = until.eval(&ctx)?;
+            let mut pubkey = pubkey.map(|e| e.eval(&ctx)).transpose()?;
+            let mut misc= vec![];
+            match enckey {
+                Some(k) => {
+                    let encpubkey : PubKey= identity::pubkey(&k)?.into();
+                    if let Some(pk) = pubkey { ensure!(pk == encpubkey,"pubkey and enckey don't match. pick one")}
+                    pubkey = Some(encpubkey);
+                    misc.push(clist(&[b"enckey",k.as_bytes()]));
+                },
+                None => {},
+            }
+            if let Some(n) = copy_from{
+                let alt_name = n.eval(&ctx)?;
+                pubkey = lns::lookup_pubkey(&common.runtime()?, &alt_name)?;
+            }
+
+            let group = group.map(|e| e.eval(&ctx)).transpose()?;
+
+            links.extend(group.map(as_link(GROUP_TAG)));
+            links.extend(pubkey.map(as_link(PUBKEY_TAG)));
+            links.extend(pubkey.filter(|_| !no_auth).map(as_link(auth_tag(&PUBKEY_TAG[1..]))));
+            for link_e in auth {
+                let mut auth_link = link_e.eval(&ctx)?;
+                ensure!(auth_link.tag.0[0] == 0, "tag must start with 0 - it is shifted left to add the ^ authority token");
+                auth_link.tag = auth_tag(&auth_link.tag.0[1..]);
+                links.push(auth_link)
+            }
+            ensure!(allow_empty || !links.is_empty(),"empty claim");
+            let claim = Claim::new(name, until, &links, misc)?;
+            common.write_multi_dest(&mut write, &claim.pkt, None)?;
+        },
+        Cmd::Ls { name } => {
+            let ctx = common.eval_ctx();
+            let name = name.eval(&ctx)?;
+            if name.claim_group().is_none(){ bail!("ls not supported for 'env' names. just look at {:?}",common.env()?.location())}
+            let rt = common.env()?;
+            let reader = rt.get_reader()?;
+            for c_ok in lns::utils::list_all_potential_claims_with_prefix(&reader,&name){
+                match c_ok {
+                    Result::Ok(o) => {
+                        println!("{o}")
+                    },
+                    Err(e) => eprintln!("{e:#?}"),
+                }
+            }
+        },
+        Cmd::LsGroup { group } => ls_tag(&common,GROUP_TAG,group)?,
+        Cmd::LsPubkey{ pubkey} => ls_tag(&common,PUBKEY_TAG,pubkey)?,
+
+    };
     Ok(())
 }
+
+
+fn ls_tag(common:&CommonOpts,tag:Tag,ptr:Option<PExpr>) -> anyhow::Result<()>{
+    let ctx = common.eval_ctx();
+    let ptr = ptr.map(|g|g.eval(&ctx)).transpose()?;
+    let rt = common.env()?;
+    let reader = rt.get_reader()?;
+    for c_ok in lns::utils::list_all_reverse_lookups(&reader,tag,ptr){
+        for (_,el) in c_ok{
+            match el {
+                Result::Ok(Some(c)) => {
+                    let val = c.links().first_eq(tag).map(|l|l.ptr.to_string()).unwrap_or("cleared".to_string());
+                    println!("{val} {} {}",c.pkt.hash(),c.name)
+                },
+                Result::Ok(None) => {
+                    eprintln!("Missing claim")
+                }
+                Err(e) => eprintln!("{e:?}"),
+            }
+        }
+    } 
+    Ok(())
+}
+

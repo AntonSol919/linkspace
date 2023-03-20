@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{cell::OnceCell, mem::size_of, ops::Deref};
 
-use crate::{ByteSegments, NetPktArc, NetPktArcPtr, NetPktExt};
+use crate::{ByteSegments, NetPktArc, NetPktArcPtr, NetPktExt, NetPktBox};
 
 use super::{NetPkt, NetPktHeader};
 
@@ -66,7 +66,7 @@ impl<T: NetPkt + ?Sized> NetPkt for ReroutePkt<T> {
 ///
 /// For [NetPkt::recv] and during abe evaluation
 #[derive(Debug, Clone, Copy)]
-pub struct RecvPkt<T: ?Sized> {
+pub struct RecvPkt<T: ?Sized = NetPktBox> {
     pub recv: crate::Stamp,
     pub pkt: T,
 }
@@ -94,6 +94,9 @@ impl<A> RecvPkt<A> {
             pkt: fnc(self.pkt),
             recv: self.recv,
         }
+    }
+    pub fn owned(self) -> RecvPkt  where A: NetPkt{
+        self.map(|v| v.as_netbox())
     }
 }
 impl<T: ?Sized> Deref for RecvPkt<T> {

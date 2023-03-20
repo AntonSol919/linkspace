@@ -25,7 +25,7 @@ use bytefmt::ConstByteRef;
 use thiserror::Error;
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
 pub enum PathError {
-    #[error("Path only allows upto {MAX_PATH_LEN} components  ")]
+    #[error("Path only allows upto {MAX_PATH_LEN} components")]
     MaxLen,
     #[error("Exceeded maximum component size ({MAX_SPATH_COMPONENT_SIZE} bytes)")]
     ComponentSize,
@@ -33,7 +33,7 @@ pub enum PathError {
     ZeroComponent,
     #[error("Mismatch length for last component")]
     TailLength,
-    #[error("Exceeds Max SPath size ({MAX_SPATH_SIZE}) ")]
+    #[error("Exceeds Max SPath size ({MAX_SPATH_SIZE})")]
     CapacityError,
 
     #[error("TODO")]
@@ -205,7 +205,7 @@ impl SPathBuf {
     ) -> Result<Self, PathError> {
         let mut count = self.iter().count();
         for s in i.into_iter() {
-            self = self.try_append_component(s.as_ref())?;
+            self = self.try_push(s.as_ref())?;
             count += 1;
         }
         if count > MAX_PATH_LEN {
@@ -239,8 +239,8 @@ impl SPathBuf {
         }
     }
     /// Panics if the component is larger then 250 bytes;
-    pub fn append_component(self, s: impl AsRef<[u8]>) -> Self {
-        self.try_append_component(s.as_ref()).unwrap()
+    pub fn push(self, s: impl AsRef<[u8]>) -> Self {
+        self.try_push(s.as_ref()).unwrap()
     }
 
     pub fn try_append(self, p: &SPath) -> Result<SPathBuf, PathError> {
@@ -253,7 +253,7 @@ impl SPathBuf {
         self.spath_bytes.splice(0..0, p.spath_bytes.iter().cloned());
         Ok(self)
     }
-    pub fn try_append_component(mut self, component: &[u8]) -> Result<Self, PathError> {
+    pub fn try_push(mut self, component: &[u8]) -> Result<Self, PathError> {
         if component.len() > MAX_SPATH_COMPONENT_SIZE {
             return Err(PathError::ComponentSize);
         }
@@ -268,10 +268,10 @@ impl SPathBuf {
         Ok(self)
     }
     #[must_use]
-    pub fn prepend_component(self, component: &[u8]) -> SPathBuf {
-        self.try_prepend_component(component).unwrap()
+    pub fn push_front(self, component: &[u8]) -> SPathBuf {
+        self.try_push_front(component).unwrap()
     }
-    pub fn try_prepend_component(mut self, component: &[u8]) -> Result<SPathBuf, PathError> {
+    pub fn try_push_front(mut self, component: &[u8]) -> Result<SPathBuf, PathError> {
         if component.len() > MAX_SPATH_COMPONENT_SIZE {
             return Err(PathError::ComponentSize);
         }
@@ -392,6 +392,9 @@ impl SPath {
         self.strip_prefix(prefix)
             .expect(" Target does not start with prefix")
     }
+    pub fn collect(&self) -> arrayvec::ArrayVec<&[u8],MAX_PATH_LEN>{
+        arrayvec::ArrayVec::from_iter(self.iter())
+    }
     pub fn iter(&self) -> &SPathIter {
         unsafe { std::mem::transmute(self) }
     }
@@ -482,6 +485,11 @@ impl<'a> Iterator for &'a CheckedSPathIter {
 #[repr(transparent)]
 pub struct SPathIter {
     spath: SPath,
+}
+impl std::fmt::Debug for SPathIter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SPathIter").field("spath", &self.spath.to_string()).finish()
+    }
 }
 impl SPathIter {
     pub fn spath(&self) -> &SPath {
@@ -666,10 +674,10 @@ impl<'o> Track<'o> {
 
 impl SPath {
     #[track_caller]
-    pub fn idx(&self) -> IPathBuf {
-        self.try_idx().unwrap()
+    pub fn ipath(&self) -> IPathBuf {
+        self.try_ipath().unwrap()
     }
-    pub fn try_idx(&self) -> Result<IPathBuf, PathError> {
+    pub fn try_ipath(&self) -> Result<IPathBuf, PathError> {
         if self.is_empty() {
             return Ok(IPathBuf::new());
         }

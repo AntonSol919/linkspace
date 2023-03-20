@@ -8,7 +8,6 @@ use linkspace_core::prelude::{GroupID, PubKey};
 pub mod handshake;
 pub mod impex;
 pub mod lns;
-pub mod miniquery;
 
 pub fn unicast_group(p1: PubKey, p2: PubKey) -> GroupID {
     p1 ^ p2

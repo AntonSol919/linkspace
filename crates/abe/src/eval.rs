@@ -7,8 +7,10 @@
 This stuff is a mess.
 **/
 use std::fmt::Write;
+use std::ops::{Try, ControlFlow};
 
-use serde::{Deserialize, Serialize};
+use anyhow::{ anyhow, Context};
+use arrayvec::ArrayVec;
 use std::fmt::{Debug, Display};
 use std::{collections::HashSet, convert::Infallible, ops::FromResidual, str::FromStr};
 use thiserror::Error;
@@ -47,8 +49,7 @@ macro_rules! dbgprintln {
 /** a list of (bytes,ctr) components.
 It is an error for the lst to be empty.
 **/
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
-#[serde(transparent)]
+#[derive(Clone, PartialEq)]
 pub struct ABList {
     pub lst: Vec<(Vec<u8>, Option<Ctr>)>,
 }
@@ -88,21 +89,21 @@ impl FromIterator<ABItem> for ABList {
         iter.into_iter().fold(ABList::default(), |a, i| a.push(i))
     }
 }
-pub fn abl<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(bytes: I) -> ABList {
-    abld(bytes, Ctr::Colon)
+pub fn clist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I) -> ABList {
+    delmited_ablist(elements, Ctr::Colon)
 }
-pub fn ablf<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(bytes: I) -> ABList {
-    abld(bytes, Ctr::FSlash)
+pub fn flist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I) -> ABList {
+    delmited_ablist(elements, Ctr::FSlash)
 }
-pub fn abld<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(bytes: I, delimiter: Ctr) -> ABList {
-    let mut lst: Vec<_> = bytes
+pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I, delimiter: Ctr) -> ABList {
+    let mut lst: Vec<_> = elements
         .into_iter()
         .map(|b| (b.as_ref().to_vec(), Some(delimiter)))
         .collect();
-    if let Some((_, c)) = lst.last_mut() {
-        *c = None;
+    match lst.last_mut(){
+        Some(v) => {v.1 = None; return ABList{lst}},
+        None => return ABList::default(),
     }
-    ABList { lst }
 }
 
 impl Display for ABList {
@@ -135,62 +136,9 @@ impl Default for ABList {
         }
     }
 }
-pub fn iter_test() {
-    fn a() -> ABList {
-        ABList::default()
-    }
-    #[track_caller]
-    fn eq(a: &ABList, b: &[Vec<&[u8]>]) {
-        let b = b
-            .iter()
-            .map(|v: &Vec<_>| (v[0], v[1..].to_vec()))
-            .collect::<Vec<(&[u8], Vec<&[u8]>)>>();
-        assert_eq!(a.iter_fslash().collect::<Vec<(&[u8], Vec<&[u8]>)>>(), b)
-    }
-    eq(&a(), &[vec![&[]]]);
-    eq(&a().push_ctr(Ctr::Colon), &[vec![&[], &[]]]);
-    eq(&a().push_ctr(Ctr::FSlash), &[vec![&[]], vec![&[]]]);
-    eq(
-        &a().push_ctr(Ctr::FSlash).push_bytes(b"cc"),
-        &[vec![&[]], vec![b"cc"]],
-    );
-    eq(
-        &a().push_ctr(Ctr::Colon).push_bytes(b"aa"),
-        &[vec![&[], b"aa"]],
-    );
-    let f = a()
-        .push_bytes(b"aa")
-        .push_ctr(Ctr::Colon)
-        .push_bytes(b"bb")
-        .push_ctr(Ctr::FSlash)
-        .push_bytes(b"cc")
-        .push_ctr(Ctr::Colon)
-        .push_bytes(b"dd");
 
-    eq(&f, &[vec![b"aa", b"bb"], vec![b"cc", b"dd"]]);
-}
 impl ABList {
-    /**
-    Return an iterator over colon delim vecs:
-    Key take away is that every returned item (vec) has at least a head, but the head can be empty
-    aa:bb/cc:dd => [aa,bb] , [cc,dd]
-    aa/cc => [aa],[cc]
-    aa/ => [aa],[ [] ]
-    aa => [aa]
-    aa: => [aa, [] ]
-    :aa => [[],aa ]
-    /cc => [ [] ] , [cc]
-    /  =>  [ [] ] , [ [] ]  ( 2 items )
-    : => [ [] , [] ] ( 1 items with 2 empty elem )
-    '' (empty) => [ [] ]
-    **/
-    fn iter_fslash(&self) -> impl Iterator<Item = (&[u8], Vec<&[u8]>)> {
-        let it = self.lst.split_inclusive(|(_, c)| *c == Some(Ctr::FSlash));
-        it.map(|ls| {
-            let mut it = ls.iter().map(|(b, _c)| b.as_slice());
-            (it.next().unwrap(), it.collect())
-        })
-    }
+    
     pub fn inner(&self) -> &[(Vec<u8>, Option<Ctr>)] {
         &self.lst
     }
@@ -278,58 +226,140 @@ impl ABList {
     pub fn is_empty(&self) -> bool {
         self.lst.is_empty() || self.as_exact_bytes().map(|v| v.is_empty()).unwrap_or(false)
     }
+    
 }
-pub type ApplyErr = Box<dyn std::error::Error + Send + Sync + 'static>;
-pub enum ApplyResult {
-    None,
-    Ok(Vec<u8>),
+pub type ApplyErr = anyhow::Error;
+
+impl<'o> TryFrom<&'o [ABE]> for ABList{
+    type Error = &'o ABE;
+
+    fn try_from(abe :&'o [ABE]) -> Result<Self, Self::Error> {
+        if let Some(expr) = abe.iter().find(|v| matches!(v, ABE::Expr(Expr::Lst(_)))){ return Err(expr)}
+        let abl = abe.into_iter().map(|v| match v {
+            ABE::Ctr(c) => ABItem::Ctr(*c),
+            ABE::Expr(Expr::Bytes(b)) => ABItem::Bytes(b.clone()),
+            ABE::Expr(Expr::Lst(_))=>unreachable!()
+        }).collect();
+        Ok(abl)
+    }
+}
+
+
+
+#[derive(Debug)]
+/// Utility that impl's try for both None and Err
+/// Semantically the None value means the caller has to decide whether to continue.
+// TODO rename to Val, NoVal, Err
+pub enum ApplyResult<V=Vec<u8>> {
+    NoValue,
+    Value(V),
     Err(ApplyErr),
 }
-impl ApplyResult {
-    pub fn into_opt(self) -> Option<Result<Vec<u8>, ApplyErr>> {
+
+impl<V> ApplyResult<V> {
+
+    pub fn map<X>(self,f:impl FnOnce(V) -> X) -> ApplyResult<X>{
         match self {
-            ApplyResult::None => None,
-            ApplyResult::Ok(v) => Some(Ok(v)),
+            ApplyResult::NoValue => ApplyResult::NoValue,
+            ApplyResult::Value(v) => ApplyResult::Value(f(v)),
+            ApplyResult::Err(e) => ApplyResult::Err(e),
+        }
+    }
+    pub fn into_ok(self) -> Result<Option<V>, ApplyErr> {
+        match self {
+            ApplyResult::NoValue => Ok(None),
+            ApplyResult::Value(v) => Ok(Some(v)),
+            ApplyResult::Err(e) => Err(e),
+        }
+    }
+    pub fn into_opt(self) -> Option<Result<V, ApplyErr>> {
+        match self {
+            ApplyResult::NoValue => None,
+            ApplyResult::Value(v) => Some(Ok(v)),
             ApplyResult::Err(e) => Some(Err(e)),
         }
     }
     pub fn arg_err<X: AsRef<[u8]>>(args: impl IntoIterator<Item = X>, expect: &str) -> Self {
-        ApplyResult::Err(format!("expect {expect} but got {:?}", abl(args)).into())
+        ApplyResult::Err(anyhow!("expect {expect} but got {:?}", clist(args)).into())
     }
-}
-impl FromResidual<Option<Infallible>> for ApplyResult {
-    fn from_residual(_residual: Option<Infallible>) -> Self {
-        AR::None
+    pub fn or_else(self, map: impl FnOnce() -> ApplyResult<V>) -> Self {
+        if matches!(self, AR::NoValue) {
+            map()
+        } else {
+            self
+        }
     }
-}
-impl<V: Into<ApplyErr>> From<Option<Result<Vec<u8>, V>>> for ApplyResult {
-    fn from(v: Option<Result<Vec<u8>, V>>) -> Self {
-        match v {
-            Some(v) => v.map_err(Into::into).into(),
-            None => AR::None,
+    pub fn require(self,msg:&'static str) -> Self {
+        match self {
+            ApplyResult::NoValue => ApplyResult::Err(anyhow!("no result").context(msg)),
+            ApplyResult::Value(v) => ApplyResult::Value(v),
+            ApplyResult::Err(e) => ApplyResult::Err(e)
+        }
+    }
+    pub fn context<C>(self,context: C) -> Self where  C: Display + Send + Sync + 'static{
+        match self {
+            ApplyResult::NoValue => ApplyResult::NoValue,
+            ApplyResult::Value(o) => ApplyResult::Value(o),
+            ApplyResult::Err(e) => ApplyResult::Err(e.context(context)),
         }
     }
 }
-impl<V: Into<ApplyErr>> FromResidual<Result<Infallible, V>> for ApplyResult {
-    fn from_residual(residual: Result<Infallible, V>) -> Self {
+impl<V> FromResidual<ApplyResult<V>> for ApplyResult<V>{
+    fn from_residual(residual: ApplyResult<V>) -> Self {
+        residual
+    }
+}
+impl<V> Try for ApplyResult<V>{
+    type Output = V;
+
+    type Residual = ApplyResult<V>;
+
+    fn from_output(output: Self::Output) -> Self {
+        ApplyResult::Value(output)
+    }
+
+    fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
+        match self {
+            ApplyResult::Value(v) => std::ops::ControlFlow::Continue(v),
+            e => ControlFlow::Break(e),
+        }
+    }
+}
+
+impl<V> From<Option<V>> for ApplyResult<V>{
+    fn from(value: Option<V>) -> Self {
+        value.map(ApplyResult::Value)?
+    }
+}
+impl<V> From<V> for ApplyResult<V>{
+    fn from(value: V) -> Self {
+        ApplyResult::Value(value)
+    }
+}
+impl<V> FromResidual<Option<Infallible>> for ApplyResult<V> {
+    fn from_residual(_residual: Option<Infallible>) -> Self {
+        AR::NoValue
+    }
+}
+impl<V,E: Into<ApplyErr>> From<Option<Result<V, E>>> for ApplyResult<V> {
+    fn from(v: Option<Result<V, E>>) -> Self {
+        match v {
+            Some(v) => v.map_err(Into::into).into(),
+            None => AR::NoValue,
+        }
+    }
+}
+impl<V,E: Into<ApplyErr>> FromResidual<Result<Infallible, E>> for ApplyResult<V> {
+    fn from_residual(residual: Result<Infallible, E>) -> Self {
         AR::Err(residual.unwrap_err().into())
     }
 }
 
-impl From<Result<Vec<u8>, ApplyErr>> for ApplyResult {
-    fn from(v: Result<Vec<u8>, ApplyErr>) -> Self {
+impl<V> From<Result<V, ApplyErr>> for ApplyResult<V> {
+    fn from(v: Result<V, ApplyErr>) -> Self {
         match v {
-            Ok(o) => AR::Ok(o),
+            Ok(o) => AR::Value(o),
             Err(e) => AR::Err(e),
-        }
-    }
-}
-impl ApplyResult {
-    pub fn or_else(self, map: impl FnOnce() -> ApplyResult) -> Self {
-        if matches!(self, AR::None) {
-            map()
-        } else {
-            self
         }
     }
 }
@@ -345,8 +375,8 @@ pub enum EvalError {
     NoSuchFunc(Vec<u8>),
     #[error("func error : {} : {}",as_abtxt_e(.0), .1)]
     Func(Vec<u8>, ApplyErr),
-    #[error("other error {}",.0)]
-    Other(String),
+    #[error(transparent)]
+    Other(anyhow::Error),
 }
 
 impl std::fmt::Debug for EvalError {
@@ -363,7 +393,7 @@ pub type Describer<'cb> = &'cb mut dyn FnMut(
 );
 pub trait Scope {
     fn lookup_eval(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
-        ApplyResult::None
+        ApplyResult::NoValue
     }
     fn lookup_apply(
         &self,
@@ -384,7 +414,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
         for ScopeFunc { apply, info, .. } in self.0.list_funcs() {
             if info.id.as_bytes() == id {
                 if info.init_eq.is_some() && info.init_eq != Some(init) {
-                    return ApplyResult::Err("function can not be applied this way".into());
+                    Err(anyhow!("function can not be applied this way"))?;
                 }
                 if !info.argc.contains(&inp.len()) {
                     return ApplyResult::arg_err(inp, &format!("between {:?}", info.argc));
@@ -392,7 +422,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
                 return apply(&self.0, inp, init, ctx);
             }
         }
-        ApplyResult::None
+        ApplyResult::NoValue
     }
 
     fn describe(&self, cb: Describer) {
@@ -410,7 +440,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
         {
             return (e.apply)(&self.0, abe, funcs);
         }
-        ApplyResult::None
+        ApplyResult::NoValue
     }
 
     fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult {
@@ -419,7 +449,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
                 return to_abe(&self.0, bytes, options);
             }
         }
-        AR::None
+        AR::NoValue
     }
 }
 pub trait EvalScopeImpl {
@@ -465,11 +495,11 @@ impl Scope for () {
         _init: bool,
         _ctx: &dyn Scope,
     ) -> ApplyResult {
-        AR::None
+        AR::NoValue
     }
 
     fn lookup_eval(&self, _id: &[u8], _abe: &[ABE], _scopes: &dyn Scope) -> ApplyResult {
-        AR::None
+        AR::NoValue
     }
 
     fn describe(&self, cb: Describer) {
@@ -477,7 +507,7 @@ impl Scope for () {
     }
 
     fn encode(&self, _id: &[u8], _options: &[ABE], _bytes: &[u8]) -> ApplyResult {
-        AR::None
+        AR::NoValue
     }
 }
 impl<A: Scope> Scope for Option<A> {
@@ -490,7 +520,7 @@ impl<A: Scope> Scope for Option<A> {
     ) -> ApplyResult {
         self.as_ref()
             .map(|x| x.lookup_apply(id, inpt_and_args, init, ctx))
-            .unwrap_or(ApplyResult::None)
+            .unwrap_or(ApplyResult::NoValue)
     }
     fn describe(&self, cb: Describer) {
         match self {
@@ -506,12 +536,12 @@ impl<A: Scope> Scope for Option<A> {
     fn lookup_eval(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
         self.as_ref()
             .map(|x| x.lookup_eval(id, abe, scopes))
-            .unwrap_or(ApplyResult::None)
+            .unwrap_or(ApplyResult::NoValue)
     }
     fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult {
         self.as_ref()
             .map(|v| v.encode(id, options, bytes))
-            .unwrap_or(AR::None)
+            .unwrap_or(AR::NoValue)
     }
 }
 
@@ -644,10 +674,10 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             let inner_abl = match ls.as_slice() {
                 [ABE::Ctr(Ctr::FSlash), ref tail @ ..] => {
                     let (id, rest): (&[u8], &[ABE]) = match tail {
-                        [] => return Err(EvalError::Other("missing eval name".into())),
+                        [] => return Err(EvalError::Other(anyhow!("missing eval name"))),
                         [ABE::Expr(Expr::Lst(_)), ..] => {
                             return Err(EvalError::Other(
-                                "var eval name resolution disabled".into(),
+                                anyhow!("var eval name resolution disabled")
                             ))
                         }
                         [ABE::Ctr(Ctr::Colon), ref rest @ ..] => {
@@ -661,13 +691,13 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     };
                     dbgprintln!("Eval({})", as_abtxt_e(id));
                     match ctx.scope.lookup_eval(id, rest, &ctx.scope) {
-                        ApplyResult::None => return Err(EvalError::NoSuchSubEval(id.to_vec())),
-                        ApplyResult::Ok(b) => return Ok(ABItem::Bytes(b)),
+                        ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
+                        ApplyResult::Value(b) => return Ok(ABItem::Bytes(b)),
                         ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
                     }
                 }
                 [ABE::Expr(Expr::Lst(_)), ..] => {
-                    Err(EvalError::Other("var name resolution disabled".into()))?
+                    Err(EvalError::Other(anyhow!("function names can not be expressions")))?
                 }
                 _ => _eval(depth + 1, ctx, ls)?,
             };
@@ -684,8 +714,8 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     input_and_args
                 );
                 match scope.lookup_apply(id, input_and_args, init, &scope) {
-                    ApplyResult::None => Err(EvalError::NoSuchFunc(id.to_vec())),
-                    ApplyResult::Ok(b) => Ok(b),
+                    ApplyResult::NoValue => Err(EvalError::NoSuchFunc(id.to_vec())),
+                    ApplyResult::Value(b) => Ok(b),
                     ApplyResult::Err(e) => Err(EvalError::Func(id.to_vec(), e)),
                 }
             }
@@ -695,7 +725,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             let mut calls = it.map(|ls| ls.iter().map(|(b, _c)| b.as_slice()));
             let mut stack = [&[] as &[u8]; 16];
             let mut init_id_args = match calls.next() {
-                None => return Err(EvalError::Other("empty {{}} not enabled".into())),
+                None => return Err(EvalError::Other(anyhow!("empty {{}} not enabled"))),
                 Some(v) => v,
             };
             let mut id = init_id_args.next().unwrap_or(&[]);
@@ -707,7 +737,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     i + 1
                 });
             if init_id_args.next().is_some() {
-                return Err(EvalError::Other("more than 16 args not supported".into()));
+                return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
             }
             let args = &stack[..argc];
             dbgprintln!("Start: '{}' - {:?} ", as_abtxt_e(id), args);
@@ -725,7 +755,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                             i + 1
                         });
                 if id_and_args.next().is_some() {
-                    return Err(EvalError::Other("more than 16 args not supported".into()));
+                    return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
                 }
                 let args = &stack[..argc];
                 dbgprintln!(
@@ -766,12 +796,14 @@ pub fn _eval(
 
 #[derive(Error, Debug)]
 pub enum EncodeError {
-    #[error("option encoding error expected [ scope [:{{opts}}]? ]*  ")]
-    OptionError,
-    #[error("option parse error{}",.0)]
+    #[error("option encoding error expected [ scope [:{{opts}}]? ]* - {0}")]
+    OptionError(anyhow::Error),
+    #[error("option parse error")]
     ParseError(#[source] ASTParseError),
-    #[error("scope '{}' encode {}",.0,.1)]
-    ScopeEncode(String, ApplyErr),
+    #[error("Encoder '{0}' failed - set ignore_err or use /~? to suppress\n{1}")]
+    ScopeEncode(String, #[source] ApplyErr),
+    #[error("No suitable encoding found - add a '/:' for fallback to abtxt encoding ")]
+    NoneFound,
 }
 
 /// Encode bytes with scopes given as "scope1:{opts}/scope2:{opts}/"
@@ -781,29 +813,32 @@ pub fn encode(
     ctx: &EvalCtx<impl Scope>,
     bytes: &[u8],
     options: &str,
+    ignore_encoder_errors:bool
 ) -> std::result::Result<String, EncodeError> {
     let lst = parse_abe(options).map_err(EncodeError::ParseError)?;
-    encode_abe(ctx, bytes, &lst)
+    encode_abe(ctx, bytes, &lst,ignore_encoder_errors)
 }
 pub fn encode_abe(
     ctx: &EvalCtx<impl Scope>,
     bytes: &[u8],
     options: &[ABE],
+    ignore_encoder_errors:bool
 ) -> std::result::Result<String, EncodeError> {
     let mut it = options.split(|v| v.is_fslash());
     if options.is_empty() {
         it.next();
     }
     for scope_opts in it {
-        let (func_id, mut args) = take_first(scope_opts).map_err(|_| EncodeError::OptionError)?;
-        if !args.is_empty() {
-            args = strip_prefix(args, is_colon).map_err(|_| EncodeError::OptionError)?;
-        }
-        let func_id = as_bytes(func_id).map_err(|_| EncodeError::OptionError)?;
+        let (func_id,args) :(&[u8],&[ABE]) = match scope_opts {
+            [ABE::Ctr(Ctr::Colon)] => (&[],&[]),
+            [ABE::Expr(Expr::Bytes(b))] => (b.as_slice(),&[]),
+            [ABE::Expr(Expr::Bytes(b)),ABE::Ctr(Ctr::Colon), ref rest @ .. ] => (b.as_slice(),rest),
+            e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got {})",print_abe(e)))),
+        };
         //eprintln!("Try {}",as_abtxt(func_id));
         match ctx.scope.encode(func_id, args, bytes) {
-            ApplyResult::None => {}
-            ApplyResult::Ok(r) => {
+            ApplyResult::NoValue => {}
+            ApplyResult::Value(r) => {
                 debug_assert!(
                     eval(ctx, &parse_abe_b(&r).expect("bug: encode fmt"))
                         .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &as_abtxt(&r)))
@@ -817,11 +852,11 @@ pub fn encode_abe(
                 return Ok(st);
             }
             ApplyResult::Err(e) => {
-                return Err(EncodeError::ScopeEncode(as_abtxt_e(func_id).to_string(), e))
+                if !ignore_encoder_errors{return Err(EncodeError::ScopeEncode(as_abtxt_e(func_id).to_string(), e))}
             }
         }
     }
-    Ok(as_abtxt(bytes).to_string())
+    Err(EncodeError::NoneFound)
 }
 
 #[macro_export]
@@ -846,8 +881,8 @@ macro_rules! fnc {
                      |_,bytes:&[u8],options:&[$crate::ABE]| -> $crate::eval::ApplyResult{
                          let st : Option<String> = $to_abe(bytes,options);
                          match st {
-                             None => $crate::eval::ApplyResult::None,
-                             Some(st) => $crate::eval::ApplyResult::Ok(format!("[{}:{}]",$id,st).into_bytes())
+                             None => $crate::eval::ApplyResult::NoValue,
+                             Some(st) => $crate::eval::ApplyResult::Value(format!("[{}:{}]",$id,st).into_bytes())
                          }
                      }
         )
@@ -866,8 +901,7 @@ macro_rules! fnc {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: false},
             apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                let r : Result<Vec<u8>,$crate::eval::ApplyErr> = $fnc(a,b,init,ctx);
-                $crate::eval::ApplyResult::from(r)
+                $fnc(a,b,init,ctx).into()
             },
             to_abe:none
         }
@@ -876,8 +910,7 @@ macro_rules! fnc {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: true },
             apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                let r : Result<Vec<u8>,$crate::eval::ApplyErr> = $fnc(a,b,init,ctx);
-                $crate::eval::ApplyResult::from(r)
+                $fnc(a,b,init,ctx).into()
             },
             to_abe:$to_abe
         }
@@ -885,7 +918,7 @@ macro_rules! fnc {
 }
 
 pub fn none<T>(_t: &T, _bytes: &[u8], _opts: &[ABE]) -> ApplyResult {
-    ApplyResult::None
+    ApplyResult::NoValue
 }
 
 #[macro_export]
@@ -941,7 +974,7 @@ impl EvalScopeImpl for UIntFE {
         fncs!([
             ( "+" , 1..=16,   "Saturating addition. Requires all inputs to be equal size",
                     |_,inp:&[&[u8]]| {
-                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err("Mismatch length".into())}
+                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err(anyhow!("Mismatch length"))}
                         let mut r = inp[0].to_vec();
                         for i in &inp[1..]{
                             if carry_add_be(&mut r, i){
@@ -954,7 +987,7 @@ impl EvalScopeImpl for UIntFE {
             ),
             ( "-" , 1..=16,   "Saturating subtraction. Requires all inputs to be equal size",
                     |_,inp:&[&[u8]]| {
-                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err("Mismatch length".into())}
+                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err(anyhow!("Mismatch length"))}
                         let mut r = inp[0].to_vec();
                         for i in &inp[1..]{
                             if carry_sub_be(&mut r, i){
@@ -983,7 +1016,7 @@ impl EvalScopeImpl for UIntFE {
             ( "?u" , 1..=1, "Print big endian bytes as decimal",
               |_,inp:&[&[u8]]| {
                   let val = inp[0];
-                  if val.len() > 16 { return Err("ints larger than 16 bytes (fixme)".into())}
+                  if val.len() > 16 { return Err(anyhow!("ints larger than 16 bytes (fixme)"))}
                   let mut v = [0;16];
                   v[16-val.len()..].copy_from_slice(val);
                   Ok(u128::from_be_bytes(v).to_string().into_bytes())
@@ -1000,7 +1033,7 @@ impl EvalScopeImpl for UIntFE {
             ( "?lu",1..=1,"print little endian number",
              |_,inp:&[&[u8]]| {
                  let val = inp[0];
-                 if val.len() > 16 { return Err("ints larger than 16 bytes (fixme)".into());}
+                 if val.len() > 16 { return Err(anyhow!("ints larger than 16 bytes (fixme)"));}
                  let mut v = [0;16];
                  v[0..val.len()].copy_from_slice(val);
                  Ok(u128::from_le_bytes(v).to_string().into_bytes())
@@ -1028,12 +1061,12 @@ impl EvalScopeImpl for BytesFE {
                 .transpose()?
                 .unwrap_or(16usize);
             if len < bytes.len() {
-                return Err(format!("exceeds length {len} ( use '/cut:{len}' to cut )").into());
+                return Err(anyhow!("exceeds length {len} ( use '/cut:{len}' to cut )"));
             };
             let tmp_pad = [default_pad];
             let padb = inp.get(2).copied().unwrap_or(&tmp_pad);
             if padb.len() != 1 {
-                return Err("pad byte should be a single byte".into());
+                return Err(anyhow!("pad byte should be a single byte"));
             };
             let mut v = vec![padb[0]; len];
             if !left {
@@ -1068,7 +1101,7 @@ impl EvalScopeImpl for BytesFE {
                 .unwrap_or(16usize);
             if len > bytes.len() {
                 return Err(
-                    format!("less than length {len} ( use ':p to expand before cutting')").into(),
+                    anyhow!("less than length {len} ( use ':p to expand before cutting')").into(),
                 );
             };
             Ok(if left {
@@ -1089,8 +1122,10 @@ impl EvalScopeImpl for BytesFE {
             }
         }
         fncs!([
-            ("",1..=16,"the blank fnc can be use to start an expr such as {:12/u8} which is the same as {u8:12}",
-             |_,i:&[&[u8]]| Ok(i.concat())),
+            ("",1..=16,"the '' (empty) fnc can be use to start an expr such as {:12/u8} which is the same as {u8:12}",
+             |_,i:&[&[u8]]| Ok(i.concat()),
+             { id : |b:&[u8],_| Some(as_abtxt(b).to_string()) }
+            ),
             ("?a",1..=1,"encode bytes into ascii-bytes format",|_,i:&[&[u8]]| Ok(as_abtxt(i[0]).into_owned().into_bytes())),
             ("?a0",1..=1,"encode bytes into ascii-bytes format but strip prefix '0' bytes",
              |_,i:&[&[u8]]| Ok(as_abtxt(cut_prefix_nulls(i[0])).into_owned().into_bytes())),
@@ -1131,11 +1166,11 @@ impl EvalScopeImpl for LogicOps {
                     match i[1] {
                         b"=" => {
                             if blen != size {
-                                return Err(format!("expected {size} bytes got {blen}").into());
+                                return Err(anyhow!("expected {size} bytes got {blen}").into());
                             } else {
                             }
                         }
-                        _ => return Err("unknown op".into()),
+                        _ => return Err(anyhow!("unknown op")),
                     };
                     Ok(i[0].to_vec())
                 }
@@ -1149,11 +1184,11 @@ impl EvalScopeImpl for LogicOps {
                     match i[1] {
                         b"=" => {
                             if bytes != i[2] {
-                                return Err("unequal bytes".into());
+                                return Err(anyhow!("unequal bytes"));
                             } else {
                             }
                         }
-                        _ => return Err("unknown op".into()),
+                        _ => return Err(anyhow!("unknown op")),
                     };
                     Ok(i[0].to_vec())
                 }
@@ -1165,7 +1200,7 @@ impl EvalScopeImpl for LogicOps {
             eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
                   |_,i:&[ABE],scope:&dyn Scope|{
                       let mut it = i.split(|v| v.is_colon());
-                      if !it.next().ok_or("missing expr")?.is_empty(){ return Err("expected ':EXPR'".into())};
+                      if !it.next().context("missing expr")?.is_empty(){ return Err(anyhow!("expected ':EXPR'"))};
                       let mut err = vec![];
                       for o in it{
                           match eval(&EvalCtx { scope }, o){
@@ -1173,7 +1208,7 @@ impl EvalScopeImpl for LogicOps {
                               Err(e) => err.push((o,e)),
                           }
                       }
-                      Err(format!("{err:#?}").into())
+                      Err(anyhow!("{err:#?}"))
                   }
             )
         ]
@@ -1201,7 +1236,7 @@ impl EvalScopeImpl for Encode {
             apply: |_, inp, _, scope| {
                 let expr = parse_abe_b(inp[0])?;
                 let ctx = EvalCtx { scope };
-                AR::Ok(eval(&ctx, &expr)?.concat())
+                AR::Value(eval(&ctx, &expr)?.concat())
             },
             to_abe: none,
         }]
@@ -1214,11 +1249,24 @@ impl EvalScopeImpl for Encode {
                     let ctx = EvalCtx{scope};
                     let (head,abe) = take_first(abe)?;
                     is_colon(head)?;
-                    let mut it = abe.split(|v| v.is_colon());
-                    let id = it.next().ok_or("missing argument")?;
+                    let mut it = abe.split(|v| v.is_fslash());
+                    let id = it.next().context("missing argument")?;
                     let rest = it.as_slice();
                     let bytes = eval(&ctx, id)?.concat();
-                    AR::Ok(encode_abe(&ctx, &bytes, rest)?.into_bytes())
+                    AR::Value(encode_abe(&ctx, &bytes, rest,false)?.into_bytes())
+                }
+            },
+            ScopeEval {
+                info: ScopeEvalInfo { id: "~?", help: "same as '?' but ignores all errors" },
+                apply:|_,abe,scope|-> ApplyResult{
+                    let ctx = EvalCtx{scope};
+                    let (head,abe) = take_first(abe)?;
+                    is_colon(head)?;
+                    let mut it = abe.split(|v| v.is_fslash());
+                    let id = it.next().context("missing argument")?;
+                    let rest = it.as_slice();
+                    let bytes = eval(&ctx, id)?.concat();
+                    AR::Value(encode_abe(&ctx, &bytes, rest,true)?.into_bytes())
                 }
             },
             ScopeEval {
@@ -1227,7 +1275,7 @@ impl EvalScopeImpl for Encode {
                     let (head,abe) = take_first(abe)?;
                     is_colon(head)?;
                     let ctx = EvalCtx{scope};
-                    ApplyResult::Ok(eval(&ctx, abe)?.concat())
+                    ApplyResult::Value(eval(&ctx, abe)?.concat())
                 }
             },
         ]
@@ -1243,7 +1291,7 @@ impl EvalScopeImpl for Help {
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[ScopeFunc {
             apply: |_, i: &[&[u8]], _, scope| {
-                ApplyResult::Ok({
+                ApplyResult::Value({
                     if let Some(id) = i.get(0) {
                         let mut out = "".to_string();
                         scope.describe(&mut |name, about, fncs, evls| {
@@ -1387,16 +1435,11 @@ impl EvalScopeImpl for Comment{
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct ArgV<'o>(pub [Option<&'o [u8]>;8]);
+#[derive(Clone, Debug)]
+pub struct ArgV<'o>(pub ArrayVec<&'o [u8],8>);
 impl<'o> ArgV<'o>{
     pub fn try_fit(v: &'o [&'o [u8]]) -> Option<Self>{
-        if v.len() > 8 { return None}
-        let mut it = v.iter().copied();
-        Some(ArgV([
-            it.next(),it.next(),it.next(),it.next(),
-            it.next(),it.next(),it.next(),it.next()
-        ]))
+        v.try_into().map(ArgV).ok()
     }
 }
 impl<'o> EvalScopeImpl for ArgV<'o>{
@@ -1405,14 +1448,82 @@ impl<'o> EvalScopeImpl for ArgV<'o>{
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
-            ( "0" , 0..=0,Some(false), "argv[0]", |t:&Self,_| Ok(t.0[0].ok_or("no 0 value")?.to_vec())),
-            ( "1" , 0..=0,Some(false), "argv[1]", |t:&Self,_| Ok(t.0[1].ok_or("no 1 value")?.to_vec())),
-            ( "2" , 0..=0,Some(false), "argv[2]", |t:&Self,_| Ok(t.0[2].ok_or("no 2 value")?.to_vec())),
-            ( "3" , 0..=0,Some(false), "argv[3]", |t:&Self,_| Ok(t.0[3].ok_or("no 3 value")?.to_vec())),
-            ( "4" , 0..=0,Some(false), "argv[4]", |t:&Self,_| Ok(t.0[4].ok_or("no 4 value")?.to_vec())),
-            ( "5" , 0..=0,Some(false), "argv[5]", |t:&Self,_| Ok(t.0[5].ok_or("no 5 value")?.to_vec())),
-            ( "6" , 0..=0,Some(false), "argv[6]", |t:&Self,_| Ok(t.0[6].ok_or("no 6 value")?.to_vec())),
-            ( "7" , 0..=0,Some(false), "argv[7]", |t:&Self,_| Ok(t.0[7].ok_or("no 7 value")?.to_vec()))
+            ( "0" , 0..=0,Some(true), "argv[0]", |t:&Self,_| Ok(t.0.get(0).context("no 0 value")?.to_vec())),
+            ( "1" , 0..=0,Some(true), "argv[1]", |t:&Self,_| Ok(t.0.get(1).context("no 1 value")?.to_vec())),
+            ( "2" , 0..=0,Some(true), "argv[2]", |t:&Self,_| Ok(t.0.get(2).context("no 2 value")?.to_vec())),
+            ( "3" , 0..=0,Some(true), "argv[3]", |t:&Self,_| Ok(t.0.get(3).context("no 3 value")?.to_vec())),
+            ( "4" , 0..=0,Some(true), "argv[4]", |t:&Self,_| Ok(t.0.get(4).context("no 4 value")?.to_vec())),
+            ( "5" , 0..=0,Some(true), "argv[5]", |t:&Self,_| Ok(t.0.get(5).context("no 5 value")?.to_vec())),
+            ( "6" , 0..=0,Some(true), "argv[6]", |t:&Self,_| Ok(t.0.get(6).context("no 6 value")?.to_vec())),
+            ( "7" , 0..=0,Some(true), "argv[7]", |t:&Self,_| Ok(t.0.get(7).context("no 7 value")?.to_vec()))
         ])
     }
+}
+
+#[test]
+fn try_applyresult(){
+    
+    fn one() -> ApplyResult<isize>{
+        let v = ApplyResult::Value(1)?;
+        ApplyResult::Value(v)
+    }
+    fn one_opt() -> ApplyResult<isize>{
+        let v:isize = Some(1)?;
+        ApplyResult::Value(v)
+    }
+    fn one_ok() -> ApplyResult<isize>{
+        let v:isize = Ok::<isize,anyhow::Error>(1)?;
+        ApplyResult::Value(v)
+    }
+    fn one_ok_some() -> ApplyResult<isize>{
+        let v:isize = Ok::<Option<isize>,anyhow::Error>(Some(1))??;
+        ApplyResult::Value(v)
+    }
+    assert!(matches!(one(),ApplyResult::Value(1)));
+    assert!(matches!(one_ok(),ApplyResult::Value(1)));
+    assert!(matches!(one_opt(),ApplyResult::Value(1)));
+    assert!(matches!(one_ok_some(),ApplyResult::Value(1)));
+
+    fn none() -> ApplyResult<isize>{
+        let _v: ApplyResult<isize> = None?;
+        ApplyResult::Value(1)
+    }
+    fn none_v() -> ApplyResult<isize>{
+        let v:isize = None?;
+        ApplyResult::Value(v)
+    }
+    fn none_errv() -> ApplyResult<isize>{
+        let v:Result<isize,anyhow::Error> = None?;
+        ApplyResult::Value(v?)
+    } 
+    fn none_ok() -> ApplyResult<isize>{
+        let v:isize = Ok::<_,anyhow::Error>(None)??;
+        ApplyResult::Value(v)
+    }
+    assert!(matches!(none(),ApplyResult::NoValue));
+    assert!(matches!(none_v(),ApplyResult::NoValue));
+    assert!(matches!(none_errv(),ApplyResult::NoValue));
+    assert!(matches!(none_ok(),ApplyResult::NoValue));
+
+    fn err() -> ApplyResult<isize>{
+        let _v: ApplyResult<isize> = Err(anyhow!("err"))?;
+        ApplyResult::Value(1)
+    }
+    fn err_v() -> ApplyResult<isize>{
+        let _v: isize = Err(anyhow!("err"))?;
+        ApplyResult::Value(1)
+    }
+    fn some_err_v() -> ApplyResult<isize>{
+        let _v: isize = Some(Err(anyhow!("err")))??;
+        ApplyResult::Value(1)
+    } 
+    assert!(matches!(err(),ApplyResult::Err(_)));
+    assert!(matches!(err_v(),ApplyResult::Err(_)));
+    assert!(matches!(some_err_v(),ApplyResult::Err(_)));
+
+    fn required() -> ApplyResult<isize>{
+        let v : Option<isize> = None;
+        v.context("missing")?.into()
+    }
+    assert!(matches!(required(),ApplyResult::Err(_)));
 }

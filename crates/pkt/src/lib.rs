@@ -57,6 +57,7 @@ pub mod spath;
 pub mod spath_fmt;
 pub mod spath_macro;
 pub mod utils;
+pub mod read;
 
 pub use byte_segments::*;
 pub use endian_types::*;
@@ -271,8 +272,12 @@ where
     fn get_links(&self) -> &[Link] {
         self.links().unwrap_or_default()
     }
+    fn select(&self) -> SelectLink{ SelectLink(self.get_links())}
     fn compute_hash(&self) -> LkHash {
         linkspace_crypto::hash_segments(&self.pkt_segments().0).into()
+    }
+    fn net_pkt_size(&self) -> usize {
+        self.point_header_ref().net_pkt_size()
     }
 }
 
@@ -282,7 +287,7 @@ bitflags! {
     /// Pkt flag indicating its type.
     ///
     /// Only the _POINT combinations are valid in a packet.
-    pub struct PktTypeFlags: u8 {
+    pub struct PointTypeFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
         /// Implementations can ignore this, mostly useful for importing many datablocks.
         const EMPTY = 0b00000000;
@@ -298,18 +303,18 @@ bitflags! {
         const ERROR_POINT = Self::ERROR.bits;
     }
 }
-impl std::fmt::Display for PktTypeFlags {
+impl std::fmt::Display for PointTypeFlags {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(self.as_str())
     }
 }
-impl PktTypeFlags {
+impl PointTypeFlags {
     pub const fn as_str(self) -> &'static str {
         match self {
-            PktTypeFlags::DATA_POINT => "DataPoint",
-            PktTypeFlags::LINK_POINT => "LinkPoint",
-            PktTypeFlags::KEY_POINT => "KeyPoint",
-            PktTypeFlags::ERROR_POINT => "ErrorPoint",
+            PointTypeFlags::DATA_POINT => "DataPoint",
+            PointTypeFlags::LINK_POINT => "LinkPoint",
+            PointTypeFlags::KEY_POINT => "KeyPoint",
+            PointTypeFlags::ERROR_POINT => "ErrorPoint",
             _ => "UnknownPointType",
         }
     }

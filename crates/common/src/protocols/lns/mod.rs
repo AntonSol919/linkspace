@@ -3,213 +3,181 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/// WARN - This is a work in progress. Only [local] is currently implemented.
-/// Will impl's ABE scope/eval for [#:hello:world], [#@:world:hello], and [/#/hello/world]
-/// And reverse lookup for [group/#?] and [[#:hello:world]/#?]
-pub mod local;
-/*
-LNS: lovely name system
-LNS is a semi moderated, weighted vote based, public bindings for key<->values.
-every authority can create and publish.
-Each super authority can overwrite a subauthority
 
-As such:
-Bindings are either: proposed, accepted-unfixed,accepted-fixed, accepted-superceded.
-Once a proposal is voted it becomes accapeted-unfixed.
-If the entire chain of authorities publish sign their log a binding becomes fixed for a specific time range.
-If one of them is superceded a binding becomes accepted-superceded
+/**
+LNS is a little complex because it supports 3 modes.
+A mode defines when a claim is 'live'.
 
---propose : e.g. lns:[#:pub]:/hello/world
+The modes are :
+- the public roots (:com , :dev, :free etc) - authorities vote and claims have fast path based lookup.
+- a :local admin, creates keypoints to other 'roots' creating a chain of names. 
+- the :env claims are simply claims stored as files in the LINKSPACE directory
 
-parent : PROPOSAL_PTR - contains the lnsauth@ keys for /hello , the keys required to vote this proposal into effect
-XXXXX# : Value evaled with [#:world:hello] ( [#:...] returns the first link pointer with a tag ending in '#' )
-XXXXX@ : Value evaled with [@:world:hello] ( [@:...] returns the first link pointer with a tag ending in '@' )
-///// XXXXX> : Value evaled with [>:hello:world]
-XXXXXXXX_lnsaut@ : PUBKEY  Can authority the bitset XXXXXXXX
-[ XXXXXXXX_lnsaut@ : PUBKEY  ] *
--- data
-start:STAMP
-stop:STAMP
+an admin key/process creates a local lookup & reverse-lookup table such that each can quickly be resolved.
+Every part of this is not yet fully implemented.
 
-#vote : (Signed by the lnsauth@ of the parent to the proposal)
-proposal   : PROPOSAL_PTR
-bind       : BIND_PTR that binds the signing key as an lnsauth@ for the parent
-prevvote   : a backpointer to the previous vote from this key for this bind_ptr
-[ XXXXXXXX_hasvote : VOTE_PTR ] * : other votes for the same proposal.
-
-#bind:
-proposal : PROPOSAL_PTR
-XXXXXXXX_accept1 : VOTE_PTR
-XXXXXXXX_accept1 : VOTE_PTR
-XXXXXXXX_accept3 : VOTE_PTR
-?overrules : BIND_PTR
+**/
 
 
-Evaluation & interpretation:
-A proposal, if enacted, associates a set of links a given lns name between two dates.
-That is, a lns group name such [#:hello:com] can get a publicly acknowledged set of links.
-The set of links can have arbitrary tags, but some are special.
 
-The first link with a tag ending in '#' is the default value for [#:world:hello]. This is a groupid by convention
-The first link with a tag ending in '@' is the default value for [@:world:hello]. This is a public key by convention
-One or more link tags  XXXXXXXX_lnsaut@  refer to the public keys that have voting authority for subnames.
-The bit OR of all XXXXXXXX must be [a::8:\xff] ( all ones ).
-
-packet's arent acknowledged if their their create stamp is in the future.
-All pointers must point to packets with their create stamp in the past of their create stamp.
-
-Parent lnsauth can vote for child proposal's.
-
-Once enacted and bound, a proposal can not be retracted. It will always remain valid between start and stop.
-However, there is the concept of primary binding.
-voted for by the most top most authorities.
-witht the most number of votes.
-with the earliest final vote.
-
-
-TODO:
-Can a claim extend beyond its parent?
-reverse lookup
-
-
-The LNS evaluator consists of 2 systems.
-- The LNS resolver daemon is a standalone program.
-It watches for requests, verifies, and links LNS claims into the [#:0] group.
-
-- The LNS Scope tries to resolve [#:hello:com].
-
-The sequence of events is:
-LNS Scope tries to resolve [#:hello:com] for the first time.
-
-It checks if there is a 'alive' linkpoint lns:[#:0]:/#/com/hello, if there is this claim is used.
-//By relinking [#:pub] claims into [#:0] when validate, the sccope can skip the 'expensive' validation step.
-
-If it does not exists or is no longer alive 'now' it creates linkpoint lns:[#:0]:/find/com/hello.
-By default it will wait for 1 second to see if a value is returned. This can be disabled.
-
-The resolver daemon is watching for /find:** linkpoints.
-For each it will attempt to request, veriy, and link validated live claims.
-*/
-
-#[derive(Copy, Clone, PartialEq, Eq,Debug)]
-#[repr(u8)]
-pub enum TagSuffix {
-    Group = b'#',
-    Pubkey = b'@',
-}
-
-impl TagSuffix {
-    pub fn bslice(self) -> &'static [u8] {
-        match self {
-            TagSuffix::Group => &[b'#'],
-            TagSuffix::Pubkey => &[b'@'],
-        }
-    }
-    pub const ALL: [TagSuffix; 2] = [TagSuffix::Group, TagSuffix::Pubkey];
-    pub fn select(self, links: &[Link]) -> impl Iterator<Item = &Link> {
-        links.iter().filter(move |v| v.tag[15] == self as u8)
-    }
-}
-
-use std::{fmt::Debug, time::Duration};
-
-use linkspace_core::prelude::*;
+use abe::eval::{clist, ApplyResult};
+use anyhow::{Context };
+use bytefmt::ab;
+use linkspace_argon2_identity::pubkey;
+use linkspace_pkt::{spath, Domain, Tag, PubKey, GroupID, Ptr, Stamp, Link };
+use tracing::instrument;
 
 use crate::runtime::Linkspace;
 
-use self::local::LocalLNS;
+use self::{claim::{LiveClaim, Claim, resolve_enckey}, name::{Name, SpecialName}, public_claim::IssueHandler};
+
+
+pub mod name;
+pub mod claim;
+
+pub mod public_claim;
+pub mod local_claim;
+pub mod env_claim;
+
+pub mod eval;
+pub mod utils;
+pub mod admin;
+
 pub const LNS: Domain = ab(b"lns");
-spath!(pub const LOCAL_CLAIM_PREFIX = [b"#"]);
+spath!(pub const CLAIM_PREFIX = [b"claims"]);
+/// tag expected for local claims pointing to a (live) lns:[#:pub] claim
+pub const PUB_CLAIM_TAG : Tag = ab(b"pub-claim");
+pub const PUBKEY_TAG : Tag = ab(b"pubkey@");
+pub const VOTE_TAG : Tag = ab(b"vote");
+pub const GROUP_TAG: Tag = ab(b"group#");
+pub const ENCKEY_TAG : Tag = ab(b"enckey");
+/// A linkpoint at lns:[#:0]:by-tag/../PTR will contain by-claim:CLAIM_HASH
+pub const BY_CLAIM_TAG : Tag = ab(b"by-claim");
 
-#[derive(Debug, Clone, Copy)]
-pub struct LNS<R> {
-    pub rt: R,
-    pub timeout: Duration,
+pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1(b"by-tag");
+spath!(pub const BY_GROUP_TAG = [b"by-tag",&GROUP_TAG.0]);
+spath!(pub const BY_PUBKEY_TAG= [b"by-tag",&PUBKEY_TAG.0]);
+
+
+pub fn auth_tag(b:&[u8]) -> Tag {
+    let mut auth = ab(b"^");
+    auth[0..15][15-b.len()..].copy_from_slice(b);
+    auth
+}
+/// Get the parent claim
+pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandler) -> anyhow::Result<Result<Claim,Claim>>{
+    match name.special() {
+        Some(SpecialName::Env) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap())),
+        Some(SpecialName::Local) => todo!(),
+        None => {
+            let (parent,_val) = name.spath().pop();
+            let name = Name::from_spath(parent).ok().unwrap_or_else(Name::root);
+            Ok(lookup_live_chain(lk, &name, issue_handler)?.map(|p| p.claim).map_err(|p|p.claim))
+        },
+    }
 }
 
-pub fn get_claim<'o>(
-    _rt: Linkspace,
-    _timeout: Duration,
-    _path: &SPath,
-) -> anyhow::Result<Option<NetPktBox>> {
-    Ok(None)
-}
-pub fn reverse_lookup(i: &[&[u8]], _mode: Option<TagSuffix>) -> Result<Vec<u8>, ApplyErr> {
-    let hash: B64<[u8; 32]> = B64::try_fit_slice(i[0])?;
-    Ok(hash.to_abe_str().into_bytes())
+fn dummy_root(name:&Name) -> LiveClaim{
+    LiveClaim{
+        claim: Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap(),
+        signatures: vec![],
+        parent: None,
+    }
 }
 
-impl<R: Fn() -> anyhow::Result<Linkspace>> LNS<R> {
 
-    fn tag_ptr(&self, args: &[&[u8]], tag: TagSuffix) -> Result<Vec<u8>, ApplyErr> {
-        tracing::trace!(args=?ab_slice(args),?tag,"LNS");
-        match args.last().copied(){
-            Some(b"local") => LocalLNS{rt:&self.rt}.local_tag_ptr(args.split_last().unwrap().1, tag),
-            _ => Err("name not found".into())
+/// Lookup the chain of claims that gave a name
+pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
+    match name.special(){
+        Some(SpecialName::Env) => {
+            let path = name.fs_env_path()?;
+            let claim : anyhow::Result<Claim>= try {
+                let pbytes = match lk.env().env_data(&path, false)?{
+                    Some(p) => p,
+                    None => return Ok(Err(dummy_root(name)))
+                };
+                let pkt = linkspace_pkt::read::parse_netpkt(&pbytes, false)?.map_err(|_| anyhow::anyhow!("not a valid packet"))?;
+                Claim::from(pkt)?
+            };
+            Ok(Ok(LiveClaim{
+                claim: claim.with_context(||anyhow::anyhow!("Reading claim at {}",path.to_string_lossy()))?,
+                signatures: vec![],
+                parent: None,
+            }))
+        },
+        Some(SpecialName::Local) => {
+            // No admin process exists yet so we just pretend something setup the correct :local claims
+             match local_claim::get_private_claim(&lk.get_reader(), name, None).into_ok()?{
+                Some(claim) => {
+                    Ok(Ok(LiveClaim{
+                        claim:Claim::from(claim)?,
+                        signatures: vec![],parent:None
+                    }))
+                }
+                None => Ok(Err(dummy_root(name))),
+             }
         }
-    }
-    fn lookup_claim(&self, kind: TagSuffix, bytes: &[u8]) -> ApplyResult {
-
-        // fallback to local
-        LocalLNS{rt:&self.rt}.lookup_claim(kind,bytes)
+        // The admin process doesn't exist yet so we just walk the chain for now
+        None => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.spath().iter(), issue_handler),
     }
 }
 
-impl<R: Fn() -> anyhow::Result<Linkspace>> EvalScopeImpl for LNS<R> {
-    fn about(&self) -> (String, String) {
-        ("lns".into(), "".into())
+pub fn lookup_enckey(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<(PubKey,String)>>{
+    let claim = lookup_claim(lk, name)?;
+    match claim{
+        None => return Ok(None),
+        Some(c) => match c.enckey()?{
+            Some(k) => resolve_enckey(&lk.get_reader(), k).map(Some),
+            None => Ok(None)
+        },
     }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fncs!([
-            (
-                "#",
-                1..=7,
-                Some(true),
-                "(namecomp)* - get the associated lns group name",
-                |this: &Self, args: &[&[u8]]| this.tag_ptr(args, TagSuffix::Group),
-                |this: &Self, phash: &[u8], _| this.lookup_claim(TagSuffix::Group, phash)
-            ),
-            (
-                "@",
-                1..=7,
-                Some(true),
-                "(namecomp)* - get the associated lns group name",
-                |this: &Self, args: &[&[u8]]| this.tag_ptr(args, TagSuffix::Pubkey),
-                |this: &Self, phash: &[u8], _| this.lookup_claim(TagSuffix::Pubkey, phash)
-            ),
-            ("lns", 1..=1, "rev lookup", |_, i: &[&[u8]]| reverse_lookup(
-                i, None
-            )),
-            ("?@", 1..=1, "rev lookup", |_, i: &[&[u8]]| reverse_lookup(
-                i,
-                Some(TagSuffix::Pubkey)
-            )),
-            ("?#", 1..=1, "rev lookup", |_, i: &[&[u8]]| reverse_lookup(
-                i,
-                Some(TagSuffix::Group)
-            ))
-        ])
-    }
+}
 
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
-        &[]
-        /*
-                if id != b"+" { return ApplyResult::None;}
-                let brk = abe.iter().position(|v| v.is_colon());
-            // FIXME: #[thread_local] static
-                let default = linkspace_core::eval::abev!( { "pkt" });
-                let (path,expr) = if let Some(i) = brk {
-                (&abe[..i],abe.get(i+1..).ok_or("Missing expr after ':'")?)
-        }else { (abe,default.as_slice())};
-                let ctx = EvalCtx{scope,reval:evals};
-                tracing::trace!(?path,"eval path");
-                let path = eval::eval(&ctx, path)?;
-                let path = SPathBuf::try_from_ablist(path)?;
-                let pkt = get_claim((self.rt)()?,self.timeout, &path)?.ok_or(format!("No local claim found for {}",path))?;
-                tracing::trace!(?expr,"eval in pkt ctx");
-                let ctx = pkt_ctx(ctx, &**pkt);
-                let bytes = eval::eval(&ctx,expr)?;
-                ApplyResult::Ok(bytes.concat())
-                */
+
+pub fn lookup_pubkey(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<PubKey>>{
+    lookup_claim(lk, name).map(|m|m.and_then(|c| c.pubkey().copied()))
+}
+
+pub fn lookup_group(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<GroupID>>{
+    lookup_claim(lk, name).map(|m|m.and_then(|c| c.group().copied()))
+}
+
+pub fn lookup_claim(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<Claim>>{
+    lookup_live_chain(lk, name, &mut |_|Ok(())).map(|o|o.ok().map(|o|o.claim))
+}
+
+#[instrument(skip(lk),ret)]
+pub fn reverse_lookup(lk:&Linkspace,tag:Tag,ptr:Ptr) -> ApplyResult<Claim>{
+    // Because we can't yet trust the admin, we have to do a forward lookup as well to validate this is a valid claim.
+    let claim = admin::ptr_lookup(&lk.get_reader(), tag, ptr, None)?;
+    let name = &claim.name;
+    let by_name = lookup_claim(lk, name)??;
+    if by_name.links().first_eq(tag).map(|p|p.ptr == ptr).unwrap_or(false){
+        Some(by_name).into()
+    }else {
+        Err(anyhow::anyhow!("found {claim} pointing to {name} but this is set to {by_name} with a different {tag} link")).into()
     }
+}
+
+pub fn setup_special_keyclaim(
+    lk: &Linkspace,
+    name: Name,
+    enckey: &str,
+    overwrite:bool
+) -> anyhow::Result<PubKey> {
+    let sp = name.special().context("will only setup :local or :env keys")?;
+    if let Ok(Some(c)) = lookup_claim(lk, &name){
+        if !overwrite {anyhow::bail!("claim already set but overwrite is false")}
+        else { tracing::debug!(old_claim=%c)}
+    }
+    let pubkey = pubkey(enckey)?.into();
+    let claim = Claim::new(name, Stamp::MAX, &[Link{tag: PUBKEY_TAG,ptr:pubkey}], vec![clist(&["enckey",enckey])])?;
+    match sp {
+        SpecialName::Local => {
+            if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
+            local_claim::setup_local_keyclaim(lk, claim,None)?;
+        },
+        SpecialName::Env => env_claim::setup(lk,claim,overwrite)?
+    }
+    Ok(pubkey)
 }

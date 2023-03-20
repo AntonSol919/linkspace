@@ -48,10 +48,10 @@ impl EvalScopeImpl for StaticLNS {
         &[
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"0" => ApplyResult::Ok(PRIVATE.0.to_vec()),
-                    b"pub" => ApplyResult::Ok(PUBLIC.0.to_vec()),
-                    b"test" => ApplyResult::Ok(TEST_GROUP_ID.0.to_vec()),
-                    _ => ApplyResult::None,
+                    b"0" => ApplyResult::Value(PRIVATE.0.to_vec()),
+                    b"pub" => ApplyResult::Value(PUBLIC.0.to_vec()),
+                    b"test" => ApplyResult::Value(TEST_GROUP_ID.0.to_vec()),
+                    _ => ApplyResult::NoValue,
                 },
                 info: ScopeFuncInfo {
                     id: "#",
@@ -69,15 +69,15 @@ impl EvalScopeImpl for StaticLNS {
                     } else if g == *TEST_GROUP_ID {
                         "[#:test]"
                     } else {
-                        return ApplyResult::None;
+                        return ApplyResult::NoValue;
                     };
-                    ApplyResult::Ok(b.as_bytes().to_vec())
+                    ApplyResult::Value(b.as_bytes().to_vec())
                 },
             },
             ScopeFunc {
                 apply: |_, i, _, _| match i[0] {
-                    b"none" => ApplyResult::Ok(PRIVATE.0.to_vec()),
-                    _ => ApplyResult::None,
+                    b"none" => ApplyResult::Value(PRIVATE.0.to_vec()),
+                    _ => ApplyResult::NoValue,
                 },
                 info: ScopeFuncInfo {
                     id: "@",
@@ -88,9 +88,9 @@ impl EvalScopeImpl for StaticLNS {
                 },
                 to_abe: |_, i, _| {
                     if *i == [0; 32] {
-                        ApplyResult::Ok(b"[@:none]".to_vec())
+                        ApplyResult::Value(b"[@:none]".to_vec())
                     } else {
-                        ApplyResult::None
+                        ApplyResult::NoValue
                     }
                 },
             },
@@ -107,7 +107,7 @@ fn _rev_lookup(i: &[&[u8]], group_mode: Option<bool>) -> ApplyResult {
             Some(false) => Ok(b"[@:none]".to_vec()),
             _ => Ok(b"[#:0]".to_vec()),
         },
-        _ => return ApplyResult::None,
+        _ => return ApplyResult::NoValue,
     }
     .into()
 }

@@ -1,8 +1,10 @@
-// Copyright Anton Sol
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+/*
+Copyright Anton Sol
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*/
 use crate::{spath::*, MAX_IPATH_SIZE, MAX_PATH_LEN, MAX_SPATH_COMPONENT_SIZE};
 use std::{borrow::Borrow, ops::Deref};
 
@@ -85,7 +87,7 @@ impl Deref for IPath {
 impl TryInto<IPathBuf> for SPathBuf {
     type Error = PathError;
     fn try_into(self) -> Result<IPathBuf, Self::Error> {
-        self.try_idx()
+        self.try_ipath()
     }
 }
 impl Default for &IPath {
@@ -375,7 +377,7 @@ fn spath_idx() {
     spath.check_components().unwrap();
 
     let v = spath_buf(&[b"he", b"llo"]);
-    let i: IPathBuf = v.clone().try_idx().unwrap();
+    let i: IPathBuf = v.clone().try_ipath().unwrap();
     assert_eq!(
         i.ipath_bytes,
         vec![2, 3, 7, 7, 7, 7, 7, 7, 2, 104, 101, 3, 108, 108, 111]

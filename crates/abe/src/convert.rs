@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{fmt::Display, marker::PhantomData, ops::Deref, str::FromStr, string::FromUtf8Error};
 
+
 use serde::{Deserialize, Serialize};
 
 use crate::{ast::*, eval::*};
@@ -183,7 +184,37 @@ pub fn eval_vec<A: ABEValidator>(
 
 pub trait ToABE {
     fn to_abe_str(&self) -> String {
-        print_abe(self.to_abe())
+        let mut st = String::new();
+        self.write_abe(&mut |abe| st.push_str(&abe.to_string()));
+        st
     }
-    fn to_abe(&self) -> Vec<ABE>;
+    fn to_abe(&self) -> Vec<ABE>{
+        let mut v = vec![];
+        self.write_abe(&mut |abe| v.push(abe));
+        v
+    }
+    fn write_abe(&self, out: &mut dyn FnMut(ABE)){
+        self.to_abe().into_iter().for_each(out)
+    }
+}
+
+/// colon seperated list
+#[derive(Clone)]
+pub struct CList(pub Vec<Vec<u8>>);
+impl ABEValidator for CList {
+    fn check(b: &[ABE]) -> Result<(), MatchError> {
+        for i in b{
+            if matches!(i,ABE::Ctr(_)) { is_fslash(i)?;}
+        }
+        Ok(())
+    }
+}
+impl TryFrom<ABList> for CList{
+    type Error = MatchErrorKind;
+    fn try_from(value: ABList) -> Result<Self, Self::Error> {
+        value.lst.into_iter()
+            .map(|(b,c)| if !matches!(c,None | Some(Ctr::Colon)) {Err(MatchErrorKind::ExpectedColon)}else {Ok(b)})
+            .try_collect()
+            .map(CList)
+    }
 }

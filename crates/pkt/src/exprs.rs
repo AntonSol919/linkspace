@@ -13,9 +13,13 @@ pub fn default_domain_expr() -> DomainExpr {
     DomainExpr::from_unchecked(abe!( { "a" : }).collect())
 }
 pub type DomainExpr = TypedABE<Domain>;
+
+
 pub type HashExpr = TypedABE<LkHash>;
+pub type PExpr = TypedABE<Ptr>;
 pub type GroupExpr = TypedABE<GroupID>;
 pub type PubKeyExpr = TypedABE<PubKey>;
+
 pub fn default_group_expr() -> GroupExpr {
     GroupExpr::from_unchecked(abe!( { "#" : "pub" }).collect())
 }

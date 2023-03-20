@@ -15,7 +15,7 @@ pub use crate::env::write_result::*;
 pub use crate::env::write_trait::*;
 pub use crate::env::*;
 pub use crate::eval::*;
-pub use crate::matcher::matcher2::*;
+pub use crate::matcher::*;
 pub use crate::partial_hash::PartialHash;
 pub use crate::predicate::exprs::*;
 pub use crate::predicate::pkt_predicates::*;

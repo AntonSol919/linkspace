@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
         .simplify()
         .context("Empty dir")?;
     eprintln!("{:#?}", v);
-    let v = v.map(&mut |_, p| "hello\nworld");
+    let v = v.map(&mut |_, _p| "hello\nworld");
     {
         //eprintln!("{}",v.to_doc().pretty(3));
     }

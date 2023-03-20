@@ -3,6 +3,7 @@
 install-lk:
 	cargo +nightly install --path ./cli/linkspace
 	cargo +nightly install --path ./cli/handshake/
+	cargo +nightly install --path ./cli/lns
 
 build:
 	cargo +nightly build -p liblinkspace
@@ -14,19 +15,23 @@ docs:
 	cargo +nightly doc -p liblinkspace --target-dir ./build --no-deps
 	cp -r ./build/doc ./docs/cargo-doc
 
+homepage-downloads:
+	rm -r ./homepage/download
+	mkdir -p ./homepage/download
+	make -C ./pkg all
+	cp ./pkg/build/*.zip ./homepage/download
+
 homepage:
 	make -C ./homepage
 
-git-checkin: homepage docs 
-	cargo +nightly check -p liblinkspace
-	cargo +nightly check -p linkspace-cli #./cli/linkspace
-	cargo +nightly check -p lkpy          #./ffi/liblinkspace-py
+git-checkin: homepage docs
+	cargo +nightly check
 
-publish: git-checkin docs/guide/index.html
-	rsync -rvrkP ./homepage/ ./build/homepage
+publish: homepage-downloads git-checkin docs/guide/index.html
+	rsync -rvkP ./homepage/ ./build/homepage
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
 	git checkout publish
-	rsync -rvrkP ./build/homepage/ ./
+	rsync -rvkP ./build/homepage/ ./
 	echo 'Publish Commit $(cat ./build/PUBLISH_HEAD)'
 
 # ensure our index.html is up to date.

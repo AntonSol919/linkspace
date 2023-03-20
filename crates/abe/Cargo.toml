@@ -11,3 +11,5 @@ edition = "2021"
 thiserror = "1.0.31"
 hex = "0.4.3"
 serde = { version = "1.0.139", features = ["derive"] }
+arrayvec = "0.7.2"
+anyhow = "1.0.69"

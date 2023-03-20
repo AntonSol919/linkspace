@@ -5,8 +5,8 @@ members = [
     "crates/*",
     "cli/*",
     "ffi/*",
-    "examples/*/*-rs/*"
 ]
+exclude = ["cli/tree","cli/impex"]
 
 
 [profile.dev.package.linkspace-argon2-identity]

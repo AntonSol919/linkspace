@@ -4,11 +4,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // the db is duck type compatible between inmem and lmdb
-use crate::consts::PUBLIC_GROUP_PKT;
-use linkspace_pkt::{NetPkt, Stamp };
+use crate::{consts::PUBLIC_GROUP_PKT };
+use anyhow::{Context  };
+use linkspace_pkt::{NetPkt, Stamp, PointExt, AB };
+use tracing::instrument;
 use std::{
     fmt::Debug,
-    io,
+    io::{self, Write},
     path::{Path, PathBuf},
     sync::Arc,
     sync::OnceLock,
@@ -62,18 +64,54 @@ impl BTreeEnv {
         };
         {
             let mut writer = env.inner.write_txn()?;
-            save_pkt(&mut writer, &**PUBLIC_GROUP_PKT)?;
+            let new = save_pkt(&mut writer, &**PUBLIC_GROUP_PKT)?;
+            if new {
+            static ROOTS:&[u8] = include_bytes!("../../../common/src/protocols/lns/roots.pkt");
+            let mut bytes = ROOTS;
+            let roots:Vec<_> = std::iter::from_fn(||{
+                if bytes.len() == 0 { return None;}
+                let pkt = crate::pkt::read::parse_netpkt(bytes, false).unwrap().unwrap();
+                let pkt = pkt.as_netbox();
+                bytes = &bytes[pkt.net_pkt_size()..];
+                Some(pkt)
+            }).collect();
+            let mut it = roots.iter().map(|p| &*p as &dyn NetPkt);
+            let (i,_) = writer.write_many_state(&mut it, None).unwrap();
+                assert_eq!(i,464);
+            }
         }
         Ok(env)
     }
 
-    pub fn conf_data(&self, id: &str) -> io::Result<Vec<u8>> {
-        let p = std::path::Path::new(id);
-        if !p.is_absolute() {
-            return Err(std::io::Error::other("only absolute paths allowed"));
+    pub fn local_enckey(&self) -> anyhow::Result<String> {
+        // TODO this should prob check for read only access
+        Ok(std::fs::read_to_string(self.location.join("local_auth"))?.lines().next().context("missing enckey")?.to_owned())
+    }
+    #[instrument(ret,skip(bytes))]
+    pub fn set_env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
+        tracing::trace!(bytes=%AB(bytes));
+        let path = self.location().join("env").join(check_path(path.as_ref())?);
+        let r: anyhow::Result<()> = try {
+            std::fs::create_dir_all(path.parent().unwrap())?;
+            let mut file = if overwrite {
+                std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(&path)?
+            }else {
+                std::fs::OpenOptions::new().create_new(true).write(true).open(&path)?
+            };
+            file.write_all(bytes)?;
+        };
+        r.with_context(|| anyhow::anyhow!("Target {}",path.to_string_lossy()))
+    }
+    #[instrument(ret)]
+    // notfound_err simplifies context errors
+    pub fn env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug,notfound_err:bool) -> anyhow::Result<Option<Vec<u8>>> {
+        let path = self.location().join("env").join(check_path(path.as_ref())?);
+        use std::io::ErrorKind::*;
+        match std::fs::read(&path){
+            Ok(k) => Ok(Some(k)),
+            Err(e) if !notfound_err && e.kind() == NotFound =>Ok(None),
+            Err(e) => Err(e).with_context(|| anyhow::anyhow!("could not open {}",path.to_string_lossy()))
         }
-        let path = self.location().join(p);
-        std::fs::read(path)
     }
     #[track_caller]
     pub fn get_reader(&self) -> io::Result<ReadTxn> {
@@ -135,4 +173,11 @@ impl<'txn> SWrite for WriteTxn2<'txn> {
         let r = self.txn.as_mut().unwrap().write_many_state(pkts, out);
         self.set_last(r)
     }
+}
+
+fn check_path(path:&std::path::Path) -> anyhow::Result<&std::path::Path>{
+    if let Some(c) = path.components().find(|v| !matches!(v,std::path::Component::Normal(_))){
+        anyhow::bail!("path can not contain a {c:?} component")
+    }
+    Ok(path)
 }

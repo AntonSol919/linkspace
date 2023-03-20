@@ -141,7 +141,7 @@ impl CommonOpts {
     pub fn default_hop(&mut self) {
         self.io.inp.hop.get_or_insert(true);
     }
-    pub fn enable_private(&mut self) {
+    pub fn enable_private_group(&mut self) {
         self.io.private = true;
         self.io.inp.read_private = Some(true);
         self.io.out.write_private = Some(true)

@@ -3,13 +3,12 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::prelude::*;
-use abe::TypedABE;
-use anyhow::{anyhow, bail, Context};
+use crate::{prelude::*, protocols::lns::{name::{NameExpr }, self }};
+use abe::{TypedABE };
+use anyhow::{ Context, bail };
 use clap::Parser;
-use linkspace_argon2_identity::{decrypt, encrypt, pubkey, INSECURE_COST};
 
-use super::opts::CommonOpts;
+use super::{opts::CommonOpts };
 
 #[derive(Parser, Clone, Debug)]
 pub struct KeyOpts {
@@ -22,42 +21,56 @@ pub struct KeyOpts {
     /// use utf8 encoding for password instead of ABE
     #[clap(short, long)]
     utf8_password: bool,
-    // todo should accept 'colon:separated:ids'
-    #[clap(short, long, env = "LINKSPACE_KEY", default_value = "me")]
-    name: String,
-    /// use specific enckey str - will not lookup / generate
+    /// local key name - e.g. my:home:local
+    #[clap(short, long, env = "LINKSPACE_KEY",default_value="me:local")]
+    key: NameExpr,
+    /// use specific enckey instead of looking for key. can be $argon str or (claim) hash
     #[clap(short, long)]
     enckey: Option<String>,
     #[clap(skip)]
     signing_key: std::sync::OnceLock<SigningKey>,
 }
 impl KeyOpts {
+
+    pub fn enckey(&self, _common:&CommonOpts) ->anyhow::Result<Option<(PubKey,String)>>{
+        let enckey = match &self.enckey {
+            None => return Ok(None),
+            Some(k) => k,
+        };
+        if enckey.starts_with("$"){
+            let pubkey = crate::identity::pubkey(enckey)?.into();
+            return Ok(Some((pubkey,enckey.to_string())))
+        };
+        todo!()
+    }
+
     pub fn identity<'i>(
         &'i self,
         common: &CommonOpts,
         prompt: bool,
     ) -> anyhow::Result<&'i SigningKey> {
         self.signing_key.get_or_try_init(|| {
-            let password_bytes = self.password_bytes(common, prompt)?;
             match &self.enckey {
-                Some(enckey) => Ok(crate::identity::decrypt(enckey, &password_bytes)?),
+                Some(enckey) => {
+                    let password_bytes = self.password_bytes(common, prompt)?;
+                    Ok(crate::identity::decrypt(enckey, &password_bytes)?)
+                },
                 None => {
-                    let e = format!("[local:[:{}]::*=:enckey/readhash:data]",&self.name);
-                    let enckey = String::from_utf8(
-                        common
-                            .eval(&e)?
-                            .into_exact_bytes()
-                            .map_err(|_| anyhow!("bad enckey data"))?,
-                    )?;
+                    let name = self.key.eval(&common.eval_ctx())?;
+                    let (_,enckey)= lns::lookup_enckey(&common.runtime()?, &name)?.context("no such enckey")?;
+                    let password_bytes = self.password_bytes(common, prompt)?;
                     Ok(crate::identity::decrypt(&enckey, &password_bytes)?)
                 }
             }
         })
     }
     pub fn password_bytes(&self, common: &CommonOpts, prompt: bool) -> anyhow::Result<Vec<u8>> {
+        self.password_bytes_prompt(common, prompt,"password: ")
+    }
+    pub fn password_bytes_prompt(&self, common: &CommonOpts, prompt: bool,st:&str) -> anyhow::Result<Vec<u8>> {
         let pass_str = match self.password.as_deref() {
             Some(v) => v.to_string(),
-            None if prompt => rpassword::prompt_password("password: ")?,
+            None if prompt => rpassword::prompt_password(st)?,
             None => anyhow::bail!("missing password"),
         };
         if self.display_pass {
@@ -79,7 +92,10 @@ impl KeyOpts {
     }
 }
 
+
 #[derive(Parser, Clone, Debug)]
+/**
+**/
 pub struct KeyGenOpts {
     /// overwrite existing entry
     #[clap(long)]
@@ -89,10 +105,14 @@ pub struct KeyGenOpts {
     no_check: bool,
     /// if a key already exists return an error
     #[clap(long)]
-    error_existing: bool,
-    /// do not create a local lns entry
+    error_some: bool,
+    /// if a key does not exists return an error
     #[clap(long)]
-    no_local_claim: bool,
+    error_none: bool,
+
+    /// do not use a linkspace instance. Won't save or get.
+    #[clap(long,conflicts_with_all(["error_some","error_none","overwrite","key"]))]
+    no_lk: bool,
     #[clap(flatten)]
     key: KeyOpts,
     /// supress enckey string output
@@ -101,70 +121,42 @@ pub struct KeyGenOpts {
     /// supress pubkey string output
     #[clap(long)]
     no_pubkey: bool,
-    /// Use insecure encryption paramaters to speed up unlocking
-    #[clap(long)]
-    insecure: bool,
+    /// Set to 0 to use insecure encryption paramaters to speed up unlocking
+    #[clap(long,default_value_t=1)]
+    decrypt_cost: usize,
 
-    /// optional notes for lns entry
+    /// after reading a argon2id, first re-encode it with a new password
     #[clap(long)]
-    notes: Option<String>,
+    new_pass: bool,
+    /// new password -- implies new_pass
+    #[clap(long)]
+    new_pass_str: Option<String>,
 }
 
+
 pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
+    use linkspace_argon2_identity::{decrypt, encrypt, pubkey};
     let rt = common.runtime()?;
-    use crate::protocols::lns::local;
     let KeyGenOpts {
-        insecure,
+        decrypt_cost,
         overwrite,
         mut no_check,
-        no_local_claim,
-        key,
-        notes,
-        error_existing,
+        no_lk,
+        mut key,
+        error_some,
         no_enckey,
         no_pubkey,
+        new_pass,
+        new_pass_str,
+        error_none,
     } = opts;
 
-    let path = spath_buf(&[key.name.as_bytes()]);
-
-    let user_enckey_input = key.enckey.is_some();
-    let enckey = match key.enckey.clone() {
-        Some(k) => Some(k),
-        None => {
-            // Equivelant to [local:+name+::l>:enckey::data]
-            let r = rt.env().get_reader()?;
-            match local::get_local_claim(&r, &path)? {
-                None => None,
-                Some(pkt) => {
-                    let link = pkt
-                        .get_links()
-                        .iter()
-                        .find(|v| v.tag.ends_with(b"enckey"))
-                        .context("missing 'enckey' tag in claim")?;
-                    let st = r
-                        .read(&link.ptr)?
-                        .context("missing 'enckey' pkt")?
-                        .get_data_str()
-                        .context("bad enckey format")?
-                        .to_owned();
-                    if error_existing {
-                        bail!("already exists")
-                    }
-                    Some(st)
-                }
-            }
-        }
-    };
-    use std::env::{args, current_dir, current_exe};
-    let notes = notes.unwrap_or_else(|| {
-        format!(
-            "exec:{:?}\ndir:{:?}\nargs:{:?}",
-            current_exe(),
-            current_dir(),
-            args()
-        )
+    use linkspace_argon2_identity::{INSECURE_COST, DEFAULT_COST, EXPENSIVE_COST};
+    let cost = Some(match decrypt_cost{
+        0 => INSECURE_COST,
+        1 => DEFAULT_COST,
+        _ => EXPENSIVE_COST
     });
-    let rt = &common.runtime()?;
 
     let mut generate = |password: &[u8]| {
         let key = SigningKey::generate();
@@ -172,9 +164,41 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         encrypt(
             &key,
             &password,
-            if insecure { Some(INSECURE_COST) } else { None },
+            cost
         )
     };
+    let print = |enckey,pubkey|{
+        if !no_enckey {println!("{enckey}")};
+        if !no_pubkey {println!("{pubkey}")};
+    };
+    let name = key.key.eval(&common.eval_ctx())?;
+    //let name = key.key.clone().map(|e| e.eval(&common.eval_ctx())).transpose()?.unwrap_or_else(Name::local);
+    //ensure!(name.local_branch_authority(),"key names must end in :local - use lns to create public identities");
+    let user_enckey_input = key.enckey.is_some();
+
+    let mut enckey = match key.enckey.clone() {
+        Some(k) => Some(k),
+        None if no_lk => None ,
+        None => match lns::lookup_enckey(&rt, &name)?{
+            None if error_none => bail!("no key found"),
+            None => None,
+            Some(_) if error_some => anyhow::bail!("already exists"),
+            Some((_,e)) => Some(e)
+        }
+    };
+    tracing::debug!(?enckey);
+    if new_pass || new_pass_str.is_some(){
+        let keystr = enckey.context("new_pass but no --enckey found")?;
+        let old_password = key.password_bytes_prompt(common, true,"old password: ")?;
+        let skey = decrypt(&keystr, &old_password)?;
+        key.password = new_pass_str.clone();
+        let new_password =key.password_bytes_prompt(common, true,"new password: ")?;
+        key.password = Some(abtxt::as_abtxt(&new_password).to_string());
+        key.utf8_password = false;
+        enckey = Some(encrypt(&skey, &new_password, cost));
+    }
+
+    let rt = &common.runtime()?;
 
     if overwrite {
         let enckey = match user_enckey_input {
@@ -192,23 +216,19 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
             }
         };
 
-        let pubkey = if !no_local_claim {
-            local::setup_local_key(&rt, &key.name, &enckey, notes.as_bytes())?
-        } else {
+        let pubkey = if no_lk {
             B64(pubkey(&enckey)?)
+        } else {
+            lns::setup_special_keyclaim(&rt, name, &enckey,true)?
         };
-        if !no_enckey {
-            println!("{enckey}")
-        };
-        if !no_pubkey {
-            println!("{pubkey}")
-        };
+        print(enckey,pubkey);
         return Ok(());
     }
 
-    if user_enckey_input {
-        bail!("missing --overwrite to setup custom enckey")
+    if user_enckey_input && !no_lk{
+        bail!("missing --overwrite to setup new enckey")
     }
+    tracing::debug!(?enckey);
     match enckey {
         Some(enckey) => {
             if !no_check {
@@ -216,27 +236,18 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
                 decrypt(&enckey, &password)?;
             }
             let pubkey = B64(pubkey(&enckey)?);
-            if !no_enckey {
-                println!("{enckey}")
-            };
-            if !no_pubkey {
-                println!("{pubkey}")
-            };
+            print(enckey,pubkey);
         }
         None => {
             let password = key.password_bytes(common, true)?;
             let enckey = generate(&password);
-            let pubkey = if !no_local_claim {
-                local::setup_local_key(&rt, &key.name, &enckey, notes.as_bytes())?
-            } else {
+            let pubkey = if no_lk {
                 B64(pubkey(&enckey)?)
+            }else{
+                lns::setup_special_keyclaim(&rt, name, &enckey,false)?
             };
-            if !no_enckey {
-                println!("{enckey}")
-            };
-            if !no_pubkey {
-                println!("{pubkey}")
-            };
+            print(enckey,pubkey)
+            
         }
     }
     Ok(())

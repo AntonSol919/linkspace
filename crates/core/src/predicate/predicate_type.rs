@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // The relation between this and the 'RuleType' type is currently very hacky.
-use linkspace_pkt::PktTypeFlags;
+use linkspace_pkt::PointTypeFlags;
 use std::fmt::Display;
 
 use crate::prelude::RuleType;
@@ -12,7 +12,7 @@ pub struct PredInfo {
     pub name: &'static str,
     pub help: &'static str,
     pub example: &'static str,
-    pub implies: PktTypeFlags,
+    pub implies: PointTypeFlags,
 }
 macro_rules! predty {
     ( enum PredicateType { $( $(#[$outer:meta])* $fname:ident => ($name:expr,$ptype:tt,$example:expr,$help:expr)),*}) => {
@@ -39,7 +39,7 @@ macro_rules! predty {
                 match self {
                 $(PredicateType::$fname =>
                         PredInfo{
-                            implies: PktTypeFlags::$ptype,
+                            implies: PointTypeFlags::$ptype,
                             name:$name,
                             help:$help,
                             example:$example
@@ -58,30 +58,30 @@ macro_rules! predty {
 }
 
 predty!( enum PredicateType {
-    Hash => ("hash",DATA,"[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]","the point hash"),
-    Group => ("group",LINK,"[#:pub]","group id"),
-    Domain => ("domain",LINK,"[a:example]","domain - if fewer then 16 bytes, prepadded with \0"),
-    Prefix => ("prefix",LINK,"/hello/world","path prefix - only accepts '=' op"),
-    Path => ("path",LINK,"/hello/world","exact path - only accepts '=' op"),
-    Pubkey => ("pubkey",SIGNATURE,"[@:me:local]","public key used to sign point"),
-    Create => ("create",LINK,"[now:-1H]","the create stamp"),
-    PathLen => ("path_len",LINK,"[u8:0]","the total number of path components - max 8"),
-    LinksLen => ("links_len",LINK,"[u16:0]","the number of links in a packet"),
-    DataSize => ("data_size",LINK,"[u16:0]","the byte size of the data field"),
-    Recv => ("recv",DATA,"[now:+1D]","the recv time of a packet"),
-    IBranch => ("i_branch",LINK,"[u32:0]","total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise"),
-    IIndex  => ("i_index",EMPTY,"[u32:0]","total packets read from local index"),
-    INew  => ("i_new",EMPTY,"[u32:0]","total newly received packets"),
-    I => ("i",EMPTY,"[u32:0]","total matched packets"),
-    Hop => ("hop",EMPTY,"[u16:5]","(mutable) number of hops"),
-    Stamp => ("stamp",EMPTY,"[now]","(mutable) variable stamp"),
-    Ubits0 => ("ubits0",EMPTY,"[u32:0]","(mutable) user defined bits"),
-    Ubits1 => ("ubits1",EMPTY,"[u32:0]","(mutable) user defined bits"),
-    Ubits2 => ("ubits2",EMPTY,"[u32:0]","(mutable) user defined bits"),
-    UBits3 => ("ubits3",EMPTY,"[u32:0]","(mutable) user defined bits"),
-    Type => ("type",EMPTY,"[b2:00000001]","the field type bits - implied by other predicates"),
-    Netflags => ("netflags",EMPTY,"[b2:00000000]","(mutable) netflags"),
-    PointSize => ("point_size",DATA,"[u16:4]","exact point size - (netpkt_size - 32b header - 32b hash)")
+    Hash => ("hash",DATA,r"\[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]","the point hash"),
+    Group => ("group",LINK,r"\[#:pub\]","group id"),
+    Domain => ("domain",LINK,r"\[a:example\]","domain - if fewer then 16 bytes, prepadded with \0"),
+    Prefix => ("prefix",LINK,r"/hello/world","path prefix - only accepts '=' op"),
+    Path => ("path",LINK,r"/hello/world","exact path - only accepts '=' op"),
+    Pubkey => ("pubkey",SIGNATURE,r"\[@:me:local\]","public key used to sign point"),
+    Create => ("create",LINK,r"\[now:-1H\]","the create stamp"),
+    PathLen => ("path_len",LINK,r"\[u8:0\]","the total number of path components - max 8"),
+    LinksLen => ("links_len",LINK,r"\[u16:0\]","the number of links in a packet"),
+    DataSize => ("data_size",LINK,r"\[u16:0\]","the byte size of the data field"),
+    Recv => ("recv",DATA,r"\[now:+1D\]","the recv time of a packet"),
+    IBranch => ("i_branch",LINK,r"\[u32:0\]","total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise"),
+    IIndex  => ("i_index",EMPTY,r"\[u32:0\]","total packets read from local index"),
+    INew  => ("i_new",EMPTY,r"\[u32:0\]","total newly received packets"),
+    I => ("i",EMPTY,r"\[u32:0\]","total matched packets"),
+    Hop => ("hop",EMPTY,r"\[u16:5\]","(mutable) number of hops"),
+    Stamp => ("stamp",EMPTY,r"\[now\]","(mutable) variable stamp"),
+    Ubits0 => ("ubits0",EMPTY,r"\[u32:0\]","(mutable) user defined bits"),
+    Ubits1 => ("ubits1",EMPTY,r"\[u32:0\]","(mutable) user defined bits"),
+    Ubits2 => ("ubits2",EMPTY,r"\[u32:0\]","(mutable) user defined bits"),
+    Ubits3 => ("ubits3",EMPTY,r"\[u32:0\]","(mutable) user defined bits"),
+    Type => ("type",EMPTY,r"\[b2:00000001\]","the field type bits - implied by other predicates"),
+    Netflags => ("netflags",EMPTY,r"\[b2:00000000\]","(mutable) netflags"),
+    PointSize => ("point_size",DATA,r"\[u16:4\]","exact point size - (netpkt_size - 32b header - 32b hash)")
 });
 impl From<PredicateType> for RuleType {
     fn from(val: PredicateType) -> Self {

@@ -94,9 +94,9 @@ impl PointThinPtr {
     #[inline(always)]
     fn fixed(&self) -> BarePointFields {
         let mem = &self.content_memory();
-        match self.0.pkt_type {
-            PktTypeFlags::DATA_POINT => BarePointFields::DataPoint(mem),
-            PktTypeFlags::LINK_POINT => {
+        match self.0.point_type {
+            PointTypeFlags::DATA_POINT => BarePointFields::DataPoint(mem),
+            PointTypeFlags::LINK_POINT => {
                 let (linkpoint, tail) = mem.split_at(size_of::<LinkPointHeader>());
                 let linkpoint = unsafe { &*(linkpoint.as_ptr() as *const LinkPointHeader) };
                 BarePointFields::LinkPoint {
@@ -104,7 +104,7 @@ impl PointThinPtr {
                     tail,
                 }
             }
-            PktTypeFlags::KEY_POINT => {
+            PointTypeFlags::KEY_POINT => {
                 let (assert, tail) = mem.split_at(size_of::<KeyPointHeader>());
                 let assert = unsafe { &*(assert.as_ptr() as *const KeyPointHeader) };
                 BarePointFields::KeyPoint {
@@ -112,7 +112,7 @@ impl PointThinPtr {
                     tail,
                 }
             }
-            PktTypeFlags::ERROR_POINT => BarePointFields::Error(mem),
+            PointTypeFlags::ERROR_POINT => BarePointFields::Error(mem),
             _ => panic!("Working with invalid packets."),
         }
     }
@@ -154,7 +154,7 @@ impl PointThinPtr {
                 if inner_linkpoint_size < MIN_LINKPOINT_SIZE {
                     return Err(Error::KeyPointLength);
                 }
-                if assert.inner_point.pkt_type != PktTypeFlags::LINK_POINT {
+                if assert.inner_point.point_type != PointTypeFlags::LINK_POINT {
                     return Err(Error::SignedInvalidPkt);
                 }
                 let inner_lp_bytes = &self.pkt_bytes()[LINKPOINT_IN_KEYPOINT_OFFSET..];
@@ -290,14 +290,14 @@ impl Point for PointThinPtr {
     }
     #[inline(always)]
     fn parts(&self) -> PointParts {
-        let fields = match self.point_header().pkt_type {
-            PktTypeFlags::DATA_POINT => PointFields::DataPoint(self.content_memory()),
-            PktTypeFlags::LINK_POINT => {
+        let fields = match self.point_header().point_type {
+            PointTypeFlags::DATA_POINT => PointFields::DataPoint(self.content_memory()),
+            PointTypeFlags::LINK_POINT => {
                 let head = unsafe { &*(self.content_memory().as_ptr() as *const LinkPointHeader) };
                 let tail = unsafe { self.unchecked_linkpoint_tail() };
                 PointFields::LinkPoint(LinkPoint { head: *head, tail })
             }
-            PktTypeFlags::KEY_POINT => {
+            PointTypeFlags::KEY_POINT => {
                 let head = unsafe { &*(self.content_memory().as_ptr() as *const KeyPointHeader) };
                 let tail = unsafe { self.unchecked_assert_tail() };
                 PointFields::KeyPoint(KeyPoint { head: *head, tail })

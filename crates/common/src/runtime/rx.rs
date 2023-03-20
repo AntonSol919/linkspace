@@ -21,14 +21,14 @@ use std::{
 use tracing::{warn, Span, debug_span};
 
 pub type PktStream = Box<dyn PktStreamHandler + 'static>;
-pub type Matcher = linkspace_core::matcher::matcher2::Matcher<PktStream>;
+pub type Matcher = linkspace_core::matcher::Matcher<PktStream>;
 /// [WatchEntry] with an associated callback (Box<dyn [PktStreamHandler]>)
-pub type RxEntry = linkspace_core::matcher::matcher2::WatchEntry<PktStream>;
-pub type PostTxnHandler = Box<dyn FnMut(Stamp, &Linkspace) -> Cf>;
+pub type RxEntry = linkspace_core::matcher::WatchEntry<PktStream>;
+pub type PostTxnHandler = Box<dyn FnMut(Stamp, &Linkspace) -> ControlFlow<()>>;
 pub type PostTxnList = Vec<(PostTxnHandler, Span)>;
 
 #[derive(Clone)]
-#[must_use = "Rx does nothing unless executed"]
+#[must_use = "Linkspace runtime does nothing unless processed"]
 pub struct Linkspace {
     pub(crate) exec: Rc<Executor>,
 }
@@ -63,7 +63,6 @@ pub(crate) struct Executor {
     process_upto: Cell<Stamp>,
     is_running: Cell<bool>,
     pub spawner: OnceCell<Rc<dyn LocalAsync>>,
-    //subroutines: RefCell<Registry>
 }
 
 impl Linkspace {

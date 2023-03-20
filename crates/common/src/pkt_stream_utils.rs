@@ -7,7 +7,7 @@
 /// Useful for filtering unlinked datapackets
 use linkspace_core::{
     pkt::{NetPkt, NetPktBox},
-    prelude::{utils::PktHashSet, LkHash, B64},
+    prelude::{utils::LkHashSet, LkHash, B64},
 };
 use linkspace_pkt::PointExt;
 
@@ -15,7 +15,7 @@ use linkspace_pkt::PointExt;
 #[derive(Default)]
 pub struct Buffer {
     pub forward_buf: Vec<NetPktBox>,
-    pub latest_links: PktHashSet,
+    pub latest_links: LkHashSet,
 }
 
 impl Buffer {

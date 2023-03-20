@@ -21,3 +21,6 @@ build: setup_env
 
 install: build
 	pip install --force-reinstall ../../target/wheels/lkpy-*.whl
+
+package: setup_env
+	. .env/bin/activate && ( pip install setuptools-rust )

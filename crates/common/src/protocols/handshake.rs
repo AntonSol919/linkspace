@@ -10,12 +10,9 @@ use crate::{prelude::*, protocols::unicast_group};
 use anyhow::ensure;
 pub const HANDSHAKE_D: Domain = ab(b"\xFFhandshake");
 
-lazy_static::lazy_static! {
-    pub static ref ID_SENTINAL_SPATH : IPathBuf = ipath_buf(&[b"sentinal"]);
-    pub static ref ANONYMOUSE_SPATH : IPathBuf = ipath_buf(&[b"anonymous"]);
-    //spath!(pub const ID_SENTINAL_SPATH : [u8;9]= [b"sentinal"]);
-    //spath!(pub const ANONYMOUS_SPATH= [b"anonymous"]);
-}
+pub const ID_SENTINAL_SPATH : IPathC<17>= ipath1(b"sentinal");
+pub const ANONYMOUSE_SPATH : IPathC<18>= ipath1(b"anonymous");
+
 const MAX_DIFF_SECONDS: usize = 15;
 pub fn valid_stamp_range(stamp: Stamp, max_diff_sec: Option<usize>) -> anyhow::Result<()> {
     let dur = Duration::from_secs(max_diff_sec.unwrap_or(MAX_DIFF_SECONDS) as u64);
@@ -124,7 +121,7 @@ pub fn phase2_client_signs(
         "not in the right group "
     );
     ensure!(
-        theirs.get_spath() == ID_SENTINAL_SPATH.as_ref(),
+        theirs.get_ipath() == ID_SENTINAL_SPATH.as_ref(),
         "wrong spath "
     );
     let now = now();
@@ -167,7 +164,7 @@ pub fn phase3_server_verify(
         mine_hash
     );
     ensure!(
-        theirs.get_spath() == ID_SENTINAL_SPATH.as_ref(),
+        theirs.get_ipath() == ID_SENTINAL_SPATH.as_ref(),
         "wrong spath"
     );
     ensure!(

@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use linkspace_pkt::{NetPkt, NetPktBox, Stamp};
+use linkspace_pkt::{NetPkt,  Stamp};
 use std::io;
 
 use super::write_result::WriteResult;
@@ -14,11 +14,11 @@ pub fn save_pkt(mut writer: impl SWrite, pkt: impl NetPkt) -> io::Result<bool> {
 }
 pub fn save_pkts(
     mut writer: impl SWrite,
-    pkts: &[NetPktBox],
+    pkts: &[impl NetPkt],
 ) -> io::Result<(usize, Option<Stamp>)> {
     let mut it = pkts
         .iter()
-        .map(|p| p as &linkspace_pkt::NetPktPtr as &dyn NetPkt);
+        .map(|p| p  as &dyn NetPkt);
     writer.write_many_state(&mut it, None)
 }
 pub trait SWrite {

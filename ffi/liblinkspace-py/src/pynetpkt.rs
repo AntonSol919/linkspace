@@ -61,7 +61,7 @@ impl Pkt {
     }
     #[getter]
     pub fn pkt_type(&self) -> u8 {
-        self.0.point_header().pkt_type.bits()
+        self.0.point_header().point_type.bits()
     }
     #[getter]
     pub fn hash<'p>(&self, py: Python<'p>) -> &'p PyBytes {

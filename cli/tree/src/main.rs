@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use liblinkspace::misc::RecvPkt;
 use liblinkspace::linkspace::lk_get_all;
-use liblinkspace::{abe::lk_split_abe, lk_query, lk_query_append};
+use liblinkspace::{abe::lk_split_abe, lk_query };
 use liblinkspace::{lk_encode, lk_eval, lk_open, prelude::*};
 
 use clap::Parser;
@@ -29,7 +29,7 @@ struct Cli {
     linkspace: Option<PathBuf>,
     dgpe: String,
     #[clap(
-        default_value = "{hash:str}\\n{/links:> {ptr/2mini} \\: {tag:str}\\n}\\n{data_size:str}     {data/trim<:40/?a}\\n"
+        default_value = "[hash:str]\\n[/links:\\t[ptr/2mini]\\t[tag:str]\\n]\\n[data_size:str]\\n[data/trim<:40/?a]"
     )]
     /// eval for printing packets
     fmt: String,
@@ -73,25 +73,25 @@ fn main() -> LkResult<()> {
         linkspace, dgpe, ..
     } = &cli;
 
-    let mut query = lk_query();
+    let mut query = lk_query(None);
     let mut ok = Ok(true);
     let mut i = 0;
     // arguments ould have been typed DGPExpr. This shows one way to parse manually while only importing liblinkspace
     lk_split_abe(&dgpe, b"/", |expr: &str, _ctr: u8| {
         i += 1;
         ok = match i {
-            1 => lk_query_append(&mut query, &format!("domain:=:{}", expr)),
-            2 => lk_query_append(&mut query, &format!("group:=:{}", expr)),
-            3 => lk_query_append(&mut query, &format!("prefix:=:{}", expr)),
-            _ => Err("expected domain:group:prefix".into()),
+            1 => lk_query_parse(&mut query, &format!("domain:=:[{expr}]"),()),
+            2 => lk_query_parse(&mut query, &format!("group:=:[{expr}]"),()),
+            3 => lk_query_parse(&mut query, &format!("prefix:=:[{expr}]"),()),
+            _ => Err(anyhow::anyhow!("expected domain:group:prefix")),
         };
         ok.is_ok()
     })?;
     if i < 2 {
-        lk_query_append(&mut query, &format!("group:=:{{#:pub}}"))?;
+        lk_query_parse(&mut query, "group:=:[#:pub]",())?;
     }
     for stmt in &cli.statement {
-        lk_query_append(&mut query, &stmt)?;
+        lk_query_parse(&mut query, &stmt,())?;
     }
 
     let lk = lk_open(linkspace.as_deref(), false)?;
@@ -111,43 +111,51 @@ fn main() -> LkResult<()> {
         true
     };
     lk_get_all(&lk, &query, &mut cb)?;
-    /*
-    pkt_list.sort_by_cached_key(|entry| lk_eval(&cli.sort, Some(&entry.pkt)).unwrap());
-    pkt_list.iter().enumerate().for_each(|(i,n)| n.index.set(i));
-    */
+
+    // horizontal order
+    //pkt_list.sort_by_cached_key(|entry| lk_eval(&cli.sort, Some(&entry.pkt)).unwrap());
+    //pkt_list.iter().enumerate().for_each(|(i,n)| n.index.set(i));
+
+
     fn fmt_node<'n: 'x, 'x>(
+        prefix: &mut Vec<&'static str>,
         path: &'x mut Vec<&'n PathNode>,
         node: &'n PathNode,
         opts: &Cli,
         out: &mut dyn Write,
     ) -> LkResult<()> {
-        let mut prefix = String::new();
-        for n in path.iter() {
-            prefix.push_str(if n.last.get() { "   " } else { "│  " });
-        }
-        let hook = if node.last.get() { "└" } else { "├" };
+        use std::fmt::Write;
+
         let name = if !path.is_empty() {
             lk_encode(node.path.last(), &opts.path_encode)
         } else {
             opts.dgpe.clone()
         };
-        let mut line = format!("{prefix}{hook}─ {name}");
+        let mut line = format!("{}-+{name}",prefix.concat());
         if !node.packets.is_empty() {
-            use std::fmt::Write;
             write!(line, " ─ ({})", node.packets.len())?;
         }
         writeln!(out, "{}", line)?;
 
+        
+        if node.last.get(){
+            prefix.push("   ");
+        }else {
+            prefix.push("  |");
+        }
+
         if !opts.fmt.is_empty() {
-            let mut prefix = prefix.clone();
-            prefix.push_str(if node.last.get() { "   " } else { "│  " });
-            if let Some(p) = node.packets.first() {
-                let st = lk_eval(&opts.fmt, Some(&*p.pkt))?;
-                for v in st.split_inclusive(|v| *v == b'\n') {
-                    out.write_all(prefix.as_bytes())?;
-                    out.write_all(v)?;
+            let mut pre = prefix.concat().into_bytes();
+            pre.push(b'>');
+            for p in node.packets.iter() {
+                let st = lk_eval(&opts.fmt, &*p.pkt as &dyn NetPkt)?;
+                for line in st.split_inclusive(|v| *v == b'\n') {
+                    out.write_all(&pre)?;
+                    out.write_all(line)?;
                 }
             }
+            pre.pop();
+            out.write(&pre)?;
         }
 
         if let Some((_, v)) = node.children.last_key_value() {
@@ -156,13 +164,15 @@ fn main() -> LkResult<()> {
 
         path.push(node);
         for v in node.children.values() {
-            fmt_node(path, v, opts, out)?;
+            fmt_node(prefix,path, v, opts, out)?;
         }
+        prefix.pop();
         path.pop();
         Ok(())
     }
     let p = liblinkspace::linkspace::lk_info(&lk).path;
-    println!("{p}");
-    fmt_node(&mut vec![], &root, &cli, &mut std::io::stdout())?;
+    println!("fixme");
+    println!("{:?}",p);
+    fmt_node(&mut vec![],&mut vec![], &root, &cli, &mut std::io::stdout())?;
     Ok(())
 }

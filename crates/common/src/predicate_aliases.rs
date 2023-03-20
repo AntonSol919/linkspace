@@ -88,12 +88,12 @@ impl PredicateAliases {
         } = self;
         let signed = signed
             .then(||
-                  abev!((PktTypeF::NAME) : "1" : +(U8::new(PktTypeFlags::SIGNATURE.bits()).abe_bits()))
+                  abev!((PktTypeF::NAME) : "1" : +(U8::new(PointTypeFlags::SIGNATURE.bits()).abe_bits()))
             );
 
         let unsigned = unsigned
             .then(||
-                  abev!( (PktTypeF::NAME) : "0" :+(U8::new(!PktTypeFlags::SIGNATURE.bits()).abe_bits()))
+                  abev!( (PktTypeF::NAME) : "0" :+(U8::new(!PointTypeFlags::SIGNATURE.bits()).abe_bits()))
             );
         let max = max.map(|i| abev!( (QScope::Query.to_string()) : "<" : +(U32::from(i).to_abe())));
         let max_new =

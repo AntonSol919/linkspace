@@ -9,7 +9,7 @@ use crate::{netpkt::NetPktHeader, *};
 #[repr(C, align(4))]
 pub struct PointHeader {
     pub reserved: u8,
-    pub pkt_type: PktTypeFlags,
+    pub point_type: PointTypeFlags,
     pub point_size: U16,
 }
 
@@ -67,13 +67,13 @@ impl Signed {
 
 impl PointHeader {
     pub const ERROR: Self = PointHeader {
-        pkt_type: PktTypeFlags::ERROR_POINT,
+        point_type: PointTypeFlags::ERROR_POINT,
         reserved: 0,
         point_size: U16::new(4),
     };
-    pub const fn new(kind: PktTypeFlags, content_len: usize) -> Result<Self, Error> {
+    pub const fn new(kind: PointTypeFlags, content_len: usize) -> Result<Self, Error> {
         PointHeader {
-            pkt_type: kind,
+            point_type: kind,
             reserved: 0,
             point_size: U16::new(content_len as u16 + 4),
         }
@@ -87,11 +87,11 @@ impl PointHeader {
         if len > MAX_CONTENT_SIZE {
             return Err(Error::ContentLen);
         }
-        let ok = match self.pkt_type {
-            PktTypeFlags::DATA_POINT => true,
-            PktTypeFlags::LINK_POINT => len >= size_of::<LinkPointHeader>(),
-            PktTypeFlags::KEY_POINT => len >= size_of::<KeyPointHeader>(),
-            PktTypeFlags::ERROR_POINT => true,
+        let ok = match self.point_type {
+            PointTypeFlags::DATA_POINT => true,
+            PointTypeFlags::LINK_POINT => len >= size_of::<LinkPointHeader>(),
+            PointTypeFlags::KEY_POINT => len >= size_of::<KeyPointHeader>(),
+            PointTypeFlags::ERROR_POINT => true,
             e => return Err(Error::UnknownPktType(e.bits)),
         };
         if ok {

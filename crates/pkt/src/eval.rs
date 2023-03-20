@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::*;
+use anyhow::{anyhow, bail, Context};
 use bytefmt::abe::ast::Ctr;
 use bytefmt::abe::{eval::*, ToABE, ABE};
 use bytefmt::abe::{eval_fnc, fncs};
@@ -51,7 +52,7 @@ macro_rules! as_scopefn {
                     &[b"abe"] => field.abe(&pkt.0, &mut out)?,
                     &[b"str"] => field.display(&pkt.0, &mut out)?,
                     &[] | &[b""] | &[b"bytes"] => field.bytes(&pkt.0, &mut out)?,
-                    _ => return ApplyResult::Err("expect ?(str|abe)".into()),
+                    _ => return ApplyResult::Err(anyhow!("expect ?(str|abe)")),
                 }
                 Ok(out).into()
             },
@@ -103,7 +104,20 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
     }
 }
 
-pub struct SelectLink<'o>(&'o [Link]);
+pub fn lptr(l:&Link)->&Ptr{&l.ptr}
+pub fn ptrv(l:&Link)->Vec<u8>{l.ptr.to_vec()}
+#[derive(Copy,Clone)]
+pub struct SelectLink<'o>(pub &'o [Link]);
+// TODO . this should be done with ExtendedTestOp 
+impl<'o> SelectLink<'o> {
+    pub fn first_eq(self,tag:Tag) -> Option<&'o Link>{
+        self.0.iter().find(|l| l.tag == tag)
+    }
+    pub fn first_tailmask(self,tail:&[u8]) -> Option<&'o Link>{
+        self.0.iter().find(|l| l.tag.ends_with(tail))
+    }
+}
+
 impl<'o> EvalScopeImpl for SelectLink<'o> {
     fn about(&self) -> (String, String) {
         ("select link".into(), "".into())
@@ -114,16 +128,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             1..=1,
             "[suffix] get first link with tag ending in suffix",
             |links: &Self, i: &[&[u8]]| {
-                Ok(links
-                    .0
-                    .iter()
-                    .find(|v| v.tag.ends_with(i[0]))
-                    .ok_or_else(|| {
-                        format!("no such tag in \n{}", crate::link::print_links(links.0))
-                    })?
-                    .ptr
-                    .0
-                    .to_vec())
+                links.first_tailmask(i[0]).map(ptrv).context("no such link")
             }
         )])
     }
@@ -134,7 +139,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             |links: &Self, abe: &[ABE], scope| {
                 let abe = match abe {
                     &[ABE::Ctr(Ctr::Colon), ref r @ ..] => r,
-                    _ => Err(EvalError::Other("links expects :[..]".into()))?,
+                    _ => anyhow::bail!("links expects")
                 };
                 let mut out = vec![];
                 for link in links.0 {
@@ -144,9 +149,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
                             Ok(o) => {
                                 out.extend_from_slice(&o);
                             }
-                            Err(_) => Err(EvalError::Other(
-                                "links expects result to be undelimited bytes".into(),
-                            ))?,
+                            Err(_e) => bail!("links expects result to be undelimited bytes (fixme)")
                         },
                         Err(e) => return Err(e.into()),
                     }
@@ -173,7 +176,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                         b"abe" => Ok(lk.link.ptr.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.link.ptr.to_string().into_bytes()),
                         b"" => Ok(lk.link.ptr.0.to_vec()),
-                        _ => Err("unexpected fmt expect ?(str|abe)".into()),
+                        _ => bail!("unexpected fmt expect ?(str|abe)"),
                     }
                 }
             ),
@@ -186,7 +189,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                         b"abe" => Ok(lk.link.tag.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.link.tag.to_string().into_bytes()),
                         b"" => Ok(lk.link.tag.0.to_vec()),
-                        _ => Err("unexpected fmt expect ?(str|abe)".into()),
+                        _ => bail!("unexpected fmt expect ?(str|abe)"),
                     }
                 }
             )
@@ -223,7 +226,7 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
                 |t: &Self, _i: &[&[u8]]| Ok(t
                     .pkt
                     .recv()
-                    .ok_or("no recv available in context")?
+                    .context("no recv available in context")?
                     .0
                     .to_vec())
             )

@@ -6,6 +6,18 @@
 use linkspace_core::{prelude::*, try_opt};
 use std::io::{Error as IoError, ErrorKind, Read};
 
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Pkt Error")]
+    Pkt(#[from] linkspace_core::pkt::Error),
+    #[error("Io Error")]
+    IO(#[from] IoError),
+    #[error("private null group not allowed in this context")]
+    PrivateGroup,
+}
+
 #[derive(Debug)]
 pub struct NetPktDecoder<T> {
     pub allow_private: bool,
@@ -24,46 +36,7 @@ impl<T> NetPktDecoder<T> {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct UnalignedPkt<'o>(&'o NetPktPtr);
-impl<'o> UnalignedPkt<'o> {
-    /// Currently fine but if alignment is enforced this will be trouble.
-    pub unsafe fn get(self) -> &'o NetPktPtr {
-        self.0
-    }
-    pub fn as_netbox(self) -> NetPktBox {
-        self.0.as_netbox()
-    }
-    pub fn as_netarc(self) -> NetPktArc {
-        self.0.as_netarc()
-    }
-}
 
-pub fn parse_netpkt(
-    bytes: &[u8],
-    validate: bool,
-    allow_private: bool,
-) -> Result<Option<UnalignedPkt>, Error> {
-    if bytes.len() < MIN_NETPKT_SIZE {
-        return Ok(None);
-    }
-    let header = unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const PartialNetHeader) };
-    header.pkt_header.check()?;
-    if bytes.len() < header.pkt_header.net_pkt_size() {
-        return Ok(None);
-    }
-    let pkt = unsafe { &*(bytes.as_ptr() as *const NetPktPtr) };
-    if validate {
-        pkt.check::<true>()?
-    } else {
-        pkt.check::<false>()?
-    };
-
-    if !allow_private && pkt.group() == Some(&PRIVATE) {
-        return Err(Error::PrivateGroup);
-    }
-    Ok(Some(UnalignedPkt(pkt)))
-}
 
 impl<T: Read> Iterator for NetPktDecoder<T> {
     type Item = Result<NetPktBox, Error>;
@@ -94,8 +67,8 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
                 }
             }
         }
-        try_opt!(partial_header.pkt_header.check());
-        let len = partial_header.pkt_header.net_pkt_size();
+        try_opt!(partial_header.point_header.check());
+        let len = partial_header.point_header.net_pkt_size();
         let mut pkt = unsafe { partial_header.alloc() };
         {
             let s: &mut [u8] = unsafe {
@@ -125,14 +98,3 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
     }
 }
 
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Pkt Error")]
-    Pkt(#[from] linkspace_core::pkt::Error),
-    #[error("Io Error")]
-    IO(#[from] IoError),
-    #[error("private null group not allowed in this context")]
-    PrivateGroup,
-}

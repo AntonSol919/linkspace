@@ -3,6 +3,9 @@ name = "linkspace-common"
 version = "0.1.0"
 edition = "2021"
 
+authors = ["Az"]
+license = "MPL-2.0"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
@@ -11,7 +14,7 @@ lmdb=["linkspace-core/lmdb"]
 inmem=["linkspace-core/inmem"]
 fs=["memmap2", "notify", "ron"]
 cli=["clap", "clap/env", "clap/derive", "rpassword"]
-full=["fs", "cli", "tokio/net"]
+full=["fs", "cli"]
 
 [dependencies]
 abe = { path = "../abe"}
@@ -21,48 +24,20 @@ linkspace-core= { path = "../core",default-features=false}
 linkspace-argon2-identity = { path = "../argon2-identity"}
 anyhow = "*"
 serde = { version = "1.0.139", features = ["derive"] }
-enumflags2 = "0.7.5"
-crossbeam-channel = "0.5.5"
-once_cell = "1.13.0"
-async-stream = "0.3.3"
-rand = "0.8.5"
+rand = {version="0.8.5",features=["rand_chacha"]}
 tracing = "0.1.35"
-tracing-futures = { version = "0.2.5", features = ["std-future","futures-03"] }
 thiserror = "1.0.31"
 memmap2 = { version = "0.5.5", optional = true }
 notify = { version = "5.0", optional = true }
 rpassword = { version = "7.1" , optional = true }
 clap = { version = "^4.0.6", features = ["derive"], optional = true }
-serde_json = "1.0.82"
 async_executors = { version = "0.6.0", features = ["timer","async_global","bindgen","localpool"] }
 futures = "0.3.21"
-tokio = { version = "1.20.0", default-features = false, optional = true }
-lazy_static = "1.4.0"
 either = "1.7.0"
-serde_bytes = "0.11.6"
-triomphe = "0.1.7"
 ron = { version = "0.7.1", default-features = false, optional = true }
-derive_more = "0.99.17"
-lock_api = "0.4.7"
-tokio-stream = { version = "0.1.9", features = ["sync"] }
 auto_impl = "1.0.1"
-anymap = "0.12.1"
-tokio-util = { version = "0.7.3", features = ["codec"] }
-bytes = "1.1.0"
-serde-value = "0.7.0"
-indexmap = "1.9.1"
-arrayvec = "0.7.2"
-bitflags = "1.3.2"
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-parking_lot = "0.12.1"
-
+rand_chacha = "0.3.1"
 tracing-subscriber = "0.3.14"
-
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-parking_lot = { version = "0.12.1" }
-
-
 
 [dev-dependencies]
 tracing-test = "0.2.2"

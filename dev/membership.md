@@ -15,3 +15,6 @@ subgroup  : ...groupid
 
 The members could follow along with a group 'admin' by something like
 looking for packets signed in exchange:GROUP:/GROUP/membership by the 'admin' and rewriting them into exchange:{#:0}/GROUP/membership signed by {root}
+
+# Option 2 
+Full LNS integration. Everybody needs a keyname under @:some:prefix:nl

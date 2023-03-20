@@ -94,10 +94,10 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
             continue;
         }
 
-        let abe = match pkt.as_point().point_header_ref().pkt_type {
-            PktTypeFlags::DATA_POINT => &datap_fmt,
-            PktTypeFlags::LINK_POINT => &linkp_fmt,
-            PktTypeFlags::KEY_POINT => &keyp_fmt,
+        let abe = match pkt.as_point().point_header_ref().point_type {
+            PointTypeFlags::DATA_POINT => &datap_fmt,
+            PointTypeFlags::LINK_POINT => &linkp_fmt,
+            PointTypeFlags::KEY_POINT => &keyp_fmt,
             _ => todo!(),
         };
         let ctx = pkt_ctx(common.eval_ctx(), &**pkt);

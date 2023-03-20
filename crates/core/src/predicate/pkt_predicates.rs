@@ -130,7 +130,7 @@ fn as_rules_it2<X, Y: Into<ABList>>(
     })
 }
 impl PktPredicates {
-    fn path_check(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn path_check(&mut self) -> anyhow::Result<()> {
         if let Some(i) = self.path_prefix.path_len().checked_sub(1) {
             self.path_len.try_add(TestOp::Greater, i)?;
         }
@@ -261,13 +261,14 @@ impl PktPredicates {
                         .try_add(op, Domain::try_from(val)?.uint().get())?,
                     FieldEnum::PathF => {
                         ensure!(op == TestOp::Equal, "path only supports equallity");
-                        let path: IPathBuf = SPathBuf::try_from(val)?.try_idx()?;
+                        let path: IPathBuf = SPathBuf::try_from(val)?.try_ipath()?;
                         self.path_len.try_add(TestOp::Equal, path.len() as u8)?;
                         ensure!(
                             path.starts_with(&self.path_prefix),
                             "prefix conflicting with path"
                         );
                         self.path_prefix = path;
+                        self.path_check()?;
                     }
                     FieldEnum::PathLenF => {
                         self.path_len.try_add(op, U8::try_from(val)?.0)?;
@@ -319,17 +320,8 @@ impl PktPredicates {
             RuleType::PrefixPath => {
                 ensure!(op == TestOp::Equal, "prefix only supports equallity ");
                 let sp = SPathBuf::try_from(val)?;
-                if self.path_prefix.starts_with(&sp) {
-                    tracing::trace!(old=%self.path_prefix,new=%sp,"Current prefix already more specific")
-                } else if sp.starts_with(&self.path_prefix) {
-                    let sp = sp.try_idx()?;
-                    tracing::trace!(old=%self.path_prefix,new=%sp,new_len=sp.path_len(),"Setting more specific prefix");
-                    self.path_prefix = sp;
-                    self.path_check()?;
-                } else {
-                    anyhow::bail!("disjoin spath {:?} <> {:?}", &*sp, &*self.path_prefix);
-                };
-            }
+                self.prefix(sp)?;
+            },
             RuleType::Limit(l) => {
                 self.state.idx(*l).add(op, U32::try_from(val)?.get());
                 self.state.is_valid()?;

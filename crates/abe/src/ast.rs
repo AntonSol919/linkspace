@@ -3,7 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use serde::{Deserialize, Serialize};
+use anyhow::{ anyhow};
+use serde::{Serialize, Deserialize};
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Write;
@@ -106,6 +107,9 @@ impl Display for MatchError {
 
 #[derive(Error, Debug)]
 pub enum MatchErrorKind {
+    #[error("length mismatch max {max} has {has}")]
+    MaxLen{ max: usize, has: usize },
+
     #[error("length mismatch expect {expect} has {has}")]
     ExactLen { expect: usize, has: usize },
     #[error("minimum length mismatch expect {expect} has {has}")]
@@ -334,7 +338,7 @@ impl Debug for Expr {
                 Ok(())
             }
             Expr::Lst(l) => {
-                f.write_str("{[")?;
+                f.write_str("[")?;
                 let mut it = l.iter();
                 if let Some(n) = it.next() {
                     Display::fmt(n, f)?;
@@ -343,7 +347,7 @@ impl Debug for Expr {
                         Display::fmt(n, f)?;
                     }
                 }
-                f.write_str("]}")
+                f.write_str("]")
             }
         }
     }
@@ -371,9 +375,9 @@ use thiserror::Error;
 pub enum ASTParseError {
     #[error("ABTxt Error {}",.0)]
     AB(#[from] ABTxtError),
-    #[error("Unmatched '}}'")]
+    #[error("Unmatched ']'")]
     UnmatchedClose,
-    #[error("Unmatched '{{'")]
+    #[error("Unmatched '['")]
     UnmatchedOpen,
     #[error("Newline in brackets")]
     NewlineInBrackets,
@@ -382,6 +386,14 @@ pub enum ASTParseError {
 pub fn parse_abe(st: &str) -> Result<Vec<ABE>, ASTParseError> {
     parse_abe_b(st.as_ref())
 }
+
+// TODO - this is inefficient
+pub fn parse_ablist_b(st:&[u8]) -> anyhow::Result<crate::eval::ABList>{
+    let abe = parse_abe_b(st)?;
+    abe.as_slice().try_into().map_err(|e| anyhow!("expr not supported - {e}"))
+}
+
+
 pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     #[derive(Clone, PartialEq)]
     enum ABTok {

@@ -11,13 +11,13 @@ static_assertions::assert_eq_size!([u8; MIN_NETPKT_SIZE], PartialNetHeader);
 pub struct PartialNetHeader {
     pub net_header: crate::NetPktHeader,
     pub hash: crate::LkHash,
-    pub pkt_header: crate::PointHeader,
+    pub point_header: crate::PointHeader,
 }
 impl PartialNetHeader {
     pub const EMPTY: Self = PartialNetHeader {
         net_header: NetPktHeader::EMPTY,
         hash: B64([0; 32]),
-        pkt_header: PointHeader::ERROR,
+        point_header: PointHeader::ERROR,
     };
     pub fn from(bytes: &[u8; MIN_NETPKT_SIZE]) -> PartialNetHeader {
         unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const Self) }
@@ -26,7 +26,7 @@ impl PartialNetHeader {
     ///
     /// This must be a reference to a buffer of at least self.pkt_header.net_pkt_size len with the correct hash
     pub unsafe fn alloc(self) -> NetPktBox {
-        let (layout, metadata) = crate::netpktbox_layout(&self.pkt_header);
+        let (layout, metadata) = crate::netpktbox_layout(&self.point_header);
         let ptr: *mut u8 = std::alloc::alloc(layout);
         if ptr.is_null() {
             std::alloc::handle_alloc_error(layout);
@@ -36,7 +36,7 @@ impl PartialNetHeader {
         let mut val = Box::from_raw(ptr);
         val._net_header = self.net_header;
         val.hash = self.hash;
-        val.pkt.pkt_header = self.pkt_header;
+        val.pkt.pkt_header = self.point_header;
         val
     }
 }

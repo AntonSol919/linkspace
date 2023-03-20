@@ -15,7 +15,7 @@ use core::str::FromStr;
 use std::fmt::Debug;
 
 pub trait FieldG {
-    const PKTS: PktTypeFlags;
+    const PKTS: PointTypeFlags;
 }
 pub trait NamedField
 where
@@ -31,7 +31,7 @@ where
 pub struct FieldInfo {
     pub token: u8,
     pub name: &'static str,
-    pub pkts: PktTypeFlags,
+    pub pkts: PointTypeFlags,
 }
 const fn as_info<I: NamedField>() -> FieldInfo {
     FieldInfo {
@@ -53,7 +53,7 @@ macro_rules! fid  {
             #[derive(Copy,Clone,Debug)]
             pub struct $fname;
             impl FieldG for $fname {
-                const PKTS : PktTypeFlags= $pkt_types;
+                const PKTS : PointTypeFlags= $pkt_types;
             }
             impl NamedField for $fname{
                 const TOKEN: u8 = $token;
@@ -155,34 +155,34 @@ pub const VAR_FIELDS: [FieldEnum; 7] = [
 ];
 
 fid! {[
-    (VarNetFlagsF,b'f',"netflags", PktTypeFlags::DATA),
-    (VarHopF,b'j',"hop" , PktTypeFlags::DATA),
-    (VarStampF,b's',"stamp" , PktTypeFlags::DATA),
-    (VarUBits0F,b'q',"ubits0" , PktTypeFlags::DATA),
-    (VarUBits1F,b'Q',"ubits1" , PktTypeFlags::DATA),
-    (VarUBits2F,b'w',"ubits2" , PktTypeFlags::DATA),
-    (VarUBits3F,b'W',"ubits3" , PktTypeFlags::DATA),
-    (PktHashF,b'h',"hash" , PktTypeFlags::DATA),
-    (PktTypeF,b'y',"type", PktTypeFlags::DATA),
-    (PointSizeF,b'o',"point_size", PktTypeFlags::DATA ),
-    (PubKeyF,b'k',"pubkey",PktTypeFlags::SIGNATURE),
-    (SignatureF,b'v',"signature",PktTypeFlags::SIGNATURE),
-    (GroupIDF,b'g',"group",PktTypeFlags::LINK),
-    (DomainF,b'd',"domain",PktTypeFlags::LINK),
-    (CreateF,b'c',"create",PktTypeFlags::LINK),
-    (PathLenF,b'x',"path_len",PktTypeFlags::LINK),
-    (LinksLenF,b'l',"links_len",PktTypeFlags::LINK),
-    (DataSizeF,b'B',"data_size",PktTypeFlags::DATA),
-    (PathF,b'p',"path",PktTypeFlags::LINK),
-    (PathComp0F,b'0',"comp0",PktTypeFlags::LINK),
-    (PathComp1F,b'1',"comp1",PktTypeFlags::LINK),
-    (PathComp2F,b'2',"comp2",PktTypeFlags::LINK),
-    (PathComp3F,b'3',"comp3",PktTypeFlags::LINK),
-    (PathComp4F,b'4',"comp4",PktTypeFlags::LINK),
-    (PathComp5F,b'5',"comp5",PktTypeFlags::LINK),
-    (PathComp6F,b'6',"comp6",PktTypeFlags::LINK),
-    (PathComp7F,b'7',"comp7",PktTypeFlags::LINK),
-    (DataF,b'b',"data",PktTypeFlags::DATA)
+    (VarNetFlagsF,b'f',"netflags", PointTypeFlags::DATA),
+    (VarHopF,b'j',"hop" , PointTypeFlags::DATA),
+    (VarStampF,b's',"stamp" , PointTypeFlags::DATA),
+    (VarUBits0F,b'q',"ubits0" , PointTypeFlags::DATA),
+    (VarUBits1F,b'Q',"ubits1" , PointTypeFlags::DATA),
+    (VarUBits2F,b'w',"ubits2" , PointTypeFlags::DATA),
+    (VarUBits3F,b'W',"ubits3" , PointTypeFlags::DATA),
+    (PktHashF,b'h',"hash" , PointTypeFlags::DATA),
+    (PktTypeF,b'y',"type", PointTypeFlags::DATA),
+    (PointSizeF,b'o',"point_size", PointTypeFlags::DATA ),
+    (PubKeyF,b'k',"pubkey",PointTypeFlags::SIGNATURE),
+    (SignatureF,b'v',"signature",PointTypeFlags::SIGNATURE),
+    (GroupIDF,b'g',"group",PointTypeFlags::LINK),
+    (DomainF,b'd',"domain",PointTypeFlags::LINK),
+    (CreateF,b'c',"create",PointTypeFlags::LINK),
+    (PathLenF,b'x',"path_len",PointTypeFlags::LINK),
+    (LinksLenF,b'l',"links_len",PointTypeFlags::LINK),
+    (DataSizeF,b'B',"data_size",PointTypeFlags::DATA),
+    (PathF,b'p',"path",PointTypeFlags::LINK),
+    (PathComp0F,b'0',"comp0",PointTypeFlags::LINK),
+    (PathComp1F,b'1',"comp1",PointTypeFlags::LINK),
+    (PathComp2F,b'2',"comp2",PointTypeFlags::LINK),
+    (PathComp3F,b'3',"comp3",PointTypeFlags::LINK),
+    (PathComp4F,b'4',"comp4",PointTypeFlags::LINK),
+    (PathComp5F,b'5',"comp5",PointTypeFlags::LINK),
+    (PathComp6F,b'6',"comp6",PointTypeFlags::LINK),
+    (PathComp7F,b'7',"comp7",PointTypeFlags::LINK),
+    (DataF,b'b',"data",PointTypeFlags::DATA)
 ]}
 
 impl FieldEnum {
@@ -250,7 +250,7 @@ field_val!([
     (PktTypeF, u8, |pkt: &'o T| (pkt
         .as_point()
         .point_header()
-        .pkt_type
+        .point_type
         .bits)),
     (PointSizeF, u16, |pkt: &'o T| (pkt
         .as_point()
@@ -325,10 +325,10 @@ field_ptr!([
     (VarUBits2F, U32, |pkt: &'o T| &pkt.net_header_ref().ubits[2]),
     (VarUBits3F, U32, |pkt: &'o T| &pkt.net_header_ref().ubits[3]),
     (PktHashF, LkHash, |pkt: &'o T| pkt.hash_ref()),
-    (PktTypeF, PktTypeFlags, |pkt: &'o T| &pkt
+    (PktTypeF, PointTypeFlags, |pkt: &'o T| &pkt
         .as_point()
         .point_header_ref()
-        .pkt_type),
+        .point_type),
     (PointSizeF, U16, |pkt: &'o T| &pkt
         .as_point()
         .point_header_ref()
@@ -386,7 +386,7 @@ impl FieldEnum {
             FieldEnum::VarUBits3F => out.write_all(&VarUBits3F::get_ptr(pkt).0),
             FieldEnum::PktHashF => out.write_all(&PktHashF::get_ptr(pkt).0),
             FieldEnum::PktTypeF => out.write_all(std::slice::from_ref(
-                &pkt.as_point().point_header_ref().pkt_type.bits,
+                &pkt.as_point().point_header_ref().point_type.bits,
             )),
             FieldEnum::PointSizeF => out.write_all(&PointSizeF::get_ptr(pkt).0),
             FieldEnum::DataSizeF => out.write_all(&DataSizeF::get_val(pkt).to_be_bytes()),

@@ -78,9 +78,9 @@ impl PktStreamTest for SPathPrefix {
         )))
     }
 }
-impl PktStreamTest for PktTypeFlags {
+impl PktStreamTest for PointTypeFlags {
     fn test(&self, pkt: &NetPktPtr) -> bool {
-        self.contains(pkt.point_header().pkt_type)
+        self.contains(pkt.point_header().point_type)
     }
     fn get_field(&self) -> RuleType {
         RuleType::Field(FieldEnum::PktTypeF)

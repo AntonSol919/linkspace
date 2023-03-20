@@ -445,6 +445,11 @@ impl<U: UInt> std::fmt::Debug for Mask<U> {
 }
 
 impl<U: UInt> TestSet<U> {
+    pub fn new_eq(v: U) -> TestSet<U>{
+        let mut t= Self::DEFAULT;
+        t.add(TestOp::Equal, v);
+        t
+    }
     pub fn as_eq(&self) -> Option<U> {
         // FIXME check mask
         self.bound.as_eq()

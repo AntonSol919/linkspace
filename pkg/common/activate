@@ -1,0 +1,6 @@
+export R="$(realpath "$(dirname "${BASH_SOURCE[0]}" )")"
+export LINKSPACE=$R/linkspace
+export PATH="$R/bin":"$R/examples/app/imageboard":"$R/examples/exchange/anyhost/bin":$PATH
+export GROUP=[#:pub]
+export PYTHONPATH="$PYTHONPATH":"$R"
+export PS1="lk - $PS1"

@@ -1,7 +1,7 @@
 #!/bin/bash
-set -euo pipefail
+set -euox pipefail
 cd "$(dirname "$0")"
-echo My Key $(lk key --password "" --insecure)
+lk key --password ${PASS:-""}
 export SERVER=${SERVER:-${1:-"127.0.0.1:5020"}}
 export GROUP_ORIG=$GROUP
 export GROUP=$(lk eval "[:$GROUP/?b]")

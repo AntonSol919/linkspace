@@ -18,7 +18,7 @@ use std::{ops::ControlFlow, path::Path, time::Duration};
 use liblinkspace::{prelude::*, abe::ctx::{UserData, self}};
 use pyo3::{
     prelude::*,
-    types::{PyBytes, PyFunction, PyTuple},
+    types::{PyBytes,  PyTuple},
 };
 mod pynetpkt;
 use pynetpkt::*;
@@ -44,11 +44,12 @@ fn call_ctx(_py: Python) -> (&'static str, i32) {
     }
 }
 
+pub type PyFunc = Py<PyAny>;
 
 struct PyPktStreamHandler {
-    on_match: Py<PyFunction>,
-    on_close: Option<Py<PyFunction>>,
-    on_err: Option<Py<PyFunction>>
+    on_match: PyFunc,
+    on_close: Option<PyFunc>,
+    on_err: Option<PyFunc>
 }
 impl PktHandler for PyPktStreamHandler {
     fn handle_pkt(
@@ -203,7 +204,7 @@ pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt) -> anyhow::Result<&'a PyBytes> {
 }
 #[pyfunction]
 pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> anyhow::Result<(Pkt, &[u8])> {
-    let p = liblinkspace::point::lk_read_ref(buf, validate, allow_private)?;
+    let p = liblinkspace::point::lk_read(buf, validate, allow_private)?;
     let size = p.size();
     Ok((Pkt::from_dyn(&p), &buf[size..]))
 }
@@ -307,7 +308,7 @@ pub fn lk_query_clear(query: &mut Query) {
 
 fn call_cont_py(
     py: Python,
-    func: &Py<PyFunction>,
+    func: &PyFunc,
     args: impl IntoPy<Py<PyTuple>>,
 ) -> PyResult<bool> {
     let result = func.call1(py, args)?;
@@ -327,7 +328,7 @@ pub fn lk_get_all(
     py: Python,
     lk: &Linkspace,
     query: &Query,
-    cb: Py<PyFunction>,
+    cb: PyFunc,
 ) -> anyhow::Result<u32> {
     let mut cb_err = Ok(());
     let count = liblinkspace::linkspace::lk_get_all(&lk.0, &query.0, &mut |pkt| {
@@ -344,9 +345,9 @@ pub fn lk_watch(
     py: Python,
     lk: &Linkspace,
     query: &Query,
-    on_match: Py<PyFunction>,
-    on_close: Option<Py<PyFunction>>,
-    on_err: Option<Py<PyFunction>>,
+    on_match: PyFunc,
+    on_close: Option<PyFunc>,
+    on_err: Option<PyFunc>,
 ) -> anyhow::Result<u32> {
     let watch_handler = PyPktStreamHandler { on_match, on_close,on_err };
     let (file, line) = call_ctx(py);
@@ -354,7 +355,7 @@ pub fn lk_watch(
     liblinkspace::linkspace::lk_watch2(&lk.0, &query.0, watch_handler, span)
 }
 #[pyfunction]
-pub fn lk_list_watches(py: Python, lk: &Linkspace, cb: Py<PyFunction>) -> PyResult<PyObject> {
+pub fn lk_list_watches(py: Python, lk: &Linkspace, cb: PyFunc) -> PyResult<PyObject> {
     let mut r = Ok(py.None());
     liblinkspace::linkspace::lk_list_watches(&lk.0, &mut |id, query| {
         if r.is_err() {
@@ -409,7 +410,7 @@ pub fn lk_process_while(
 #[pyfunction]
 pub fn lk_status_set(
     lk: &Linkspace,
-    callback: Py<PyFunction>,
+    callback: PyFunc,
     group: &[u8],
     domain: &[u8],
     objtype: &[u8],
@@ -435,7 +436,7 @@ pub fn lk_status_set(
 #[pyfunction]
 pub fn lk_status_poll(
     lk: &Linkspace,
-    callback: Py<PyFunction>,
+    callback: PyFunc,
     timeout: &[u8],
     group: &[u8],
     domain: &[u8],
@@ -525,7 +526,7 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add("PRIVATE", PyBytes::new(py, &consts::PRIVATE.0))?;
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
-    m.add("DEFAULT_PKT_ABE", abe::DEFAULT_PKT)?;
+    m.add("DEFAULT_PKT", abe::DEFAULT_PKT)?;
 
     Ok(())
 }

@@ -65,16 +65,3 @@ fn lmdb(){
     btree_sanity(store).expect("OK");
 }
 */
-
-#[test]
-fn serde_abtxt() {
-    use crate::prelude::*;
-    let null: Domain = r#"a\0b"#.parse().unwrap();
-    let escaped: Domain = r#"a\\0b"#.parse().unwrap();
-    assert_ne!(null, escaped);
-    assert_eq!(null.cut_ending_nulls(), b"a\0b");
-    assert_eq!(format!("{}", escaped), r#"a\\0b"#);
-    let null_js = serde_json::to_string(&null).unwrap();
-    let escaped_js = serde_json::to_string(&escaped).unwrap();
-    assert_ne!(null_js, escaped_js);
-}

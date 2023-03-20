@@ -12,7 +12,6 @@ use futures::{
     Future, StreamExt,
 };
 use linkspace_core::env::BTreeEnv;
-/// Some tools to run a Rx on different threads
 use std::rc::Rc;
 
 pub fn attach(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {

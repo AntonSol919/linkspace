@@ -140,6 +140,8 @@ enum Command {
     /// abe   - encode input into abe
     #[clap(alias = "n")]
     Encode {
+        #[clap(short,long,action=clap::ArgAction::Count)]
+        ignore_err: u8,
         /// a set of '/' delimited options
         #[clap(default_value = "@/#/b:32:64")]
         opts: String,
@@ -275,7 +277,7 @@ fn main() -> std::process::ExitCode {
                 }
             }
             eprintln!("error: {:?}", args);
-            eprintln!("{:?}", e);
+            eprintln!("{:#?}", e);
             ExitCode::FAILURE
         }
         Err(e) => {
@@ -305,13 +307,18 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Printf(opts) => {
             crate::printf::pkt_info(common, opts)?;
         }
-        Command::Encode { opts } => {
+        Command::Encode { opts, ignore_err } => {
             use std::io::Read;
             let mut bytes = vec![];
             std::io::stdin().read_to_end(&mut bytes)?;
             let ctx = common.eval_ctx();
-            let r = linkspace_common::abe::eval::encode(&ctx, &bytes, &opts)?;
-            std::io::stdout().write_all(r.as_bytes())?;
+            let r = linkspace_common::abe::eval::encode(&ctx, &bytes, &opts,ignore_err > 0 );
+            if ignore_err > 1 && r.is_err() {
+                std::io::stdout().write_all(abtxt::as_abtxt(&bytes).as_bytes())?;
+            }else {
+                let r = r?;
+                std::io::stdout().write_all(r.as_bytes())?;
+            }
         }
         Command::Linkpoint { write, link } => {
             let mut write = common.open(&write)?;
@@ -338,7 +345,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             */
         }
         Command::Dedup { capacity, write } => {
-            common.enable_private();
+            common.enable_private_group();
             let inp = common.inp_reader()?;
             let mut deduper = linkspace_common::pkt_stream_utils::QuickDedup::new(capacity);
             let mut dest = common.open(&write)?;
@@ -422,7 +429,13 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let val = eval(&ctx, &abe)?;
             let mut out = std::io::stdout();
             if json {
-                serde_json::ser::to_writer(&mut out, &val)?;
+                use serde_json::{to_value,value::Value};
+                let mut lst = val.inner().iter()
+                    .map(|(b,v)| (String::from_utf8(b.clone()).map(Value::String)
+                                  .unwrap_or_else(|_|to_value(b).unwrap()),v))
+                    .map(to_value);
+                let vec = Value::Array(lst.try_collect()?);
+                println!("{vec}");
             } else {
                 out.write_all(&val.concat())?;
             }
@@ -431,7 +444,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
         Command::Route { field_mut } => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
-            common.enable_private();
+            common.enable_private_group();
             common.io.inp.no_check = true;
             let inp = common.inp_reader()?;
             let mut out = WriteDestSpec::stdout().open(&common.eval_ctx())?.unwrap();

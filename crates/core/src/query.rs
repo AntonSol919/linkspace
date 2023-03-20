@@ -19,7 +19,7 @@ use tracing::debug_span;
 
 use crate::{
     env::query_mode::Mode,
-    matcher::matcher2::WatchEntry,
+    matcher::WatchEntry,
     prelude::{PktPredicates, TestOp},
 };
 
@@ -213,7 +213,7 @@ impl<'o> EvalScopeImpl for &'o Query {
             "[X] - try get byte value associated with X",
             |ewatch: &&Query, name: &[&[u8]]| {
                 let optv = ewatch.get_option_bytes(name[0]).transpose()?;
-                optv.ok_or_else(|| format!("{} not set", AB(name[0])).into())
+                optv.ok_or_else(|| anyhow::anyhow!("{} not set", AB(name[0])))
                     .map(Vec::from)
             }
         )])
