@@ -17,8 +17,8 @@ body {
     grid-template-areas:
         'logo name tagl tagl .    .'
         '.    .    .    .    .    .'
-        'navi main main main main .'
-        'navi main main main main .'
+        'navi main main main main main'
+        'navi main main main main main'
         'foot foot foot foot foot .';
     gap: 1em;
     padding: 10px;
@@ -26,22 +26,7 @@ body {
     margin-right: 10vw;
     line-height: 1.2em;
 }
-@media screen and (max-width: 480px) {
-    body{
-        margin:0px;
-        grid-template-columns: auto auto auto;
-        grid-template-rows: auto auto auto auto auto auto;
-        grid-template-areas:
-            'name .    .    '
-            'tagl tagl .    '
-            'navi navi navi '
-            'main main main '
-            'foot foot foot '; 
-    }
-    .definition { max-width:100% !important;}
-    nav { display: flex; justify-content: space-around;}
-    #logo{ display:none;}
-}
+
 img {
     width: 100%;
     height: 100%;
@@ -84,8 +69,6 @@ grid-area: tagl;
     border: 1px solid #cce3f9;
 }
 #main{
-
-    max-width:40em;
     grid-area: main;
 }
 
@@ -136,4 +119,71 @@ table thead th {
     font-weight: bold;
     border-top: 3px solid #e1e4e5;
     border-bottom: 1px solid #e1e4e5;
+}
+
+.merge {
+    width:100%;
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.merge > div {
+    flex-basis: 100%;
+}
+
+.merge > pre {
+    margin:1rem;
+    border:1px solid black;
+}
+.merge > .op {
+    flex-basis:0%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size:3rem;
+}
+
+#hh0{background:#e6194B;}
+#hh1{background:#3cb44b;}
+#hh2{background:#ffe119;}
+#hh3{background:#4363d8;}
+#hh4{background:#f58231;}
+#hh5{background:#42d4f4;}
+#hh6{background:#911eb4;}
+#hh7{background:#f032e6;}
+
+
+#text-footnotes{
+
+    border-top: 1px solid #e1e4e5;
+    padding-top: 36px;
+}
+.footpara {
+    color: #999;
+    font-size: 90%;
+    font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
+    padding-bottom: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+    line-height: 1.25em;
+}
+
+@media screen and (max-width: 480px) {
+    body{
+        margin:0px;
+        grid-template-columns: auto auto auto;
+        grid-template-rows: auto auto auto auto auto auto;
+        grid-template-areas:
+            'name .    .    '
+            'tagl tagl .    '
+            'navi navi navi '
+            'main main main '
+            'foot foot foot '; 
+    }
+    .definition { max-width:100% !important;}
+    nav { display: flex; justify-content: space-around;}
+    #logo{ display:none;}
+    .merge > pre { margin:0px; }
+    code { display:block;}
+    
 }
