@@ -22,13 +22,13 @@ Or treat it as a shared folder. That works as well.
 In return a supernet provides a lot of useful properties including:
 Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant etc.
 
-Begin with the [Basics](https://antonsol919.github.io/linkspace/docs/guide/basics.html),
+Begin with the [basics](https://antonsol919.github.io/linkspace/basics.html),
 then checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html).
 
 The packet format and index is stable, but the API and various conventions are still in the early stages.
 Expect some unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
 
-See the ./dev folder for more.
+See the ./dev folder for the roadmap/missing features.
 
 # Usage
 
