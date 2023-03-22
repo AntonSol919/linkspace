@@ -8,8 +8,7 @@ use crate::{
     *,
 };
 use bytefmt::{
-    abe::{print_abe, ToABE},
-    bstr,
+    abe::{print_abe, ToABE}, 
 };
 use core::str::FromStr;
 use std::fmt::Debug;
@@ -73,7 +72,7 @@ macro_rules! fid  {
             $( $fname = $token ),*
         }
         impl FieldEnum {
-            pub const LIST : [FieldEnum;28]= [$(FieldEnum::$fname,)*];
+            pub const LIST : [FieldEnum;29]= [$(FieldEnum::$fname,)*];
             pub fn try_from_id(id:&[u8]) -> Option<Self> {
                 $( if id == &[$token] || id == $name.as_bytes() { return Some(FieldEnum::$fname);})*
                     None
@@ -119,6 +118,8 @@ impl FieldEnum {
             | FieldEnum::PathComp6F
             | FieldEnum::PathComp7F
             | FieldEnum::PathF => SPathBuf::try_from(abl).ok().map(|v| v.to_abe()),
+
+            FieldEnum::IPathF => IPathBuf::try_from(abl).ok().map(|v| v.to_abe()),
             FieldEnum::SignatureF => Signature::try_from(abl).ok().map(|v| v.to_abe()),
             FieldEnum::DataF => Some(abl.into()),
         }
@@ -174,6 +175,7 @@ fid! {[
     (LinksLenF,b'l',"links_len",PointTypeFlags::LINK),
     (DataSizeF,b'B',"data_size",PointTypeFlags::DATA),
     (PathF,b'p',"path",PointTypeFlags::LINK),
+    (IPathF,b'P',"ipath",PointTypeFlags::LINK),
     (PathComp0F,b'0',"comp0",PointTypeFlags::LINK),
     (PathComp1F,b'1',"comp1",PointTypeFlags::LINK),
     (PathComp2F,b'2',"comp2",PointTypeFlags::LINK),
@@ -282,6 +284,7 @@ field_val!([
 ]);
 
 field_ptr!([
+    (IPathF, IPath, |pkt: &'o T| pkt.as_point().get_ipath()),
     (PathF, SPath, |pkt: &'o T| pkt.as_point().get_spath()),
     (PathComp0F, [u8], |pkt: &'o T| pkt
         .as_point()
@@ -368,6 +371,7 @@ impl FieldEnum {
             | FieldEnum::PathComp5F
             | FieldEnum::PathComp6F
             | FieldEnum::PathComp7F
+            | FieldEnum::IPathF
             | FieldEnum::PathF => return None,
         };
         Some(v)
@@ -393,6 +397,7 @@ impl FieldEnum {
             FieldEnum::LinksLenF => out.write_all(&LinksLenF::get_val(pkt).to_be_bytes()),
             FieldEnum::DomainF => out.write_all(&DomainF::get_ptr(pkt).0),
             FieldEnum::PathF => out.write_all(PathF::get_ptr(pkt).spath_bytes()),
+            FieldEnum::IPathF => out.write_all(IPathF::get_ptr(pkt).ipath_bytes()),
             FieldEnum::PathLenF => {
                 out.write_all(std::slice::from_ref(pkt.as_point().get_path_len()))
             }
@@ -411,7 +416,7 @@ impl FieldEnum {
             FieldEnum::DataF => out.write_all(pkt.as_point().data()),
         }
     }
-    pub fn display(self, pkt: &dyn NetPkt, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn display(self, pkt: &dyn NetPkt, mut out: impl std::io::Write) -> anyhow::Result<()> {
         match self {
             FieldEnum::VarNetFlagsF => write!(out, "{:?}", VarNetFlagsF::get_ptr(pkt)),
             FieldEnum::VarHopF => write!(out, "{}", VarHopF::get_ptr(pkt)),
@@ -425,8 +430,9 @@ impl FieldEnum {
             FieldEnum::PointSizeF => write!(out, "{}", PointSizeF::get_ptr(pkt)),
             FieldEnum::DataSizeF => write!(out, "{}", DataSizeF::get_val(pkt)),
             FieldEnum::LinksLenF => write!(out, "{}", LinksLenF::get_val(pkt)),
-            FieldEnum::DomainF => write!(out, "{}", DomainF::get_ptr(pkt)),
+            FieldEnum::DomainF => write!(out, "{}", DomainF::get_ptr(pkt).as_str(true)),
             FieldEnum::PathF => write!(out, "{}", PathF::get_ptr(pkt)),
+            FieldEnum::IPathF => write!(out, "{}", IPathF::get_ptr(pkt).spath()),// TODO might be wrong
             FieldEnum::PathLenF => write!(out, "{}", PathLenF::get_ptr(pkt)),
             FieldEnum::PathComp0F => write!(out, "{}", AB(PathComp0F::get_ptr(pkt))),
             FieldEnum::PathComp1F => write!(out, "{}", AB(PathComp1F::get_ptr(pkt))),
@@ -441,11 +447,12 @@ impl FieldEnum {
             FieldEnum::PubKeyF => write!(out, "{}", PubKeyF::get_ptr(pkt)),
             FieldEnum::SignatureF => write!(out, "{}", SignatureF::get_ptr(pkt)),
             FieldEnum::DataF => {
-                use bstr::*;
-                let bstr = BStr::new(pkt.as_point().data());
-                out.write_fmt(format_args!("{}", &bstr))
+                let data = pkt.as_point().data();
+                let data = std::str::from_utf8(data)?;
+                out.write_all(data.as_bytes())
             }
-        }
+        }?;
+        Ok(())
     }
 
     pub fn into_abe(self, pkt: &dyn NetPkt) -> String {
@@ -466,6 +473,7 @@ impl FieldEnum {
             FieldEnum::PktTypeF => print_abe(U8::new(PktTypeF::get_val(pkt)).abe_bits()),
             FieldEnum::PointSizeF => PointSizeF::get_ptr(pkt).to_abe_str(),
             FieldEnum::DomainF => DomainF::get_ptr(pkt).to_abe_str(),
+            FieldEnum::IPathF => PathF::get_ptr(pkt).to_abe_str(), // TODO might be the wrong choice
             FieldEnum::PathF => PathF::get_ptr(pkt).to_abe_str(),
             FieldEnum::PathLenF => U8::new(PathLenF::get_val(pkt)).to_abe_str(),
             FieldEnum::PathComp0F => AB(PathComp0F::get_ptr(pkt)).to_abe_str(),
@@ -486,4 +494,16 @@ impl FieldEnum {
         };
         out.write_all(string.as_bytes())
     }
+}
+
+#[test]
+fn fields(){
+    let ipath = ipath_buf(&[b"hello",b"world"]);
+    let p = linkpoint([1;32].into(), [2;16].into(), &ipath, &[], &[], now(), ());
+    let abe = abe::parse_abe("[path]").unwrap();
+    let path = abe::eval::eval(&pkt_ctx(core_ctx(), &p),&abe).unwrap().into_exact_bytes().unwrap();
+    let pbox = p.as_netbox();
+    let path1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
+    assert_eq!(path,ipath.spath_bytes());
+    assert_eq!(path,path1)
 }

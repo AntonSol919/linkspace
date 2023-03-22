@@ -84,7 +84,7 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
 
 
 /// It is up to the caller to ensure 'lk_process' is called accodingly. Impl [PktHandler::stopped] to capture the timeout event.
-pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: impl PktHandler + 'static) -> LkResult<()>{
+pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: impl PktHandler + 'static,watch_id:Option<&[u8]>) -> LkResult<()>{
     let span = debug_span!("status_poll",?status,?d_timeout);
     let _ = span.enter();
     let mut ok = false;
@@ -114,8 +114,13 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: im
     lk_query_push(&mut query, "data_size", ">", &*U16::ZERO)?;
     lk_query_push(&mut query, "links_len", ">", &*U16::ZERO)?;
     lk_query_push(&mut query, "recv", "<", &*wait_until)?;
-    let w = [b"status" as &[u8],&*now()].concat();
-    lk_query_push(&mut query, "", "watch", &w)?;
+    match watch_id{
+        Some(id) => {lk_query_push(&mut query, "", "watch", id)?;},
+        None => {
+            let id = [b"status" as &[u8],&*now()].concat(); 
+            lk_query_push(&mut query, "", "watch", &id)?;
+        },
+    };
     lk_watch2(lk, &query, cb,span)?;
     Ok(())
 }
@@ -130,6 +135,7 @@ fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<()>{
     Ok(())
 }
 
+/// Insert a callback that is triggered on a request. Must yield a valid response. Don't forget to process
 pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linkspace,Domain,GroupID,&IPath,Link) -> LkResult<NetPktBox> +'static)-> LkResult<()>{
     let span = debug_span!("status_set",?status);
     let _ = span.enter();
@@ -167,7 +173,6 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
         lk_save(lk,&reply)?;
         Ok(())
     }),span)?;
-    lk_process_while(&lk, Stamp::MAX, Stamp::MAX)?;
     Ok(())
 }
 

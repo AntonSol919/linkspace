@@ -14,7 +14,7 @@ use linkspace_pkt::core_scope;
 pub use linkspace_pkt::B64EvalFnc;
 use linkspace_pkt::EvalCore;
 use linkspace_pkt::GroupID;
-use linkspace_pkt::SPathFncs;
+use linkspace_pkt::PathFE;
 use linkspace_pkt::B64;
 
 pub const EVAL0_1: &str = "0.1";
@@ -24,13 +24,13 @@ pub fn std_ctx() -> EvalCtx<EvalStd> {
 }
 pub type EvalStd = (
     ((EvalCore, EScope<StaticLNS>), EScope<StampEF>),
-    EScope<SPathFncs>,
+    EScope<PathFE>,
 );
 pub const fn std_ctx_v(_version: &str) -> EvalCtx<EvalStd> {
     EvalCtx {
         scope: (
             ((core_scope(), EScope(StaticLNS)), EScope(StampEF{fixed_now:None})),
-            EScope(SPathFncs),
+            EScope(PathFE),
         ),
     }
 }
@@ -71,7 +71,7 @@ impl EvalScopeImpl for StaticLNS {
                     } else {
                         return ApplyResult::NoValue;
                     };
-                    ApplyResult::Value(b.as_bytes().to_vec())
+                    ApplyResult::Value(b.to_string())
                 },
             },
             ScopeFunc {
@@ -88,7 +88,7 @@ impl EvalScopeImpl for StaticLNS {
                 },
                 to_abe: |_, i, _| {
                     if *i == [0; 32] {
-                        ApplyResult::Value(b"[@:none]".to_vec())
+                        ApplyResult::Value("[@:none]".to_string())
                     } else {
                         ApplyResult::NoValue
                     }

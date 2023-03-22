@@ -33,6 +33,7 @@ pub enum StopReason {
     Replaced,
     Closed,
 }
+
 pub trait PktStreamHandler {
     /// if returns some, periodcially check to see if the handler can be closed.
     fn checkup(&mut self) -> Option<ControlFlow<()>> {

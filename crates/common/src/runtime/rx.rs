@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopReason};
 use abe::abtxt::as_abtxt_e;
-use anyhow::bail;
+use anyhow::{bail, Context};
 pub use async_executors::{Timer, TimerExt};
 use futures::future::Either;
 pub use futures::task::{LocalSpawn, LocalSpawnExt};
@@ -175,17 +175,24 @@ impl Linkspace {
             }
         }
     }
+    fn watch_state(&self,id:&WatchIDRef) -> Option<(u32,usize)>{
+        let cbs = self.exec.cbs.borrow();
+        let e = cbs.0.get(id)?;
+        Some((e.nth_query,e.entry_id))
+    }
 
     /**
     continiously trigger watch callbacks unless
     - max_wait has elapsed between new packets - return false
     - until time has been reached - returns false
+    - watch_id has matched at least once - returns true
     - no more watch callbacks exists - returns true
      **/
     pub fn run_while(
         &self,
         max_wait: Option<Duration>,
         last_step: Option<Instant>,
+        watch_id: Option<(&WatchIDRef,bool)>
     ) -> anyhow::Result<bool> {
         if self.exec.is_running.get() {
             bail!("already running")
@@ -196,9 +203,20 @@ impl Linkspace {
             "run while");
         let mut latest_processed_id = Stamp::ZERO;
         let mut last_new_pkt = Instant::now();
-        // check the 3 break conditions, and update 'next_check' as required for next check
+        let current_state = match watch_id{
+            Some((id,is_done)) => Some((id,is_done,self.watch_state(id).context("watch id not found")?)),
+            None => None
+        };
+        // check the 4 break conditions, and update 'next_check' as required for next check
         loop {
             let new_recv_id = self.process();
+            if let Some((wid,is_done,(qid,eid))) = current_state{
+                let (v_qid,v_eid) = match self.watch_state(wid){
+                    Some(v) => v,
+                    None => return Ok(true),
+                };
+                if v_eid != eid || (!is_done && v_qid != qid) { return Ok(true)}
+            }
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
             let d = |i| i-newtime;
@@ -312,11 +330,9 @@ impl Linkspace {
         };
         for pkt in txn.pkts_after(from) {
             if pkt.net_header().flags.contains(NetFlags::SILENT) {
-                tracing::trace!("skipping silent pkt");
-                continue;
+                tracing::trace!("(not) skipping silent pkt - TODO make this a option");
             }
-            let _g =
-                tracing::error_span!("Matching",logptr=?pkt.recv,pkt=%pkt_fmt(&pkt.pkt)).entered();
+            let _g = tracing::error_span!("Matching",logptr=?pkt.recv,pkt=%pkt_fmt(&pkt.pkt)).entered();
             tracing::debug!("Testing New Pkt");
 
             let pkt = ShareArcPkt {

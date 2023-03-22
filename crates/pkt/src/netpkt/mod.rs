@@ -198,7 +198,7 @@ pub fn calc_len() {
     .as_netbox();
     let upto_header_bytes = sp.as_netpkt_bytes()[0..MIN_NETPKT_SIZE].try_into().unwrap();
     let calculated = PartialNetHeader::from(upto_header_bytes)
-        .pkt_header
+        .point_header
         .net_pkt_size();
     assert_eq!(sp.size(), calculated)
 }

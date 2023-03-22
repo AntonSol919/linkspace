@@ -39,10 +39,10 @@ impl<R: LKS> PrivateLNS<R> {
         Ok(super::reverse_lookup(&self.rt.lk()?, tag,ptr).into_ok()?.map(|o| o.name))
     }
     
-    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult {
+    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult<String> {
         let name :Name= self.get_by_tag(tag, ptr)??;
-        if tag == GROUP_TAG { Ok(format!("[#:{name}]").into_bytes()).into()}
-        else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]").into_bytes()).into()}
+        if tag == GROUP_TAG { Ok(format!("[#:{name}]")).into()}
+        else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]")).into()}
         else {Err(anyhow!("bug! weird tag{tag}")).into()}
     }
 }
@@ -67,7 +67,7 @@ impl<R: LKS> NetLNS<R> {
                 let mut issue :Result<(),Issue>= Ok(());
                 match super::lookup_live_chain(&self.rt.lk()?, &name, &mut |i| {issue = Err(i);Ok(())})?{
                     Ok(c) => Ok(c.claim),
-                    Err(e) => bail!("couldn't find claim - deepest know: {} - last-issue: {issue:?}",e.claim.name), // make udp call
+                    Err(_e) => bail!("couldn't find claim - last-issue: {issue:?}"), // make udp call
                 }
             }
         }
@@ -78,10 +78,10 @@ impl<R: LKS> NetLNS<R> {
             None => Ok(None)
         }
     }
-    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult {
+    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult<String> {
         let name :Name= self.get_by_tag(tag, ptr)??;
-        if tag == GROUP_TAG { Ok(format!("[#:{name}]").into_bytes()).into()}
-        else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]").into_bytes()).into()}
+        if tag == GROUP_TAG { Ok(format!("[#:{name}]")).into()}
+        else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]")).into()}
         else {Err(anyhow!("bug! weird tag{tag}")).into()}
     }
 }

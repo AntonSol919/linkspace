@@ -48,8 +48,9 @@
 <div>
   <p>
     A web-servers is software that serve such a file/folder tree
-    and for some changes does additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
-    When a users wants to add things that overlap with previous stuff a server has multiple options.
+    and does some additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
+    When a user wants to add new entries they might overlap with previous stuff.
+    A server would have multiple options.
     After all, it is the only 'real' copy we can point to.
     However, this has profound <a href="./why.html">consequences</a>.
   </p>
@@ -87,8 +88,9 @@
 
 <div>
   <p>
-    The hash is unique numbers for an entire entry, including the path.<br>
-    Beyond merging. This also gives us the option to pick if we want to refer to things by a path "image/Broken.jpg" or by their hash.
+    The hash is a unique number for every entry. It depends in part on the content and the path.<br>
+    This allows us to merge two trees.<br>
+    What is more, we also get the option to pick if we want to refer to things by a path "image/Broken.jpg" or by their hash.
   </p>
 </div>
 
@@ -136,7 +138,7 @@
     <p>
       Linkspace goes further.
       Each entry is set inside a Domain and a Group.
-      A domain name is chosen by a developers creating a (graphical) interface. The domain name signals what app to use, and how things are organized.
+      A domain name is chosen by a developer creating a (graphical) interface. The domain name signals what app to use, and how things are organized.
       The group is set by the user. It exits because we say it exists.
       Finally, each entry has a creation date and <i>can</i> be signed. 
     </p>
@@ -180,7 +182,7 @@ The tree described here is the general case where primary_key has variable lengt
 <li id="fn2" role="doc-endnote"><p>
     With the most notable simplification being that: 
     Hash references are usually not written inside the text.  
-    Instead the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
+    Instead, the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
     Furthermore, addressing by path 'images/Broken.jpg' has a few extra options. You can refine the address with additional constraint such as time or who created it.
 <a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>

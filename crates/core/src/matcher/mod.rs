@@ -1,5 +1,5 @@
 
-use std::ops::ControlFlow;
+use std::{ops::ControlFlow, cell::Cell};
 
 // Copyright Anton Sol
 //
@@ -26,10 +26,13 @@ pub type WatchIDExpr = TypedABE<Vec<u8>>;
 
 /// [[WatchEntry]] with no associated context
 pub type BareWatch = WatchEntry<()>;
+#[thread_local]
+static ENTRY_ID:Cell<usize>=Cell::new(0);
 
 #[derive(Debug)]
 /// Stored predicates, predicate state, identity, and associated ctx \<C\> ( usually a callback )
 pub struct WatchEntry<C> {
+    pub entry_id: usize,
     pub id: WatchID,
     pub tests: Vec<Box<dyn PktStreamTest>>,
     pub nth_query: u32,
@@ -74,6 +77,7 @@ impl<C> WatchEntry<C> {
         ensure!(i_new.has_any(), "watch budget empty");
         ensure!(i_query.info(nth_query).val.is_some(), "watch budget empty");
         Ok(WatchEntry {
+            entry_id: ENTRY_ID.update(|i| i.saturating_add(1)),
             id,
             query: Box::new(query),
             tests,
@@ -89,6 +93,7 @@ impl<C> WatchEntry<C> {
     }
     pub fn map<N>(self, new_ctx: N) -> (C, WatchEntry<N>) {
         let WatchEntry {
+            entry_id,
             tests,
             id,
             query,
@@ -104,6 +109,7 @@ impl<C> WatchEntry<C> {
         (
             ctx,
             WatchEntry {
+                entry_id,
                 tests,
                 id,
                 query,
@@ -172,6 +178,11 @@ impl<C> Default for Matcher<C> {
     }
 }
 impl<C> Matcher<C> {
+    pub fn get(&self, watch_id: &WatchIDRef) -> Option<&WatchEntry<C>>{
+        self
+            .watch_entries
+            .binary_search_by_key(&watch_id, |e| &e.id).ok().and_then(|i|self.watch_entries.get(i))
+    }
     pub fn register(&mut self, watch_e: WatchEntry<C>) -> Option<WatchEntry<C>> {
         let ok = watch_e.recv_bounds.high > linkspace_pkt::now().get();
         tracing::debug!(register_ok=?ok);

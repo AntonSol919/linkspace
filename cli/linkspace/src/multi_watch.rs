@@ -60,7 +60,7 @@ pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Resul
         .map_err(|_| anyhow::anyhow!("Thread failed?"))??;
     if linger {
         tracing::info!("stdin closed, run while work");
-        let _ = rx.run_while(None, None);
+        let _ = rx.run_while(None, None,None);
     }
     Ok(())
 }

@@ -29,7 +29,7 @@ struct Cli {
     linkspace: Option<PathBuf>,
     dgpe: String,
     #[clap(
-        default_value = "[hash:str]\\n[/links:\\t[ptr/2mini]\\t[tag:str]\\n]\\n[data_size:str]\\n[data/trim<:40/?a]"
+        default_value = "[hash:str]\\n[/links:\\t[ptr/2mini]\\t[tag:str]\\n]\\n[data_size:str]\\n[data/ltrim:40/?a]"
     )]
     /// eval for printing packets
     fmt: String,

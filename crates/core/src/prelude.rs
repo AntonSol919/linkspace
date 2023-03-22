@@ -6,7 +6,7 @@
 pub use std::ops::ControlFlow::*;
 pub use std::sync::Arc;
 
-pub use linkspace_pkt::*;
+pub use linkspace_pkt::{*,eval,exprs,Error};
 
 pub use crate::consts::*;
 pub use crate::env::queries::*;

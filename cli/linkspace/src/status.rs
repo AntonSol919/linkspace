@@ -69,7 +69,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
         let data = data_reader(&c.eval_ctx().dynr(),&mut buf)?;
         lk_linkpoint(domain, group, path, &[link], data, None)
     })?;
-    lk_process_while(&lk, Stamp::ZERO,Stamp::ZERO)?;
+    lk_process_while(&lk,None, Stamp::ZERO,Stamp::ZERO)?;
 
     return Ok(())
 }
@@ -138,9 +138,9 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
         isokc.set(true);
         write.handle_pkt(&pkt, lk.as_impl())?;
         if multi { ControlFlow::Continue(())}else {ControlFlow::Break(())}
-    }))?;
+    }),None)?;
     // We only have a single watch. Will be dropped after recv predicate becomes imposible.
-    lk_process_while(&lk, Stamp::ZERO,Stamp::ZERO)?;
+    lk_process_while(&lk,None, Stamp::ZERO,Stamp::ZERO)?;
     anyhow::ensure!(ok.get(),"no resposne after {:?}",timeout);
     Ok(())
 }

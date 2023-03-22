@@ -1,3 +1,4 @@
+
 h1{
     height: 1em;
     padding: 0px;
@@ -10,6 +11,7 @@ table , pre{
 body {
     background:#fdfdfd;
     color: #404040;
+    font-size: calc(15px + 0.390625vw);
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
     display: grid;
     grid-template-columns: min-content min-content auto auto auto 3em;
@@ -168,7 +170,7 @@ table thead th {
     line-height: 1.25em;
 }
 
-@media screen and (max-width: 480px) {
+@media screen and (max-width: 768px), (orientation: portrait) and (max-width:1024px) {
     body{
         margin:0px;
         grid-template-columns: auto auto auto;

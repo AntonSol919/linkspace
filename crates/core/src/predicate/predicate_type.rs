@@ -60,7 +60,7 @@ macro_rules! predty {
 predty!( enum PredicateType {
     Hash => ("hash",DATA,r"\[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]","the point hash"),
     Group => ("group",LINK,r"\[#:pub\]","group id"),
-    Domain => ("domain",LINK,r"\[a:example\]","domain - if fewer then 16 bytes, prepadded with \0"),
+    Domain => ("domain",LINK,r"\[a:example\]","domain - if fewer than 16 bytes, prepadded with \0"),
     Prefix => ("prefix",LINK,r"/hello/world","path prefix - only accepts '=' op"),
     Path => ("path",LINK,r"/hello/world","exact path - only accepts '=' op"),
     Pubkey => ("pubkey",SIGNATURE,r"\[@:me:local\]","public key used to sign point"),

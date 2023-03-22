@@ -598,15 +598,15 @@ pub mod key {
     /** linkspace stored identity
 
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
-    empty name defaults to 'me' ( i.e. \[@:name:local\] )
+    empty name defaults to ( i.e. \[@:local\] )
     **/
     pub fn lk_key(
         linkspace: &Linkspace,
         password: &[u8],
         name: &str,
-        new: bool,
+        create: bool,
     ) -> LkResult<SigningKey> {
-        super::varctx::lk_key(super::abe::ctx::ctx(().into())?,linkspace,password,name,new)
+        super::varctx::lk_key(super::abe::ctx::ctx(().into())?,linkspace,password,name,create)
         
     }
 }
@@ -621,14 +621,15 @@ pub mod linkspace {
     It connects to a database and a IPC event source
     Open or create with [lk_open].
     This can be called multiple times across threads and processes.
-    save with [lk_save] and get packets with [lk_get],
-    register callbacks with [lk_watch], and process new data with [lk_process] or [lk_process_while]
-    It is possible to nest lk_watch and lk_get calls.
-     **/
+    save with [lk_save].
+    Use [lk_process] or [lk_process_while] to update the reader
+    and get packets with [lk_get], [lk_get_all], and [lk_watch].
+    **/
     #[derive(Clone)]
     #[repr(transparent)]
     pub struct Linkspace(pub(crate) linkspace_common::runtime::Linkspace);
 
+    use linkspace_common::prelude::WatchIDRef;
     use tracing::debug_span;
 
     use super::*;
@@ -637,8 +638,8 @@ pub mod linkspace {
     /// will look at `path` or $LINKSPACE or '$HOME'
     /// and open 'PATH/linkspace' unless the basename of PATH is linkspacel 'linkspace'
     ///
-    /// A runtime is used to [lk_save] and [lk_get] packets.
-    /// [lk_watch] also reacts to new packets to saved by this or other processes/thread  when running [lk_process] or [lk_process_while]
+    /// A runtime is used in many arguments.
+    /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// You can open the same instance in multiple threads (sharing their db session & ipc ) and across multiple processes.
     /// moving an open linkspace across threads is not supported.
     pub fn lk_open(path: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
@@ -660,7 +661,7 @@ pub mod linkspace {
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
         linkspace_common::core::env::write_trait::save_pkt(&mut lk.0.get_writer(), pkt)
     }
-    /// [lk_watch] but only for currently indexed packets.
+    /// [lk_watch] but only for currently indexed packets. Don't forget to [lk_process]
     /// Terminates early when `cb` returns false
     pub fn lk_get_all(
         lk: &Linkspace,
@@ -679,11 +680,11 @@ pub mod linkspace {
         Ok(c)
     }
 
-    /// get a single packet
+    /// get a single packet. Don't forget to [lk_process]
     pub fn lk_get(lk: &Linkspace, query: &Query) -> LkResult<Option<NetPktBox>> {
         lk_get_ref(lk, query, &mut |v| v.as_netbox())
     }
-    /** read a single packet directly from disk.
+    /** read a single packet mmap-ed packet. Don't forget to [lk_process]
     This means that [NetPkt::net_header_mut] is unavailable.
     You can wrap it in a [crate::misc::ReroutePkt] to change this or [NetPkt::as_netbox] to allocate and mutate.
     **/
@@ -740,25 +741,27 @@ pub mod linkspace {
         }
     }
 
-    /// process the log of new packets and trigger callbacks
+    /// process the log of new packets and trigger callbacks. Updates the reader to the latest state.
     pub fn lk_process(rt: &Linkspace) -> Stamp {
         rt.0.process()
     }
-    /** process the log of new packets continiously
+    /** process the log of new packets continuously
 
     will return when:
     - max_wait has elapsed between new packets - return false
       e.g. lk_eval("[s:+1M]") or 0u64 to ignore
     - until time has been reached - returns false
       e.g. lk_eval("[now:+1M]") or 0u64 to ignore
+    - (watch_id,false) was triggered - returns true
+    - (watch_id,true) was finished - returns true
     - no more watch callbacks exists - returns true
     **/
-    pub fn lk_process_while(lk: &Linkspace, d_max_wait: Stamp, at_until: Stamp) -> LkResult<bool> {
+    pub fn lk_process_while(lk: &Linkspace,watch_id:Option<(&WatchIDRef,bool)>, d_max_wait: Stamp, at_until: Stamp) -> LkResult<bool> {
         let max_wait = (d_max_wait != Stamp::ZERO)
             .then_some(std::time::Duration::from_micros(d_max_wait.get()));
 
         let until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
-        lk.0.run_while(max_wait, until)
+        lk.0.run_while(max_wait, until,watch_id)
     }
 
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
@@ -766,6 +769,7 @@ pub mod linkspace {
             cb(&el.id, Query::from_impl(&*el.query))
         }
     }
+    #[derive(Debug)]
     pub struct LkInfo<'o> {
         pub path: &'o std::path::Path,
     }
@@ -877,10 +881,9 @@ pub mod varctx {
         linkspace: &Linkspace,
         password: &[u8],
         name: &str,
-        new: bool,
+        create: bool,
     ) -> LkResult<SigningKey> {
         use linkspace_common::protocols::lns;
-        let name = format!("{}:local",if name.is_empty(){"me"}else{name});
         let expr = parse_abe(&name)?;
         let name : lns::name::Name= eval(&ctx.as_dyn(), &expr)?.try_into()?;
         match lns::lookup_enckey(&linkspace.0, &name)?{
@@ -888,18 +891,10 @@ pub mod varctx {
                 Ok(linkspace_common::identity::decrypt(&enckey, password)?)
             }
             None => {
-                if new {
+                if create {
                     use super::key::*;
                     let key = lk_keygen();
                     let enckey = super::key::lk_keystr(&key, password);
-                    /*
-                    use std::env::{args, current_dir, current_exe};
-                    let notes = format!(
-                        "exec:{:?}\ndir:{:?}\nargs:{:?}",
-                        current_exe(),
-                        current_dir(),
-                        args()
-                    );*/
                     lns::setup_special_keyclaim(&linkspace.0, name, &enckey, false)?;
                     Ok(key)
                 } else {

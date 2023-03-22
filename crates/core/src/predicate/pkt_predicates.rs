@@ -300,6 +300,7 @@ impl PktPredicates {
                     FieldEnum::VarUBits3F => {
                         self.var_ubits[3].try_add(op, U32::try_from(val)?.get())?
                     }
+                    FieldEnum::IPathF => todo!(),
                     FieldEnum::PathComp0F => todo!(),
                     FieldEnum::PathComp1F => todo!(),
                     FieldEnum::PathComp2F => todo!(),

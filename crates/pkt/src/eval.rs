@@ -187,7 +187,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                 |lk: &Self, i: &[&[u8]]| {
                     match i.get(0).copied().unwrap_or(b"") {
                         b"abe" => Ok(lk.link.tag.to_abe_str().into_bytes()),
-                        b"str" => Ok(lk.link.tag.to_string().into_bytes()),
+                        b"str" => Ok(lk.link.tag.as_str(true).into_owned().into_bytes()),
                         b"" => Ok(lk.link.tag.0.to_vec()),
                         _ => bail!("unexpected fmt expect ?(str|abe)"),
                     }
@@ -241,6 +241,5 @@ fn pktfmt() {
     let ctx = pkt_ctx(ctx, &pkt);
     let abe = abe::parse_abe("[pkt] [data]").unwrap();
     let st = eval(&ctx,&abe).unwrap().concat();
-    let v = std::str::from_utf8(&st).unwrap();
-    panic!("OK {v}")
+    let _v = std::str::from_utf8(&st).unwrap();
 }

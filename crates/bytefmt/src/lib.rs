@@ -558,14 +558,14 @@ impl EvalScopeImpl for B64EvalFnc {
             ("2mini",1..=1,"encode mini",|_,i:&[&[u8]]| Ok(mini_b64(i[0]).into_bytes())),
             ( @C "b", 1..=1, None, "decode base64",
                |_,i:&[&[u8]],_,_| Ok(base64_decode(i[0])?),
-               |_,b:&[u8],opts:&[ABE]| -> ApplyResult{
+               |_,b:&[u8],opts:&[ABE]| -> ApplyResult<String>{
                    if opts.is_empty(){
-                       return ApplyResult::Value(format!("[b:{}]",base64(b)).into_bytes());
+                       return ApplyResult::Value(format!("[b:{}]",base64(b)));
                    }
                    for len_st in opts.iter().filter_map(|v| as_bytes(v).ok()){
                        let len = std::str::from_utf8(len_st)?.parse::<u32>()?;
                        if len as usize == b.len() {
-                           return ApplyResult::Value(format!("[b:{}]",base64(b)).into_bytes());
+                           return ApplyResult::Value(format!("[b:{}]",base64(b)));
                        }
                    }
                    ApplyResult::NoValue

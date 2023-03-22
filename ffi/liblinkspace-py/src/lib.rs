@@ -13,7 +13,7 @@
 )]
 
 use ref_cast::RefCast;
-use std::{ops::ControlFlow, path::Path, time::Duration};
+use std::{ops::ControlFlow, path::{Path, PathBuf}, time::Duration};
 
 use liblinkspace::{prelude::*, abe::ctx::{UserData, self}};
 use pyo3::{
@@ -94,7 +94,7 @@ fn common_args(
     domain: Option<&[u8]>,
     path: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
-    stamp: Option<&[u8]>,
+    create_stamp: Option<&[u8]>,
 ) -> anyhow::Result<(GroupID, Domain, IPathBuf, Vec<Link>, Option<Stamp>)> {
     let group = group
         .map(|group| GroupID::try_fit_bytes_or_b64(group))
@@ -107,11 +107,15 @@ fn common_args(
     let path = match path {
         None => IPathBuf::new(),
         Some(p) => {
-            let path = p
-                .iter()?
-                .map(|i| i.and_then(bytelike))
-                .try_collect::<Vec<_>>()?;
-            IPathBuf::try_from_iter(path)?
+            if let Ok(p) = p.downcast::<PyBytes>(){
+                SPath::from_slice(p.as_bytes())?.into_spathbuf().try_ipath()?
+            }else {
+                let path = p
+                    .iter()?
+                    .map(|i| i.and_then(bytelike))
+                    .try_collect::<Vec<_>>()?;
+                IPathBuf::try_from_iter(path)?
+            }
         }
     };
     let links = links
@@ -122,12 +126,19 @@ fn common_args(
             ptr: B64(l.ptr),
         })
         .collect();
-    let stamp = stamp.map(|p| Stamp::try_from(p)).transpose()?;
-    Ok((group, domain, path, links, stamp))
+    let create_stamp = create_stamp.map(|p| Stamp::try_from(p)).transpose()?;
+    Ok((group, domain, path, links, create_stamp))
 }
 
 #[pyclass]
 pub struct SigningKey(pub liblinkspace::SigningKey);
+#[pymethods]
+impl SigningKey{
+    #[getter]
+    fn pubkey<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+        PyBytes::new(py, &*self.0.pubkey())
+    }
+}
 
 use tracing::debug_span;
 
@@ -144,14 +155,16 @@ pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<Sign
     Ok(SigningKey(liblinkspace::key::lk_keyopen(id, password)?))
 }
 
+const E:&[u8]=&[];
 #[pyfunction]
+#[pyo3(signature =(lk,password=E,name="me:local",create=false))]
 pub fn lk_key(
     lk: &Linkspace,
     password: &[u8],
-    id: Option<&str>,
-    new: Option<bool>,
+    name: &str,
+    create: bool,
 ) -> anyhow::Result<SigningKey> {
-    liblinkspace::lk_key(&lk.0, password, id.unwrap_or(""), new.unwrap_or(false)).map(SigningKey)
+    liblinkspace::lk_key(&lk.0, password, name, create).map(SigningKey)
 }
 
 #[pyfunction]
@@ -167,11 +180,11 @@ pub fn lk_linkpoint(
     path: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     data: Option<&PyAny>,
-    stamp: Option<&[u8]>,
+    create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
-    let (group, domain, path, links, stamp) = common_args(group, domain, path, links, stamp)?;
-    let pkt = liblinkspace::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, stamp)?;
+    let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
+    let pkt = liblinkspace::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
@@ -182,12 +195,12 @@ pub fn lk_keypoint(
     path: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     data: Option<&PyAny>,
-    stamp: Option<&[u8]>,
+    create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
-    let (group, domain, path, links, stamp) = common_args(group, domain, path, links, stamp)?;
+    let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
     let pkt =
-        liblinkspace::point::lk_keypoint_ref(domain, group, &*path, &*links, data, stamp, &key.0)?;
+        liblinkspace::point::lk_keypoint_ref(domain, group, &*path, &*links, data, create, &key.0)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 
@@ -246,10 +259,15 @@ pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> 
 pub struct Linkspace(pub(crate) liblinkspace::Linkspace);
 
 #[pyfunction]
-pub fn lk_open(path: Option<&str>, create: Option<bool>) -> anyhow::Result<Linkspace> {
+#[pyo3(signature =(path="",create=false))]
+/// open a linkspace runtime.
+///
+/// will look at `path` or $LINKSPACE or '$HOME'
+/// and open 'PATH/linkspace' unless the basename of PATH is linkspace 'linkspace'
+pub fn lk_open(path: &str, create: bool) -> anyhow::Result<Linkspace> {
     Ok(Linkspace(liblinkspace::lk_open(
-        path.map(Path::new),
-        create.unwrap_or(false),
+        if path.is_empty(){None} else {Some(Path::new(path))},
+        create,
     )?))
 }
 #[pyfunction]
@@ -377,12 +395,16 @@ continiously trigger watch callbacks unless
 e.g. lk_eval("{s:+1M}") or 0u64 to ignore
 - until time has been reached - returns false
 e.g. lk_eval("{now:+1M}") or 0u64 to ignore
+- if !watch_finish && watch_id was triggered - returns true
+- if watch_finish && watch_id was finished - returns true
 - no more watch callbacks exists - returns true
 
  **/
 #[pyfunction]
 pub fn lk_process_while(
     lk: &Linkspace,
+    watch: Option<&[u8]>,
+    watch_finish:Option<bool>,
     max_wait: Option<&[u8]>,
     until: Option<&[u8]>,
 ) -> anyhow::Result<bool> {
@@ -398,8 +420,9 @@ pub fn lk_process_while(
     const CHECK_SIGNALS_INTERVAL: Stamp = Stamp::new(Duration::SECOND.as_micros() as u64);
     let mut check_at = now().saturating_add(CHECK_SIGNALS_INTERVAL);
     let mut empty_watches = false;
+    let watch = watch.map(|id| (id,watch_finish.unwrap_or(false)));
     while !empty_watches && until > check_at {
-        empty_watches = liblinkspace::lk_process_while(&lk.0, max_wait, check_at)?;
+        empty_watches = liblinkspace::lk_process_while(&lk.0,watch, max_wait, check_at)?;
         tracing::trace!("Checking signals");
         Python::with_gil(|py| py.check_signals())?;
         check_at = check_at.saturating_add(CHECK_SIGNALS_INTERVAL);
@@ -425,11 +448,16 @@ pub fn lk_status_set(
         objtype,
         instance,
     };
+    tracing::info!("setup status {:?}",status_ctx);
     lk_status_set(&lk.0, status_ctx, move |_lk, domain, group, path, link| {
+        tracing::info!("get gil status");
         Python::with_gil(|py| {
             let val = callback.call0(py)?;
             let bytes = bytelike(val.as_ref(py))?;
-            liblinkspace::lk_linkpoint(domain, group, path, &[link], bytes, None)
+
+            let pkt = liblinkspace::lk_linkpoint(domain, group, path, &[link], bytes, None);
+            tracing::info!("Status result {:?}",pkt);
+            pkt
         })
     })
 }
@@ -442,6 +470,7 @@ pub fn lk_status_poll(
     domain: &[u8],
     objtype: &[u8],
     instance: Option<&[u8]>,
+    watch_id: Option<&[u8]>
 ) -> anyhow::Result<()> {
     use liblinkspace::conventions::status::*;
     let timeout = Stamp::try_from(timeout)?;
@@ -458,7 +487,7 @@ pub fn lk_status_poll(
         on_close: None,
         on_err:None
     };
-    lk_status_poll(&lk.0, status_ctx, timeout, handler)
+    lk_status_poll(&lk.0, status_ctx, timeout, handler,watch_id)
 }
 
 #[pyfunction]
@@ -466,6 +495,23 @@ pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Res
     let hash = liblinkspace::conventions::lk_pull(&lk.0, &query.0)?;
     Ok(PyBytes::new(py, &hash.0))
 }
+
+
+#[pyclass]
+#[pyo3(get_all)]
+pub struct LkInfo {
+    pub path:PathBuf
+}
+#[pyfunction]
+pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
+    let liblinkspace::linkspace::LkInfo{
+        path
+    }= liblinkspace::linkspace::lk_info(&lk.0);
+    Ok(LkInfo{path:path.into()})
+}
+
+
+
 
 /** linkspace python bindings.
 **/
@@ -515,9 +561,11 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_all, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_watch, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_list_watches, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process_while, m)?)?;
+
+    m.add_function(wrap_pyfunction!(crate::lk_list_watches, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_info, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_key, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_pull, m)?)?;
@@ -541,3 +589,4 @@ pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyByt
     let sp = liblinkspace::prelude::spath_buf(&path);
     Ok(PyBytes::new(py, &sp.spath_bytes()))
 }
+

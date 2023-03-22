@@ -15,26 +15,23 @@ pub fn get_private_claim<'o>(
     name: &Name,
     admin: Option<PubKey>
 ) -> ApplyResult<RecvPktPtr<'o>> {
-    ApplyResult::Value(get_private_claims(reader, name,admin)?.next()?)
+    ApplyResult::Value(get_private_claims(reader, name,true,admin)?.next()?)
 }
+
 pub fn get_private_claims<'o>(
     reader: &'o ReadTxn,
     name: &Name,
+    exact:bool,
     admin: Option<PubKey>
 ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'o>>> {
     let path = name.claim_ipath();
-    let mut preds = PktPredicates::from_gdp(PRIVATE, LNS, &path).create_before(now())?;
+    let mut preds = PktPredicates::from_gdp(PRIVATE, LNS, &path,exact).create_before(now())?;
+    preds.state.i_branch = TestSet::new_eq(0);
     if let Some(v) = admin {
         preds.pubkey.add(TestOp::Equal, v.into())
     }
     Ok(reader.query_tree(Order::Desc, &preds))
 }
-
-
-
-
-
-
 
 
 pub (crate) fn setup_local_keyclaim(

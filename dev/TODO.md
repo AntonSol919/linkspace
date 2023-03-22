@@ -50,6 +50,7 @@ LNS pubkeys should have the option to favor one name.
 
 # Internals
 
+- Detangle field_ids abe and ruletype
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.
 - make testset its own crate ( required for selectlink interface )
 - alternative naming for abe::expr::list, ablist, abtxt

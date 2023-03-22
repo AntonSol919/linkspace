@@ -154,6 +154,9 @@ enum Command {
         opts: CLIQuery,
     },
 
+    /// runtime - create a new instance (alternative to the '--init' argument)
+    Init,
+
     /** runtime - save packets from stdin to database
 
     WARN : By default this will increment hop.
@@ -311,6 +314,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             use std::io::Read;
             let mut bytes = vec![];
             std::io::stdin().read_to_end(&mut bytes)?;
+            tracing::trace!(?bytes);
             let ctx = common.eval_ctx();
             let r = linkspace_common::abe::eval::encode(&ctx, &bytes, &opts,ignore_err > 0 );
             if ignore_err > 1 && r.is_err() {
@@ -484,6 +488,12 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::PollStatus(ps) => status::poll_status(common, ps)?,
         Command::SetStatus(ss) => status::set_status(common, ss)?,
+        Command::Init => {
+            common.linkspace.init = true;
+            let lk = common.runtime()?.into();
+            let x = liblinkspace::linkspace::lk_info(&lk);
+            println!("{:?}",x);
+        },
     }
     Ok(())
 }

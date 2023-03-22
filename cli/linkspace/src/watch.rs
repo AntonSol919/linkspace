@@ -112,7 +112,7 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
         let span = debug_span!("linkspace-cli watch");
         let out = common.multi_writer(write);
         rt.watch_query(&query, out, span)?;
-        let _ = rt.run_while(None, None);
+        let _ = rt.run_while(None, None,None);
     };
     Ok(())
 }

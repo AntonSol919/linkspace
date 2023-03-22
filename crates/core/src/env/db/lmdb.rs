@@ -56,7 +56,7 @@ fn open_env(path: &Path, mut mapsize: usize, flags: EnvironmentFlags) -> Environ
         tracing::warn!("lmdb on 32-bit is capped at {DEFAULT_MAP_SIZE} ( 2^31 )");
         mapsize = DEFAULT_MAP_SIZE;
     }
-    for i in 0..20 {
+    for i in 0..5 {
         err = match Environment::new()
             .set_max_dbs(4)
             .set_flags(flags)
@@ -71,7 +71,7 @@ fn open_env(path: &Path, mut mapsize: usize, flags: EnvironmentFlags) -> Environ
             panic!("{os_err:?}\nLINKSPACE_LMDB_MAPSIZE={mapsize}");
         }
         tracing::warn!(?i, ?err, ?os_err, "DB Open");
-        if i == 19 {
+        if i == 5 {
             tracing::error!(?i, ?err, ?os_err, "DB Open");
         }
         std::thread::sleep(std::time::Duration::from_millis(50 + 200 * i));

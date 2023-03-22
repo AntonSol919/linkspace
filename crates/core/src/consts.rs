@@ -25,7 +25,7 @@ lazy_static! {
             tag: ab(b""),
             ptr: B64([0; 32])
         }],
-        &[],
+        &[0],
         Stamp::new(0),
         NetPktHeader::EMPTY
     )

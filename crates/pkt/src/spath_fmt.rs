@@ -78,6 +78,7 @@ impl SPathBuf {
                 )));
             }
             let lst = it.collect::<Result<Vec<_>, _>>()?;
+            if lst.len() == 1 && lst[0].is_empty() { return Ok(SPathBuf::new())}
             return Ok(SPathBuf::try_from_iter(lst)?);
         }
         Ok(SPathBuf::new())
@@ -305,13 +306,14 @@ fn test_encode() {
     assert!(spath_str("noopen").is_err());
     eq("/ok", &[b"ok"]);
     assert!(spath_str("/trail/").is_err());
-    assert!(spath_str(r#"/kk{kk"#).is_err());
-    eq("/\\{k", &[b"{k"]);
+    assert!(spath_str(r#"/kk[kk"#).is_err());
+    eq("/\\[k", &[b"[k"]);
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct SPathFncs;
-impl EvalScopeImpl for SPathFncs {
+pub struct PathFE;
+
+impl EvalScopeImpl for PathFE {
     fn about(&self) -> (String, String) {
         (
             "path".into(),
@@ -331,6 +333,10 @@ impl EvalScopeImpl for SPathFncs {
             ensure!(end >= start ,"end < start");
             Ok(start..end)
         }
+        fn encode_sp(_:&PathFE,b:&[u8],_:&[ABE]) -> ApplyResult<String>{
+           SPath::from_slice(b).ok().map(|p|format!("[/{p}]")).into()
+        }
+        
         crate::abe::fncs!([
             ("?sp", 1..=1, "decode spath", |_, i: &[&[u8]]| Ok(
                 SPath::from_slice(i[0])?.to_string().into_bytes()
@@ -368,11 +374,13 @@ impl EvalScopeImpl for SPathFncs {
                 "build ipath from arguments",
                 |_, i: &[&[u8]]| { Ok(IPathBuf::try_from_iter(i)?.ipath_bytes().to_vec()) }
             ),
-            (
+            (@C
                 "sp",
                 1..=8,
+                None,
                 "build spath from arguments",
-                |_, i: &[&[u8]]| { Ok(SPathBuf::try_from_iter(i)?.spath_bytes().to_vec()) }
+                |_, i: &[&[u8]],_,_| { Ok(SPathBuf::try_from_iter(i)?.spath_bytes().to_vec()) },
+                encode_sp
             )
         ])
     }
@@ -385,6 +393,16 @@ impl EvalScopeImpl for SPathFncs {
                     ApplyResult::Value(p.unwrap())
                 },
                 info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. [//some/spath/val] creates the byte for /some/spath/val" }
+            },
+            ScopeEval {
+                apply: |_,inp:&[ABE],scope:&dyn Scope| {
+                    let mut lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
+                    let mut skip_first = true;
+                    lst.lst.retain(|v| std::mem::take(&mut skip_first) ||  !v.0.is_empty());
+                    let p = SPathBuf::try_from(lst)?;
+                    ApplyResult::Value(p.unwrap())
+                },
+                info: ScopeEvalInfo { id: "~", help: "similar to '//' but forgiving on empty components" }
             }
         ]
     }

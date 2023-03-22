@@ -17,7 +17,6 @@ lk_status_poll(lk,
                domain=b"exchange",
                group=PUBLIC,
                objtype=b"process")
-
 lk_process_while(lk)
 
 if len(status) == 0:
