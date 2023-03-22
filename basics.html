@@ -90,8 +90,8 @@
 <div>
   <p>
     A web-servers is software that serve such a file/folder tree
-    and for some changes does additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
-    When a users wants to add things that overlap with previous stuff a server has multiple options.
+    and does some additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
+    When a user wants to add new entries that overlap with previous stuff a server has multiple options.
     After all, it is the only 'real' copy we can point to.
     However, this has profound <a href="./why.html">consequences</a>.
   </p>
@@ -129,8 +129,9 @@
 
 <div>
   <p>
-    The hash is unique numbers for an entire entry, including the path.<br>
-    Beyond merging. This also gives us the option to pick if we want to refer to things by a path "image/Broken.jpg" or by their hash.
+    The hash is a unique numbers for an each entry. It depends on only on the data but also the path.<br>
+    This allows us to merge two trees.<br>
+    Whats more, we also get the option to pick if we want to refer to things by a path "image/Broken.jpg" or by their hash.
   </p>
 </div>
 
@@ -177,7 +178,10 @@
 <div>
     <p>
       Linkspace goes further.
-        Each entry is set inside a Domain, a Group, has a creation date, and <i>can</i> be signed.
+      Each entry is set inside a Domain and a Group.
+      A domain name is chosen by a developer creating a (graphical) interface. The domain name signals what app to use, and how things are organized.
+      The group is set by the user. It exits because we say it exists.
+      Finally, each entry has a creation date and <i>can</i> be signed. 
     </p>
     </div>
 
@@ -203,17 +207,6 @@
 
 <div>
     <p>
-        A domain name is chosen by a developers creating a (graphical) interface.
-        It signals what app to use, and how things are organized.
-        The group is setup by the user. It exits because members say it exists.
-    </p>
-    <p>
-        A exchange process following the <a href="./docs/guide/index.html#lk_pull">pull convention</a> ensures the data the domain app wants is retrieved.
-        One type of exchange process could connect to a single host server for all members. 
-        Another type might exchange data directly between members.
-        This is what is meant by the method of exchange being an extraneous concern. 
-    </p>
-    <p>
       These are the basics ideas<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>..<br>
       For more details and some advanced concepts see the <a href="./docs/guide/index.html">Guide</a>.
     </p>
@@ -230,7 +223,7 @@ The tree described here is the general case where primary_key has variable lengt
 <li id="fn2" role="doc-endnote"><p>
     With the most notable simplification being that: 
     Hash references are usually not written inside the text.  
-    Instead the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
+    Instead, the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
     Furthermore, addressing by path 'images/Broken.jpg' has a few extra options. You can refine the address with additional constraint such as time or who created it.
 <a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
