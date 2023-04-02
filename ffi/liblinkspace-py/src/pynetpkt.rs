@@ -99,6 +99,14 @@ impl Pkt {
     pub fn recv<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
         self.0.recv().map(|p| PyBytes::new(py, &p.0))
     }
+    #[getter] pub fn comp0<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp0())}
+    #[getter] pub fn comp1<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp1())}
+    #[getter] pub fn comp2<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp2())}
+    #[getter] pub fn comp3<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp3())}
+    #[getter] pub fn comp4<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp4())}
+    #[getter] pub fn comp5<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp5())}
+    #[getter] pub fn comp6<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp6())}
+    #[getter] pub fn comp7<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().comp7())}
     pub fn path_list<'p>(&self, py: Python<'p>) -> Option<Vec<&'p PyBytes>> {
         self.0.ipath().map(|p| {
             p.comps_bytes()[0..*p.path_len() as usize]

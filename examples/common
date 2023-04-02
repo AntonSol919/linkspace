@@ -1,0 +1,3 @@
+export GROUP=[#:pub]
+export PYTHONPATH=$PWD
+export PATH=$PATH:$(find $PWD -maxdepth 2 -mindepth 1 -type d | sed -z 's/\n/:/g')

@@ -75,10 +75,10 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
     let path = lk_status_path(status)?;
     let mut q = lk_query(None);
     let create_after = now().saturating_sub(max_age);
-    lk_query_push(&mut q, "group", "=", &*PRIVATE)?;
-    lk_query_push(&mut q, "domain", "=", &*domain)?;
-    lk_query_push(&mut q, "create", ">", &*create_after)?;
-    lk_query_push(&mut q, "prefix", "=", path.spath_bytes())?;
+    q = lk_query_push(q, "group", "=", &*PRIVATE)?;
+    q = lk_query_push(q, "domain", "=", &*domain)?;
+    q = lk_query_push(q, "create", ">", &*create_after)?;
+    q = lk_query_push(q, "prefix", "=", path.spath_bytes())?;
     Ok(q)
 }
 
@@ -111,14 +111,14 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: im
     }
     let wait_until = last_request.saturating_add(d_timeout);
     tracing::debug!(?wait_until,"Waiting until");
-    lk_query_push(&mut query, "data_size", ">", &*U16::ZERO)?;
-    lk_query_push(&mut query, "links_len", ">", &*U16::ZERO)?;
-    lk_query_push(&mut query, "recv", "<", &*wait_until)?;
-    match watch_id{
-        Some(id) => {lk_query_push(&mut query, "", "watch", id)?;},
+    query = lk_query_push(query, "data_size", ">", &*U16::ZERO)?;
+    query = lk_query_push(query, "links_len", ">", &*U16::ZERO)?;
+    query = lk_query_push(query, "recv", "<", &*wait_until)?;
+    query = match watch_id{
+        Some(id) => lk_query_push(query, "", "watch", id)?,
         None => {
             let id = [b"status" as &[u8],&*now()].concat(); 
-            lk_query_push(&mut query, "", "watch", &id)?;
+            lk_query_push(query, "", "watch", &id)?
         },
     };
     lk_watch2(lk, &query, cb,span)?;
@@ -155,12 +155,12 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
 
     let mut q = lk_query(None);
     let prefix = lk_status_path(LkStatus { instance:None, ..status})?;
-    lk_query_push(&mut q, "data_size", "=", &*U16::ZERO)?;
-    lk_query_push(&mut q, "links_len", "=", &*U16::ZERO)?;
-    lk_query_push(&mut q, "prefix", "=", prefix.spath_bytes())?;
+    q = lk_query_push(q, "data_size", "=", &*U16::ZERO)?;
+    q = lk_query_push(q, "links_len", "=", &*U16::ZERO)?;
+    q = lk_query_push(q, "prefix", "=", prefix.spath_bytes())?;
     // We only care about new packets. Worst case a request was received and timeout between our init and this cb.
-    lk_query_push(&mut q, "i_index", "<", &*U32::ZERO)?;
-    lk_query_push(&mut q, "", "watch", &[b"status-update" as &[u8],&*now()].concat())?;
+    q = lk_query_push(q, "i_index", "<", &*U32::ZERO)?;
+    q = lk_query_push(q, "", "watch", &[b"status-update" as &[u8],&*now()].concat())?;
     lk_watch2(&lk, &q, cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
         let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype};
         let p = pkt.get_ipath();

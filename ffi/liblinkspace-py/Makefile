@@ -16,6 +16,13 @@ watch-dev: setup_env
 doc: build
 	. .env/bin/activate && pdoc lkpy
 
+# this is a temporary hack https://pyo3.rs/v0.18.2/python_typing_hints
+typestub: setup_env
+	. .env/bin/activate && (stubgen -p lkpy)
+	mv out/lkpy/lkpy.pyi ./
+	cp ./lkpy.pyi ../../target/debug/
+	rm -r out
+
 build: setup_env
 	. .env/bin/activate && (  maturin build )
 

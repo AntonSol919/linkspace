@@ -57,11 +57,11 @@ pub fn base64_decode(st: impl AsRef<[u8]>) -> Result<Vec<u8>, DecodeError> {
     base64::decode_config(st, base64::URL_SAFE_NO_PAD)
 }
 
-pub fn fmt_b64(b: &[u8], full: bool) -> String {
-    if full {
-        base64(b)
-    } else {
+pub fn b64(b: &[u8], mini: bool) -> String {
+    if mini{
         mini_b64(b)
+    } else {
+        base64(b)
     }
 }
 pub fn mini_b64(v: &[u8]) -> String {
@@ -72,7 +72,7 @@ pub fn mini_b64(v: &[u8]) -> String {
     if v.len() <= 12 {
         return st;
     }
-    r.push_str(&st[0..4]);
+    r.push_str(&st[0..6]);
     r.push_str(&":".repeat(padc / 2));
     if padc % 2 != 0 {
         r.push('.');
@@ -278,23 +278,7 @@ impl<const L: usize> ABEValidator for AB<[u8; L]> {
     }
 }
 
-// const equivilant for AsRef<[u8]>
-pub trait ConstByteRef {
-    const AS_REF: for<'o> fn(&'o Self) -> &'o [u8];
-}
-impl ConstByteRef for u8 {
-    const AS_REF: for<'o> fn(&'o Self) -> &'o [u8] = std::slice::from_ref;
-}
-impl ConstByteRef for str {
-    const AS_REF: for<'o> fn(&'o Self) -> &'o [u8] = |v| v.as_bytes();
-}
-impl ConstByteRef for [u8] {
-    const AS_REF: for<'o> fn(&'o Self) -> &'o [u8] = |v| v;
-}
 
-impl<const L: usize> ConstByteRef for AB<[u8; L]> {
-    const AS_REF: fn(&Self) -> &[u8] = |b| &b.0;
-}
 impl<N: AsRef<[u8]>> AsRef<[u8]> for AB<N> {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
@@ -373,6 +357,11 @@ where
     }
 }
 
+impl<N: AsRef<[u8]>> AsRef<[u8]> for B64<N> {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
 impl<N> AsRef<N> for B64<N> {
     #[inline(always)]
     fn as_ref(&self) -> &N {
@@ -432,12 +421,7 @@ impl<const L: usize> ABEValidator for B64<[u8; L]> {
         Ok(())
     }
 }
-impl<const L: usize> AsRef<[u8]> for B64<[u128; L]> {
-    #[inline(always)]
-    fn as_ref(&self) -> &[u8] {
-        Self::AS_REF(self)
-    }
-}
+
 
 impl<N> B64<N>
 where
@@ -451,11 +435,7 @@ where
     }
 }
 
-impl<const L: usize> AsRef<[u8]> for B64<[u8; L]> {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
+
 impl<N> Borrow<N> for B64<N> {
     fn borrow(&self) -> &N {
         &self.0
@@ -516,13 +496,7 @@ impl<const L: usize> TryFrom<&[u8]> for B64<[u8; L]> {
     }
 }
 
-impl<const L: usize> ConstByteRef for B64<[u8; L]> {
-    const AS_REF: fn(&Self) -> &[u8] = |b| &b.0;
-}
-impl<const L: usize> ConstByteRef for B64<[u128; L]> {
-    const AS_REF: fn(&Self) -> &[u8] =
-        |b: &Self| unsafe { std::slice::from_raw_parts(b.0.as_ptr() as *const u8, L * 16) };
-}
+
 impl<const N: usize> FromStr for B64<[u8; N]> {
     type Err = base64::DecodeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {

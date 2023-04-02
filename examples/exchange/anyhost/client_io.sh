@@ -22,8 +22,10 @@ lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
 lk set-status exchange $GROUP process anyhost-client --data "abe:OK\nPID:$$\nSESSION:$SESSION" &
 
+export LINKSPACE_NO_CHECK=true
+
 # save reads from stdin, ie. the server 
-lk save --new db --new stdout \
+LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
     | lk printf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
@@ -40,7 +42,7 @@ lk --private watch --new "[f:exchange]:[#:0]:/pull/$GROUP:**" \
 
 
 # This group exchange requires us to send all the data to the server
-lk watch --bare --mode log-asc -- "group:=:$GROUP" "hop:=:[:0/u32]" \
+lk watch --bare --mode log-asc -- "group:=:$GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
     | lk get-links \
     | lk dedup \
     | lk printf --inspect "[now:str] SENDING [hash:str]" \

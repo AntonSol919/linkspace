@@ -34,7 +34,7 @@ impl DGPDWatchCLIOpts {
         for e in it.chain(exprs){
             tracing::trace!(?e, "add expr");
             let e = e.eval(&ctx)?;
-            query.add(vec![e])?;
+            query.add_stmt(e)?;
         }
         Ok(query)
     }

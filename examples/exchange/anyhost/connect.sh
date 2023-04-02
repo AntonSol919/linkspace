@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
 cd "$(dirname "$0")"
 lk key --password ${PASS:-""}
 export SERVER=${SERVER:-${1:-"127.0.0.1:5020"}}

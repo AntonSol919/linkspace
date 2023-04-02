@@ -387,7 +387,6 @@ pub fn parse_abe(st: &str) -> Result<Vec<ABE>, ASTParseError> {
     parse_abe_b(st.as_ref())
 }
 
-// TODO - this is inefficient
 pub fn parse_ablist_b(st:&[u8]) -> anyhow::Result<crate::eval::ABList>{
     let abe = parse_abe_b(st)?;
     abe.as_slice().try_into().map_err(|e| anyhow!("expr not supported - {e}"))

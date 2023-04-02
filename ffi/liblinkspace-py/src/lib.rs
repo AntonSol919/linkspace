@@ -12,10 +12,11 @@
     duration_constants
 )]
 
+use anyhow::Context;
 use ref_cast::RefCast;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::Duration};
 
-use liblinkspace::{prelude::*, abe::ctx::{UserData, self}};
+use liblinkspace::{prelude::*, abe::ctx::{UserData, self} };
 use pyo3::{
     prelude::*,
     types::{PyBytes,  PyTuple},
@@ -247,7 +248,13 @@ pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>) -> anyho
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
     let out= liblinkspace::varctx::lk_eval(uctx, expr )?;
-    Ok(String::from_utf8(out)?)
+    match String::from_utf8(out){
+        Ok(v) => Ok(v),
+        Err(e) => {
+            let lossy = String::from_utf8_lossy(e.as_bytes()).into_owned();
+            Err(e).context(anyhow::anyhow!("Result '{lossy}' contains invalid utf8"))
+        }
+    }
 }
 #[pyfunction]
 pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> {
@@ -260,10 +267,6 @@ pub struct Linkspace(pub(crate) liblinkspace::Linkspace);
 
 #[pyfunction]
 #[pyo3(signature =(path="",create=false))]
-/// open a linkspace runtime.
-///
-/// will look at `path` or $LINKSPACE or '$HOME'
-/// and open 'PATH/linkspace' unless the basename of PATH is linkspace 'linkspace'
 pub fn lk_open(path: &str, create: bool) -> anyhow::Result<Linkspace> {
     Ok(Linkspace(liblinkspace::lk_open(
         if path.is_empty(){None} else {Some(Path::new(path))},
@@ -274,17 +277,26 @@ pub fn lk_open(path: &str, create: bool) -> anyhow::Result<Linkspace> {
 pub fn lk_save(runtime: &Linkspace, pkt: &Pkt) -> anyhow::Result<bool> {
     Ok(liblinkspace::lk_save(&runtime.0, pkt.0.netpktptr())?)
 }
+#[pyfunction]
+pub fn lk_save_all<'o>(runtime: &Linkspace, pkts: &'o PyAny) -> anyhow::Result<usize> {
+    let pkts :Vec<Pkt>= pkts.iter()?.map(|o| o.and_then(|o:&PyAny| o.extract())).try_collect()?;
+    let lst :Vec<_>= pkts.iter().map(|p| p.0.netpktptr() as &dyn NetPkt).collect();
+    Ok(liblinkspace::linkspace::lk_save_all(&runtime.0, &lst)?)
+}
 
 #[pyclass]
 #[derive(Clone)]
 pub struct Query(pub(crate) liblinkspace::Query);
+#[pymethods]
+impl Query{
+    pub fn __str__(&self) -> String { lk_query_print(self, true) }
+}
 
 #[pyfunction]
 pub fn lk_query(copy_from: Option<&Query>) -> Query {
     Query(liblinkspace::lk_query(copy_from.map(|v| &v.0)))
 }
 #[pyfunction]
-/// A short hand for [:mode:hash-asc,i:=:{u32:0},hash:=:HASH]
 pub fn lk_hash_query(hash: &PyAny) -> anyhow::Result<Query> {
     let hash = LkHash::try_fit_bytes_or_b64(bytelike(hash)?)?;
     Ok(Query(liblinkspace::query::lk_hash_query(hash)))
@@ -295,24 +307,27 @@ fn bytelike(p: &PyAny) -> PyResult<&[u8]> {
 }
 
 #[pyfunction]
+#[pyo3(signature =(query,*statements,pkt=None,argv=None))]
 pub fn lk_query_parse(
-    query: &mut Query,
-    statements: &str,
+    query: Query,
+    statements: &PyTuple,
     pkt: Option<&Pkt>,
     argv: Option<&PyAny>,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<Query> {
     let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
         .transpose()?
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
-    let changed = liblinkspace::varctx::lk_query_parse(uctx,&mut query.0, &statements)?;
-    Ok(changed)
+    let lst :Vec<&str> = statements.iter().map(|p| p.extract::<&str>()).try_collect()?;
+    let query = liblinkspace::varctx::lk_query_parse(uctx,query.0, &*lst)?;
+    Ok(Query(query))
 }
 #[pyfunction]
-pub fn lk_query_push(query: &mut Query, field: &str, op: &str, bytes: &PyAny) -> LkResult<bool> {
-    liblinkspace::lk_query_push(&mut query.0, field, op, bytelike(bytes)?)
+pub fn lk_query_push(query: Query, field: &str, op: &str, bytes: &PyAny) -> LkResult<Query> {
+    let q = liblinkspace::lk_query_push(query.0, field, op, bytelike(bytes)?)?;
+    Ok(Query(q))
 }
 #[pyfunction]
 #[pyo3(signature =(query,as_expr=false))]
@@ -342,6 +357,7 @@ pub fn lk_get(lk: &Linkspace, query: &Query) -> anyhow::Result<Option<Pkt>> {
     liblinkspace::linkspace::lk_get_ref(&lk.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
+// Returning an iterator would force us to keep the readtxn open
 pub fn lk_get_all(
     py: Python,
     lk: &Linkspace,
@@ -389,17 +405,6 @@ pub fn lk_process(lk: &Linkspace) -> [u8; 8] {
     liblinkspace::lk_process(&lk.0).0
 }
 
-/**
-continiously trigger watch callbacks unless
-- max_wait has elapsed between new packets - return false
-e.g. lk_eval("{s:+1M}") or 0u64 to ignore
-- until time has been reached - returns false
-e.g. lk_eval("{now:+1M}") or 0u64 to ignore
-- if !watch_finish && watch_id was triggered - returns true
-- if watch_finish && watch_id was finished - returns true
-- no more watch callbacks exists - returns true
-
- **/
 #[pyfunction]
 pub fn lk_process_while(
     lk: &Linkspace,
@@ -513,7 +518,7 @@ pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
 
 
 
-/** linkspace python bindings.
+/** linkspace python bindings. follows the liblinkspace api (https://antonsol919.github.io/linkspace/docs/cargo-doc/liblinkspace/index.html)
 **/
 #[pymodule]
 fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
@@ -531,6 +536,7 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<crate::Linkspace>()?;
     m.add_class::<crate::Query>()?;
 
+    m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
     m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_datapoint, m)?)?;
@@ -557,6 +563,7 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(crate::lk_open, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_save, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_save_all, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_all, m)?)?;
@@ -580,7 +587,12 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 #[pyfunction]
-/// Compatible with lk_query_push
+#[pyo3(signature=(bytes,mini=false))]
+pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
+    let b = liblinkspace::prelude::B64(bytes);
+    if mini{b.b64_mini()} else{b.to_string()}
+}
+#[pyfunction]
 pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
     let path = components
         .iter()?

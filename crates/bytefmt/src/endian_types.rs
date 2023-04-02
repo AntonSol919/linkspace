@@ -104,9 +104,7 @@ macro_rules! endian_number{
                 <$native>::from_str(s).map($name::from)
             }
         }
-        impl crate::ConstByteRef for $name {
-            const AS_REF : fn (&Self) -> &[u8] = |i| &i.0;
-        }
+        
         impl AsRef<[u8]> for $name {
             fn as_ref(&self) -> &[u8] { &self.0}
         }

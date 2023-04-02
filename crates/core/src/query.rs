@@ -134,37 +134,22 @@ impl Query {
     pub fn get_mode(&self) -> anyhow::Result<Mode> {
         Ok(self.mode().transpose()?.unwrap_or(Mode::TREE_DESC))
     }
-    /// remains unchanged on error
-    pub fn add(&mut self, statements: Vec<ABList>) -> anyhow::Result<bool> {
-        let mut tmp = Query {
-            predicates: self.predicates.clone(),
-            options: vec![],
-        };
-        for stmt in statements {
-            if stmt.lst[0].0.is_empty() && stmt.lst[0].1 == Some(Ctr::Colon) {
-                tmp.add_option_abl(stmt)?;
-            } else {
-                tmp.predicates.add_ext_predicate(stmt.try_into()?)?;
-            }
-        }
-        let changed = tmp.predicates != self.predicates;
-        self.predicates = tmp.predicates;
-        self.options.append(&mut tmp.options );
-        Ok(changed)
+    pub fn add_stmt(&mut self, stmt:ABList) -> anyhow::Result<()>{
+        if stmt.lst[0].0.is_empty() && stmt.lst[0].1 == Some(Ctr::Colon) {
+            self.add_option_abl(stmt)
+        } else {
+            self.predicates.add_ext_predicate(stmt.try_into()?)
+        } 
     }
-    /// remains unchanged on error
-    pub fn parse(&mut self, bytes: &[u8], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<bool> {
-        let mut statements = vec![];
-        for line in bytes.split(|ch| *ch == b'\n') {
-            if line.is_empty() {
-                continue;
-            }
+    pub fn parse(&mut self, multiline_stament: &[u8], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<()> {
+        for line in multiline_stament.split(|ch| *ch == b'\n') {
+            if line.is_empty(){ continue;}
             let e = eval(ctx, &abe::parse_abe_b(line)?)?;
-            statements.push(e)
+            self.add_stmt(e)?;
         }
-        self.add(statements)
+        Ok(())
     }
-    
+
     pub fn hash_eq(h: linkspace_pkt::LkHash) -> Self {
         let mut predicates = PktPredicates::default();
         predicates.hash.add(TestOp::Equal, h.into());

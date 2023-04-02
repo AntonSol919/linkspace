@@ -21,7 +21,6 @@ pub struct SPathBytes<X: ?Sized> {
     spath_bytes: X,
 }
 
-use bytefmt::ConstByteRef;
 use thiserror::Error;
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
 pub enum PathError {
@@ -48,9 +47,7 @@ pub enum PathError {
 
 /// Explicitly SPath bytes (analogous to [[str]])
 pub type SPath = SPathBytes<[u8]>;
-impl ConstByteRef for SPath {
-    const AS_REF: fn(&Self) -> &[u8] = |sp| sp.spath_bytes();
-}
+
 
 /// Owned SPath bytes (analogous to String)
 pub type SPathBuf = SPathBytes<Vec<u8>>;

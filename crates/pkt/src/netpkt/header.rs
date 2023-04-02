@@ -6,7 +6,7 @@
 use bytefmt::{
     abe::ToABE,
     endian_types::{U32, U8},
-    ConstByteRef, AB, B64,
+     AB, B64,
 };
 use core::fmt;
 use serde::{Deserialize, Serialize};
@@ -30,10 +30,7 @@ pub struct NetPktHeader {
     pub ubits: [U32; 4],
 }
 
-impl ConstByteRef for NetPktHeader {
-    const AS_REF: for<'o> fn(&'o Self) -> &'o [u8] =
-        |r| unsafe { &*(r as *const NetPktHeader as *const [u8; 32]) };
-}
+
 static_assertions::assert_eq_size!(NetPktHeader, [u8; 32]);
 impl From<NetPktHeader> for B64<[u8; 32]> {
     fn from(val: NetPktHeader) -> Self {

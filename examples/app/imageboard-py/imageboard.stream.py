@@ -26,16 +26,14 @@ else:
     print(str(status[0].data,'utf8'))
 
 
-query = lk_query()
 query_string = """
-
 group:=:[#:pub]
 domain:=:imageboard
 path:=:/[0]
 create:>=:[now:-1D]
 :watch:[0]
 """
-lk_query_parse(query,query_string,argv=[boardname])
+query = lk_query_parse(lk_query(),query_string,argv=[boardname])
 
 #We signal the exchange process to gather the data
 lk_pull(lk,query)
@@ -48,6 +46,6 @@ def update_img(pkt):
     create = lk_eval2str("[create:str]",pkt)
     os.system(f"{script_dir}/imageboard.view.py {boardname} {create}")
 
-lk_query_parse(query,"i_index:<:[u32:0]") # we only care for new stuff
+query = lk_query_parse(query,"i_index:<:[u32:0]") # we only care for new stuff
 lk_watch(lk,query, update_img)
 lk_process_while(lk)

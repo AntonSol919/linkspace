@@ -141,6 +141,7 @@ It consists of the following functions:
   - [[lk_open]]
   - [[lk_save]]
   - [[lk_get]]
+  - [[lk_get_all]]
   - [[lk_watch]]
   - [[lk_process]]
   - [[lk_process_while]]
@@ -408,6 +409,11 @@ The ~[#:...]~ is part of the [[LNS]].
 A public registry for assigning names and naming rights.
 e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 #+END_VERSE
+
+
+** lk_write and lk_read
+The vast majority of developers should not have to deal with IO and the byte representation of packets.
+Unless you're writing an exchange process.
 
 * ABE
 :PROPERTIES:

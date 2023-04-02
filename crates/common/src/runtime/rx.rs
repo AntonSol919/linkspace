@@ -4,7 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopReason};
-use abe::abtxt::as_abtxt_e;
 use anyhow::{bail, Context};
 pub use async_executors::{Timer, TimerExt};
 use futures::future::Either;
@@ -18,7 +17,7 @@ use std::{
     rc::{Rc, Weak},
     time::{Duration, Instant},
 };
-use tracing::{warn, Span, debug_span};
+use tracing::{warn, Span, debug_span, instrument};
 
 pub type PktStream = Box<dyn PktStreamHandler + 'static>;
 pub type Matcher = linkspace_core::matcher::Matcher<PktStream>;
@@ -188,6 +187,7 @@ impl Linkspace {
     - watch_id has matched at least once - returns true
     - no more watch callbacks exists - returns true
      **/
+    #[instrument(skip(self))]
     pub fn run_while(
         &self,
         max_wait: Option<Duration>,
@@ -213,9 +213,13 @@ impl Linkspace {
             if let Some((wid,is_done,(qid,eid))) = current_state{
                 let (v_qid,v_eid) = match self.watch_state(wid){
                     Some(v) => v,
-                    None => return Ok(true),
+                    None => {
+                        tracing::debug!("watch was dropped");
+                        return Ok(true);
+                    }
                 };
-                if v_eid != eid || (!is_done && v_qid != qid) { return Ok(true)}
+                if v_eid != eid { tracing::debug!("Watch was overwritten"); return Ok(true);}
+                if !is_done && v_qid != qid { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(true);}
             }
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
@@ -291,6 +295,7 @@ impl Linkspace {
     }
 
     /// check the log for new packets and execute callbacks
+    #[instrument(skip(self))]
     pub fn process(&self) -> Stamp {
         self.exec.written.set(false);
         let this = self.clone();
@@ -410,16 +415,16 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<u32> {
         let mode = query.get_mode()?;
-        let id = query.watch_id().transpose()?;
+        let id = query.watch_id().transpose()?.context("watch_query now always requires the :watch option")?;
         let follow = query.get_known_opt(KnownOptions::Follow);
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.
-        let span = tracing::debug_span!(parent: &span, "with_opts", id=?id.map(as_abtxt_e), ?follow, ?mode, ?start);
+        let span = tracing::debug_span!(parent: &span, "with_opts", id=?AB(id), ?follow, ?mode, ?start);
         match follow {
             Some(_p) => {
                 let onmatch = FollowHandler { inner: onmatch };
                 Ok(self.watch(
-                    id.map(Vec::from),
+                    id,
                     mode,
                     Cow::Borrowed(&query),
                     onmatch,
@@ -428,7 +433,7 @@ impl Linkspace {
                 )?)
             }
             None => Ok(self.watch(
-                id.map(Vec::from),
+                id,
                 mode,
                 Cow::Borrowed(&query),
                 onmatch,
@@ -440,7 +445,7 @@ impl Linkspace {
     /// only checks predicates, does not handle any options.
     pub fn watch(
         &self,
-        watch_id: Option<WatchID>,
+        watch_id: &WatchIDRef,
         mode: query_mode::Mode,
         q: Cow<Query>,
         mut onmatch: impl PktStreamHandler + 'static,
@@ -453,9 +458,7 @@ impl Linkspace {
         let span = debug_span!(parent:&span,"query", preds=%q.predicates);
         let mut counter = 0;
         let check_db = q.predicates.state.check_db();
-        if let Some(wid) = watch_id.as_ref() {
-            self.close(wid); // this is not ideal. But other close semantics seem worse.
-        }
+        self.close(watch_id); // this is not ideal. But other close semantics seem worse.
         if check_db {
             let local_span = tracing::debug_span!(parent: &span, "DB Callback").entered();
             tracing::trace!(?mode);
@@ -475,16 +478,12 @@ impl Linkspace {
                 return Ok(counter);
             }
         }
-        if let Some(wid) = watch_id {
-            match RxEntry::new(wid, q.into_owned(), counter, Box::new(onmatch), span) {
-                Ok(e) => {
-                    tracing::debug!("Setup Watch");
-                    self.insert_watch(e)
-                }
-                Err(r) => tracing::info!(e=?r,"Did not register"),
+        match RxEntry::new(watch_id.to_vec(), q.into_owned(), counter, Box::new(onmatch), span) {
+            Ok(e) => {
+                tracing::debug!("Setup Watch");
+                self.insert_watch(e)
             }
-        } else if !check_db {
-            anyhow::bail!("nothing checked - did you set the :watch option?");
+            Err(r) => tracing::info!(e=?r,"Did not register"),
         }
         Ok(counter)
     }

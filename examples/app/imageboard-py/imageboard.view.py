@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/bin/env python3.11
 from lkpy import *
 import os
 import sys
@@ -13,7 +13,6 @@ if not os.path.exists(boardfile):
     os.system(f"magick convert -size 1000x1000 xc:transparent PNG32:{boardfile}")
 
 lk = lk_open(create=True)
-query = lk_query()
 
 # You can parse multiple statements as abe.
 # The usual ABE context is available, and you can extend it with argv
@@ -23,15 +22,15 @@ domain:=:imageboard
 path:=:/[0]
 create:>=:[1/u64]
 """
-lk_query_parse(query,query_string,argv=[boardname,str(create_stamp)])
+query = lk_query_parse(lk_query(),query_string,argv=[boardname,str(create_stamp)])
 # or use templates. if you're just interested in the string
-lk_query_parse(query,f"create:>=:[:{str(create_stamp)}/u64]")
+query = lk_query_parse(query,f"create:>=:[:{str(create_stamp)}/u64]")
 
 # Or if you have the exact bytes
 create_b = create_stamp.to_bytes(8,byteorder='big')
-lk_query_parse(query,f"create:>=:[0]",argv=[create_b])
+query = lk_query_parse(query,f"create:>=:[0]",argv=[create_b])
 # Or if you're only adding a single statement
-lk_query_push(query,"create",">=",create_b)
+query = lk_query_push(query,"create",">=",create_b)
 
 # The query merges overlapping predicates, and errors on conflicting predicates
 
@@ -49,17 +48,17 @@ assert lk_encode(create_b,"u64") == create_abe
 # we'll collect our entries in here 
 image_data = []
 def update_image(pkt):
-    create = pkt.create # all the links in the packet will have this as their 'z-index'
+    create = pkt.create # all the links in the packet will have this as their z-index
     for link in pkt.links:
         x = int(str(link.tag[:8],'ascii'))
         y = int(str(link.tag[8:],'ascii'))
         q = lk_hash_query(link.ptr) # shorthand for :mode:hash-asc i:=:[u32:0] hash:=:HASH
-        lk_query_push(q,"recv","<",lk_eval("[now:+3s]"))
+        q = lk_query_push(q,"recv","<",lk_eval("[now:+3s]"))
 
         # we need a uniq id to register this query under.
         wid = bytearray(pkt.hash)
         wid.extend(link.ptr)
-        lk_query_push(q,"","watch",bytes(wid))
+        q = lk_query_push(q,"","watch",bytes(wid))
         
         # print("Looking for ",lk_query_print(q,True))
         # we could get with 'lk_get(lk,q)' but to give new packets a chance to arrive we've set recv < now+3s so we will watch them.

@@ -525,31 +525,30 @@ pub mod query {
     pub fn lk_hash_query(hash: LkHash) -> Query {
         Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
+
     /// Add a single statement to a [Query], potentially skipping an encode step.
+    /// i.e. fast path for adding a single statement - lk_query_parse(q,"{field}:{op}:{lk_encode(bytes)}")
     ///
     /// Also accepts options in the form ```lk_query_push(q,"","mode",b"tree-asc")```;
-    pub fn lk_query_push(query: &mut Query, field: &str, test: &str, val: &[u8]) -> LkResult<bool> {
+    pub fn lk_query_push(mut query: Query, field: &str, test: &str, val: &[u8]) -> LkResult<Query> {
         if field.is_empty() {
             query.0.add_option(test, &[val]);
-            return Ok(false);
+            return Ok(query);
         }
         let epre = ExtPredicate {
             kind: field.parse()?,
             op: test.parse()?,
             val: val.to_vec().into(),
         };
-        let mut tmp = query.0.predicates.clone();
-        tmp.add_ext_predicate(epre)?;
-        let changed = tmp == query.0.predicates;
-        query.0.predicates = tmp;
-        Ok(changed)
+        query.0.predicates.add_ext_predicate(epre)?;
+        Ok(query)
     }
     /// Add multiple ABE encoded statements to a [Query]
     pub fn lk_query_parse<'o>(
-        query: &mut Query,
-        expr: &str,
+        query: Query,
+        expr: &[&str],
         udata: impl Into<UserData<'o>>,
-    ) -> LkResult<bool> {
+    ) -> LkResult<Query> {
         varctx::lk_query_parse(crate::abe::ctx::ctx(udata.into())?, query, expr)
     }
     /// Clear a [Query] for reuse
@@ -630,7 +629,7 @@ pub mod linkspace {
     pub struct Linkspace(pub(crate) linkspace_common::runtime::Linkspace);
 
     use linkspace_common::prelude::WatchIDRef;
-    use tracing::debug_span;
+    use tracing::{debug_span };
 
     use super::*;
     /// open a linkspace runtime.
@@ -660,6 +659,9 @@ pub mod linkspace {
     /// save a packet. Returns true if new and false if its old.
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
         linkspace_common::core::env::write_trait::save_pkt(&mut lk.0.get_writer(), pkt)
+    }
+    pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
+        linkspace_common::core::env::write_trait::save_pkts(&mut lk.0.get_writer(), pkts).map(|(i,_)|i)
     }
     /// [lk_watch] but only for currently indexed packets. Don't forget to [lk_process]
     /// Terminates early when `cb` returns false
@@ -872,9 +874,11 @@ pub mod varctx {
         )?)
     }
     /// custom ctx version of [super::lk_query_parse]
-    pub fn lk_query_parse(ctx: LkCtx, pred: &mut Query, expr: &str) -> LkResult<bool> {
-        let changed = pred.0.parse(expr.as_bytes(), &ctx.as_dyn())?;
-        Ok(changed)
+    pub fn lk_query_parse(ctx: LkCtx, mut query: Query, statements: &[&str]) -> LkResult<Query> {
+        for stmnt in statements{
+            query.0.parse(stmnt.as_bytes(), &ctx.as_dyn())?;
+        }
+        Ok(query)
     }
     pub fn lk_key(
         ctx:LkCtx,

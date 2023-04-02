@@ -22,11 +22,9 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-# Still figuring out how to standardize access - behold this monstrosity
+export LINKSPACE_NO_CHECK=true
 # save reads from std. i.e. what the client is sending
-lk filter imageboard:[#:pub]::* --allow-datapoint \
-   --write-false file:>( lk filter --write-false "stderr-expr:Dropping [domain:str]:[group:str]\n" [f:exchange]:$GROUP:/pull/$GROUP:** -- "pubkey:=:$THEIR_KEY" ) \
-   | lk save --new db --new stdout \
+LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
         --old file:>( lk printf "$PID Ignored [hash:str] (old)" >&2 ) \
    | lk printf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \

@@ -1,0 +1,6 @@
+#!/bin/bash
+source ./common
+lk init
+export GROUP=[#:test]
+export SERVER=83.172.162.31:5020
+exec connect.sh
