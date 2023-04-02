@@ -1,9 +1,9 @@
 [package]
 name = "linkspace-cli"
-version = "0.1.0"
+version = "0.1.3"
 edition = "2021"
 
-authors = ["Az <AntonSol919@gmail.com>"]
+authors = ["Azon <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
 repository = "https://github.com/AntonSol919/linkspace"
 categories = ["command-line-utilities","database","network-programming","asynchronous"]

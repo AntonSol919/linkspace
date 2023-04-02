@@ -2,7 +2,7 @@
 # parent should set out to fd4. otherwise add a exec 4>&1 1>&2
 set -euo pipefail
 function fin (){
-    kill $(jobs -p) 2>/dev/null || true
+    kill -9 -- -$$ $(jobs -p) 2>/dev/null || true
     echo Disconnected - $THEIR_KEY 
 }
 trap "fin" EXIT

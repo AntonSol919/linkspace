@@ -11,7 +11,7 @@ use std::fmt::Write;
 use std::{fmt::Debug, fmt::Display};
 
 use crate::abtxt::{
-    as_abtxt, as_abtxt_e, escape_default, ABTxtError, Byte, CtrChar, STD_ERR_CSET, STD_PLAIN_CSET,
+    as_abtxt, escape_default, ABTxtError, Byte, CtrChar, STD_ERR_CSET, STD_PLAIN_CSET,
 };
 use crate::eval::EvalError;
 
@@ -287,7 +287,7 @@ impl Expr {
         }
     }
     pub fn as_abstr(&self) -> Option<Cow<str>> {
-        self.as_bytes().ok().map(as_abtxt_e)
+        self.as_bytes().ok().map(as_abtxt)
     }
 }
 

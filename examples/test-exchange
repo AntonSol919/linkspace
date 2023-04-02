@@ -1,6 +1,8 @@
 #!/bin/bash
 source ./common
 lk init
+echo "Opening key [@:me:local] - will generate if not yet setup"
+export LINKSPACE_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 export GROUP=[#:test]
 export SERVER=83.172.162.31:5020
-exec connect.sh
+exec ./exchange/anyhost/connect.sh

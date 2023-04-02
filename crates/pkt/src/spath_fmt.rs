@@ -7,7 +7,7 @@ use anyhow::ensure;
 use bytefmt::{
     abe::{
         self,
-        abtxt::as_abtxt_e,
+        abtxt::as_abtxt,
         ast::{is_fslash, take_ctr_expr, ABEError, Ctr, MatchError},
         convert::TypedABE,
         eval::ABList,
@@ -229,7 +229,7 @@ impl Serialize for SPath {
         S: serde::Serializer,
     {
         if serializer.is_human_readable() {
-            let v: Vec<_> = self.iter().map(as_abtxt_e).collect();
+            let v: Vec<_> = self.iter().map(as_abtxt).collect();
             v.serialize(serializer)
         } else {
             self.spath_bytes().serialize(serializer)

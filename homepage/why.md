@@ -1,7 +1,8 @@
 # Why?
 
 This protocol came to be for two reasons.
-I found it overly complicated (oppose to simple - not easy) to build multiuser systems.
+I found it overly complicated (oppose to simple - not easy) to build multi-participant systems.
+
 A project starts and ends with a vision for what the user should experience and do.
 That's difficult enough.
 Instead, development also has to deal with managing a server, networking, identity, and access.
@@ -12,7 +13,7 @@ The second is to provide an answer to an issue we've all noticed in some form or
 I see it as such;
 We face a question on the rules for our the digital space. Its answer underpins how our society works:
 
-**Who gets to __administrate__ which cat videos, taxi service, or (political) message we share and see online?**
+**Who gets to __administrate__ the cat videos, taxi service, messages, and other data we share and see online?**
 
 I know three options:
 
@@ -22,21 +23,28 @@ I know three options:
 
 See [Basics](./basics.html) how 1 and 3 differ.
 
-An analogy would be:
-A medieval peasant wasn't entirely limited in switching between preachers.
-But among the best ideas we ever had, was to have anyone read and write.
-
-Option one is unilateral control over content.
+Option one, our current web, is unilateral control over content.
 These systems have evolved with one goal:
-Optimal exploitation of the guest and their attention. Everything is permitted to keep it that way.
-**lock-in** the guests, and **lock-out** any threat to the platform's place in your life.
+Optimal exploitation of its users. Everything is permitted to keep it that way.
+**lock-in** the users, and **lock-out** any threat to the platform's place in your life.
 
 We should break those locks.
 
-Dedicated hosts still have a role to play.
+Dedicated hosts have a role to play.
 But users only get a good deal if they _could_ walk away without losing what is already there.
 
-The era of digital dictatorships and fiefdoms needs to end.
-Normalcy of those rules as the bedrock of most communication is bad.
+Blockchains are in the business of encodes exclusivity, scarcity, and inequality at its very **root**.
+At best this is dumb, at worse this is evil.
+
+In practice they can't be the bedrock of useful systems.
+A useful system starts their life as a simple prototype hacked together.
+This gives the developers freedom _after_ building it to adapt it and optimize for utility.
+
+Every property of a blockchain that make it attractive for the people invested, is antithetical to the process of development.
+
+Supernets are the future.
+
+This era of digital dictatorships and fiefdoms needs to end.
+Normalcy of the other options as the bedrock of communication is bad.
 Help speed things along.
 Support the project by [registering](./lns.html) a name.

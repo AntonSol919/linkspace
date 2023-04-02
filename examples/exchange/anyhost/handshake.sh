@@ -10,8 +10,7 @@ fi
 export SESSION=$(mktemp -dt $THEIR_ADDR.XXXXX)
 
 MODE=${1:-serve}
-PASS=${PASS:-""}
-lk handshake --max-diff-secs 6000 --password "$PASS" \
+lk handshake --max-diff-secs 6000 --password "$LINKSPACE_PASS" \
           --write stdout --write file:$SESSION/handshake.out \
           --forward file:$SESSION/handshake.in \
           $MODE >&4

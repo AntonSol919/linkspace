@@ -267,9 +267,9 @@ pub const ESCAPE_LOOKUP: [&str; 256] = {
         } else if idx == b'/' as usize {
             "\\/"
         } else if idx == b'[' as usize {
-            "\\{"
+            "\\["
         } else if idx == b']' as usize {
-            "\\}"
+            "\\]"
         } else if idx >= 0x20 && idx <= 0x7e {
             let st = std::slice::from_ref(&ARR_IDX[idx]);
             match std::str::from_utf8(st) {
@@ -292,12 +292,6 @@ pub fn escape_default(byte: u8) -> &'static str {
     ESCAPE_LOOKUP[byte as usize]
 }
 
-pub fn as_abtxt_e(bytes: &[u8]) -> Cow<str> {
-    if bytes.is_empty() {
-        return "\\E".into();
-    }
-    as_abtxt(bytes)
-}
 pub fn as_abtxt(bytes: &[u8]) -> Cow<str> {
     if bytes.iter().all(|v| !escaped_byte(*v)) {
         return std::str::from_utf8(bytes).unwrap().into();
@@ -316,7 +310,7 @@ fn enc() {
         st.as_bytes(),
         &[104, 101, 108, 108, 111, 240, 159, 140, 141]
     );
-    let v = as_abtxt_e(st.as_bytes());
+    let v = as_abtxt(st.as_bytes());
     assert_eq!(v, r#"hello\xf0\x9f\x8c\x8d"#);
 
     assert_eq!(crate::cut_prefix_nulls(&[0, 0, 1, 2]), &[1, 2])

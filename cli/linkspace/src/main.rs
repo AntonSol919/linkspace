@@ -143,7 +143,7 @@ enum Command {
         #[clap(short,long,action=clap::ArgAction::Count)]
         ignore_err: u8,
         /// a set of '/' delimited options
-        #[clap(default_value = "@/#/b:32:64")]
+        #[clap(default_value = "@/#/b:32:64/")]
         opts: String,
     },
 

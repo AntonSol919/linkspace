@@ -1,7 +1,7 @@
 # Linkspace - a general purpose supernet
 
 > Supernet  [ˈsü-pərˌnet]
-> A self-referential multi-user data organization protocol whose primary
+> A self-referential multi-participant data organization protocol whose primary
 > addressing method uses hashes instead of endpoint identifiers.
 > A communication protocol where the method of exchange is an extraneous concern.
 > e.g. git, bitcoin, nostr, linkspace
@@ -22,22 +22,15 @@ Or treat it as a shared folder. That works as well.
 In return a supernet provides a lot of useful properties including:
 Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant etc.
 
-Begin with the [basics](https://antonsol919.github.io/linkspace/basics.html),
-then checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html).
+Checkout [Basics](https://antonsol919.github.io/linkspace/basics.html) for a simple introduction.
+[Download](https://antonsol919.github.io/linkspace/download.html) to give it a try and say hi.
+Checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're up for some programming.
 
-The packet format and index is stable, but the API and various conventions are still in the early stages.
-Expect some unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
+The packet format and index is stable, but expect some unimplemented feature and rough edges.
 
-See the ./dev folder for the roadmap/missing features.
+# Guide
 
-# Usage
-
-There are currently 3 ways using linkspace:
-The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinkspace](./crates/liblinkspace), and the python library [ffi/liblinkspace-py](./ffi/liblinkspace-py)
-A linkspace instance is a directory containing a database and auxiliary data.
-Multiple applications use it at the same time.
-
-It is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) (or build it locally with `make docs`)
+It is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html)
 
 Or jump straight to a section:
 
@@ -47,3 +40,16 @@ Or jump straight to a section:
 - [Linkspace](https://antonsol919.github.io/linkspace/docs/guide/index.html#Linkspace) instance - Locally indexed packets and new packet processing functions
 - [Conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions)
 
+# Building
+
+The 3 primary ways of using linkspace are:
+The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinkspace](./crates/liblinkspace), and the python library [ffi/liblinkspace-py](./ffi/liblinkspace-py)
+
+# Development
+
+See the ./dev folder for the roadmap/missing features.
+
+# Misc
+
+This is currently a privately financed project representing done as a part time job.
+Ideally this project could fund one or more fulltime devs through sales of [LNS](https://antonsol919.github.io/linkspace/lns.html) names.

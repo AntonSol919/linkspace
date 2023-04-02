@@ -30,7 +30,7 @@ pub use bstr;
 pub use abe;
 pub use abe::eval;
 use abe::{
-    abtxt::{as_abtxt_e, ABTxtError, MAX_STR},
+    abtxt::{ABTxtError, MAX_STR, as_abtxt},
     ast::{as_bytes, no_ctrs, MatchError},
     cut_prefix_nulls, cut_prefixeq,
     eval::{ABList, ApplyResult, EScope, EvalScopeImpl, ScopeFunc, Comment},
@@ -43,7 +43,7 @@ pub fn as_abtxt_c(mut b: &[u8], cut: bool) -> std::borrow::Cow<'_, str> {
     if cut {
         b = cut_prefix_nulls(b)
     }
-    abe::abtxt::as_abtxt_e(b)
+    abe::abtxt::as_abtxt(b)
 }
 
 pub fn ab_slice<X>(i: &[X]) -> &[AB<X>] {
@@ -112,9 +112,6 @@ where
     }
     pub fn as_str(&self, cut_nulls: bool) -> Cow<str> {
         abe::abtxt::as_abtxt(self.as_ref_cut(cut_nulls))
-    }
-    pub fn as_str_e(&self, cut_nulls: bool) -> Cow<str> {
-        abe::abtxt::as_abtxt_e(self.as_ref_cut(cut_nulls))
     }
 
     // deterimine prefix mode and cut
@@ -345,7 +342,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&as_abtxt_e(self.as_ref()))
+        f.write_str(&as_abtxt(self.as_ref()))
     }
 }
 impl<X> Debug for AB<X>
@@ -353,7 +350,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&as_abtxt_e(self.as_ref()))
+        f.write_str(&as_abtxt(self.as_ref()))
     }
 }
 

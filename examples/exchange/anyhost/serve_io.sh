@@ -3,7 +3,7 @@
 set -euo pipefail
 PID=$$
 function fin (){
-    kill $(jobs -p) 2>/dev/null || true
+    kill -9 -- -$$ $(jobs -p) 2>/dev/null || true
     echo $PID Disconnected - $THEIR_KEY 
 }
 trap "fin" EXIT

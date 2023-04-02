@@ -67,3 +67,4 @@ must clarify nested watch_id open semantics.
 - Normalize lingo around abe "seperators" and "ctr characters"
 - stack spath/ipath - max size is 250bytes. Could impl copy
 - abe - change macro '{}' into '[]'
+- should prob move to libmdbx

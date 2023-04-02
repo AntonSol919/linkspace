@@ -15,7 +15,7 @@ pub struct KeyOpts {
     /// (abe) password argon2 encrypted signing key
     #[clap(long, alias = "pass", env = "LINKSPACE_PASS")]
     password: Option<String>,
-    /// print password
+    /// print password - is always in abtxt format
     #[clap(long)]
     display_pass: bool,
     /// use utf8 encoding for password instead of ABE
@@ -73,22 +73,17 @@ impl KeyOpts {
             None if prompt => rpassword::prompt_password(st)?,
             None => anyhow::bail!("missing password"),
         };
-        if self.display_pass {
-            println!("input: {pass_str}")
-        };
-        if self.utf8_password {
-            Ok(pass_str.as_bytes().to_owned())
+        let bytes = if self.utf8_password {
+            pass_str.as_bytes().to_owned()
         } else {
             let txt = pass_str.parse::<TypedABE<Vec<u8>>>()?;
-            if self.display_pass {
-                println!("abe: {txt}")
-            };
-            let bytes = txt.eval(&common.eval_ctx())?;
-            if self.display_pass {
-                println!("bytes: {}", AB(bytes.as_slice()))
-            };
-            Ok(bytes)
-        }
+            txt.eval(&common.eval_ctx())?
+        };
+
+        if self.display_pass {
+            println!("{}",AB(&bytes))
+        };
+        Ok(bytes)
     }
 }
 
@@ -205,13 +200,13 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
             true => {
                 let enckey = enckey.unwrap();
                 if !no_check {
-                    let password = key.password_bytes(common, true)?;
+                    let password = key.password_bytes_prompt(common, true,"decrypting - password>")?;
                     decrypt(&enckey, &password)?;
                 }
                 enckey
             }
             false => {
-                let password = key.password_bytes(common, true)?;
+                let password = key.password_bytes_prompt(common, true,"generating new - password>")?;
                 generate(&password)
             }
         };
@@ -232,14 +227,14 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
     match enckey {
         Some(enckey) => {
             if !no_check {
-                let password = key.password_bytes(common, true)?;
+                let password = key.password_bytes_prompt(common, true,"decrypting - password>")?;
                 decrypt(&enckey, &password)?;
             }
             let pubkey = B64(pubkey(&enckey)?);
             print(enckey,pubkey);
         }
         None => {
-            let password = key.password_bytes(common, true)?;
+            let password = key.password_bytes_prompt(common, true,"generating new - password>")?;
             let enckey = generate(&password);
             let pubkey = if no_lk {
                 B64(pubkey(&enckey)?)

@@ -16,7 +16,6 @@ use std::{collections::HashSet, convert::Infallible, ops::FromResidual, str::Fro
 use thiserror::Error;
 
 use crate::abtxt::as_abtxt;
-use crate::abtxt::{as_abtxt_e };
 use crate::{ast::*, cut_ending_nulls2, cut_prefix_nulls};
 
 const fn as_str(o: Option<Ctr>) -> &'static str {
@@ -121,7 +120,7 @@ impl Debug for ABList {
         struct ABDebug<I>(I, Option<Ctr>);
         impl<I: AsRef<[u8]>> Debug for ABDebug<I> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str(&as_abtxt_e(self.0.as_ref()))
+                f.write_str(&as_abtxt(self.0.as_ref()))
             }
         }
         f.debug_list()
@@ -367,13 +366,13 @@ use ApplyResult as AR;
 
 #[derive(Error)]
 pub enum EvalError {
-    #[error("evaluator err :  {} {}",as_abtxt_e(.0),.1)]
+    #[error("evaluator err :  '{}' {}",as_abtxt(.0),.1)]
     SubEval(Vec<u8>, ApplyErr),
-    #[error("no such e-func : '/{}'",as_abtxt_e(.0))]
+    #[error("no such e-func : '/{}'",as_abtxt(.0))]
     NoSuchSubEval(Vec<u8>),
-    #[error("no such func : {}",as_abtxt_e(.0))]
+    #[error("no such func : {}",as_abtxt(.0))]
     NoSuchFunc(Vec<u8>),
-    #[error("func error : {} : {}",as_abtxt_e(.0), .1)]
+    #[error("func error : '{}' : {}",as_abtxt(.0), .1)]
     Func(Vec<u8>, ApplyErr),
     #[error(transparent)]
     Other(anyhow::Error),
@@ -666,7 +665,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             Ok(ABItem::Ctr(*c))
         }
         ABE::Expr(Expr::Bytes(b)) => {
-            dbgprintln!("Match bytes({}) (depth={depth})", as_abtxt_e(b));
+            dbgprintln!("Match bytes('{}') (depth={depth})", as_abtxt(b));
             Ok(ABItem::Bytes(b.to_vec()))
         }
         ABE::Expr(Expr::Lst(ls)) => {
@@ -689,7 +688,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                         [ABE::Ctr(Ctr::FSlash), ..] => (&[], tail),
                         [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] => (id, r),
                     };
-                    dbgprintln!("Eval({})", as_abtxt_e(id));
+                    dbgprintln!("Eval('{}')", as_abtxt(id));
                     match ctx.scope.lookup_eval(id, rest, &ctx.scope) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Value(b) => return Ok(ABItem::Bytes(b)),
@@ -710,7 +709,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             ) -> Result<Vec<u8>, EvalError> {
                 dbgprintln!(
                     "Call({init},id={},inp={:?} )",
-                    as_abtxt_e(id),
+                    as_abtxt(id),
                     input_and_args
                 );
                 match scope.lookup_apply(id, input_and_args, init, &scope) {
@@ -740,7 +739,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                 return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
             }
             let args = &stack[..argc];
-            dbgprintln!("Start: '{}' - {:?} ", as_abtxt_e(id), args);
+            dbgprintln!("Start: '{}' - {:?} ", as_abtxt(id), args);
             let mut bytes = call(&ctx.scope, id, args, true)?;
             for mut id_and_args in calls {
                 stack = [&[] as &[u8]; 16];
@@ -760,8 +759,8 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                 let args = &stack[..argc];
                 dbgprintln!(
                     "'{}' -> '{}' :: {:?} ::",
-                    as_abtxt_e(&bytes),
-                    as_abtxt_e(id),
+                    as_abtxt(&bytes),
+                    as_abtxt(id),
                     args
                 );
                 bytes = call(&ctx.scope, id, args, false)?;
@@ -824,6 +823,7 @@ pub fn encode_abe(
     options: &[ABE],
     ignore_encoder_errors:bool
 ) -> std::result::Result<String, EncodeError> {
+    // TODO options should prob be ABList
     let mut it = options.split(|v| v.is_fslash());
     if options.is_empty() {
         it.next();
@@ -831,6 +831,7 @@ pub fn encode_abe(
     for scope_opts in it {
         let (func_id,args) :(&[u8],&[ABE]) = match scope_opts {
             [ABE::Ctr(Ctr::Colon)] => (&[],&[]),
+            [] => return Ok(as_abtxt(bytes).into_owned()),
             [ABE::Expr(Expr::Bytes(b))] => (b.as_slice(),&[]),
             [ABE::Expr(Expr::Bytes(b)),ABE::Ctr(Ctr::Colon), ref rest @ .. ] => (b.as_slice(),rest),
             e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got '{}')",print_abe(e)))),
@@ -850,7 +851,7 @@ pub fn encode_abe(
                 return Ok(st);
             }
             ApplyResult::Err(e) => {
-                if !ignore_encoder_errors{return Err(EncodeError::ScopeEncode(as_abtxt_e(func_id).to_string(), e))}
+                if !ignore_encoder_errors{return Err(EncodeError::ScopeEncode(as_abtxt(func_id).to_string(), e))}
             }
         }
     }

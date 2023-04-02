@@ -13,7 +13,6 @@ parser.add_argument('--key', dest='key', type=str,
                     default=os.environ.get('LK_KEY'),help='use key (default: [me:local])')
 args = parser.parse_args()
 
-# temporary dev init
 lk = lk_open(path=args.linkspace,create=True)
 print(lk_info(lk).path)
 
