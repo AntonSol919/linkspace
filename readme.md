@@ -51,5 +51,5 @@ See the ./dev folder for the roadmap/missing features.
 
 # Misc
 
-This is currently a privately financed project representing done as a part time job.
-Ideally this project could fund one or more fulltime devs through sales of [LNS](https://antonsol919.github.io/linkspace/lns.html) names.
+This is currently a project done in my spare time.
+Hopefully it can be one or more FTE through sales of [LNS](https://antonsol919.github.io/linkspace/lns.html) names.
