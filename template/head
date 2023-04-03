@@ -26,14 +26,15 @@
         <a href="./lns.html">LNS</a>
       </li>
 
+      <li>
+        <a href="./download.html"> Download </a>
+      </li>
+
       <li >
         <a href="./domains.html">Domains</a>
       </li>
       <li >
         <a href="./groups.html">Groups</a>
-      </li>
-      <li>
-        <a href="./download.html"> Download </a>
       </li>
     </nav>
     

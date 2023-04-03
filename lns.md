@@ -15,11 +15,9 @@ Pubkeys like:
 - @:me:local
 
 :com, :dev, :free, :local, :env, and :pub registars are special/reserved.  
-To apply for a new top level registar contact me directly.  
-
-LNS is not yet fully operational.  
+The system is operational except for quick UDP resolution. 
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).  
-Public registrations are already open.  
+Public registrations are open.  
 Read this page to find out how.  
 
 ## Q&A:
@@ -27,15 +25,15 @@ Read this page to find out how.
 ### What does a registration do?
 
 It gives you binding right for all sub registration.  
-That means the keys associated with ':com' signs off on a claim you make that binds
+That means if you register under @:yourcompany:com you can setup:
 
 1) a key addressed with the name '@:yourcompany:com'
-1) a group name '#:yourcompany:com'
-1) The public keys with authority to sign for all names ending with :yourcompany:com
+1) a group name '#:yourcompany:com**
+1) **all** authorities and keys for names ending with :yourcompany:com
 
-In turn because you own yourcompany:com, it has binding rights to a key for sales:yourcompany:com
+I.e. because you own yourcompany:com, it has binding rights to a key for sales:yourcompany:com
 Which can create a binding between a public key and the name @:bob:sales:yourcompany:com
-In addition, every registration can carry additional links & data.  
+In addition to group id's and public keys, a registration can carry additional data, such as a host IP.
 
 ### Do I require a registration?
 
@@ -58,9 +56,9 @@ In other words, your registration might be dropped or re-assigned depending on h
 
 ### Can I become a top level registar?
 
-Yes. I am looking for people to do so.
-Non-country top level names are leased on a first come, first served bases, no constraints, for a 1000 euro p/m (12000 euro a year).
-Alternative deals are negotiable. Just ask.
+Yes. I am looking for people and organizations to do so.
+Contact me at antonsol919+registar at gmail.com for more information.
+If you represent a university you can get your name for free.
 
 ### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
 

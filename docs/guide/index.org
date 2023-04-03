@@ -17,22 +17,20 @@
 
 #+LANGUAGE: en
 
-
-
 #+BEGIN_VERSE
-This is a living document it is kept up to date on a best effort basis.
+This document is kept up to date on a best effort basis.
 Sometimes the [[../cargo-doc/liblinkspace/index.html][liblinkspace]] docs is ahead of this guide.
 #+END_VERSE
 
 * Introduction
 
-Linkspace is a way to structure interlinked data into packets, addressable with a query, in order to build multi-user applications.
+Linkspace is a way to structure interlinked data into packets, addressable with a query, in order to build multi-participant applications.
 [[../cargo-doc/liblinkspace/index.html][liblinkspace]] is the authoritative implementation.
 
-You should have seen the [[../../basics.html][basics]].
+You should be familiar with the [[../../basics.html][basics]].
 
 Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already proof that addressing content by hash is a powerful abstraction.
-It sidesteps or solves a number of difficulties inherent in organizing data as streams in multi-user applications.
+It sidesteps or solves a number of difficulties inherent in organizing data as streams in applications.
 Such a system is classified as a supernet when hashed entries include hashes to other entries[fn::
 I consider blockchains a subset of supernets.
 They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain].
@@ -43,7 +41,7 @@ It is built to be fast and simple.
 #+BEGIN_VERSE
 Supernet  [ˈsü-pərˌnet]
 
-A self-referential multi-user data organization protocol whose primary
+A self-referential multi-participant data organization protocol whose primary
 addressing method uses hashes instead of endpoint identifiers.
 A communication protocol where the method of exchange is an extraneous concern.
 e.g. git, bitcoin, nostr, linkspace
@@ -53,11 +51,11 @@ The supernet paradigm is a trade-off.
 Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 This has upsides[fn::
 The readme contains technical properties this provides. However, there is one I lack a word for.
-Both the process of view-database state synchronization, and dealing with networks have this in common:
+Both the process of view-database state synchronization, and dealing with (network) IO in general have this in common:
 They're well-designed if they run under the assumption of incomplete/bad state.
 In linkspace this is an obvious requirement, and liblinkspace attempts to make it simple.
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are the facts of life.
-] and downsides. 
+] and downsides.
 
 liblinkspace is best understood as 4 ideas.
 
@@ -141,6 +139,7 @@ It consists of the following functions:
   - [[lk_open]]
   - [[lk_save]]
   - [[lk_get]]
+  - [[lk_get_all]]
   - [[lk_watch]]
   - [[lk_process]]
   - [[lk_process_while]]
@@ -386,6 +385,21 @@ The CLI also accepts ~lk link --sign~ instead of ~lk keypoint~
 #+END_py
 #+END_ctabs
 
+** Fields
+
+In python you can access these fields directly as bytes.
+The fields included in the hash are not writable.
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  [attr for attr in dir(lk_linkpoint())  if not "__" in attr]
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+['comp0', 'comp1', 'comp2', 'comp3', 'comp4', 'comp5', 'comp6', 'comp7', 'create', 'data', 'domain', 'group', 'hash', 'hop', 'ipath', 'links', 'netflags', 'path_len', 'path_list', 'pkt_type', 'point_size', 'pubkey', 'recv', 'signature', 'spath', 'ubits0', 'ubits1', 'ubits2', 'ubits3', 'until']
+#+end_example
+
+Where comp[0..7] are the path components, 
 
 ** Notes
 
@@ -409,6 +423,11 @@ A public registry for assigning names and naming rights.
 e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 #+END_VERSE
 
+
+** lk_write and lk_read
+The vast majority of developers should not have to deal with IO and the byte representation of packets.
+Unless you're writing an exchange process.
+
 * ABE
 :PROPERTIES:
 :CUSTOM_ID: ABE
@@ -421,20 +440,24 @@ e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 ABE (Ascii-Byte-Expr) is a tiny byte templating language.
 A stringly representation of delimited bytes.  
 Its primary purpose is to make it easy for developers to read and write sequences of arbitrary (0..=255) bytes in plain ascii.
-In addition, it supports evaluation various expressions (potentially reading a context such as a linkspace instance).
+In addition, it supports evaluation of functions that act as shorthand for long sequences of bytes. 
 
 Linkspace has no concept of encoding.
 Fields have a fixed length or prefix their exact length.
 The ~null~ (0) byte is not special.
 
-ABE is used for things like [[Query]] or simply [[DEFAULT_FMT][printing]] a text representation of a packet.
+ABE is used for things like [[Query]] or simply [[DEFAULT_FMT][printing]] to talk about these bytes.
 
 ABE is not meant to be a proramming language!
-It's primarily meant to read and write arbitrary bytes in some context and quickly beat them into shape.
+It's primarily meant to read and write arbitrary bytes in some context and quickly beat them into a desired shape.
 Some things are limited by design.
+Prefer to use the language you're developing in.
 
-Instead, an application should define what the bytes mean, and how to display them to the end user. 
-If the goal is to display, you should read and write in UTF-8.
+When building an application its up to the developer to define what the bytes in the data, link and path components mean.
+And subsequently what the end user sees.
+
+If the goal is to display, you should stick with UTF-8.
+But if a value is just bytes, avoid adding an additional base64(bytes).
 
 ** Parsing
 
@@ -446,12 +469,57 @@ If the goal is to display, you should read and write in UTF-8.
 - ~\x00~ up-to ~\xFF~ for bytes.
 - ~\0~ equals  ~\x00~,  ~\f~ equals ~\xFF~
 
+We can encode binary into valid abtxt as follows:
+#+BEGIN_VERSE
+We'll get back to [[#lk_encode][encode]] later. 
+#+END_VERSE
+
+#+BEGIN_ctabs
+#+begin_bash
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+printf "hello" | lk encode -i
+printf "world/" | lk encode -i
+printf "nl \n tab \t" | lk encode -i
+printf "open [ close ]" | lk encode -i
+printf "smiley 😍" | lk encode -i
+#+END_SRC
+#+end_bash
+
+#+begin_py
+All packet fields are arbitrary bytes, and lk_encode can print them as abtext
+
+#+begin_src python :session lkpy :exports both :results output verbatim
+  multiline = """newline
+  tab	""".encode()
+
+  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", "smiley 😍".encode()])
+
+  print(lk_encode(lkp.comp0),"\t",list(lkp.comp0))
+  print(lk_encode(lkp.comp1),"\t",list(lkp.comp1))
+  print(lk_encode(lkp.comp2),"\t",list(lkp.comp2))
+  print(lk_encode(lkp.comp3),"\t",list(lkp.comp3))
+  print(lk_encode(lkp.comp4),"\t",list(lkp.comp4))
+  
+#+end_src
+
+#+RESULTS:
+#+begin_example
+hello 	 [104, 101, 108, 108, 111]
+world\/ 	 [119, 111, 114, 108, 100, 47]
+newline\ntab\t 	 [110, 101, 119, 108, 105, 110, 101, 10, 116, 97, 98, 9]
+open \[ close \] 	 [111, 112, 101, 110, 32, 91, 32, 99, 108, 111, 115, 101, 32, 93]
+smiley \xf0\x9f\x98\x8d 	 [115, 109, 105, 108, 101, 121, 32, 240, 159, 152, 141]
+#+end_example
+
+#+end_py
+#+end_ctabs
+ 
+
 ** lk_eval
 
 ABE is evaluated by substituting an expressions ( ~[..]~ ) with its result.
 For example in ~[u8:97]~, the function 'u8' parses "97" and prints it.
 The byte 99 equals the character 'c'.
-
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk eval "ab[u8:99]" | xxd
@@ -471,15 +539,15 @@ lk eval --json "h[u8:101]ll[u8:111] / world:etc"
 
 Note that bytes are joined after evaluating. In the example this results in the component ~('hello ', /)~.
 The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
-In the top level of the template given to ~eval~ they are printed as is.
+In the top level of the template given to ~lk eval~ they are printed as is.
 
 In other words: ~eval "hello/:[u8:99]\n"~ == ~hello/:c\n~ ,
 but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
 
 #+Begin_VERSE
 The rest of this chapter goes further in depth.
-Understanding the ABE in depth is not critical.
-With basic knowledge of expression substitution (~[..]~) and the ~':'~, ~'/'~ delimiters the reader can choose to
+Understanding ABE in depth is not critical.
+With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters the reader can choose to
 skip to the next chapter [[Query]] and return here for reference later.
 #+end_VERSE
 
@@ -1352,8 +1420,10 @@ The linkspace is a local log and index that one or more processes connect to.
 It is the place you save and retrieve data from.
 Either by read or watch.
 The latter lets you callback for each currently known and future packet matching a specific set of predicates.
-This is done in the [[lk_process]] stage.
-You can nest calling ~lk_watch~ and ~lk_get~.
+
+Essentially every thread has a read transaction to the database.
+This transaction is updated to reflect the latest state through [[lk_process]] and [[lk_process_while]].
+You can read one packet with [[lk_get]], multiple from disk with [[lk_get_all]], or current and future packet with [[lk_watch]].
 
 ** lk_open
 :PROPERTIES:
@@ -1369,6 +1439,11 @@ You can nest calling ~lk_watch~ and ~lk_get~.
 :PROPERTIES:
 :CUSTOM_ID: lk_get
 :END:
+** lk_get_all
+:PROPERTIES:
+:CUSTOM_ID: lk_get_all
+:END:
+
 
 ** lk_watch
 :PROPERTIES:
@@ -1403,6 +1478,8 @@ You can nest calling ~lk_watch~ and ~lk_get~.
 
 Conventions are functions built on top of the other linkspace functions.
 They provide interop for processes by encoding data into linkspace packets.
+
+Generally they require the caller to also run [[lk_process]] or [[lk_process_while]]
 
 One general conventions is that domains and paths starting with \xff are for meta stuff, such as status queries and packet exchange.
 
@@ -1499,14 +1576,13 @@ the link ~vote:$Claim1.hash~. The first claim to get a majority of votes wins.
 The tree index is in the expected order when using the numbers as path components.
 E.g. ~lk linkpoint ::/some/dir/[now]~ will come after ~lk linkpoint ::/some/dir/[now:-1D]~ because ~now > (now - one day)~
 
-**** Why can't I own a group? / I'm not in control of the user! / Anybody in my group can leak data from it!?
-I don't make the rules, I just make them obvious.
-
 **** Every user of my domain app needs X from my server/I want to add advertisements to my domain app.
-You can hardcode a public key into the app, and also publish a group exchange service.
-There are two primary ways to centralize things.
+Hardcode a public key into the app and publish a group exchange service.
+There are two primary ways to centralize things with this public key.
 Either everybody connects over a single group, or you can exchange over the group: their-key XOR your-key group.
 
+**** I'm not in control of the user! / Anybody in my group can leak data from it!?
+I don't make the rules, I just make them obvious.
 
 **** A domain application can write outside its own domain space.
 Yes, the current API has no restriction.
@@ -1537,6 +1613,29 @@ Will it solve it entirely? Never.
 But existing tools to combat spam are no more or less effective.
 Instead, we have an additional tool to do better.
 
+* Example Domain App - linkmail
+:PROPERTIES:
+:CUSTOM_ID: linkmail
+:END:
+
+#+begin_ctabs
+#+begin_info
+
+#+BEGIN_VERSE
+Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
+#+END_VERSE
+linkmail is a app to write messages in a group.
+Note that it will complain if you have not also started an exchange process for the group.
+#+end_info
+
+#+begin_py
+#+INCLUDE: "../../examples/app/linkmail-py/linkmail.py" src python
+#+end_py
+
+#+end_ctabs
+
+
+
 * Example Domain App - Imageboard
 :PROPERTIES:
 :CUSTOM_ID: imageboard
@@ -1546,15 +1645,14 @@ Instead, we have an additional tool to do better.
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
 #+END_VERSE
 
-This is a very simplified example.
-It shows what is required to write a simple app using linkspace.
-
+This is a basic domain application example.
 Should you build applications in bash? Fuck no.
 
 The purpose of the app will be to create an image collage with multiple people.
+
 The data structure is as follows:
 
 Adding an image is done by creating a linkpoint where the first path component indicates the name of the image.
@@ -1578,7 +1676,7 @@ Building the collage is done by adding all images to a base image in 'create' or
 
 
 #+begin_py
-This is currently a straight-up copy of the bash script.
+This is a straight-up copy of the bash script.
 It works, but it could be done better by having only a single python instance running.
 - placing images
 #+INCLUDE: "../../examples/app/imageboard-py/imageboard.place.py" src bash
@@ -1596,6 +1694,10 @@ It works, but it could be done better by having only a single python instance ru
 :CUSTOM_ID: anyhost
 :END:
 
+#+BEGIN_VERSE
+Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/exchange
+#+END_VERSE
+
 #+begin_ctabs
 #+begin_info
 #+BEGIN_VERSE
@@ -1610,14 +1712,14 @@ It does no pruning before sending or receiving.
 #+begin_sh
 
 - anyhost client
-#+INCLUDE: "../../examples/exchange/anyhost/bin/connect.sh" src bash
-#+INCLUDE: "../../examples/exchange/anyhost/bin/client_io.sh" src bash
+#+INCLUDE: "../../examples/exchange/anyhost/connect.sh" src bash
+#+INCLUDE: "../../examples/exchange/anyhost/client_io.sh" src bash
 
 - handshake
-#+INCLUDE: "../../examples/exchange/anyhost/bin/handshake.sh" src bash
+#+INCLUDE: "../../examples/exchange/anyhost/handshake.sh" src bash
 
 - anyhost server
-#+INCLUDE: "../../examples/exchange/anyhost/bin/serve.sh" src bash
-#+INCLUDE: "../../examples/exchange/anyhost/bin/serve_io.sh" src bash
+#+INCLUDE: "../../examples/exchange/anyhost/serve.sh" src bash
+#+INCLUDE: "../../examples/exchange/anyhost/serve_io.sh" src bash
 #+end_sh
 #+end_ctabs

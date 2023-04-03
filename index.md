@@ -1,12 +1,17 @@
 ```definition
 Supernet  [ˈsü-pərˌnet]
-A self-referential multi-user data organization protocol whose primary
+A self-referential multi-participant data organization protocol whose primary
 addressing method uses hashes instead of endpoint identifiers.
 A communication protocol where the method of exchange is an extraneous concern.
 e.g. git, bitcoin, nostr, linkspace
 ```
 
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
+
+A multi-copy data-first systems.
+A supernet is ideal when multiple participants want to own and administrate a (part of a) digital system.
+This is oppose to the current technologies that have users contact a single host,
+which acts as the de facto administrator by virtue of hosting the data.
 
 Linkspace is supernet with the following highlights:
 
@@ -23,7 +28,7 @@ In return a supernet provides a lot of useful properties including:
 Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant etc.
 
 Checkout [Basics](./basics.html) for a simple introduction.
-Checkout the [Guide](./docs/guide/index.html) if you're familiar with git and web-servers.
+[Download](./download.html) to give it a try and say hi on the test group.
+Checkout the [Guide](./docs/guide/index.html) if you're up for some programming.
 
-The packet format and index is stable, but the API and various conventions are still in the early stages.
-Expect some unimplemented feature, half-baked ideas, rough edges, and the occasional bug.
+The packet format and index is stable, but expect some unimplemented feature and rough edges.

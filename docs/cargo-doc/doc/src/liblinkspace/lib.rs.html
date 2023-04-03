@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/liblinkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c4dbdcde0fbd8430.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="liblinkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0-nightly (8a73f50d8 2023-03-11)" data-search-js="search-ab3e9174d42dd6c2.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" data-theme-light-css="light-db279b6232be9c13.css" data-theme-dark-css="dark-cf923f49f397b216.css" data-theme-ayu-css="ayu-be46fdc453a55015.css" ></div><script src="../../static.files/storage-9184409068f70b79.js"></script><script defer src="../../static.files/source-script-1b95b7cca98b26e5.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f5a2577c5297a973.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-db279b6232be9c13.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-cf923f49f397b216.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../liblinkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/liblinkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fbd14db5c88ed452.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="liblinkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0-nightly (478cbb42b 2023-03-28)" data-search-js="search-bc5a112813b5d712.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" data-theme-light-css="light-db279b6232be9c13.css" data-theme-dark-css="dark-cf923f49f397b216.css" data-theme-ayu-css="ayu-be46fdc453a55015.css" ></div><script src="../../static.files/storage-d4a1a279bad1a0c0.js"></script><script defer src="../../static.files/source-script-1b95b7cca98b26e5.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-9ade54abd4bd73c8.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-db279b6232be9c13.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-cf923f49f397b216.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../liblinkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -912,7 +912,6 @@
 <a href="#912" id="912">912</a>
 <a href="#913" id="913">913</a>
 <a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1440,31 +1439,30 @@ See guide#ABE to understand its use and indepth explanation.
     </span><span class="kw">pub fn </span>lk_hash_query(hash: LkHash) -&gt; Query {
         Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
+
     <span class="doccomment">/// Add a single statement to a [Query], potentially skipping an encode step.
+    /// i.e. fast path for adding a single statement - lk_query_parse(q,&quot;{field}:{op}:{lk_encode(bytes)}&quot;)
     ///
     /// Also accepts options in the form ```lk_query_push(q,&quot;&quot;,&quot;mode&quot;,b&quot;tree-asc&quot;)```;
-    </span><span class="kw">pub fn </span>lk_query_push(query: <span class="kw-2">&amp;mut </span>Query, field: <span class="kw-2">&amp;</span>str, test: <span class="kw-2">&amp;</span>str, val: <span class="kw-2">&amp;</span>[u8]) -&gt; LkResult&lt;bool&gt; {
+    </span><span class="kw">pub fn </span>lk_query_push(<span class="kw-2">mut </span>query: Query, field: <span class="kw-2">&amp;</span>str, test: <span class="kw-2">&amp;</span>str, val: <span class="kw-2">&amp;</span>[u8]) -&gt; LkResult&lt;Query&gt; {
         <span class="kw">if </span>field.is_empty() {
             query.<span class="number">0</span>.add_option(test, <span class="kw-2">&amp;</span>[val]);
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(query);
         }
         <span class="kw">let </span>epre = ExtPredicate {
             kind: field.parse()<span class="question-mark">?</span>,
             op: test.parse()<span class="question-mark">?</span>,
             val: val.to_vec().into(),
         };
-        <span class="kw">let </span><span class="kw-2">mut </span>tmp = query.<span class="number">0</span>.predicates.clone();
-        tmp.add_ext_predicate(epre)<span class="question-mark">?</span>;
-        <span class="kw">let </span>changed = tmp == query.<span class="number">0</span>.predicates;
-        query.<span class="number">0</span>.predicates = tmp;
-        <span class="prelude-val">Ok</span>(changed)
+        query.<span class="number">0</span>.predicates.add_ext_predicate(epre)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(query)
     }
     <span class="doccomment">/// Add multiple ABE encoded statements to a [Query]
     </span><span class="kw">pub fn </span>lk_query_parse&lt;<span class="lifetime">&#39;o</span>&gt;(
-        query: <span class="kw-2">&amp;mut </span>Query,
-        expr: <span class="kw-2">&amp;</span>str,
+        query: Query,
+        expr: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str],
         udata: <span class="kw">impl </span>Into&lt;UserData&lt;<span class="lifetime">&#39;o</span>&gt;&gt;,
-    ) -&gt; LkResult&lt;bool&gt; {
+    ) -&gt; LkResult&lt;Query&gt; {
         varctx::lk_query_parse(<span class="kw">crate</span>::abe::ctx::ctx(udata.into())<span class="question-mark">?</span>, query, expr)
     }
     <span class="doccomment">/// Clear a [Query] for reuse
@@ -1513,15 +1511,15 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="doccomment">/** linkspace stored identity
 
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
-    empty name defaults to &#39;me&#39; ( i.e. \[@:name:local\] )
+    empty name defaults to ( i.e. \[@:local\] )
     **/
     </span><span class="kw">pub fn </span>lk_key(
         linkspace: <span class="kw-2">&amp;</span>Linkspace,
         password: <span class="kw-2">&amp;</span>[u8],
         name: <span class="kw-2">&amp;</span>str,
-        new: bool,
+        create: bool,
     ) -&gt; LkResult&lt;SigningKey&gt; {
-        <span class="kw">super</span>::varctx::lk_key(<span class="kw">super</span>::abe::ctx::ctx(().into())<span class="question-mark">?</span>,linkspace,password,name,new)
+        <span class="kw">super</span>::varctx::lk_key(<span class="kw">super</span>::abe::ctx::ctx(().into())<span class="question-mark">?</span>,linkspace,password,name,create)
         
     }
 }
@@ -1536,15 +1534,16 @@ See guide#ABE to understand its use and indepth explanation.
     It connects to a database and a IPC event source
     Open or create with [lk_open].
     This can be called multiple times across threads and processes.
-    save with [lk_save] and get packets with [lk_get],
-    register callbacks with [lk_watch], and process new data with [lk_process] or [lk_process_while]
-    It is possible to nest lk_watch and lk_get calls.
-     **/
+    save with [lk_save].
+    Use [lk_process] or [lk_process_while] to update the reader
+    and get packets with [lk_get], [lk_get_all], and [lk_watch].
+    **/
     </span><span class="attr">#[derive(Clone)]
     #[repr(transparent)]
     </span><span class="kw">pub struct </span>Linkspace(<span class="kw">pub</span>(<span class="kw">crate</span>) linkspace_common::runtime::Linkspace);
 
-    <span class="kw">use </span>tracing::debug_span;
+    <span class="kw">use </span>linkspace_common::prelude::WatchIDRef;
+    <span class="kw">use </span>tracing::{debug_span };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="doccomment">/// open a linkspace runtime.
@@ -1552,8 +1551,8 @@ See guide#ABE to understand its use and indepth explanation.
     /// will look at `path` or $LINKSPACE or &#39;$HOME&#39;
     /// and open &#39;PATH/linkspace&#39; unless the basename of PATH is linkspacel &#39;linkspace&#39;
     ///
-    /// A runtime is used to [lk_save] and [lk_get] packets.
-    /// [lk_watch] also reacts to new packets to saved by this or other processes/thread  when running [lk_process] or [lk_process_while]
+    /// A runtime is used in many arguments.
+    /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// You can open the same instance in multiple threads (sharing their db session &amp; ipc ) and across multiple processes.
     /// moving an open linkspace across threads is not supported.
     </span><span class="kw">pub fn </span>lk_open(path: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>std::path::Path&gt;, create: bool) -&gt; std::io::Result&lt;Linkspace&gt; {
@@ -1575,7 +1574,10 @@ See guide#ABE to understand its use and indepth explanation.
     </span><span class="kw">pub fn </span>lk_save(lk: <span class="kw-2">&amp;</span>Linkspace, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt) -&gt; std::io::Result&lt;bool&gt; {
         linkspace_common::core::env::write_trait::save_pkt(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.get_writer(), pkt)
     }
-    <span class="doccomment">/// [lk_watch] but only for currently indexed packets.
+    <span class="kw">pub fn </span>lk_save_all(lk: <span class="kw-2">&amp;</span>Linkspace, pkts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt]) -&gt; std::io::Result&lt;usize&gt; {
+        linkspace_common::core::env::write_trait::save_pkts(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.get_writer(), pkts).map(|(i,<span class="kw">_</span>)|i)
+    }
+    <span class="doccomment">/// [lk_watch] but only for currently indexed packets. Don&#39;t forget to [lk_process]
     /// Terminates early when `cb` returns false
     </span><span class="kw">pub fn </span>lk_get_all(
         lk: <span class="kw-2">&amp;</span>Linkspace,
@@ -1594,11 +1596,11 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="prelude-val">Ok</span>(c)
     }
 
-    <span class="doccomment">/// get a single packet
+    <span class="doccomment">/// get a single packet. Don&#39;t forget to [lk_process]
     </span><span class="kw">pub fn </span>lk_get(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query) -&gt; LkResult&lt;<span class="prelude-ty">Option</span>&lt;NetPktBox&gt;&gt; {
         lk_get_ref(lk, query, <span class="kw-2">&amp;mut </span>|v| v.as_netbox())
     }
-    <span class="doccomment">/** read a single packet directly from disk.
+    <span class="doccomment">/** read a single packet mmap-ed packet. Don&#39;t forget to [lk_process]
     This means that [NetPkt::net_header_mut] is unavailable.
     You can wrap it in a [crate::misc::ReroutePkt] to change this or [NetPkt::as_netbox] to allocate and mutate.
     **/
@@ -1655,25 +1657,27 @@ See guide#ABE to understand its use and indepth explanation.
         }
     }
 
-    <span class="doccomment">/// process the log of new packets and trigger callbacks
+    <span class="doccomment">/// process the log of new packets and trigger callbacks. Updates the reader to the latest state.
     </span><span class="kw">pub fn </span>lk_process(rt: <span class="kw-2">&amp;</span>Linkspace) -&gt; Stamp {
         rt.<span class="number">0</span>.process()
     }
-    <span class="doccomment">/** process the log of new packets continiously
+    <span class="doccomment">/** process the log of new packets continuously
 
     will return when:
     - max_wait has elapsed between new packets - return false
       e.g. lk_eval(&quot;[s:+1M]&quot;) or 0u64 to ignore
     - until time has been reached - returns false
       e.g. lk_eval(&quot;[now:+1M]&quot;) or 0u64 to ignore
+    - (watch_id,false) was triggered - returns true
+    - (watch_id,true) was finished - returns true
     - no more watch callbacks exists - returns true
     **/
-    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace, d_max_wait: Stamp, at_until: Stamp) -&gt; LkResult&lt;bool&gt; {
+    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,watch_id:<span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>WatchIDRef,bool)&gt;, d_max_wait: Stamp, at_until: Stamp) -&gt; LkResult&lt;bool&gt; {
         <span class="kw">let </span>max_wait = (d_max_wait != Stamp::ZERO)
             .then_some(std::time::Duration::from_micros(d_max_wait.get()));
 
         <span class="kw">let </span>until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
-        lk.<span class="number">0</span>.run_while(max_wait, until)
+        lk.<span class="number">0</span>.run_while(max_wait, until,watch_id)
     }
 
     <span class="kw">pub fn </span>lk_list_watches(lk: <span class="kw-2">&amp;</span>Linkspace, cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>Query)) {
@@ -1681,7 +1685,8 @@ See guide#ABE to understand its use and indepth explanation.
             cb(<span class="kw-2">&amp;</span>el.id, Query::from_impl(<span class="kw-2">&amp;*</span>el.query))
         }
     }
-    <span class="kw">pub struct </span>LkInfo&lt;<span class="lifetime">&#39;o</span>&gt; {
+    <span class="attr">#[derive(Debug)]
+    </span><span class="kw">pub struct </span>LkInfo&lt;<span class="lifetime">&#39;o</span>&gt; {
         <span class="kw">pub </span>path: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>std::path::Path,
     }
     <span class="kw">pub fn </span>lk_info(lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; LkInfo {
@@ -1783,19 +1788,20 @@ See guide#ABE to understand its use and indepth explanation.
         )<span class="question-mark">?</span>)
     }
     <span class="doccomment">/// custom ctx version of [super::lk_query_parse]
-    </span><span class="kw">pub fn </span>lk_query_parse(ctx: LkCtx, pred: <span class="kw-2">&amp;mut </span>Query, expr: <span class="kw-2">&amp;</span>str) -&gt; LkResult&lt;bool&gt; {
-        <span class="kw">let </span>changed = pred.<span class="number">0</span>.parse(expr.as_bytes(), <span class="kw-2">&amp;</span>ctx.as_dyn())<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(changed)
+    </span><span class="kw">pub fn </span>lk_query_parse(ctx: LkCtx, <span class="kw-2">mut </span>query: Query, statements: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; LkResult&lt;Query&gt; {
+        <span class="kw">for </span>stmnt <span class="kw">in </span>statements{
+            query.<span class="number">0</span>.parse(stmnt.as_bytes(), <span class="kw-2">&amp;</span>ctx.as_dyn())<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(query)
     }
     <span class="kw">pub fn </span>lk_key(
         ctx:LkCtx,
         linkspace: <span class="kw-2">&amp;</span>Linkspace,
         password: <span class="kw-2">&amp;</span>[u8],
         name: <span class="kw-2">&amp;</span>str,
-        new: bool,
+        create: bool,
     ) -&gt; LkResult&lt;SigningKey&gt; {
         <span class="kw">use </span>linkspace_common::protocols::lns;
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}:local&quot;</span>,<span class="kw">if </span>name.is_empty(){<span class="string">&quot;me&quot;</span>}<span class="kw">else</span>{name});
         <span class="kw">let </span>expr = parse_abe(<span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>;
         <span class="kw">let </span>name : lns::name::Name= eval(<span class="kw-2">&amp;</span>ctx.as_dyn(), <span class="kw-2">&amp;</span>expr)<span class="question-mark">?</span>.try_into()<span class="question-mark">?</span>;
         <span class="kw">match </span>lns::lookup_enckey(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, <span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>{
@@ -1803,19 +1809,11 @@ See guide#ABE to understand its use and indepth explanation.
                 <span class="prelude-val">Ok</span>(linkspace_common::identity::decrypt(<span class="kw-2">&amp;</span>enckey, password)<span class="question-mark">?</span>)
             }
             <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">if </span>new {
+                <span class="kw">if </span>create {
                     <span class="kw">use </span><span class="kw">super</span>::key::<span class="kw-2">*</span>;
                     <span class="kw">let </span>key = lk_keygen();
                     <span class="kw">let </span>enckey = <span class="kw">super</span>::key::lk_keystr(<span class="kw-2">&amp;</span>key, password);
-                    <span class="comment">/*
-                    use std::env::{args, current_dir, current_exe};
-                    let notes = format!(
-                        &quot;exec:{:?}\ndir:{:?}\nargs:{:?}&quot;,
-                        current_exe(),
-                        current_dir(),
-                        args()
-                    );*/
-                    </span>lns::setup_special_keyclaim(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, name, <span class="kw-2">&amp;</span>enckey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+                    lns::setup_special_keyclaim(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, name, <span class="kw-2">&amp;</span>enckey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(key)
                 } <span class="kw">else </span>{
                     <span class="macro">anyhow::bail!</span>(<span class="string">&quot;no matching entry found&quot;</span>)
@@ -1828,5 +1826,4 @@ See guide#ABE to understand its use and indepth explanation.
 <span class="comment">// Allow for interop when importing linkspace_common
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub mod </span>interop;
-</code></pre></div>
-</section></main></body></html>
+</code></pre></div></section></main></body></html>
