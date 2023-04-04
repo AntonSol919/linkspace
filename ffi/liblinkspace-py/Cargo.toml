@@ -9,8 +9,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.69"
-liblinkspace = { path = "../../crates/liblinkspace"}
-pyo3 = { version = "0.18.2", features = ["extension-module","anyhow","abi3-py311","serde"]  }
+liblinkspace = { path = "../../crates/liblinkspace", version ="0.1.0"}
+pyo3 = { version = "0.18.2", features = ["extension-module","anyhow","abi3","serde"]  }
 ref-cast = "1.0.14"
 smallvec = {version="1.10.0",features=["const_new","const_generics","write"]}
 tracing = "0.1.37"

@@ -248,13 +248,13 @@ dependencies = [
 
 [[package]]
 name = "blake2b_simd"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72936ee4afc7f8f736d1c38383b56480b5497b4617b4a77bdbf1d2ababc76127"
+checksum = "3c2f0dc9a68c6317d884f97cc36cf5a3d20ba14ce404227df55e1af708ab04bc"
 dependencies = [
  "arrayref",
  "arrayvec 0.7.2",
- "constant_time_eq 0.1.5",
+ "constant_time_eq 0.2.4",
 ]
 
 [[package]]
@@ -315,43 +315,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "bstr"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7f0778972c64420fdedc63f09919c8a88bda7b25135357fd25a5d9f3257e832"
-dependencies = [
- "memchr",
- "once_cell",
- "regex-automata",
- "serde",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 
 [[package]]
-name = "bus"
-version = "0.1.0"
-dependencies = [
- "event-listener",
- "fslock",
- "futures",
- "libc",
- "nix",
- "socket2",
- "tracing",
-]
-
-[[package]]
-name = "bytefmt"
+name = "byte-fmt"
 version = "0.1.0"
 dependencies = [
  "abe",
  "base64",
- "bstr",
  "ruint",
  "serde",
  "serde_bytes",
@@ -906,6 +880,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ipcbus"
+version = "0.1.0"
+dependencies = [
+ "event-listener",
+ "fslock",
+ "futures",
+ "libc",
+ "nix",
+ "socket2",
+ "tracing",
+]
+
+[[package]]
 name = "is-terminal"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -972,9 +959,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.139"
+version = "0.2.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
+checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 
 [[package]]
 name = "liblinkspace"
@@ -991,7 +978,7 @@ name = "linkspace-argon2-identity"
 version = "0.1.0"
 dependencies = [
  "base64",
- "linkspace-crypto",
+ "linkspace-cryptography",
  "rust-argon2",
  "thiserror",
 ]
@@ -1014,8 +1001,7 @@ dependencies = [
  "abe",
  "anyhow",
  "async_executors",
- "auto_impl",
- "bytefmt",
+ "byte-fmt",
  "clap",
  "either",
  "futures",
@@ -1026,7 +1012,6 @@ dependencies = [
  "notify",
  "rand",
  "rand_chacha",
- "ron",
  "rpassword",
  "serde",
  "thiserror",
@@ -1041,12 +1026,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arrayvec 0.7.2",
- "bus",
  "dunce",
  "either",
+ "ipcbus",
  "lazy_static",
  "libc",
- "linkspace-crypto",
+ "linkspace-cryptography",
  "linkspace-pkt",
  "lmdb-rkv",
  "lmdb-rkv-sys",
@@ -1059,7 +1044,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "linkspace-crypto"
+name = "linkspace-cryptography"
 version = "0.1.0"
 dependencies = [
  "blake3",
@@ -1098,9 +1083,9 @@ dependencies = [
  "auto_impl",
  "bincode",
  "bitflags 1.3.2",
- "bytefmt",
+ "byte-fmt",
  "bytes",
- "linkspace-crypto",
+ "linkspace-cryptography",
  "serde",
  "serde_json",
  "static_assertions",
@@ -1628,17 +1613,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ron"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88073939a61e5b7680558e6be56b419e208420c2adb92be54921fa6b72283f1a"
-dependencies = [
- "base64",
- "bitflags 1.3.2",
- "serde",
-]
-
-[[package]]
 name = "rpassword"
 version = "7.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1688,13 +1662,14 @@ checksum = "62cc5760263ea229d367e7dff3c0cbf09e4797a125bd87059a6c095804f3b2d1"
 
 [[package]]
 name = "rust-argon2"
-version = "0.8.2"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b50162d19404029c1ceca6f6980fe40d45c8b369f6f44446fa14bb39573b5bb9"
 dependencies = [
  "base64",
  "blake2b_simd",
- "constant_time_eq 0.2.4",
+ "constant_time_eq 0.1.5",
  "crossbeam-utils",
- "hex",
 ]
 
 [[package]]

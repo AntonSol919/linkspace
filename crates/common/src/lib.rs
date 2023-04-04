@@ -30,7 +30,7 @@ pub use anyhow;
 pub use serde;
 
 pub use abe;
-pub use bytefmt;
+pub use byte_fmt;
 
 pub use linkspace_argon2_identity as identity;
 pub use linkspace_core as core;

@@ -5,9 +5,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::*;
 use anyhow::{anyhow, bail, Context};
-use bytefmt::abe::ast::Ctr;
-use bytefmt::abe::{eval::*, ToABE, ABE};
-use bytefmt::abe::{eval_fnc, fncs};
+use byte_fmt::abe::ast::Ctr;
+use byte_fmt::abe::{eval::*, ToABE, ABE};
+use byte_fmt::abe::{eval_fnc, fncs};
 
 pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     let pkt_env = EScope(NetPktFieldsEval(pkt));

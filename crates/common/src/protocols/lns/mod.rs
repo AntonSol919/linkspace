@@ -22,7 +22,7 @@ Every part of this is not yet fully implemented.
 
 use abe::eval::{clist, ApplyResult};
 use anyhow::{Context };
-use bytefmt::ab;
+use byte_fmt::ab;
 use linkspace_argon2_identity::pubkey;
 use linkspace_pkt::{spath, Domain, Tag, PubKey, GroupID, Ptr, Stamp, Link };
 use tracing::instrument;

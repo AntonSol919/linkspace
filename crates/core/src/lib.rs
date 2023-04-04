@@ -35,7 +35,7 @@
 )]
 pub use parse_display;
 
-pub use linkspace_crypto as crypto;
+pub use linkspace_cryptography as crypto;
 pub use linkspace_pkt as pkt;
 pub mod consts;
 pub mod env;
@@ -50,6 +50,7 @@ pub mod query;
 pub mod stamp_fmt;
 pub mod stamp_range;
 
+
 #[macro_export]
 macro_rules! try_opt {
     ($expr:expr $(,)?) => {
@@ -63,3 +64,5 @@ macro_rules! try_opt {
         }
     };
 }
+
+pub static LNS_ROOTS:&[u8] = include_bytes!("./lnsroots.pkt");

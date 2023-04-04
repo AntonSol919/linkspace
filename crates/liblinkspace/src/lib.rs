@@ -14,7 +14,7 @@
     try_trait_v2,
     strict_provenance
 )]
-#![doc = include_str!("../readme.md")]
+#![doc = include_str!("../README.md")]
 #![doc = r#"
 
 The functions re-exported below is essentially the entire liblinkspace interface.
@@ -33,7 +33,7 @@ pub type LkResult<T = ()> = std::result::Result<T, LkError>;
 pub mod prelude {
     pub use super::*;
     pub use linkspace_common::{
-        bytefmt::{endian_types, AB, B64},
+        byte_fmt::{endian_types, AB, B64},
         core::env::queries::RecvPktPtr,
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,

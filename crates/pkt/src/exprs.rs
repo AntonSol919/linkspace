@@ -3,8 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use bytefmt::abe::abe;
-use bytefmt::abe::TypedABE;
+use byte_fmt::abe::abe;
+use byte_fmt::abe::TypedABE;
 
 use crate::*;
 pub type StampExpr = TypedABE<Stamp>;

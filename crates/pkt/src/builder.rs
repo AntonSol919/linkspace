@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use linkspace_crypto::SigningKey;
+use linkspace_cryptography::SigningKey;
 
 use crate::*;
 
@@ -165,7 +165,7 @@ pub fn try_keypoint_ref<'t>(
         fields: PointFields::LinkPoint(sp),
     }
     .compute_hash();
-    let signature = linkspace_crypto::sign_hash(signkey, &linkpoint_hash.0).into();
+    let signature = linkspace_cryptography::sign_hash(signkey, &linkpoint_hash.0).into();
     let pkt_parts = PointParts {
         pkt_header: PointHeader::new(
             PointTypeFlags::KEY_POINT,

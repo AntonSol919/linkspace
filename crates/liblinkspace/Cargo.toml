@@ -8,6 +8,9 @@ homepage = "https://antonsol919.github.io/linkspace/"
 documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 categories = ["database","network-programming","asynchronous"]
+keywords = ["linkspace", "supernet"]
+description = "liblinkspace - a general purpose supernet"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,5 +19,5 @@ categories = ["database","network-programming","asynchronous"]
 [dependencies]
 anyhow = "1.0.69"
 backtrace = "0.3.67"
-linkspace-common = { path = "../common"}
+linkspace-common = { path = "../common", version = "0.1.0"}
 tracing = "0.1.37"

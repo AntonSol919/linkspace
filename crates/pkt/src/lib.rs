@@ -33,7 +33,7 @@
     type_alias_impl_trait,
     once_cell
 )]
-pub use bytefmt::*;
+pub use byte_fmt::*;
 use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
@@ -65,7 +65,7 @@ pub use eval::*;
 pub use exprs::*;
 pub use field_ids::*;
 pub use ipath::*;
-pub use linkspace_crypto::SigningKey;
+pub use linkspace_cryptography::SigningKey;
 pub use netpkt::*;
 pub use point::*;
 pub use point_parts::*;
@@ -274,7 +274,7 @@ where
     }
     fn select(&self) -> SelectLink{ SelectLink(self.get_links())}
     fn compute_hash(&self) -> LkHash {
-        linkspace_crypto::hash_segments(&self.pkt_segments().0).into()
+        linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
     fn net_pkt_size(&self) -> usize {
         self.point_header_ref().net_pkt_size()

@@ -56,8 +56,8 @@ pub struct Signed {
     pub linkpoint_hash: LkHash,
 }
 impl Signed {
-    pub fn validate(&self) -> Result<(), linkspace_crypto::Error> {
-        linkspace_crypto::validate_signature(
+    pub fn validate(&self) -> Result<(), linkspace_cryptography::Error> {
+        linkspace_cryptography::validate_signature(
             &self.pubkey.0,
             &self.signature.0,
             &self.linkpoint_hash.0,

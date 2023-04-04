@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // the db is duck type compatible between inmem and lmdb
-use crate::{consts::PUBLIC_GROUP_PKT };
+use crate::{consts::PUBLIC_GROUP_PKT, LNS_ROOTS };
 use anyhow::{Context  };
 use linkspace_pkt::{NetPkt, Stamp, PointExt, AB };
 use tracing::instrument;
@@ -39,14 +39,14 @@ pub static BUS: OnceLock<BusCall> = OnceLock::new();
 pub struct BTreeEnv {
     inner: RawBTreeEnv,
     location: Arc<PathBuf>,
-    pub log_head: Arc<bus::ProcBus>,
+    pub log_head: Arc<ipcbus::ProcBus>,
 }
 impl Debug for BTreeEnv {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("BTreeEnv").finish()
     }
 }
-pub use bus::ProcBus;
+pub use ipcbus::ProcBus;
 
 impl BTreeEnv {
     pub fn location(&self) -> &Path {
@@ -56,7 +56,7 @@ impl BTreeEnv {
         let inner = db::open(&path, make_dir)?;
         let location = Arc::new(path.canonicalize()?);
         tracing::debug!(?location, "Opening BTreeEnv");
-        let log_head = bus::ProcBus::new(inner.uid());
+        let log_head = ipcbus::ProcBus::new(inner.uid());
         let env = BTreeEnv {
             inner,
             log_head: Arc::new(log_head),
@@ -66,8 +66,7 @@ impl BTreeEnv {
             let mut writer = env.inner.write_txn()?;
             let new = save_pkt(&mut writer, &**PUBLIC_GROUP_PKT)?;
             if new {
-            static ROOTS:&[u8] = include_bytes!("../../../common/src/protocols/lns/roots.pkt");
-            let mut bytes = ROOTS;
+            let mut bytes = LNS_ROOTS;
             let roots:Vec<_> = std::iter::from_fn(||{
                 if bytes.len() == 0 { return None;}
                 let pkt = crate::pkt::read::parse_netpkt(bytes, false).unwrap().unwrap();
@@ -136,7 +135,7 @@ impl BTreeEnv {
 /// Needs to broadcast updates and expose a ReadTxn ref
 pub struct WriteTxn2<'o> {
     txn: Option<db::WriteTxn<'o>>,
-    update: &'o bus::ProcBus,
+    update: &'o ipcbus::ProcBus,
     last: Option<Stamp>,
 }
 

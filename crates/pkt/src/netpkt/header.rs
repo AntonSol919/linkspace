@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use bytefmt::{
+use byte_fmt::{
     abe::ToABE,
     endian_types::{U32, U8},
      AB, B64,
@@ -44,7 +44,7 @@ impl From<B64<[u8; 32]>> for NetPktHeader {
 }
 
 impl ToABE for NetPktHeader {
-    fn to_abe(&self) -> Vec<bytefmt::abe::ABE> {
+    fn to_abe(&self) -> Vec<byte_fmt::abe::ABE> {
         let NetPktHeader {
             prefix,
             flags,
@@ -52,7 +52,7 @@ impl ToABE for NetPktHeader {
             stamp,
             ubits,
         } = self;
-        bytefmt::abe::abev!( +(prefix.to_abe())
+        byte_fmt::abe::abev!( +(prefix.to_abe())
                 : +(U8::new(flags.bits).abe_bits())
                 : +(hop.to_abe())
                 : +(stamp.to_abe())
@@ -140,9 +140,9 @@ bitflags! {
         const ALWAYS_ZERO = 0b1000_0000;
     }
 }
-impl From<NetFlags> for bytefmt::endian_types::U8 {
+impl From<NetFlags> for byte_fmt::endian_types::U8 {
     fn from(val: NetFlags) -> Self {
-        bytefmt::endian_types::U8::new(val.bits)
+        byte_fmt::endian_types::U8::new(val.bits)
     }
 }
 /// [NetPktHeader] builder.

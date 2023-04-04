@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::sync::LazyLock;
 
-use bytefmt::abe::{parse_abe, ABE};
+use byte_fmt::abe::{parse_abe, ABE};
 /// default fmt in many cases and output for `[pkt]`
 pub static DEFAULT_PKT: &str = "\
 type\\t[type:str]\\n\

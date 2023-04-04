@@ -2,9 +2,12 @@
 name = "linkspace-common"
 version = "0.1.0"
 edition = "2021"
-
-authors = ["Azon"]
 license = "MPL-2.0"
+authors = ["Azon <AntonSol919@gmail.com>"]
+repository = "https://github.com/AntonSol919/linkspace"
+categories = []
+keywords = ["linkspace"]
+description = "linkspace common"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,19 +15,20 @@ license = "MPL-2.0"
 default = ["full", "lmdb"]
 lmdb=["linkspace-core/lmdb"]
 inmem=["linkspace-core/inmem"]
-fs=["memmap2", "notify", "ron"]
+fs=["memmap2", "notify"]
 cli=["clap", "clap/env", "clap/derive", "rpassword"]
 full=["fs", "cli"]
 
 [dependencies]
-abe = { path = "../abe"}
-bytefmt = { path = "../bytefmt"}
-linkspace-pkt = { path = "../pkt"}
-linkspace-core= { path = "../core",default-features=false}
-linkspace-argon2-identity = { path = "../argon2-identity"}
-anyhow = "*"
+abe = { path = "../abe", version = "0.1.0"}
+byte-fmt = { path = "../byte-fmt", version = "0.1.0"}
+linkspace-pkt = { path = "../pkt", version = "0.1.0"}
+linkspace-core= { path = "../core",default-features=false, version = "0.1.0"}
+linkspace-argon2-identity = { path = "../argon2-identity", version = "0.1.0"}
+
+anyhow = "1.0.69"
 serde = { version = "1.0.139", features = ["derive"] }
-rand = {version="0.8.5",features=["rand_chacha"]}
+rand = {version="0.8.5"}
 tracing = "0.1.35"
 thiserror = "1.0.31"
 memmap2 = { version = "0.5.5", optional = true }
@@ -34,9 +38,6 @@ clap = { version = "^4.0.6", features = ["derive"], optional = true }
 async_executors = { version = "0.6.0", features = ["timer","async_global","bindgen","localpool"] }
 futures = "0.3.21"
 either = "1.7.0"
-ron = { version = "0.7.1", default-features = false, optional = true }
-auto_impl = "1.0.1"
-rand_chacha = "0.3.1"
 tracing-subscriber = "0.3.14"
 
 [dev-dependencies]

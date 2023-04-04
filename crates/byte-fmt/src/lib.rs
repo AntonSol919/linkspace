@@ -25,7 +25,6 @@ use std::{
     str::FromStr,
 };
 
-pub use bstr;
 
 pub use abe;
 pub use abe::eval;

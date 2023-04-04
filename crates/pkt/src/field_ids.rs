@@ -7,7 +7,7 @@ use crate::{
     netpkt::{NetFlags, NetPktHeader},
     *,
 };
-use bytefmt::{
+use byte_fmt::{
     abe::{print_abe, ToABE}, 
 };
 use core::str::FromStr;
