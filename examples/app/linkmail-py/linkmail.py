@@ -1,4 +1,4 @@
-#!/bin/env python3.11
+#!/bin/env python3
 import os,sys,logging,tempfile,subprocess,shlex,functools,cmd,argparse,getpass
 from lkpy import *
 from pathlib import Path

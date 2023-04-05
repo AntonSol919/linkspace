@@ -33,11 +33,9 @@ We should break those locks.
 Dedicated hosts have a role to play.
 But users only get a good deal if they _could_ walk away without losing what is already there.
 
-Blockchains are in the business of encodes exclusivity, scarcity, and inequality at its very **root**.
-At best this is dumb, at worse this is evil.
+Blockchains are in the business of encodes exclusivity, scarcity, and inequality at its **root**.
 
-In practice they can't be the bedrock of useful systems.
-A useful system starts their life as a simple prototype hacked together.
+In practice they fail to support useful systems, because such a thing starts its life as a simple prototype hacked together.
 This gives the developers freedom _after_ building it to adapt it and optimize for utility.
 
 Every property of a blockchain that make it attractive for the people invested, is antithetical to the process of development.

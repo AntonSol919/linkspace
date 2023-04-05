@@ -1,4 +1,4 @@
-#!/bin/env python3.11
+#!/bin/env python3
 from lkpy import *
 import os
 import sys

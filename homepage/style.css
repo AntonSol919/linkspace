@@ -187,5 +187,27 @@ table thead th {
     #logo{ display:none;}
     .merge > pre { margin:0px; }
     code { display:block;}
+    .entrygrid{
+        grid-template-columns: /* */;
+    }
     
+    
+}
+
+.entrygrid{
+    margin:1rem;
+    border:1px solid black;
+    display: grid;
+    grid-template-columns: min-content max-content auto;
+    grid-column-gap: 1em;
+}
+.entrygrid.small > span:nth-child(3n+4){
+    grid-column-start:1;
+}
+.entrygrid.big{
+    grid-template-columns: min-content max-content max-content auto;
+    grid-row-gap:1em;
+}
+.entrygrid.big> span:nth-child(4n+5){
+    grid-column-start:1;
 }

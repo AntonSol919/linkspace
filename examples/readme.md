@@ -1,13 +1,11 @@
 # Examples
 
-This folder contains examples that come packaged the necessary stuff to follow along with the guide,
-as well as various poc apps and an exchange.
-
+This folder contains two application examples and a proof of concept group exchange.
 If you got this as a [pkg](https://antonsol919.github.io/linkspace/download.html) it comes bundled with the cli and python module.
 
 Try and say hi by opening two shells:
-
-In the first connect to a server.
+In the first connect to a test server.
+You'll need `socat` for this (available through most package managers).
 
 ```bash
 ./test-exchange

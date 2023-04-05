@@ -15,14 +15,15 @@ docs:
 	cargo +nightly doc -p liblinkspace --target-dir ./build --no-deps
 	cp -r ./build/doc ./docs/cargo-doc
 
+homepage:
+	make -C ./homepage
+
 homepage-downloads:
 	rm -r ./homepage/download
 	mkdir -p ./homepage/download
 	make -C ./pkg all
 	cp ./pkg/build/*.zip ./homepage/download
 
-homepage:
-	make -C ./homepage
 
 git-checkin: homepage docs
 	cargo +nightly check
