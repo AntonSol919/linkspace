@@ -26,14 +26,14 @@ In return a supernet provides a lot of useful properties including:
 Serverless, free, extensible, reusable, adaptable, scalable, lockin-resistant, lockout-resistant, verifyable, optional accountability, inherent privacy,fault tolerant, etc.
 
 Checkout [Basics](https://antonsol919.github.io/linkspace/basics.html) for a simple introduction.
-[Download](https://antonsol919.github.io/linkspace/download.html) to give it a try and say hi.
+You can give it a try by [downloading](https://antonsol919.github.io/linkspace/download.html) the poc zip and say hi.
 Checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're up for some programming.
 
-The packet format and index is stable, but expect some unimplemented feature and rough edges.
+    The packet format and index is stable, but expect some unimplemented feature and rough edges.
 
 # Guide
 
-It is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html)
+If you're interested in development, it is suggested to start at the [guide](https://antonsol919.github.io/linkspace/docs/guide/index.html)
 
 Or jump straight to a section:
 

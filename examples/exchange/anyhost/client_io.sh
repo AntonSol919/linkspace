@@ -35,7 +35,6 @@ LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
 # read the pull request made by other apps and place them into the group
 lk --private watch --new "[f:exchange]:[#:0]:/pull/$GROUP:**" \
     | lk --private rewrite \
-                --password "" \
                 --group $GROUP \
                 --write db --write stdout sign-all \
     | lk p  ">>>>new request [hash:str]\n[data]\n<<<<" &

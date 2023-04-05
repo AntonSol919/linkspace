@@ -2,7 +2,7 @@
 set -euo pipefail
 
 export PORT=${PORT:-"5020"}
-echo My Key $(lk key --password "")
+echo My Key $(lk key)
 export GROUP=$(lk eval "[:$GROUP/?b]")
 echo Serving $GROUP $PORT 
 export LINKSPACE_PASS=$(lk key --no-pubkey --no-enckey --display-pass)

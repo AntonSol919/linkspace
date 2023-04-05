@@ -1,5 +1,6 @@
 #!/bin/env python3
 import os,sys,logging,tempfile,subprocess,shlex,functools,cmd,argparse,getpass
+from typing import Tuple,List
 from lkpy import *
 from pathlib import Path
 
@@ -8,7 +9,7 @@ parser = argparse.ArgumentParser(description='Linkmail')
 parser.add_argument('--linkspace', dest='linkspace', type=str,
                     default="",help='use linkspace (default: $HOME/linkspace)')
 parser.add_argument('--group', dest='group', type=str,
-                    default=os.environ.get('GROUP'),help='group (default: [#:pub])')
+                    default=os.environ.get('GROUP',''),help='group (default: $GROUP)')
 parser.add_argument('--key', dest='key', type=str,
                     default=os.environ.get('LK_KEY'),help='use key (default: [me:local])')
 args = parser.parse_args()
@@ -45,7 +46,7 @@ def links_str(links=[]):
     return "\n".join([tag_str(l.tag) + " " + lk_encode(l.ptr,"#/@/b") for l in links])
 
 first_mail = "Hello world!"
-def user_write_mail(links = [],notes = "") -> tuple[str,list[Link],str]:
+def user_write_mail(links = [],notes = "") -> Tuple[str,List[Link],str]:
     global first_mail
     editor = os.environ.get('VISUAL', os.environ.get('EDITOR', 'vi'))
     with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as tf:
@@ -83,6 +84,7 @@ def get_exchange_status(watch_finish=False):
 
 intro = """
 linkmail - A simple linkspace mail system
+
 Use 'new' to write a new linkmail.
 Use 'list [subj] [limit]' to print a list of linkmail.
 Use 'pull [subj]' to request mail from the group.
@@ -92,21 +94,23 @@ Use 'open [N]' to open a linkmail
 Every time a list is displayed with a number you can:
 - 'open <N>' to open it
 - 'link <N> [tag]' to save it for use during 'new'
+
+Use 'help list' for more options
 """
 
 
-list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
+list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data:str/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
 class Linkmail(cmd.Cmd):
     intro =intro
     prompt = "> "
 
-    links : list[Link] = []
+    links : List[Link] = []
     notes = "Add notes here"
 
-    lst : list[Pkt] = []
-    queue_in : list[Pkt] = []
+    lst : List[Pkt] = []
+    queue_in : List[Pkt] = []
     # last from lst, or last 'open'
-    last_shown : Pkt = lk_linkpoint(data="Nothing here so far",create=int(0).to_bytes(8))
+    last_shown : Pkt = lk_linkpoint(data="Nothing here so far",create=int(0).to_bytes(8,byteorder='big'))
 
     def precmd(self,line):
         lk_process(lk)
@@ -125,7 +129,7 @@ class Linkmail(cmd.Cmd):
             print(i,tag,lk_eval2str(list_template,pkt))
         return i
     
-    def print_list(self,lst:list[Pkt]):
+    def print_list(self,lst:List[Pkt]):
         self.lst.clear()
         for p in lst:
             self.print_entry(p)
