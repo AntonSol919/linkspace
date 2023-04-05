@@ -47,55 +47,61 @@
   <div>
     <p style="margin-top:0px">
       Just like URL's of the world wide web, linkspace looks a lot like a filesystem.<br>
-      To understand the difference, think about what happens when we merge two instances.
+      To understand the difference, we must first look at merging two sets.
     </p>
   </div>
 
-<pre>
-+
-|-image
-| |-Broken.jpg : {imgdata}
-|
-|-thread
-  |-Coffee machine broke!
-    |- msg     : {fix pls? image/Broken.jpg}
- 
-</pre>
+<div class="entrygrid small">
+
+<span></span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
+
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/Broken.jpg</span>
+
+</div>
 
 <div class="op">+</div>
  
-<pre>
-+
-|-thread
-  |-Tabs or spaces?
-    |- msg     : {Why not U+3164?}
-</pre>
+<div class="entrygrid small">
+<span></span>
+<span style="width:28ch">/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+</div>
 
 <div class="op">=</div>
 
-<pre>
-+
+<div class="entrygrid small">
 
-|-image
-| |-Broken.jpg : {imgdata}
-|
-|-thread
-  |-Tabs or spaces?
-  | |- msg       : {Why not U+3164?}         
-  |
-  |-Coffee machine broke!
-    |- msg       : {fix pls? image/Broken.jpg}
-</pre>
+<span></span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
 
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/Broken.jpg</span>
+
+<span></span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+</div>
 
 <div>
   <p>
-    A web-servers is software that serve such a file/folder tree
+    A web-servers is software that serve such a file/folder tree, receives new entries,
     and does some additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
-    When a user wants to add new entries they might overlap with previous stuff.
+    Your browser requests some of the data in the tree and uses it draw a interface to make it easy to interact with.
+    The webserver does not care about those graphics. It only knows about data.
+
+    What happens when two people want to write to the same location? 
     A server would have multiple options.
     After all, it is the only 'real' copy we can point to.
-    However, this has profound <a href="./why.html">consequences</a>.
+    One option is to only keep one entry, or add a timestamp to the end signaling the date it received the message.
+    Without a single host being the 'real' copy, these options don't work. 
+    But having a single host is slow, creates a single point of failure, and with that much control by one organization has profound <a href="./why.html">consequences</a>.
   </p>
 
   <p>
@@ -103,31 +109,44 @@
   </p>
 </div>
 
-<pre>
-+
-|-thread
-  |-Tabs or spaces?
-    |- msg : <span id="hh0">[HASH_0]</span>{Why not U+3164?}
-</pre>
+<div class="entrygrid small">
+<span id="hh0">[HASH_0]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+</div>
 
 <div class="op">+</div>
 
-<pre>
-+
-|-thread
-  |-Tabs or spaces?
-    |- msg : <span id="hh1">[HASH_1]</span>{Get a life}
-</pre>
+<div class="entrygrid small">
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+</div>
+
+<div class="op">+</div>
+
+<div class="entrygrid small">
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
 
 <div class="op">=</div>
 
-<pre>
-+
-|-thread
-  |-Tabs or spaces?
-    |- msg : <span id="hh0">[HASH_0]</span>{Why not U+3164?}
-             <span id="hh1">[HASH_1]</span>{Get a life}
-</pre>
+<div class="entrygrid small">
+<span id="hh0">[HASH_0]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
+
 
 <div>
   <p>
@@ -137,79 +156,93 @@
   </p>
 </div>
 
+<div class="entrygrid small">
 
-<pre>
-+
-|-image
-| |-Broken.jpg : <span id="hh2">[HASH_2]</span>{imgdata}
-|
-|-thread
-  |-Coffee machine broke!
-    |- msg     : <span id="hh3">[HASH_3]</span>{fix pls? Look at <span id="hh2">[HASH_2]</span> }
-</pre>
+<span id="hh3">[HASH_3]</span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span>image/Broken.jpg</span>
+</div>
 
 <div class="op">+</div>
 
-<pre>
-+
-|-thread
-  |-Coffee machine broke!
-    |- msg     : <span id="hh4">[HASH_4]</span>{
-                  Hey <span id="hh3">[HASH_3]</span>!
-                  Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
-                 }
-</pre>
+<div class="entrygrid small">
+
+<span id="hh5">[HASH_5]</span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+</span>
+
+</div>
 
 <div class="op">=</div>
 
-<pre>
-+
-|-image
-| |-Broken.jpg : <span id="hh2">[HASH_2]</span>{imgdata}
-|
-|-thread
-  |-Coffee machine broke!
-    |- msg     : <span id="hh3">[HASH_3]</span>{fix pls? Look at <span id="hh2">[HASH_2]</span> }
-               : <span id="hh4">[HASH_4]</span>{
-                  Hey <span id="hh3">[HASH_3]</span>!
-                  Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
-                 }
-</pre>
+<div class="entrygrid small">
 
+<span id="hh3">[HASH_3]</span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/Broken.jpg</span>
+
+<span id="hh5">[HASH_5]</span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+</span>
+
+</div>
 
 <div>
     <p>
       Linkspace goes further.
       Each entry is set inside a Domain and a Group.
-      A domain name is chosen by a developer creating a (graphical) interface. The domain name signals what app to use, and how things are organized.
+      A domain name is chosen by a developer creating a (graphical) interface.
+      The domain name signals what app to use, and thus how the developer organized entries.
       The group is set by the user. It exits because we say it exists.
       Finally, each entry has a creation date and <i>can</i> be signed. 
     </p>
     </div>
 
-<pre>
-+domain=message-board
-+group=[#:example:com]        
-|-image
-| |-Broken.jpg : <span id="hh2">[HASH_2]</span>[1/13/2015]{imgdata}
-|
-|-thread
-  |-Coffee machine broke!
-    |- msg     : <span id="hh3">[HASH_3]</span>[3/3/2023]
-                 {fix pls? Look at <span id="hh2">[HASH_2]</span>}
-                 [@:alice:accounting:example:com]
-               : <span id="hh4">[HASH_4]</span>[4/3/2023]
-                 {
-                  Hey <span id="hh3">[HASH_3]</span>!
-                  Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
-                 }
-                 [@:bob:maintenance:example:com]
-</pre>
+<div class="entrygrid big">
 
+<span id="hh3">[HASH_3]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+<br>
+[@:alice:sales:com]
+</span>
+
+<span id="hh5">[HASH_5]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
+<span>
+Hey <span id="hh3">[HASH_3]</span>!
+Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
+<br>
+[@:bob:maintainance:com]
+</span>
+
+</div>
 
 <div>
     <p>
-      These are the basics ideas<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>..<br>
+      These are the basics<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.
+      If For more details and some advanced concepts see the <a href="./docs/guide/index.html">Guide</a>.
       For more details and some advanced concepts see the <a href="./docs/guide/index.html">Guide</a>.
     </p>
 </div>
@@ -224,9 +257,10 @@ The tree described here is the general case where primary_key has variable lengt
 <a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2" role="doc-endnote"><p>
     With the most notable simplification being that: 
-    Hash references are usually not written inside the text.  
+    Packets containing <i>only</i> data <a href="./docs/guide/index.html#lk_datapoint">exist</a>.
+    Hash references are not written inside the text.  
     Instead, the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
-    Furthermore, addressing by path 'images/Broken.jpg' has a few extra options such as constraining it to time created, signed by, etc.
+    Finally, addressing by path 'images/Broken.jpg' has a few extra options to select it by time created, signed by, etc.
 <a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>

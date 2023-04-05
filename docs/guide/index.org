@@ -73,9 +73,10 @@ The end of this document contains an example of both.
 * Setup
 
 This guide uses Python and (Bash) CLI snippets.
-You can get the latest version from [[https://github.com/AntonSol919/linkspace][GitHub]]
+You can [[https://antonsol919.github.io/linkspace/download.html][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
 
-** linkspace-cli
+** Building 
+*** linkspace-cli
 
 ~make install-lk~ or:
 
@@ -96,7 +97,7 @@ linkspace-cli 0.1.0
 #+end_example
 
 
-** lkpy - linkspace python bindings
+*** lkpy - linkspace python bindings
 
 ~make install-lkpy~ or: 
 
@@ -388,7 +389,7 @@ The CLI also accepts ~lk link --sign~ instead of ~lk keypoint~
 ** Fields
 
 In python you can access these fields directly as bytes.
-The fields included in the hash are not writable.
+Fields are not writable because they are included in the hash.
 
 #+begin_src python :session lkpy :exports both :results value verbatim
   [attr for attr in dir(lk_linkpoint())  if not "__" in attr]
@@ -400,6 +401,11 @@ The fields included in the hash are not writable.
 #+end_example
 
 Where comp[0..7] are the path components, 
+
+#+BEGIN_VERSE
+Some [[#predicatelist][fields]] we've not seen so far are writable, but they are not relevant for most applications.
+#+END_VERSE
+
 
 ** Notes
 
@@ -481,7 +487,7 @@ printf "hello" | lk encode -i
 printf "world/" | lk encode -i
 printf "nl \n tab \t" | lk encode -i
 printf "open [ close ]" | lk encode -i
-printf "smiley 😍" | lk encode -i
+printf "emoji 🚀" | lk encode -i
 #+END_SRC
 #+end_bash
 
@@ -492,13 +498,13 @@ All packet fields are arbitrary bytes, and lk_encode can print them as abtext
   multiline = """newline
   tab	""".encode()
 
-  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", "smiley 😍".encode()])
+  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", "🚀".encode()]) # encode implies utf-8
 
   print(lk_encode(lkp.comp0),"\t",list(lkp.comp0))
   print(lk_encode(lkp.comp1),"\t",list(lkp.comp1))
   print(lk_encode(lkp.comp2),"\t",list(lkp.comp2))
   print(lk_encode(lkp.comp3),"\t",list(lkp.comp3))
-  print(lk_encode(lkp.comp4),"\t",list(lkp.comp4))
+  print(lk_encode(lkp.comp4),"\t",list(lkp.comp4), lkp.comp4.decode("utf-8"))
   
 #+end_src
 
@@ -1172,13 +1178,17 @@ path_len:>:[u8:0]
 
 #+end_sh
 #+begin_py
-
 #+begin_src python :session lkpy :exports both :results value verbatim
   q = lk_query()
-#+END_SRC
+  q = lk_query_push(q,"","hello",b"world")
+  # You can copy from an existing query.
+  other = lk_query(q)
+  lk_query_print(other)
+#+end_src
 
-
+#+RESULTS:
 #+end_py
+
 #+end_ctabs
 
 ** lk_query_parse
@@ -1186,22 +1196,30 @@ path_len:>:[u8:0]
 :CUSTOM_ID: lk_query_parse
 :END:
 
-Add multiple constraints to a query. Returns an error if the resulting set is empty.
+Add multiple constraints to a query.
+You can add multi line strings or per line.
+Each line is evaluated. you can set a pkt or argv context.
+
+Returns an error if the resulting set is empty.
 The full list of predicates and their byte size can be found [[#predicatelist][here]].
 
 #+begin_ctabs
 #+begin_py
 #+begin_src python :session lkpy :exports both :results value verbatim
-  # parse runs eval and can take pkt and argv as argument.
+  q = lk_query()
+
   stmt = """
   group:=:[#:pub]
   domain:=:example
-  path_len:<:[u8:4]
-  data_size:<:[0]
   """
-  lk_query_parse(q,stmt,argv=[int(10).to_bytes(2)])
-  lk_query_print(q,True) 
+
+  q = lk_query_parse(q,stmt,
+                 "path_len:<:[u8:4]",
+                 "data_size:<:[0]",argv=[int(10).to_bytes(2)]) 
+  lk_query_print(q,True)
 #+END_SRC
+
+
 #+end_py
 #+end_ctabs
 
@@ -1210,18 +1228,16 @@ The full list of predicates and their byte size can be found [[#predicatelist][h
 :CUSTOM_ID: lk_query_push
 :END:
 
-Add a single statement to a query, with the last field in byte format.
-
-Predicates are combined. Creating conflicts returns an error
+Similar to lk_query_parse, but only adds a single statement and the last field expects the bytes.
 
 #+begin_ctabs
 #+begin_py
 
 #+begin_src python :session lkpy :exports both :results value verbatim
   q = lk_query()
-  lk_query_push(q,"data_size","<",bytes([0,4])) # less than 4
-  lk_query_push(q,"data_size","<",lk_eval("[u16:20]"))  # less than 20
-  lk_query_push(q,"data_size","<",int(3).to_bytes(2))  # less than 3
+  q = lk_query_push(q,"data_size","<",bytes([0,4])) # less than 4
+  q = lk_query_push(q,"data_size","<",lk_eval("[u16:20]"))  # less than 20
+  q = lk_query_push(q,"data_size","<",int(3).to_bytes(2))  # less than 3
   lk_query_print(q)
 #+END_SRC
 
@@ -1299,9 +1315,8 @@ Setting pubkey or signature excludes link and data points.
 Besides the fields in a point, predicates also apply to the hash and variable net header fields.
 These fields are useful when writing an exchange processes.
 
-The netheader fields can be mutated.
-It is 32 bytes consisting of the following field. 
-The netheader fields are :
+The netheader fields can be mutated and are to be used by the group exchange for exchanging routing information.
+It is 32 bytes consisting of the following field: 
 
 |              |                               |
 | Field_{size} |                               |

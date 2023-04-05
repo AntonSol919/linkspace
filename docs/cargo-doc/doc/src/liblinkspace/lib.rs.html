@@ -928,7 +928,7 @@
     try_trait_v2,
     strict_provenance
 )]
-#![doc = <span class="macro">include_str!</span>(<span class="string">&quot;../readme.md&quot;</span>)]
+#![doc = <span class="macro">include_str!</span>(<span class="string">&quot;../README.md&quot;</span>)]
 #![doc = <span class="string">r#&quot;
 
 The functions re-exported below is essentially the entire liblinkspace interface.
@@ -947,7 +947,7 @@ Some internals structs defs are currently leaking and will be removed.
 <span class="kw">pub mod </span>prelude {
     <span class="kw">pub use super</span>::<span class="kw-2">*</span>;
     <span class="kw">pub use </span>linkspace_common::{
-        bytefmt::{endian_types, AB, B64},
+        byte_fmt::{endian_types, AB, B64},
         core::env::queries::RecvPktPtr,
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,

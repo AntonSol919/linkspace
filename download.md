@@ -3,11 +3,17 @@
 
 ## POC - builds
 
-The package includes the CLI and lkpy.so for python 3.11, as well as proof of concept domain applications and exchange.
-Checkout the readme and come say hi.
+Unzip, follow the README.md, and come say hi.
 
-- [0.1.3-x86_64](./download/linkspace-x86_64-unknown-linux-gnu.zip)
-- [0.1.3-aarc64](./download/linkspace-aarch64-unknown-linux-gnu.zip)
+- [linkspace-x86_64.zip](./download/linkspace-x86_64-unknown-linux-gnu.zip)
+- [linkspace-aarch64.zip](./download/linkspace-aarch64-unknown-linux-gnu.zip)
+
+The package contains:
+
+- the `lk` CLI
+- `lkpy.so` you can import with python.
+- linkmail and imageboard domain applications.
+- anyhost exchange .
 
 ## git
 
