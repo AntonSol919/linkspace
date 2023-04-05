@@ -29,7 +29,7 @@ Checkout [Basics](https://antonsol919.github.io/linkspace/basics.html) for a sim
 You can give it a try by [downloading](https://antonsol919.github.io/linkspace/download.html) the poc zip and say hi.
 Checkout the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're up for some programming.
 
-    The packet format and index is stable, but expect some unimplemented feature and rough edges.
+The packet format and index is stable, but expect some unimplemented feature and rough edges.
 
 # Guide
 
