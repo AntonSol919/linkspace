@@ -122,7 +122,7 @@ It is available as a Rust crate ~liblinkspace~ and binding for other languages f
 It consists of the following functions:
 
 - [[Point]] creation
-  - [[file:::#datapoint-py][lk_datapoint]]
+  - [[#lk_datapoint][lk_datapoint]]
   - [[#lk_linkpoint][lk_linkpoint]]
   - [[lk_keypoint]]
 
@@ -172,7 +172,7 @@ Functions usually deal with netpacket.
 
 ** lk_datapoint
 :PROPERTIES:
-:CUSTOM_ID: datapoint
+:CUSTOM_ID: lk_datapoint
 :END:
 
 #+begin_ctabs
