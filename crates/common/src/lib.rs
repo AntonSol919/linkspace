@@ -14,14 +14,14 @@
     iterator_try_collect,
     btree_drain_filter,
     hash_drain_filter,
-    cell_update,
+    lazy_cell,
+    once_cell_try,
     duration_constants,
     control_flow_enum,
     type_alias_impl_trait,
     try_blocks,
     never_type,
     try_trait_v2,
-    once_cell,
     write_all_vectored,
     drain_filter
 )]

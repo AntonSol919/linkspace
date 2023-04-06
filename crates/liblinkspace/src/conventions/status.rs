@@ -115,10 +115,10 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: im
     query = lk_query_push(query, "links_len", ">", &*U16::ZERO)?;
     query = lk_query_push(query, "recv", "<", &*wait_until)?;
     query = match watch_id{
-        Some(id) => lk_query_push(query, "", "watch", id)?,
+        Some(id) => lk_query_push(query, "", "id", id)?,
         None => {
             let id = [b"status" as &[u8],&*now()].concat(); 
-            lk_query_push(query, "", "watch", &id)?
+            lk_query_push(query, "", "id", &id)?
         },
     };
     lk_watch2(lk, &query, cb,span)?;
@@ -160,7 +160,7 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
     q = lk_query_push(q, "prefix", "=", prefix.spath_bytes())?;
     // We only care about new packets. Worst case a request was received and timeout between our init and this cb.
     q = lk_query_push(q, "i_index", "<", &*U32::ZERO)?;
-    q = lk_query_push(q, "", "watch", &[b"status-update" as &[u8],&*now()].concat())?;
+    q = lk_query_push(q, "", "id", &[b"status-update" as &[u8],&*now()].concat())?;
     lk_watch2(&lk, &q, cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
         let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype};
         let p = pkt.get_ipath();

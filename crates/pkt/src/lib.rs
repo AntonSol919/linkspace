@@ -31,7 +31,7 @@
     new_uninit,
     get_mut_unchecked,
     type_alias_impl_trait,
-    once_cell
+    lazy_cell
 )]
 pub use byte_fmt::*;
 use core::mem::size_of;

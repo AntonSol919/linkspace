@@ -50,8 +50,8 @@ e.g. git, bitcoin, nostr, linkspace
 The supernet paradigm is a trade-off.
 Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 This has upsides[fn::
-The readme contains technical properties this provides. However, there is one I lack a word for.
-Both the process of view-database state synchronization, and dealing with (network) IO in general have this in common:
+The homepage contains a more about various properties. However, there is one I lack a word for.
+Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
 They're well-designed if they run under the assumption of incomplete/bad state.
 In linkspace this is an obvious requirement, and liblinkspace attempts to make it simple.
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are the facts of life.
@@ -66,9 +66,9 @@ liblinkspace is best understood as 4 ideas.
 
 A big addition compared to similar systems is the split between domains and groups.
 It separates the responsibility of 'User Interface & Data Structure' with the 'Members and the exchange of data'.
-This split and other standard problems, are supported by a set of [[Conventions]].
+This split and other common problems, are supported by a set of [[Conventions]].
 
-The end of this document contains an example of both.
+The end of this document contains an examples.
 
 * Setup
 
@@ -1149,10 +1149,11 @@ The following are shorthand and resolve to one or more of the basic tests.
 | =*          | First n-bytes must eq val |
 
 
-The CLI has various aliases that can act as a guide in creating queries by using ~print-query~.
 
 #+begin_ctabs
 #+begin_sh
+
+The CLI has various aliases that can act as a guide in creating queries by using ~print-query~.
 
 #+BEGIN_VERSE 
 Many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:path:(?depth)~
@@ -1160,23 +1161,13 @@ If no depth is set the path_len is constraint by default.
 Except for ~watch-tree~ which sets the depth to unconstrained by default
 #+END_VERSE 
 
+Here we look for the domain 'my' , the group [#:pub], with path starting at /hello and with one additional component. 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk print-query "my:[#:pub]:/hello:*" --signed
 #+END_SRC
 
-#+RESULTS[7090d2515ed323cb265812647ca4093b57fe2249]:
-#+begin_example
-:mode:tree-desc
-:watch:default
-type:1:[b2:00000111]
-domain:=:[a:my]
-group:=:[b:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0]
-prefix:=:/hello
-path_len:<:[u8:3]
-path_len:>:[u8:0]
-#+end_example
-
 #+end_sh
+
 #+begin_py
 #+begin_src python :session lkpy :exports both :results value verbatim
   q = lk_query()
@@ -1186,9 +1177,7 @@ path_len:>:[u8:0]
   lk_query_print(other)
 #+end_src
 
-#+RESULTS:
 #+end_py
-
 #+end_ctabs
 
 ** lk_query_parse
@@ -1616,17 +1605,7 @@ Both can be solved in a number of ways, but most solutions are quickly going to 
 I've tried.
 
 Queries have a few desirable properties.
-You can do a form of algebra on them with concatenation and equality.
-They handle arbitrary bytes.
-They're declarative enough for where they're used.
-
-**** Will it handle spam?
-You can require proof of work or a proof of association.
-POW is as simple as adding a predicate on the hash.
-AI generated spam only makes this association more important than it is now, and the linkspace protocol can help there.
-Will it solve it entirely? Never.
-But existing tools to combat spam are no more or less effective.
-Instead, we have an additional tool to do better.
+They handle byte values, and you can concatenate them to get their common subset.
 
 * Example Domain App - linkmail
 :PROPERTIES:

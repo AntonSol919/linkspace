@@ -1,23 +1,20 @@
+use std::sync::LazyLock;
+
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use lazy_static::lazy_static;
 use linkspace_cryptography::public_testkey;
 use linkspace_pkt::*;
 pub const B64_HASH_LENGTH: usize = 43;
 pub use linkspace_pkt::consts::*;
 pub use linkspace_pkt::consts as pkt_consts;
 
-lazy_static! {
-
-    pub static ref TEST_GROUP_PKT: NetPktBox =
-        datapoint(b"Test Group", NetPktHeader::EMPTY).as_netbox();
-    pub static ref TEST_GROUP_ID: LkHash = TEST_GROUP_PKT.hash();
-    pub static ref PUBLIC_GROUP_PKT: NetPktBox =
-        datapoint(b"Hello, Sol", NetPktHeader::EMPTY).as_netbox();
-    pub static ref SINGLE_LINK_PKT: NetPktBox = linkpoint(
+pub static TEST_GROUP_PKT : LazyLock<NetPktBox> = LazyLock::new(|| datapoint(b"Test Group", NetPktHeader::EMPTY).as_netbox());
+pub static TEST_GROUP_ID : LazyLock<LkHash> = LazyLock::new(|| TEST_GROUP_PKT.hash());
+pub static PUBLIC_GROUP_PKT : LazyLock<NetPktBox> = LazyLock::new(|| datapoint(b"Hello, Sol", NetPktHeader::EMPTY).as_netbox());
+pub static SINGLE_LINK_PKT: LazyLock<NetPktBox> = LazyLock::new(|| linkpoint(
         PRIVATE,
         ab(b""),
         IPath::empty(),
@@ -29,8 +26,8 @@ lazy_static! {
         Stamp::new(0),
         NetPktHeader::EMPTY
     )
-    .as_netbox();
-}
+    .as_netbox());
+
 pub const PRIVATE: LkHash = B64([0; 32]);
 pub const PUBLIC_GROUP_B64: &str = "RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0";
 pub const PUBLIC: LkHash = B64([

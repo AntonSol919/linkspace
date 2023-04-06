@@ -7,7 +7,7 @@
     iterator_try_collect,
     write_all_vectored,
     can_vector,
-    once_cell,
+    lazy_cell,
     control_flow_enum,
     type_alias_impl_trait,
     io_error_other,
@@ -53,6 +53,7 @@ pub mod save;
 pub mod status;
 pub mod watch;
 
+// const is wrong but who cares.
 const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
     use std::fmt::Write;
     let mut st: String = "\n".into();

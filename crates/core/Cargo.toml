@@ -20,7 +20,6 @@ dunce = "1.0.2"
 linkspace-pkt = { path = "../pkt",features=["keygen"], version="0.1.0"}
 linkspace-cryptography = { path = "../cryptography",features=["keygen"],version="0.1.0"}
 ipcbus = { path = "../ipcbus", version = "0.1.0"}
-lazy_static = "1.4.0"
 serde = { version = "1.0.139", features = ["derive","rc"] }
 arrayvec = { version = "0.7.2", features = ["serde"] }
 anyhow = "1.0.69"

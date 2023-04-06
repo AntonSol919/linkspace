@@ -1,6 +1,5 @@
 Not everybody wants to host everything all the time.
 A potential method for constraining exchange's would be for people to set something like:
-(These could be protected by signing them as the local root)
 
 ## A list of accepted pull ( DOMAIN:GROUP:/\fexchange/access/pull )
 pull-list: #pull list ( must be able to access this list)

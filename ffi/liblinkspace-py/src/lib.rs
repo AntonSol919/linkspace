@@ -5,7 +5,6 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![feature(
     control_flow_enum,
-    once_cell,
     io_error_other,
     iterator_try_collect,
     thread_local,

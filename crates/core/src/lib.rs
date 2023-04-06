@@ -31,7 +31,7 @@
     never_type,
     drain_filter,
     hash_drain_filter,
-    once_cell
+    lazy_cell
 )]
 pub use parse_display;
 

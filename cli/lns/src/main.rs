@@ -3,14 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#![feature(iterator_try_collect,once_cell)]
-/*
-TODO;
-- get name ( bootstrap )
-- claim name --group PtrExpr --noauth-pubkey PtrExpr --auth X --auth Y --until
-- vote HashPtr   (--no-verify-claim --no-verify-prev )
-*/
-
+#![feature(iterator_try_collect)]
 
 use anyhow::*;
 use linkspace_common::{
@@ -18,7 +11,6 @@ use linkspace_common::{
     cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
     prelude::*, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, auth_tag, GROUP_TAG, public_claim::Issue }, identity,  };
 use tracing_subscriber::EnvFilter;
-
 
 
 #[derive(Parser )]

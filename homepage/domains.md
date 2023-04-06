@@ -1,7 +1,6 @@
 
-# domain applications
+# domains
 
-These are available inside the [poc pkg](./download.html)
-
-- [linkmail](./docs/guide/index.html#linkmail)
-- [imageboard](./docs/guide/index.html#imageboard)
+- [linkmail](./docs/guide/index.html#linkmail) (available in the [pkg](./download.html))
+- [imageboard](./docs/guide/index.html#imageboard) (available in the [pkg](./download.html))
+- [lns](./lns.html)

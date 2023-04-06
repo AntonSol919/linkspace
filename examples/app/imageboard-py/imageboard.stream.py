@@ -31,7 +31,7 @@ group:=:[#:pub]
 domain:=:imageboard
 path:=:/[0]
 create:>=:[now:-1D]
-:watch:[0]
+:id:[0]
 """
 query = lk_query_parse(lk_query(),query_string,argv=[boardname])
 

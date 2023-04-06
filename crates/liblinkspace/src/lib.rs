@@ -6,7 +6,6 @@
 #![feature(
     thread_local,
     io_error_other,
-    once_cell,
     write_all_vectored,
     control_flow_enum,
     type_alias_impl_trait,
@@ -479,7 +478,7 @@ pub mod query {
     group:=:[#:pub]
     domain:=:[a:hello]
     prefix:=:/some/path
-    :watch:default
+    :id:default
     ";
     lk_query_parse(&mut query,query_str,())?;
     // Optionally with user data such as an argv
@@ -705,7 +704,7 @@ pub mod linkspace {
     watch packets matching the query - both already in the db and new packets on arrival
 
     Calls `cb` for each matching packet.
-    If the `query` contains the watch option ( e.g. ':watch:example' ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    If the `query` contains the id option ( e.g. ':id:example' ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
     The watch is dropped when
     - the cb returns 'break' ( usually false )
     - [[lk_stop]] is called with the matching id
@@ -734,7 +733,7 @@ pub mod linkspace {
         tracing::debug_span!("{}", name)
     }
 
-    /// close lk_watch watches based on the watch id ':watch:example' in the query.
+    /// close lk_watch watches based on the watch id ':id:example' in the query.
     pub fn lk_stop(rt: &Linkspace, id: &[u8], range: bool) {
         if range {
             rt.0.close_range(id)

@@ -12,7 +12,7 @@ A supernet is ideal when multiple participants want to own and administrate a (p
 This is oppose to the current technologies that have users contact a single host,
 which acts as the de facto administrator by virtue of hosting the data.
 
-[Linkspace](https://antonsol919.github.io/linkspace/index.html)  is supernet with the following highlights:
+[Linkspace](https://antonsol919.github.io/linkspace/index.html) is supernet with the following highlights:
 
 - Small and powerful API
 - Fast (Blake3, no JSON/Base64 encoding, well aligned fields)
@@ -50,9 +50,9 @@ The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/liblinks
 
 # Development
 
+Linkspace is currently an unfunded project. Meaning I still do other stuff for food.
+
 See the ./dev folder for the roadmap/missing features.
 
-# Misc
-
-This is currently a project done in my spare time.
-Hopefully it can be one or more FTE through sales of [LNS](https://antonsol919.github.io/linkspace/lns.html) names.
+I wish I could say "use the linkmail application" for further development, but its not very user friendly at the moment.
+If you find a bug feel free to open an issue or send me an email <antonsol919@gmail.com>.

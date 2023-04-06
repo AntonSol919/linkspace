@@ -3,9 +3,19 @@
 <div class="merge">
   <div>
     <p style="margin-top:0px">
-      Just like URL's of the world wide web, linkspace looks a lot like a filesystem.<br>
-      To understand the difference, we must first look at merging two sets.
+    In the 1960s we invented the electronic hierachical filesystem. 
+    Organizing files in folders. For example "/linkspace/homepage/basics.html". This proved extremely powerful.
+    So much so, that the Web (specifically HTTP) is essentially nothing more than a way to talk to file systems around the world.
+    i.e. <a href="https://antonsol919.github.io/linkspace/basics.html">http://antonsol919.github.io/linkspace/basics.html</a>.
+    Linkspace takes this a step further. 
     </p>
+    <p>
+    To understand linkspace let's look at an example of a message board.
+    Initially it only contains someone complaing about a coffee machine. Someone else starts a thread about tabs vs spaces. 
+    </p>
+     <p>
+     The two are merged together to create the new state of the message board.
+     </p>
   </div>
 
 <div class="entrygrid small">
@@ -47,29 +57,55 @@
 </div>
 
 <div>
-  <p>
-    A web-servers is software that serve such a file/folder tree, receives new entries,
-    and does some additional processing<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
-    Your browser requests some of the data in the tree and uses it draw a interface to make it easy to interact with.
-    The webserver does not care about those graphics. It only knows about data.
+ 
+   <p>
+    We'll call "image/Broken.jpg" a <b>path</b> pointing to [image data].
+    One or more of these entries, a path + data, in a (sorted) hierachical set together we'll call a <b>tree</b>. We just saw what happens when we merge trees.
+    The internet as we know it is built on them.
+    There are millions of hosts (i.e. servers) that serve such a tree, receive new entries, and do some processing.
+   </p>
 
-    What happens when two people want to write to the same location? 
-    A server would have multiple options.
-    After all, it is the only 'real' copy we can point to.
-    One option is to only keep one entry, or add a timestamp to the end signaling the date it received the message.
-    Without a single host being the 'real' copy, these options don't work. 
-    But having a single host is slow, creates a single point of failure, and with that much control by one organization has profound <a href="./why.html">consequences</a>.
+   <p>
+    This is more true than might be aparent. It's not <i>just</i> HTTP. 
+    For example, an SQL database is a special case of a tree. It is built on top of multiple sorted lists under table names.
+    Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
+   </p>
+  <p>
+    Sending data can be thought of as combining <b>your tree</b> with another <b>tree</b>.
+    We've dubbed words to describe specific cases such as:
+    '<i>creating posts</i>', '<i>uploading image</i>', '<i>upvote/like a post</i>', '<i>stream a video </i>', etc.
+    Fundamentally they can be seen as merging trees.
   </p>
 
   <p>
-    In linkspace two entries can always overlap<br>
+    The majority of the internet that people interact with today follows a single host design.
+    A design where you make a request to get the only 'real' copy of the tree.
+    For all its simplicity, this design has techinical downsides<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>
+    and comes with profound <a href="./why.html">consequences</a> for the dynamic between host and user.
   </p>
+
+   <p>
+   In linkspace there is no single 'real' copy, and thus no de facto administrator.
+   Any number of participants can host (part of) tree.
+   </p>
+
+   <p>
+   That does mean there is no way to uniquely identify an entry with only a path.
+   Two computers far apart can write to the same location at the same time.
+   No one would know until their trees get merged. 
+   </p>
+   <p>
+    In linkspace we allow more than one entry to have the same path.
+    Each entry is cryptograhpically hashed, i.e. there exists a unique number to reference the entry.
+  </p>
+
+    
 </div>
 
 <div class="entrygrid small">
 <span id="hh0">[HASH_0]</span>
 <span>/thread/Tabs or spaces/msg</span>
-<span>Are we still doing this?</span>
+<span>Are we still doing this?</span  >
 </div>
 
 <div class="op">+</div>
@@ -107,66 +143,92 @@
 
 <div>
   <p>
-    The hash is a unique number for every entry. It depends in part on the content and the path.<br>
-    This allows us to merge two trees.<br>
-    What is more, we also get the option to pick if we want to refer to things by a path "image/Broken.jpg" or by their hash.
+   An entry also carries a creation date, and <i>can</i> be cryptographically signed. 
+   These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c], but we can refer to them by <a href="./lns.html">lns</a> name such as [@:anton:nl].
+  </p>
+
+  <p>
+   When reading from the tree, requesting by path returns multiple entries.
+   By default, the first result is the latest, unsigned entry.
+  </p>
+  <p>
+    An upside of using hashes, is that we can choose to link to other data by its path (e.g. "image/Broken.jpg") or by its hash:
   </p>
 </div>
 
-<div class="entrygrid small">
+<div class="entrygrid big">
 
 <span id="hh3">[HASH_3]</span>
-<span>/image/Broken.jpg</span>
-<span>[image data]</span>
+<span></span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
 
 <span id="hh4">[HASH_4]</span>
-<span>/thread/Coffee machine broke!/msg</span>
-<span>fix pls? <span id="hh3">[HASH_3]</span>image/Broken.jpg</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+<br>
+[@:alice:sales:com]
+</span>
 </div>
 
 <div class="op">+</div>
 
-<div class="entrygrid small">
+<div class="entrygrid big">
 
 <span id="hh5">[HASH_5]</span>
-<span>/thread/Coffee machine broke!/msg</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
 Hey <span id="hh4">[HASH_4]</span>!
 Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+<br>
+[@:bob:maintainance:com]
 </span>
-
 </div>
 
 <div class="op">=</div>
 
-<div class="entrygrid small">
+<div class="entrygrid big">
+
 
 <span id="hh3">[HASH_3]</span>
-<span>/image/Broken.jpg</span>
-<span>[image data]</span>
+<span></span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
 
 <span id="hh4">[HASH_4]</span>
-<span>/thread/Coffee machine broke!/msg</span>
-<span>fix pls? image/Broken.jpg</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+<br>
+[@:alice:sales:com]
+</span>
 
 <span id="hh5">[HASH_5]</span>
-<span>/thread/Coffee machine broke!/msg</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
 Hey <span id="hh4">[HASH_4]</span>!
 Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+<br>
+[@:bob:maintainance:com]
 </span>
 
 </div>
 
 <div>
-    <p>
-      Linkspace goes further.
-      Each entry is set inside a Domain and a Group.
-      A domain name is chosen by a developer creating a (graphical) interface.
-      The domain name signals what app to use, and thus how the developer organized entries.
-      The group is set by the user. It exits because we say it exists.
-      Finally, each entry has a creation date and <i>can</i> be signed. 
+      <p>
+      Entries in linkspace have two fields that preceed the path.
+      A <b>domain</b> field and <b>group</b> field.
+      Essentially each (domain, group) has its own tree.
+      A developer building an application can pick a domain name, and builds his app to read and write the data structure he needs for his application as entries in the tree.
+      A domain apps doesn't need to manage connections to other servers. It communicates by reading and writing to the tree.
+      The group indicates the set of intended recipients.
+      An application should ask the user which group to use.
+      A group is made up by one or more members that have set up a method of exchange.
     </p>
+    
     </div>
 
 <div class="entrygrid big">
@@ -188,8 +250,8 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 <span>message_board<br>[#:example:com]</span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
-Hey <span id="hh3">[HASH_3]</span>!
-Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 <br>
 [@:bob:maintainance:com]
 </span>
@@ -198,29 +260,47 @@ Isn't this <span id="hh2">[HASH_2]</span> image from 2015?
 
 <div>
     <p>
-      These are the basics<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.
+      These are the basic concepts<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.
       If you're on a unix give it a <a href="./download.html">try</a>.
-      For more details and some advanced concepts see the <a href="./docs/guide/index.html">Guide</a>.
+      For details on the exact layout of the tree and other practical stuff see the <a href="./docs/guide/index.html">Guide</a>.
     </p>
+
+<h3>Q&A</h3>
+    <p>
+    A few notes to prevent some confusion.
+    </p>
+
+    <p>
+    <b>Q</b>: Is this a blockchain?<br>
+    <b>A</b>: Only if you think git is a blockchain. There is no strict 'chain', nor 'blocks'. I consider blockchains to have a different set of <a href="./why.html#option2">values</a>. Which is why I'm proposing <a href="./index.html">'supernets'</a>.
+    </p>
+
+    <p>
+    <b>Q</b>: Isn't administration necesary for such and such?<br>
+    <b>A</b>: Its relativly simple to organize such that a participant trusts a specific key to act as administrator. The difference sits in having a choice or not.  
+    </p>
+
+    <p>
+    <b>Q</b>: Will it handle spam?<br>
+    <b>A</b>: No worse than current systems. Instead, we have extra tools. Proof of work on hashes, and proof of association with public keys. With AI advances driving the cost of bullshit to 0, they'll become a necesity. Will it solve it entirely? A philosphical discussion on the classification of spam is outside the scope of this project.
+    </p>
+
+
 </div>
 
 <section class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr>
 <ol>
 <li id="fn1" role="doc-endnote"><p>
-Databases aren't magic. They create multiple sorted lists under table names.
-In essence : 'table_name/primary_key=value'
-The tree described here is the general case where primary_key has variable length and tables can be nested and (unambiguously) merged.
+    They're a single point of failure, links can become invalid, everybody has to re-invent authentication, everybody has to re-invent dealing with IO errors, scaling requires techinical know-how, etc.
 <a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2" role="doc-endnote"><p>
     With the most notable simplification being that: 
-    Packets containing <i>only</i> data <a href="./docs/guide/index.html#lk_datapoint">exist</a>.
-    Hash references are not written inside the text.  
-    Instead, the entry looks like <a href="./docs/guide/index.html#lk_linkpoint">this</a> so that links are fast to read for computers.
-    Finally, addressing by path 'images/Broken.jpg' has a few extra options to select it by time created, signed by, etc.
+    <a href="./docs/guide/index.html#lk_datapoint">Data entries</a> without a path, group, domain, etc exists as well.
+    Referencing other packets by hash is not done inside the data but <a href="./docs/guide/index.html#lk_linkpoint">adjacent</a>.
+    Finally, addressing by path 'images/Broken.jpg' would default to a tree set of all entries with that path. There are options to be more specific. 
 <a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 
 </div>
-

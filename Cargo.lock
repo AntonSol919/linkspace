@@ -1029,7 +1029,6 @@ dependencies = [
  "dunce",
  "either",
  "ipcbus",
- "lazy_static",
  "libc",
  "linkspace-cryptography",
  "linkspace-pkt",

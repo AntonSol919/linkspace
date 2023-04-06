@@ -17,8 +17,8 @@ case "${1:-UNKNOWN}" in
       # DOMAIN GROUP OBJTYPE INSTANCE ... --data abe:OK 
       INIT=$(lk link "$2:[#:0]:/\xffstatus/[:$3/size?:=:32]/$4/$5" -l init:[#:0] "${@:6}" --write db --write stdout | lk p "[hash:str]")
       {
-          lk ps "$2:[#:0]:/\xffstatus/$3/$4" --new -- ":watch:base" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
-          lk ps "$2:[#:0]:/\xffstatus/$3/$4/$5" --new -- ":watch:instance" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
+          lk ps "$2:[#:0]:/\xffstatus/$3/$4" --new -- ":id:base" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
+          lk ps "$2:[#:0]:/\xffstatus/$3/$4/$5" --new -- ":id:instance" "links_len:=:\0\0" "data_size:=:\0\0" | lk data;
       } | \
           RUST_LOG=trace lk --private multi-watch --linger | \
           lk --private collect "$2:[#:0]:/\xffstatus/$3/$4/$5" "${@:6}" \

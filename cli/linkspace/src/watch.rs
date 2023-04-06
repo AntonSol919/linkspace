@@ -85,10 +85,10 @@ impl CLIQuery {
             let st = self.mode.unwrap_or_default().to_string();
             select.add_option(&KnownOptions::Mode.to_string(), &[st.as_bytes()]);
         }
-        let inner_id = select.watch_id().transpose()?;
+        let inner_id = select.id().transpose()?;
         let id = self.id.eval(&ctx)?;
         if inner_id != Some(&id) {
-            select.add_option(&KnownOptions::Watch.to_string(), &[&id]);
+            select.add_option(&KnownOptions::Id.to_string(), &[&id]);
         }
         if self.print.do_print() {
             self.print.print_query(&select.into(), &mut std::io::stdout())?;

@@ -154,7 +154,7 @@ class Linkmail(cmd.Cmd):
         q = lk_query(common_q)
         path_b = lk_eval(f"[/~/mail/{path}]")
         # we use the path in binary form. Two strings might differ but eval to the same bytes
-        q = lk_query_push(q,"","watch",path_b) 
+        q = lk_query_push(q,"","id",path_b) 
 
         q = lk_query_push(q,"path","=",path_b)
         q = lk_query_push(q,"","follow",b"")
@@ -232,7 +232,7 @@ class Linkmail(cmd.Cmd):
 
 dloop = Linkmail()
 
-new_mail = lk_query_parse(lk_query(common_q),":watch:incoming","prefix:=:/mail","i_index:<:[u32:0]")
+new_mail = lk_query_parse(lk_query(common_q),":id:incoming","prefix:=:/mail","i_index:<:[u32:0]")
 logging.debug("new_mail",str(new_mail))
 lk_watch(lk,new_mail,lambda p: dloop.new_mail_pkt(p))
 

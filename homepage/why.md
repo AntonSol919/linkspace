@@ -1,7 +1,8 @@
 # Why?
 
 This protocol came to be for two reasons.
-I found it overly complicated (oppose to simple - not easy) to build multi-participant systems.
+
+Reason 1: I found it overly complex to build multi-participant systems.
 
 A project starts and ends with a vision for what the user should experience and do.
 That's difficult enough.
@@ -9,40 +10,34 @@ Instead, development also has to deal with managing a server, networking, identi
 In linkspace I've tried to decouple these things.
 A group, once setup can run any domain app. A domain app can run in any group.
 
-The second is to provide an answer to an issue we've all noticed in some form or another.
-I see it as such;
-We face a question on the rules for our the digital space. Its answer underpins how our society works:
+Reason 2: I wanted to address a key question that underpins how our society uses digital systems.
 
 **Who gets to __administrate__ the cat videos, taxi service, messages, and other data we share and see online?**
 
 I know three options:
 
-1. Dedicated hosts, exclusively on their machines.
+1. Dedicated hosts, exclusively on their machines. This is how most of the internet currently works.
 2. A pay2play scheme, on a blockchain.
 3. Users pick their admins, on a supernet.
 
-See [Basics](./basics.html) how 1 and 3 differ.
 
-Option one, our current web, is unilateral control over content.
-These systems have evolved with one goal:
-Optimal exploitation of its users. Everything is permitted to keep it that way.
+In Option 1, our current web, control over content is unilateral.
+The current systems have evolved with one goal:
+optimal exploitation of their users. Everything is permitted to keep it that way.
 **lock-in** the users, and **lock-out** any threat to the platform's place in your life.
 
-We should break those locks.
+We should break these locks.
 
 Dedicated hosts have a role to play.
-But users only get a good deal if they _could_ walk away without losing what is already there.
+But users can only get a good deal if they _could_ walk away without losing what is already there.
 
-Blockchains are in the business of encodes exclusivity, scarcity, and inequality at its **root**.
+[Option 2]{#option2}, blockchains, encodes exclusivity, scarcity, and inequality.
 
-In practice they fail to support useful systems, because such a thing starts its life as a simple prototype hacked together.
-This gives the developers freedom _after_ building it to adapt it and optimize for utility.
+These properties make it attractive for the people already invested, but are antithetical to the process of development. A successful system is born from a simple system. Most simple systems are hacked together to solve a problem, and a developer comes back _afterwards_ to optimize for utility.
+That doesn't seem to happen when the system requires a chain of consent.
 
-Every property of a blockchain that make it attractive for the people invested, is antithetical to the process of development.
-
-Supernets are the future.
+Option 3, the [supernet](./basics.html), is the option that makes sense.
 
 This era of digital dictatorships and fiefdoms needs to end.
-Normalcy of the other options as the bedrock of communication is bad.
 Help speed things along.
 Support the project by [registering](./lns.html) a name.
