@@ -4,7 +4,7 @@
     cb: impl <a class="trait" href="../trait.PktHandler.html" title="trait liblinkspace::PktHandler">PktHandler</a> + 'static
 ) -&gt; <a class="type" href="../type.LkResult.html" title="type liblinkspace::LkResult">LkResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>watch packets matching the query - both already in the db and new packets on arrival</p>
 <p>Calls <code>cb</code> for each matching packet.
-If the <code>query</code> contains the watch option ( e.g. ‘:watch:example’ ) the <code>cb</code> is also called for all new packets during [<a href="fn.lk_process.html" title="fn liblinkspace::linkspace::lk_process">lk_process</a>] and [<a href="fn.lk_process_while.html" title="fn liblinkspace::linkspace::lk_process_while">lk_process_while</a>].
+If the <code>query</code> contains the id option ( e.g. ‘:id:example’ ) the <code>cb</code> is also called for all new packets during [<a href="fn.lk_process.html" title="fn liblinkspace::linkspace::lk_process">lk_process</a>] and [<a href="fn.lk_process_while.html" title="fn liblinkspace::linkspace::lk_process_while">lk_process_while</a>].
 The watch is dropped when</p>
 <ul>
 <li>the cb returns ‘break’ ( usually false )</li>

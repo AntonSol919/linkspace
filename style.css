@@ -9,8 +9,8 @@ table , pre{
 }
 
 body {
-    background:#fdfdfd;
-    color: #404040;
+    /*background:white;#fdfdfd;*/
+    color: #1F2323;
     font-size: calc(15px + 0.390625vw);
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
     display: grid;
@@ -26,7 +26,7 @@ body {
     padding: 10px;
     margin-left: 10vw;
     margin-right: 10vw;
-    line-height: 1.2em;
+    line-height: 1.5;
 }
 
 img {

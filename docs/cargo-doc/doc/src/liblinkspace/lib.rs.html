@@ -1393,7 +1393,7 @@ See guide#ABE to understand its use and indepth explanation.
     group:=:[#:pub]
     domain:=:[a:hello]
     prefix:=:/some/path
-    :watch:default
+    :id:default
     &quot;;
     lk_query_parse(&amp;mut query,query_str,())?;
     // Optionally with user data such as an argv
@@ -1619,7 +1619,7 @@ See guide#ABE to understand its use and indepth explanation.
     watch packets matching the query - both already in the db and new packets on arrival
 
     Calls `cb` for each matching packet.
-    If the `query` contains the watch option ( e.g. &#39;:watch:example&#39; ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    If the `query` contains the id option ( e.g. &#39;:id:example&#39; ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
     The watch is dropped when
     - the cb returns &#39;break&#39; ( usually false )
     - [[lk_stop]] is called with the matching id
@@ -1648,7 +1648,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="macro">tracing::debug_span!</span>(<span class="string">&quot;{}&quot;</span>, name)
     }
 
-    <span class="doccomment">/// close lk_watch watches based on the watch id &#39;:watch:example&#39; in the query.
+    <span class="doccomment">/// close lk_watch watches based on the watch id &#39;:id:example&#39; in the query.
     </span><span class="kw">pub fn </span>lk_stop(rt: <span class="kw-2">&amp;</span>Linkspace, id: <span class="kw-2">&amp;</span>[u8], range: bool) {
         <span class="kw">if </span>range {
             rt.<span class="number">0</span>.close_range(id)
