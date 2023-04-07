@@ -8,8 +8,8 @@ e.g. git, bitcoin, nostr, linkspace
 
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
-A supernet is ideal when multiple participants want to own and administrate (a part of) a digital system.
-This in contrast to current technologies where users contact a single host,
+A supernet is ideal when multiple participants want to own and administrate (part of) a digital system.
+This is in contrast to current technologies where users contact a single host,
 which acts as de facto administrator by virtue of hosting the data.
 
 Linkspace is a supernet with the following highlights:
@@ -19,8 +19,8 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressable data
 - Group/Domain split
 
-Checkout [Basics](./basics.html) for a simple introduction.
+Check out [Basics](./basics.html) for a simple introduction.
 [Download](./download.html) to give it a try and say hi on the test group.
-Checkout the [Guide](./docs/guide/index.html) if you're up for some programming.
+Check out the [Guide](./docs/guide/index.html) if you're up for some programming.
 
-The packet format and index is stable, but expect some unimplemented features and rough edges.
+The packet format and index are stable, but expect some unimplemented features and rough edges.

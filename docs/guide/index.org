@@ -50,8 +50,8 @@ e.g. git, bitcoin, nostr, linkspace
 The supernet paradigm is a trade-off.
 Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 This has upsides[fn::
-The readme contains technical properties this provides. However, there is one I lack a word for.
-Both the process of view-database state synchronization, and dealing with (network) IO in general have this in common:
+The homepage contains a more about various properties. However, there is one I lack a word for.
+Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
 They're well-designed if they run under the assumption of incomplete/bad state.
 In linkspace this is an obvious requirement, and liblinkspace attempts to make it simple.
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are the facts of life.
@@ -66,9 +66,9 @@ liblinkspace is best understood as 4 ideas.
 
 A big addition compared to similar systems is the split between domains and groups.
 It separates the responsibility of 'User Interface & Data Structure' with the 'Members and the exchange of data'.
-This split and other standard problems, are supported by a set of [[Conventions]].
+This split and other common problems, are supported by a set of [[Conventions]].
 
-The end of this document contains an example of both.
+The end of this document contains an examples.
 
 * Setup
 
