@@ -19,7 +19,7 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressable data
 - Group/Domain split
 
-Check out [Basics](./basics.html) for a simple introduction.
+Check out [Basics](./basics.html) for an introduction.
 [Download](./download.html) to give it a try and say hi on the test group.
 Check out the [Guide](./docs/guide/index.html) if you're up for some programming.
 
