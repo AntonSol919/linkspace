@@ -7,21 +7,19 @@ h1{
 pre{
     margin-left:2em
 }
-html,body { height:100vh; width:100vw;padding:0px;margin:0px;}
+html,body { height:100%; width:100%;padding:0px;margin:0px;}
 body {
     color: #1F2323;
     font-size: calc(15px + 0.390625vw);
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
 
     display: grid;
-    grid-template-columns: min-content min-content min-content min-content auto;
+    grid-template-columns: 10vw min-content min-content min-content min-content 10vw;
     grid-template-rows: minmax(1em,3em) auto;
     grid-template-areas:
-        'logo name tagl .    . '
-        'navi main main main .';
+        '. logo name tagl .    . '
+        '. navi main main main .';
     gap: 1em;
-    padding-left: 10vw;
-    padding-right: 10vw;
     line-height: 1.5;
 }
 
@@ -69,13 +67,14 @@ grid-area: tagl;
 }
 
 .definition {
+    margin-left:1em;
     max-width:60vw;
-    border: 2px solid beige;
     color: gray;
     border-radius: 10px;
-    padding: 0.4rem 0.8rem;
+    padding: 0.4em ;
     background-color: #f6f9ff;
-    border: 1px solid #cce3f9;
+    border: 0.1em solid #cce3f9;
+    font-family:monospace;
 }
 
 
@@ -151,10 +150,6 @@ h3 {
 
 @media screen and (max-width: 768px), (orientation: portrait) and (max-width:1024px) {
 
-    code {
-        overflow-x:scroll;
-        display:block;
-    }
     body{
         padding:0px;
         margin:0px;

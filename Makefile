@@ -28,7 +28,7 @@ homepage-downloads:
 git-checkin: homepage docs
 	cargo +nightly check
 
-publish: homepage-downloads git-checkin docs/guide/index.html
+publish: git-checkin docs/guide/index.html
 	rsync -rvkP ./homepage/ ./build/homepage
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
 	git checkout publish
