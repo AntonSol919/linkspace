@@ -2,50 +2,66 @@
 <html>
 	<head>
 		<title>Linkspace - a general purpose supernet</title>
-		 <link rel="icon" type="image/x-icon" href="./images/logo2.png	">
-		<link rel="stylesheet" href="./style.css"/>
+		 <link rel="icon" type="image/x-icon" href="./images/logo2.png">
+		 <link rel="stylesheet" href="./style.css"/>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+     <script>
+       function get_offset(_,nav_item){
+           let page_el = $("#"+nav_item.href.split("#")[1]);
+           return {nav_item,page_el};
+       }
+       $(document).ready(function() {
+           let hrefs = $("nav > li").children().map(get_offset);
+           $("#main").scroll(function() {
+               //hrefs.removeClass("active-section");
+           });
+       });
+     </script>
 	<body>
-		<a id="name" href="./index.html" >Linkspace</a>
-    <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
+		 <a id="name" href="./index.html" >Linkspace</a>
 		<div id="tagline">a general purpose supernet</div>
+    <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
+
     <nav>
       <li>
-        <a href="./index.html">Home</a>
-      </li>
-      <li>
-        <a href="./basics.html">Basics</a>
+        <a href="#basics">Basics</a>
       </li>
 
       <li>
-        <a href="./why.html">Why?</a>
+        <a href="#why">Why?</a>
       </li>
-      <li>
-        <a href="./docs/guide/index.html">Guide</a>
-      </li>
+      
       <li >
-        <a href="./lns.html">LNS</a>
+        <a href="#LNS">LNS</a>
       </li>
 
       <li>
-        <a href="./download.html">Download</a>
+        <a href="#download">Download</a>
+      </li>
+      
+      <li >
+        <a href="#domains">Domains</a>
+      </li>
+      <li >
+        <a href="#groups">Groups</a>
+      </li>
+      <li >
+        <a href="#about">About</a>
+      </li>
+      <hr>
+      <li>
+        <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
       <li>
-        <a href="https://github.com/AntonSol919/linkspace">Git</a>
-      <li >
-        <a href="./domains.html">Domains</a>
+        <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
       </li>
-      <li >
-        <a href="./groups.html">Groups</a>
-      </li>
-      <li >
-        <a href="./about.html">About</a>
-      </li>
+      
+
 
     </nav>
     
-    <footer>
-    </footer>
     <div id="main">
+
 <pre class="definition"><code>Supernet  [ˈsü-pərˌnet]
 A self-referential multi-participant data organization protocol whose primary
 addressing method uses hashes instead of endpoint identifiers.
@@ -64,12 +80,417 @@ administrator by virtue of hosting the data.</p>
 <li>Path (URL like) addressable data</li>
 <li>Group/Domain split</li>
 </ul>
-<p>Check out <a href="./basics.html">Basics</a> for an introduction. <a
-href="./download.html">Download</a> to give it a try and say hi on the
-test group. Check out the <a href="./docs/guide/index.html">Guide</a> if
-you’re up for some programming.</p>
+<p>Check out the <a href="#basics">Basics</a> for an introduction. <a
+href="#download">Download</a> to give it a try and say hi on the test
+group. Check out the <a href="./docs/guide/index.html">Guide</a> if
+you're up for some programming.</p>
 <p>The packet format and index are stable, but expect some unimplemented
 features and rough edges.</p>
+<h1 id="basics">Basics</h1>
+<p>In the 1960s we invented the electronic hierachical filesystem.
+Organizing files in folders. For example
+"/linkspace/homepage/basics.html". This proved extremely powerful. So
+much so, that the Web (specifically HTTP) is essentially nothing more
+than a way to talk to file systems around the world. i.e. <a
+href="http://antonsol919.github.io/linkspace/basics.html">"https://antonsol919.github.io/linkspace/basics.html"</a>.
+Linkspace takes this a step further.</p>
+<p>To understand linkspace let's look at an example of a message board.
+Initially it only contains someone complaing about a coffee machine.
+Someone else starts a thread about tabs vs spaces.</p>
+<p>The two are merged together to create the new state of the message
+board.</p>
+<div class="entrygrid small"><span></span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/Broken.jpg</span>
+</div>
+<div class="op">+</div>
+<div class="entrygrid small">
+<span></span>
+<span style="width:28ch">/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+</div>
+<div class="op">=</div>
+<div class="entrygrid small">
+
+<span></span>
+<span>/image/Broken.jpg</span>
+<span>[image data]</span>
+
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/Broken.jpg</span>
+
+<span></span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+</div>
+<p>We'll call "image/Broken.jpg" a <strong>path</strong> pointing to
+[image data]. One or more of these entries, a path + data, in a (sorted)
+hierachical set together we'll call a <strong>tree</strong>. We just saw
+what happens when we merge trees. The internet as we know it is built on
+them. There are millions of hosts (i.e. servers) that serve such a tree,
+receive new entries, and do some processing.</p>
+<p>This is more true than might be aparent. It's not
+<strong>just</strong> HTTP. For example, an SQL database is a special
+case of a tree. It is built on top of multiple sorted lists under table
+names. Essentially their rows are "/table<em>name/primary</em>key =
+value", and a SQL query can address multiple entries.</p>
+<p>Sending data can be thought of as combining <strong>your
+tree</strong> with another <strong>tree</strong>. We've dubbed words to
+describe specific cases such as: '<strong>creating posts</strong>',
+'<strong>uploading image</strong>', '<strong>upvote/like a
+post</strong>', '<strong>stream a video </strong>', etc. Fundamentally
+they can be seen as merging trees.</p>
+<p>The majority of the internet that people interact with today follows
+a single host design. A design where you make a request to get the only
+'real' copy of the tree. For all its simplicity, this design has
+techinical downsides<a
+href="They&#39;re%20a%20single%20point%20of%20failure,%20links%20can%20become%20invalid,%20everybody%20has%20to%20re-invent%20authentication,%20everybody%20has%20to%20re-invent%20dealing%20with%20IO%20errors,%20scaling%20requires%20techinical%20know-how,%20etc.">^1</a>
+and comes with profound <a href="#why">consequences</a> for the dynamic
+between host and user.</p>
+<p>In linkspace there is no single 'real' copy, and thus no de facto
+administrator. Any number of participants can host (part of) tree.</p>
+<p>That does mean there is no way to uniquely identify an entry with
+only a path. Two computers far apart can write to the same location at
+the same time. No one would know until their trees get merged.</p>
+<p>In linkspace we allow more than one entry to have the same path. Each
+entry is cryptograhpically hashed, i.e. there exists a unique number to
+reference the entry.</p>
+<div class="entrygrid small"><span id="hh0">[HASH_0]</span><span>/thread/Tabs or spaces/msg</span><span>Are we still doing this?</span></div>
+<div class="op">+</div>
+<div class="entrygrid small">
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+</div>
+<div class="op">+</div>
+<div class="entrygrid small">
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
+<div class="op">=</div>
+<div class="entrygrid small">
+<span id="hh0">[HASH_0]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
+<p>An entry also carries a creation date, and <strong>can</strong> be
+cryptographically signed. These cryptographic public keys look like
+[b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c], but we can refer to
+them by <a href="#LNS">lns</a> name such as [@:anton:nl].</p>
+<p>When reading from the tree, requesting by path returns multiple
+entries. By default, the first result is the latest, unsigned entry.</p>
+<p>An upside of using hashes, is that we can choose to link to other
+data by its path (e.g. "image/Broken.jpg") or by its hash:</p>
+<div class="entrygrid big">
+
+<span id="hh3">[HASH_3]</span>
+<span></span>
+<span>/image/Broken.jpg  2015/01/02</span>
+<span>[image data]  [@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+  
+[@:alice:sales:com]
+</span>
+</div>
+<div class="op">+</div>
+<div class="entrygrid big">
+
+<span id="hh5">[HASH_5]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+  
+[@:bob:maintainance:com]
+</span>
+</div>
+<div class="op">=</div>
+<div class="entrygrid big">
+
+
+<span id="hh3">[HASH_3]</span>
+<span></span>
+<span>/image/Broken.jpg  2015/01/02</span>
+<span>[image data]  [@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+  
+[@:alice:sales:com]
+</span>
+
+<span id="hh5">[HASH_5]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+  
+[@:bob:maintainance:com]
+</span>
+
+</div>
+<p>Entries in linkspace have two fields that preceed the path. A
+<strong>domain</strong> field and <strong>group</strong> field.
+Essentially each (domain, group) has its own tree. A developer building
+an application can pick a domain name, and builds his app to read and
+write the data structure he needs for his application as entries in the
+tree. A domain app doesn't need to manage connections to other servers.
+It communicates by reading and writing to the tree. The group indicates
+the set of intended recipients. An application should ask the user which
+group to use. A group is made up by one or more members that have set up
+a method of exchange.</p>
+<div class="entrygrid big">
+
+<span id="hh3">[HASH_3]</span>
+<span>message_board  [#:example:com]</span>
+<span>/image/Broken.jpg  2015/01/02</span>
+<span>[image data]  [@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span>message_board  [#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
+<span>fix pls? image/Broken.jpg
+  
+[@:alice:sales:com]
+</span>
+
+<span id="hh5">[HASH_5]</span>
+<span>message_board  [#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+  
+[@:bob:maintainance:com]
+</span>
+
+</div>
+<p>These are the basic concepts[^2]. If you're on a unix give it a <a
+href="#Download">try</a>. For details on the exact layout of the tree
+and other practical stuff see the <a
+href="%22./docs/guide/index.html%22">Guide</a>.</p>
+<h3>Q&amp;A</h3>
+<p>A few notes to prevent some confusion.</p>
+<p><strong>Q</strong>: Is this a blockchain?<br />
+<strong>A</strong>: Only if you think git is a blockchain. There is no
+strict 'chain', nor 'blocks'. I consider blockchains to have a different
+set of <a href="#option2">values</a>. Which is why I'm proposing
+'supernets'.</p>
+<p><strong>Q</strong>: Isn't administration necesary for such and
+such?<br />
+<strong>A</strong>: Its relativly simple to organize such that a
+participant trusts a specific key to act as administrator. The
+difference sits in having a choice or not.</p>
+<p><strong>Q</strong>: Will it handle spam?<br />
+<strong>A</strong>: No worse than current systems. Instead, we have
+extra tools. Proof of work on hashes, and proof of association with
+public keys. With AI advances driving the cost of bullshit to 0, they'll
+become a necesity. Will it solve it entirely? A philosphical discussion
+on the classification of spam is outside the scope of this project.</p>
+<p>[^2]: With the most notable simplification being that: <a
+href="./docs/guide/index.html#lk_datapoint">Data entries</a> without a
+path, group, domain, etc exists as well. Referencing other packets by
+hash is not done inside the data but <a
+href="./docs/guide/index.html#lk_linkpoint">adjacent</a>.</p>
+<h1 id="why">Why?</h1>
+<p>This protocol came to be for two reasons.</p>
+<p>Reason 1: I found it overly complex to build multi-participant
+systems.</p>
+<p>A project starts and ends with a vision for what the user should
+experience and do. That's difficult enough. Instead, development also
+has to deal with managing a server, networking, identity, and access. In
+linkspace I've tried to decouple these things. A group, once setup can
+run any domain app. A domain app can run in any group.</p>
+<p>Reason 2: I wanted to address a key question that underpins how our
+society uses digital systems.</p>
+<p><strong>Who gets to <strong>administrate</strong> the cat videos,
+taxi service, messages, and other data we share and see
+online?</strong></p>
+<p>I know three options:</p>
+<ol>
+<li>Dedicated hosts, exclusively on their machines. This is how most of
+the internet currently works.</li>
+<li>A pay2play scheme, on a blockchain.</li>
+<li>Users pick their admins, on a supernet.</li>
+</ol>
+<p>In Option 1, our current web, control over content is unilateral. The
+current systems have evolved with one goal: optimal exploitation of
+their users. Everything is permitted to keep it that way.
+<strong>lock-in</strong> the users, and <strong>lock-out</strong> any
+threat to the platform's place in your life.</p>
+<p>We should break these locks.</p>
+<p>Dedicated hosts have a role to play. But users can only get a good
+deal if they <em>could</em> walk away without losing what is already
+there.</p>
+<p><span id="option2">Option 2</span> , blockchains. They are hyped to
+be many thinks, and some people want to believe blockchains will be the
+foundation of our digital space going forward. I don't see how. They
+encodes exclusivity, scarcity, and inequality. Very few useful systems
+require those things. It makes them attractive for the people already
+invested, but these properties are antithetical to the process of
+development. Most successful system seem to share a common history. A
+developer builds something simple that works, then has the freedom to
+tweak and optimize for utility. That doesn't seem to happen when the
+building blocks require a complex chain of consent.</p>
+<p>Option 3, the supernet, is the option that makes sense. It prevents
+data hosts from gaining all the leverage as they have in our current
+system. And they don't encode scarcity or consent as a core principle in
+the way blockchains do.</p>
+<p>This era of digital dictatorships and fiefdoms needs to end. Help
+speed things along. Support the project by <a
+href="#LNS">registering</a> a name.</p>
+<h1 id="LNS">LNS</h1>
+<p>LNS is built on top of linkspace. It reads and writes entries to the
+'lns' domain.<br />
+It provides a way for naming groups and public keys.<br />
+<strong>Groups</strong> look like:</p>
+<ul>
+<li>#:pub</li>
+<li>#:myfancystore:com</li>
+<li>#:friendsofbob:local</li>
+</ul>
+<p><strong>Public keys</strong> look like:</p>
+<ul>
+<li>@:john:lns:org</li>
+<li>@:alice:my:fancystore:com</li>
+<li>@:john:nl</li>
+<li>@:me:local</li>
+</ul>
+<p>The top level names :local, :env, and :pub are special. It is mostly
+working working, but I plan to build a dedicated exchange method for
+fast lookup of unknowns (recursive UDP similarly to DNS). You can take a
+look on how it integrates with linkspace in the <a
+href="./docs/guide/index.html#ABELNS">guide</a>. Registrations are open.
+Read this page to find out how.</p>
+<h3>What does a registration do?</h3>
+<p>It gives you binding right for all sub registration. That means if
+you register under @:yourcompany:com you can set up:</p>
+<p>1) a key addressed with the name @:yourcompany:com 1) a group name
+#:yourcompany:com 1) <strong>all</strong> authorities for names ending
+with *:yourcompany:com</p>
+<p>I.e. because you own yourcompany:com, it can set up bindings for
+sales:yourcompany:com. If you set up an authority for
+sales:yourcompany:com it can bind a public key to
+@:bob:sales:yourcompany:com.</p>
+<h3>Do I require a registration?</h3>
+<p>Nothing in linkspace requires a registration. Everything can be done
+without. In fact, both :env and :local are meant for naming things for
+only yourself or between peers respectively and require no registration
+whatsoever. Registrations allow you to pick a name to be known publicly
+for everybody.</p>
+<h3>How can I register?</h3>
+<p>The following top level authorities have been assigned, and you can
+request a name ending in:</p>
+<ul>
+<li>:free. First come, first served.</li>
+<li>:dev if you have contributed to the code.</li>
+<li>:com for 10 euro per year.</li>
+<li>:nl for 10 euro per year.</li>
+</ul>
+<p>To do so, scroll down to the end.</p>
+<h3>Can I become a top level authority?</h3>
+<p>Yes. I am looking for people and organizations to do so. Contact me
+at <a href="mailto:antonsol919+registar@gmail.com"
+class="email">antonsol919+registar@gmail.com</a> for more information.
+If you represent a university you can get your name for free.</p>
+<h3>Can I buy with crypto? Why not use crypto to do X, Y, Z ?</h3>
+<p>Linkspace is easy to integrate with blockchains (or even create a new
+blockchain). You are free to build don'g it as you wish (MPL-2.0
+license). However, in an effort to put food on the table and pay taxes I
+prefer fiat money. Additionally, 1 cent transactions save a lot of
+trouble w.r.t. identification if you lose the private key.</p>
+<h2>Claim a name</h2>
+<p>This currently requires a some work. To make a :free claim get the
+git repository, install rust and:</p>
+<pre class="terminal"><code>make install-lk
+lk --init key --key &#39;YOUR_NAME:local&#39; | tee enckey
+lk lns create-claim &#39;YOUR_NAME:free&#39; --copy-from YOUR_NAME:local --until [now:+99Y] | tee lnsreq.lkp | lk p</code></pre>
+<p>Keep the file 'enckey' (and the password you entered) safe. Email the
+lnsreq.lkp file to <a href="mailto:antonsol919+lns@gmail.com"
+class="email">antonsol919+lns@gmail.com</a>. I plan to accept :free name
+requests until some clown automatically applies for all common names.
+After which I'll probably put up a proof of work fence with some
+additional constraints on the name.</p>
+<p>Get a pull request accepted, and you get a :dev name.</p>
+<p>First come, first served<a
+href="You&#39;ll%20have%20to%20reply%20within%20a%20week%20once%20I%20send%20a%20follow-up%20email.%20This%20is%20done%20on%20a%20best%20effort%20basis%20-%20no%20rights%20are%20given.">^3</a>.</p>
+<h1 id="download">Download</h1>
+<p>Unzip, follow the ./linkspace-pkg/README.md to connect to a
+server.</p>
+<ul>
+<li><a
+href="./download/linkspace-x86_64-unknown-linux-gnu.zip">linkspace-x86_64.zip</a></li>
+<li><a
+href="./download/linkspace-aarch64-unknown-linux-gnu.zip">linkspace-aarch64.zip</a></li>
+</ul>
+<p>The package contains:</p>
+<ul>
+<li>the <code>lk</code> CLI</li>
+<li><code>lkpy.so</code> you can import with python.</li>
+<li>linkmail and imageboard domain applications.</li>
+<li>anyhost exchange .</li>
+</ul>
+<h2 id="git">Git</h2>
+<p>Currently the primary repository is <a
+href="https://github.com/AntonSol919/linkspace">github</a></p>
+<h1 id="domains">Domains list</h1>
+<ul>
+<li><a href="./docs/guide/index.html#linkmail">linkmail</a> (available
+in the <a href="#download">download</a>)</li>
+<li><a href="./docs/guide/index.html#imageboard">imageboard</a>
+(available in the <a href="#download">download</a>)</li>
+<li><a href="./lns.html">lns</a></li>
+</ul>
+<h1 id="groups">Groups</h1>
+<h2 id="server">Known (public) servers</h2>
+<ul>
+<li><p>[#:test] - 83.172.162.31:5020</p>
+<p>This is the equivalent of unfiltered potato behind a proxy.</p>
+<p>It'll get purged every now and then but come say hi!</p></li>
+</ul>
+<h2 id="exchange">Exchange Process</h2>
+<ul>
+<li><a href="./docs/guide/index.html#anyhost">anyhost</a></li>
+</ul>
+<h1 id="about">About</h1>
+<p>Linkspace is currently an unfunded project, and is missing some key
+<a
+href="https://github.com/AntonSol919/linkspace/blob/main/dev/TODO.md">features</a>.
+Meaning I still do other stuff for food, and won't be available all the
+time.</p>
+<p>Please contact me directly if you're interested in supporting the
+project. Or if you want to talk about specific applications.</p>
+<h3>Contact</h3>
+<p>Of course the preferred way is to try and contact me on the test
+server. For the less adventurous you can use <a
+href="mailto:antonsol919@gmail.com"
+class="email">antonsol919@gmail.com</a>.</p>
+<h3>Trademark</h3>
+<p>linkspace is a pending trademark of R.A.I.T. Solutions. Once
+registered I will likely use similar terms as git uses for its
+trademark.</p>
       </div>
 	</body>
 </html>

@@ -1,8 +1,4 @@
-.PHONY: all
-all: index.html about.html lns.html domains.html groups.html download.html why.html basics.html
+.PHONY: all 
 
-basics.html: ./template/* ./basics.html.*
-	cat ./template/head ./basics.html.* ./template/tail > basics.html
-
-%.html: %.md ./template/*
-	pandoc -f markdown $< | cat ./template/head - ./template/tail > $@
+index.html: index.md head tail
+	pandoc --toc -f markdown_strict+header_attributes+bracketed_spans+implicit_header_references+backtick_code_blocks -t html5 index.md  | cat ./head - ./tail > $@
