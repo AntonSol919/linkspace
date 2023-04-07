@@ -298,7 +298,6 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
     With the most notable simplification being that: 
     <a href="./docs/guide/index.html#lk_datapoint">Data entries</a> without a path, group, domain, etc exists as well.
     Referencing other packets by hash is not done inside the data but <a href="./docs/guide/index.html#lk_linkpoint">adjacent</a>.
-    Finally, addressing by path 'images/Broken.jpg' would default to a tree set of all entries with that path. There are options to be more specific. 
 <a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>

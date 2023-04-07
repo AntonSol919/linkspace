@@ -31,12 +31,13 @@ We should break these locks.
 Dedicated hosts have a role to play.
 But users can only get a good deal if they _could_ walk away without losing what is already there.
 
-[Option 2]{#option2}, blockchains, encodes exclusivity, scarcity, and inequality.
+[Option 2]{#option2}, blockchains. They are hyped to be many thinks, and some people want to believe blockchains will be the foundation of our digital space going forward. I don't see how. They encodes exclusivity, scarcity, and inequality.
+Very few useful systems require those things.
+It makes them attractive for the people already invested, but these properties are antithetical to the process of development.
+Most successful system seem to share a common history. A developer builds something simple that works, then has the freedom to tweak and optimize
+for utility. That doesn't seem to happen when the building blocks require a complex chain of consent.
 
-These properties make it attractive for the people already invested, but are antithetical to the process of development. A successful system is born from a simple system. Most simple systems are hacked together to solve a problem, and a developer comes back _afterwards_ to optimize for utility.
-That doesn't seem to happen when the system requires a chain of consent.
-
-Option 3, the [supernet](./basics.html), is the option that makes sense.
+Option 3, the [supernet](./basics.html), is the option that makes sense. It prevents data hosts from gaining all the leverage as they have in our current system. And they don't encode scarcity or consent as a core principle in the way blockchains do.
 
 This era of digital dictatorships and fiefdoms needs to end.
 Help speed things along.
