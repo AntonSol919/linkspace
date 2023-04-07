@@ -223,7 +223,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
       A <b>domain</b> field and <b>group</b> field.
       Essentially each (domain, group) has its own tree.
       A developer building an application can pick a domain name, and builds his app to read and write the data structure he needs for his application as entries in the tree.
-      A domain apps doesn't need to manage connections to other servers. It communicates by reading and writing to the tree.
+      A domain app doesn't need to manage connections to other servers. It communicates by reading and writing to the tree.
       The group indicates the set of intended recipients.
       An application should ask the user which group to use.
       A group is made up by one or more members that have set up a method of exchange.
