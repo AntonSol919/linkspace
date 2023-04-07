@@ -29,9 +29,9 @@ The packet format and index are stable, but expect some unimplemented features a
 
 
 In the 1960s we invented the electronic hierachical filesystem. 
-Organizing files in folders. For example "/linkspace/homepage/basics.html". This proved extremely powerful.
+Organizing files in folders. For example "/linkspace/homepage/index.html". This proved extremely powerful.
 So much so, that the Web (specifically HTTP) is essentially nothing more than a way to talk to file systems around the world.
-i.e. ["https://antonsol919.github.io/linkspace/basics.html"](http://antonsol919.github.io/linkspace/basics.html).
+i.e. ["https://antonsol919.github.io/linkspace/index.html"](http://antonsol919.github.io/linkspace/index.html).
 Linkspace takes this a step further. 
 
 To understand linkspace let's look at an example of a message board.
@@ -419,7 +419,7 @@ Currently the primary repository is [github](https://github.com/AntonSol919/link
 
 - [linkmail](./docs/guide/index.html#linkmail) (available in the [download](#download))
 - [imageboard](./docs/guide/index.html#imageboard) (available in the [download](#download))
-- [lns](./lns.html)
+- lns
 
 # Groups{#groups}
 ## Known (public) servers{#server}
