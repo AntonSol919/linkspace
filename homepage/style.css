@@ -4,37 +4,42 @@ h1{
     padding: 0px;
     margin:1em;
 }
-table , pre{
+pre{
     margin-left:2em
 }
-
+html,body { height:100vh; width:100vw;padding:0px;margin:0px;}
 body {
-    /*background:white;#fdfdfd;*/
     color: #1F2323;
     font-size: calc(15px + 0.390625vw);
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
+
     display: grid;
-    grid-template-columns: min-content min-content auto auto auto 3em;
-    grid-template-rows: minmax(1em,3em) 1em auto auto auto auto;
+    grid-template-columns: min-content min-content min-content min-content auto;
+    grid-template-rows: minmax(1em,3em) auto;
     grid-template-areas:
-        'logo name tagl tagl .    .'
-        '.    .    .    .    .    .'
-        'navi main main main main main'
-        'navi main main main main main'
-        'foot foot foot foot foot .';
+        'logo name tagl .    . '
+        'navi main main main .';
     gap: 1em;
-    padding: 10px;
-    margin-left: 10vw;
-    margin-right: 10vw;
+    padding-left: 10vw;
+    padding-right: 10vw;
     line-height: 1.5;
 }
 
+.active-section{
+    border-radius:5px;
+    border:1px solid black;
+    background: white;
+}
 img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
 
+#main{
+    grid-area: main;
+    overflow-y:scroll;
+}
 #logo{
     grid-area: logo;
     max-height:2em;
@@ -44,8 +49,8 @@ img {
 }
 
 #name{
-    color: inherit; /* blue colors for links too */
-    text-decoration: inherit; /* no underline */
+    color: inherit;
+    text-decoration: inherit;
     display:block;
     white-space: nowrap;
     line-height:100%;
@@ -53,6 +58,8 @@ img {
     grid-area: name;
     font-size:3em;
 }
+
+
 
 #tagline {
 color: #9a9994;
@@ -70,13 +77,8 @@ grid-area: tagl;
     background-color: #f6f9ff;
     border: 1px solid #cce3f9;
 }
-#main{
-    grid-area: main;
-}
 
-footer {
-    grid-area: foot;
-}
+
 nav {
     text-align:end;
     grid-area: navi;
@@ -95,52 +97,9 @@ h3 {
     font-weight:700;
 }
 
-table{
-border-collapse: collapse;
-border-spacing: 0;
-empty-cells: show;
-margin-bottom: 24px;
-border-bottom: 1px solid #e1e4e5;
-}
-table td, table th {
-    font-size: 90%;
-    margin: 0;
-    overflow: visible;
-    padding: 8px 16px;
-    background-color: white;
-    border: 1px solid #e1e4e5;
-}
-td {
-    vertical-align: top;
-}
-table tr:nth-child(2n-1) td {
-    background-color: #f3f6f6;
-}
-
-table thead th {
-    font-weight: bold;
-    border-top: 3px solid #e1e4e5;
-    border-bottom: 1px solid #e1e4e5;
-}
-
-.merge {
-    width:100%;
-    display: flex;
-    flex-flow: row wrap;
-}
-
-.merge > div {
-    flex-basis: 100%;
-}
-
-.merge > pre {
-    margin:1rem;
-    border:1px solid black;
-}
-.merge > .op {
+.op {
     flex-basis:0%;
     display: flex;
-    justify-content: center;
     align-items: center;
     font-size:3rem;
 }
@@ -170,29 +129,7 @@ table thead th {
     line-height: 1.25em;
 }
 
-@media screen and (max-width: 768px), (orientation: portrait) and (max-width:1024px) {
-    body{
-        margin:0px;
-        grid-template-columns: auto auto auto;
-        grid-template-rows: auto auto auto auto auto auto;
-        grid-template-areas:
-            'name .    .    '
-            'tagl tagl .    '
-            'navi navi navi '
-            'main main main '
-            'foot foot foot '; 
-    }
-    .definition { max-width:100% !important;}
-    nav { display: flex; justify-content: space-around;}
-    #logo{ display:none;}
-    .merge > pre { margin:0px; }
-    code { display:block;}
-    .entrygrid{
-        grid-template-columns: /* */;
-    }
-    
-    
-}
+
 
 .entrygrid{
     margin:1rem;
@@ -210,4 +147,34 @@ table thead th {
 }
 .entrygrid.big> span:nth-child(4n+5){
     grid-column-start:1;
+}
+
+@media screen and (max-width: 768px), (orientation: portrait) and (max-width:1024px) {
+
+    code {
+        overflow-x:scroll;
+        display:block;
+    }
+    body{
+        padding:0px;
+        margin:0px;
+        grid-template-columns: auto auto auto;
+        grid-template-rows: auto auto auto auto auto;
+        grid-template-areas:
+            'name .    .    '
+            'tagl tagl .    '
+            'navi navi navi '
+            'main main main '
+    }
+    .definition{max-width:80vw;}
+    #main{overflow-x:scroll;}
+    nav { display: flex; flex-flow: row wrap; justify-content: space-around; overflow-x:scroll;}
+    nav > hr { margin:0px;}
+    
+    #logo{ display:none;}
+    .merge > pre { margin:0px; }
+    .entrygrid{
+        grid-template-columns: /* */;
+        overflow-x:scroll;
+    }
 }

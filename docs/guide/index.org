@@ -27,7 +27,7 @@ Sometimes the [[../cargo-doc/liblinkspace/index.html][liblinkspace]] docs is ahe
 Linkspace is a way to structure interlinked data into packets, addressable with a query, in order to build multi-participant applications.
 [[../cargo-doc/liblinkspace/index.html][liblinkspace]] is the authoritative implementation.
 
-You should be familiar with the [[../../basics.html][basics]].
+You should be familiar with the [[../../index.html#basics][basics]].
 
 Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already proof that addressing content by hash is a powerful abstraction.
 It sidesteps or solves a number of difficulties inherent in organizing data as streams in applications.
@@ -1038,7 +1038,7 @@ It allows you to register as ~@:Alice:nl~, ~#:sales:company:com~, etc.
 LNS is easy to use from an abe expression.
 Both to lookup and do a reverse lookup.
 
-See [[../../lns.html][lns]] for info.
+See [[../../index.html#LNS][lns]] for info.
 
 #+BEGIN_VERSE
 You can create local bindings, allowing you to reference ~[@:my_identity:local]~ or ~[#:friends:local]~
@@ -1555,7 +1555,7 @@ Also writes into the local LNS lookup table such that the public key can be requ
 :CUSTOM_ID: lns
 :END:
 
-See [[../../lns.html][LNS]] for some general information.
+See [[../../index.html#LNS][LNS]] for some general information.
 See [[#ABELNS][abe#lns]] for how to use LNS for lookup and reverse lookup.
 
 The LNS system works by making a claim in ~lns:[#:pub]:/claim/test/example/john~ which we'll call ~$Claim1~
