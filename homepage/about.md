@@ -1,4 +1,4 @@
-### About
+# About
 
 Linkspace is currently an unfunded project, and is missing some key [features](https://github.com/AntonSol919/linkspace/blob/main/dev/TODO.md).
 Meaning I still do other stuff for food, and won't be available all the time.

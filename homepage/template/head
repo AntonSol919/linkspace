@@ -2,8 +2,8 @@
 <html>
 	<head>
 		<title>Linkspace - a general purpose supernet</title>
-		 <link rel="icon" type="image/x-icon" href="./images/logo2.png	">
-		<link rel="stylesheet" href="./style.css"/>
+		 <link rel="icon" type="image/x-icon" href="./images/logo2.png">
+		 <link rel="stylesheet" href="./style.css"/>
 	<body>
 		<a id="name" href="./index.html" >Linkspace</a>
     <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
@@ -20,7 +20,7 @@
         <a href="./why.html">Why?</a>
       </li>
       <li>
-        <a href="./docs/guide/index.html">Guide</a>
+        <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
       <li >
         <a href="./lns.html">LNS</a>
@@ -30,7 +30,7 @@
         <a href="./download.html">Download</a>
       </li>
       <li>
-        <a href="https://github.com/AntonSol919/linkspace">Git</a>
+        <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
       <li >
         <a href="./domains.html">Domains</a>
       </li>
