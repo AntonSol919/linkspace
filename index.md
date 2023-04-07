@@ -150,16 +150,13 @@ An upside of using hashes, is that we can choose to link to other data by its pa
 
 <span id="hh3">[HASH_3]</span>
 <span></span>
-<span>/image/Broken.jpg  2015/01/02</span>
-<span>[image data]  [@:alice:sales:com]</span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
 
 <span id="hh4">[HASH_4]</span>
 <span></span>
-<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
-<span>fix pls? image/Broken.jpg
-  
-[@:alice:sales:com]
-</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg<br>[@:alice:sales:com]</span>
 </div>
 
 <div class="op">+</div>
@@ -168,12 +165,10 @@ An upside of using hashes, is that we can choose to link to other data by its pa
 
 <span id="hh5">[HASH_5]</span>
 <span></span>
-<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
 Hey <span id="hh4">[HASH_4]</span>!
-Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
-  
-[@:bob:maintainance:com]
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainance:com]
 </span>
 </div>
 
@@ -184,24 +179,21 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 
 <span id="hh3">[HASH_3]</span>
 <span></span>
-<span>/image/Broken.jpg  2015/01/02</span>
-<span>[image data]  [@:alice:sales:com]</span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
 
 <span id="hh4">[HASH_4]</span>
 <span></span>
-<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
-<span>fix pls? image/Broken.jpg
-  
-[@:alice:sales:com]
-</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg<br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span></span>
-<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
 Hey <span id="hh4">[HASH_4]</span>!
 Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
-  
+<br>
 [@:bob:maintainance:com]
 </span>
 
@@ -219,26 +211,21 @@ A group is made up by one or more members that have set up a method of exchange.
 <div class="entrygrid big">
 
 <span id="hh3">[HASH_3]</span>
-<span>message_board  [#:example:com]</span>
-<span>/image/Broken.jpg  2015/01/02</span>
-<span>[image data]  [@:alice:sales:com]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/image/Broken.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
 
 <span id="hh4">[HASH_4]</span>
-<span>message_board  [#:example:com]</span>
-<span>/thread/Coffee machine broke!/msg  2023/03/02</span>
-<span>fix pls? image/Broken.jpg
-  
-[@:alice:sales:com]
-</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? image/Broken.jpg<br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span>message_board  [#:example:com]</span>
-<span>/thread/Coffee machine broke!/msg  2023/03/03</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
 <span>
 Hey <span id="hh4">[HASH_4]</span>!
-Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
-  
-[@:bob:maintainance:com]
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainance:com]
 </span>
 
 </div>
