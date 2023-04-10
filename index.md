@@ -29,7 +29,7 @@ Expect stuff to be incomplete and undocumented.
 Any feedback, questions, and ideas for improvements are welcome!
 
 Of course the preferred way is to try and contact me by downloading the zip and sending a message to the test group.
-For the less adventurous you can open an issue on github or email me at antonsol919@gmail.com.
+For the less adventurous you can open an issue on GitHub or email me at antonsol919@gmail.com.
 
 # Basics {#basics}
 
@@ -216,6 +216,12 @@ The group indicates the set of intended recipients.
 An application should ask the user which group to use.
 A group is made up by one or more members that have set up a method of exchange.
 
+There are three somewhat special groups:
+
+- the [#:0] group with nobody but you.
+- 'Your key XOR other key' is a group with two members.
+- The [#:pub] group with everybody as a member.
+
 <div class="entrygrid big">
 
 <span id="hh3">[HASH_3]</span>
@@ -240,7 +246,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 
 These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well and referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
 
-If you're on a unix give it a [try](#Download). (It runs on windows but i've not yet build method of exchanging data between peers for it)
+If you're on a unix give it a [try](#Download). (It runs on Windows but I've not yet build method of exchanging data between peers for it)
 For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
 
 ### Q&A
@@ -259,7 +265,7 @@ This protocol came to be for two reasons.
 
 Reason 1: I found it overly complex to build multi-user systems.
 
-For every 'N' applications someone uses, they have to create 'M' groups.
+For every 'N' networked applications someone uses, they have to create 'M' groups.
 This creates N*M configuration.
 In theory linkspace makes this an N+M problem.
 
@@ -269,48 +275,53 @@ A domain application can run in any group.
 Or put more practically:
 The users can use a chat app to talk to a group and open a different app to play scrabble with that same group.
 
-Similarly from a developer's perspective, building something new can be fun.
+Similarly, from a developer's perspective, building something new can be fun.
 Building something new and having to build and manage a server, user accounts, groups, etc is a lot less fun.
 
-Reason 2: I wanted to address a key question that underpins how our society uses digital systems.
+Reason 2: I wanted to provide an alternative answer to a key question that underpins how our society uses digital systems.
 
 **Who gets to __administrate__ the cat videos, taxi service, messages, and other data we share and see online?**
 
 As I see it there are three options:
 
-1. Dedicated hosts, exclusively on their machines. This is how most of the internet currently works.
+1. Applications are hosted by one organization on their machines. This is how most of the internet currently works.
 2. A pay2play scheme, on a blockchain.
 3. Users pick their admins, on a supernet.
 
-In Option 1, our current web, the host has unilateral control.
-The current systems have evolved with one goal:
-optimal exploitation of their users. Everything is permitted to keep it that way.
+In Option 1, our current web, the host has unilateral control as it relays data between users.
+Furthermore, many popular hosts are the result of an environment where winner keeps all.
+They're build for optimal exploitation of their users.
+Everything is permitted to keep it that way.
 **lock-in** the users, and **lock-out** any threat to the platform's place in your life.
 
 We should break these locks.
 
-I'm not suggesting they go away entirely.
-Most hosts provide more than just a means to exchange data between users.
-They can still fill that role.
-What a supernet does is create the option for users to back out of a deal with a provider without necessarily losing all their history and relations with others.
-If for nothing else, a supernet would be worth it for the competition it enables.
-
 [Option 2]{#option2}, blockchains.
 They are hyped to be many things, and some people believe blockchains will be the foundation of our digital space going forward.
 I don't see how.
-They encode scarcity and using them is relatively expensive.
+They encode scarcity, and using them is relatively expensive.
 Very few systems require that.
-It makes them attractive for the people already invested, but these properties are antithetical to the process of development.
-Successful systems are build from small incremental improvements. 
+Trusting an administrator is cheaper and works really well.
+
+Scarcity makes them attractive for the people already invested, but these properties are antithetical to the process of development.
+Successful systems are build from small incremental improvements.
 That doesn't seem to happen when the building blocks are a costly chain of consent.
 
-Option 3, a supernet, is the option that makes sense.
-A supernet prevents the data hosts from having too much leverage as they do now.
-A supernet doesn't encode scarcity or consent as a core principle in the way blockchains do.
+Option 3, a supernet, is the option that makes more sense to me.
+It splits up the hosts and doesn't encode scarcity as a core principle.
 
-I hope we can look back at the current era of the internet and recognize it for what it is.
+In a supernet there are two new roles.
+One to provide servers to relay data, and one to build applications that run on the supernet.
+It prevents both from having too much leverage and chasing the wrong incentives.
+
+If someone in the system abuses their position the user can change it up without losing access to their history and relations to others.
+If for nothing else, a supernet is worth it to get us more useful competition.
+
+Whether this all works out as intended, I have no idea.
+
+My hope is we can look back at the current era of the internet and recognize it for what it is.
 Digital fiefdoms.
-The step forward is to pick who lords over us.
+The step forward is to take full control over who lords over us.
 
 Help speed things along.
 Support the project by registering a LNS name.
@@ -379,7 +390,7 @@ If you represent a university you can get your name for free.
 
 Linkspace is easy to integrate with blockchains (or can be used to create new blockchains).
 You are free to build on it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes I prefer fiat money and a microtransactions save a lot of trouble w.r.t. identification if you lose the private key.
+However, in an effort to put food on the table and pay taxes I prefer fiat money and a tiny transaction save a lot of trouble w.r.t. identification if you lose the private key.
 Other top level authorities set their own price and how to pay it.
 
 ## Claim a name{#claim}
@@ -431,7 +442,7 @@ Currently, the primary repository is [GitHub](https://github.com/AntonSol919/lin
 
 - [\#:test] - 83.172.162.31:5020
 
-  This is a potato behind a proxy and I'm not filtering atm. (A great idea and I'm sure it will be filled with sunshine and rainbows.)
+  This is a potato behind a proxy, and I'm not filtering atm. (A great idea and I'm sure it will be filled with sunshine and rainbows.)
 
   It'll get purged occasionally but come say hi using the download!
 
