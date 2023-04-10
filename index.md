@@ -23,7 +23,7 @@ Check out the [Basics](#basics) for an introduction.
 [Download](#download) to give it a try and say hi on the test group.
 Check out the [Guide](./docs/guide/index.html) if you're up for some programming.
 
-The packet format and index are stable, but expect some unimplemented features and rough edges.
+The packet format and their order on disk are stable, but expect some unimplemented features and rough edges.
 
 # Basics {#basics}
 
@@ -35,7 +35,7 @@ i.e. ["https://antonsol919.github.io/linkspace/index.html"](http://antonsol919.g
 Linkspace takes this a step further. 
 
 To understand linkspace let's look at an example of a message board.
-Initially it only contains someone complaing about a coffee machine. Someone else starts a thread about tabs vs spaces. 
+Initially it only contains someone complaing about a coffee machine. Someone else starts a thread about tabs vs spaces.
 
 The two are merged together to create the new state of the message board.
 
@@ -82,18 +82,19 @@ This is more true than might be aparent. It's not __just__ HTTP.
 For example, an SQL database is a special case of a tree. It is built on top of multiple sorted lists under table names.
     Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
 
-Sending data can be thought of as combining **your tree** with another **tree**.
+Sending data can be thought of as combining **your tree** with **another tree**.
 We've dubbed words to describe specific cases such as:
 '__creating posts__', '__uploading image__', '__upvote/like a post__', '__stream a video __', etc.
-Fundamentally they can be seen as merging trees.
+Fundamentally they can be viewed as merging trees.
 
 The majority of the internet that people interact with today follows a single host design.
 A design where you make a request to get the only 'real' copy of the tree.
-For all its simplicity, this design has techinical downsides[^1]
-and comes with profound [consequences](#why) for the dynamic between host and user.
+For all its simplicity, this design has downsides.
+It becomes a single point of failure, links can become invalid, everybody has to re-invent authentication, every application has to re-invent dealing with IO errors, etc.
+There are also profound [consequences](#why) for the dynamic between host and user.
 
 In linkspace there is no single 'real' copy, and thus no de facto administrator.
-Any number of participants can host (part of) tree.
+Any number of participants can host (part of) a tree.
 
 That does mean there is no way to uniquely identify an entry with only a path.
 Two computers far apart can write to the same location at the same time.
@@ -202,7 +203,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 Entries in linkspace have two fields that preceed the path.
 A **domain** field and **group** field.
 Essentially each (domain, group) has its own tree.
-A developer building an application can pick a domain name, and builds his app to read and write the data structure he needs for his application as entries in the tree.
+A developer using linkspace picks a domain name and builds his app to read and write entries in the tree.
 A domain app doesn't need to manage connections to other servers. It communicates by reading and writing to the tree.
 The group indicates the set of intended recipients.
 An application should ask the user which group to use.
@@ -230,24 +231,19 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 
 </div>
 
-These are the basic concepts[^2].
+These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well. Referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint).
+
 If you're on a unix give it a [try](#Download).
-For details on the exact layout of the tree and other practical stuff see the [Guide]("./docs/guide/index.html").
+For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
 
 ### Q&A
 A few notes to prevent some confusion.
 
 **Q**: Is this a blockchain?  
-**A**: Only if you think git is a blockchain. There is no strict 'chain', nor 'blocks'. I consider blockchains to have a different set of [values](#option2). Which is why I'm proposing 'supernets'.
+**A**: Only if you think git is a blockchain. There are neither 'blocks', nor a strict 'chain'. I consider blockchains to have a different set of [values](#option2). Which is why I'm proposing the term 'supernet'.
 
-**Q**: Isn't administration necesary for such and such?  
-**A**: Its relativly simple to organize such that a participant trusts a specific key to act as administrator. The difference sits in having a choice or not.  
-
-**Q**: Will it handle spam?  
-**A**: No worse than current systems. Instead, we have extra tools. Proof of work on hashes, and proof of association with public keys. With AI advances driving the cost of bullshit to 0, they'll become a necesity. Will it solve it entirely? A philosphical discussion on the classification of spam is outside the scope of this project.
-
-[^1]: They're a single point of failure, links can become invalid, everybody has to re-invent authentication, everybody has to re-invent dealing with IO errors, scaling requires techinical know-how, etc.
-[^2]: With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well. Referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint).
+**Q**: How would it handle unwanted content / spam?  
+**A**: Someone can sign a list of 'accepted' entries, and you could filter based on that. Effectively emulating the current state of affairs, and thus no worse than current systems. Instead, we have extra tools. Proof of work on hashes, and proof of association with public keys. AI is driving the cost of bullshit to 0. I expect these options to become more important.
 
 # Why?{#why}
 
@@ -259,7 +255,7 @@ A project starts and ends with a vision for what the user should experience and 
 That's difficult enough.
 Instead, development also has to deal with managing a server, networking, identity, and access.
 In linkspace I've tried to decouple these things.
-A group, once setup can run any domain app. A domain app can run in any group.
+A group, once set up can run any domain app. A domain app can run in any group.
 
 Reason 2: I wanted to address a key question that underpins how our society uses digital systems.
 
@@ -272,7 +268,7 @@ I know three options:
 3. Users pick their admins, on a supernet.
 
 
-In Option 1, our current web, control over content is unilateral.
+In Option 1, our current web, the host has unilateral control.
 The current systems have evolved with one goal:
 optimal exploitation of their users. Everything is permitted to keep it that way.
 **lock-in** the users, and **lock-out** any threat to the platform's place in your life.
@@ -283,13 +279,14 @@ Dedicated hosts have a role to play.
 But users can only get a good deal if they _could_ walk away without losing what is already there.
 
 [Option 2]{#option2}
-, blockchains. They are hyped to be many thinks, and some people want to believe blockchains will be the foundation of our digital space going forward. I don't see how. They encodes exclusivity, scarcity, and inequality.
-Very few useful systems require those things.
+, blockchains. They are hyped to be many things, and some people believe blockchains will be the foundation of our digital space going forward. I don't see how. They encode scarcity and using them is relatively expensive.
+Very few useful systems require that.
 It makes them attractive for the people already invested, but these properties are antithetical to the process of development.
-Most successful system seem to share a common history. A developer builds something simple that works, then has the freedom to tweak and optimize
-for utility. That doesn't seem to happen when the building blocks require a complex chain of consent.
+Successful systems are build from small incremental improvements. The return on investment on blockchains projects suggest that doesn't happen when the building blocks require a complex chain of consent.
 
-Option 3, the supernet, is the option that makes sense. It prevents data hosts from gaining all the leverage as they have in our current system. And they don't encode scarcity or consent as a core principle in the way blockchains do.
+Option 3, a supernet, is the option that makes sense.
+A supernet prevents the data hosts from gaining all the leverage as they have in our current system.
+A supernet doesn't encode scarcity or consent as a core principle in the way blockchains do.
 
 This era of digital dictatorships and fiefdoms needs to end.
 Help speed things along.
@@ -299,7 +296,7 @@ Support the project by [registering](#LNS) a name.
 
 LNS is built on top of linkspace. It reads and writes entries to the 'lns' domain.  
 It provides a way for naming groups and public keys.  
-**Groups** look like:
+**Groups** look like:  
 
 - \#:pub
 - \#:myfancystore:com
@@ -324,18 +321,18 @@ It gives you binding right for all sub registration.
 That means if you register under @:yourcompany:com you can set up:
 
 1) a key addressed with the name @:yourcompany:com
-1) a group name #:yourcompany:com
-1) **all** authorities for names ending with *:yourcompany:com
+1) a group addressed with the name #:yourcompany:com
+1) a key to manage registrations for names ending with *:yourcompany:com
 
-I.e. because you own yourcompany:com, it can set up bindings for sales:yourcompany:com.
-If you set up an authority for sales:yourcompany:com it can bind a public key to @:bob:sales:yourcompany:com.
+I.e. The key with the authority for yourcompany:com can create bindings for sales:yourcompany:com.
+That registration can set up a binding for the key @:bob:sales:yourcompany:com.
 
 ### Do I require a registration?
 
 Nothing in linkspace requires a registration.
 Everything can be done without.
-In fact, both :env and :local are meant for naming things for only yourself or between peers respectively and require no registration whatsoever.
-Registrations allow you to pick a name to be known publicly for everybody.
+In fact, *:env names you set up for your own use (similarly to /etc/hosts), and *:local are meant for names you share between peers.
+Registrations allow you to pick an unambiguous name to be known publicly and they support the project financially.
 
 ### How can I register?
 
@@ -346,7 +343,7 @@ The following top level authorities have been assigned, and you can request a na
 - :com for 10 euro per year.
 - :nl for 10 euro per year.
 
-To do so, scroll down to the end.
+To do so, see [claim a name](#claim).
 
 ### Can I become a top level authority?
 
@@ -356,12 +353,12 @@ If you represent a university you can get your name for free.
 
 ### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
 
-Linkspace is easy to integrate with blockchains (or even create a new blockchain).
-You are free to build don'g it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes I prefer fiat money.
-Additionally, 1 cent transactions save a lot of trouble w.r.t. identification if you lose the private key.
+Linkspace is easy to integrate with blockchains (or can be use to create new blockchains).
+You are free to build on it as you wish (MPL-2.0 license).
+However, in an effort to put food on the table and pay taxes I prefer fiat money and a micro transactions save a lot of trouble w.r.t. identification if you lose the private key.
+Other top level authorities set their own price and how to pay it.
 
-## Claim a name
+## Claim a name{#claim}
 
 This currently requires a some work.
 To make a :free claim get the git repository, install rust and:
@@ -413,7 +410,7 @@ Currently the primary repository is [github](https://github.com/AntonSol919/link
 
 - [\#:test] - 83.172.162.31:5020
 
-  This is the equivalent of unfiltered potato behind a proxy.
+  This is a potato behind a proxy and i'm not filtering atm. A great idea and nothing will go wrong.
 
   It'll get purged every now and then but come say hi!
 

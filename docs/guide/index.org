@@ -29,14 +29,14 @@ Linkspace is a way to structure interlinked data into packets, addressable with 
 
 You should be familiar with the [[../../index.html#basics][basics]].
 
-Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already proof that addressing content by hash is a powerful abstraction.
-It sidesteps or solves a number of difficulties inherent in organizing data as streams in applications.
-Such a system is classified as a supernet when hashed entries include hashes to other entries[fn::
+Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
+This abstraction sidesteps or solves a number of difficulties inherent in organizing data as streams in applications.
+If entries include hashes to other entries I propose to classify it as a supernet[fn::
 I consider blockchains a subset of supernets.
-They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain].
+They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain.].
 
-The issue with supernets so far, is that they are bound to their use-case.
-Linkspace is general purpose.
+The issue with supernets build so far is that they are bound to their use-case.
+Linkspace is a general purpose supernet.
 It is built to be fast and simple.
 #+BEGIN_VERSE
 Supernet  [ˈsü-pərˌnet]
@@ -65,10 +65,10 @@ liblinkspace is best understood as 4 ideas.
 - [[Linkspace]] - Reading, writing, and reacting to packets
 
 A big addition compared to similar systems is the split between domains and groups.
-It separates the responsibility of 'User Interface & Data Structure' with the 'Members and the exchange of data'.
+It separates the responsibility of 'User Interface & Data Structure' from the 'Members and the exchange of data'.
 This split and other common problems, are supported by a set of [[Conventions]].
 
-The end of this document contains an examples.
+The end of this document contains examples.
 
 * Setup
 
