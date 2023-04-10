@@ -1096,37 +1096,30 @@ By default [[lk_key]] sets up the ~[@:me:local]~ identity.
 #+END_VERSE
 
 A query is a list of predicates and options used to select a set of packets.
-They are used by the local index ( [[lk_watch]] and [[lk_get]] ),
-or to signal what packets should be found looked for in the group ( [[lk_pull]] ),
-or as a filter function.
+An application can use them to read from the local instance with [[lk_watch]] and [[lk_get]].
+And also to make a request to an exchange process that will retrieve relevant packets from the group with [[lk_pull]].
 
 ** lk_query
 :PROPERTIES:
 :CUSTOM_ID: lk_query
 :END:
 
-
 Queries are newline separated.
 Predicates are an [[ABE]] 3-tuple ~field ':' test-operation ':' value~ and constrain the set of accepted packets.
 Options are context dependent and start with ':'
 
-#+Caption: select everything signed by me in ~example:[#:pub]:/hello/world/**~ with a max data size of 255, with between 2 and 8 links from the tree index and follow it's the links
+A query might look like this:
+
 #+BEGIN_EXAMPLE
 group:=:[#:pub]
 domain:=:example
-data_size:<=:[u16:256]
-prefix:=:/hello/world
-pubkey:=:[@local:me]
-link_len:>=:[u16:2]
-link_len:<=:[u16:8]
-
-:mode:tree-asc
-:follow
-:watch:gethellos
+path:=:/hello/world
+pubkey:=:[@:me:local]
+create:>:[now:-1D]
 #+END_EXAMPLE
 
-A predicate can be set multiple times.
-They are designed such that you can concatenate two queries.
+A predicate can be set multiple times. e.g. We can add a create:<:[now:+1D]
+Queries are designed such that you can concatenate the string representation of two queries and get a new query.
 If the result can only ever be the empty set an error is returned.
 
 There are only 4 basic test operations.
@@ -1161,7 +1154,8 @@ If no depth is set the path_len is constraint by default.
 Except for ~watch-tree~ which sets the depth to unconstrained by default
 #+END_VERSE 
 
-Here we look for the domain 'my' , the group [#:pub], with path starting at /hello and with one additional component. 
+Here we look for the domain 'my' , the group [#:pub], with path starting at /hello and with one additional path component.
+
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk print-query "my:[#:pub]:/hello:*" --signed
 #+END_SRC
@@ -1187,7 +1181,8 @@ lk print-query "my:[#:pub]:/hello:*" --signed
 
 Add multiple constraints to a query.
 You can add multi line strings or per line.
-Each line is evaluated. you can set a pkt or argv context.
+Each line is evaluated as an abe expression.
+You can set a pkt or argv context.
 
 Returns an error if the resulting set is empty.
 The full list of predicates and their byte size can be found [[#predicatelist][here]].
@@ -1263,12 +1258,10 @@ data_size:<:\0\x03
 
 Print a query as text.
 The query will have merged overlapping predicates
-The last argument sets whether to create abe expressions or stick to ab-text without the expressions
-
+The boolean argument sets whether to create abe expressions or stick to a representation without expressions.
 
 #+begin_ctabs
 #+begin_py
-
 
 #+begin_src python :session lkpy :exports both :results value verbatim
   lk_query_print(q,True)
@@ -1290,8 +1283,6 @@ The types are: datapoint=[b2:0000_0001], linkpoint [b2:0000_0011], keypoint [b2:
 Setting 'group', 'domain', 'path', 'links', or 'create' predicates automatically exclude the datapoint type.
 Setting pubkey or signature excludes link and data points.
 #+END_VERSE
-
-
 
 ** More on predicates
 
