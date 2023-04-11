@@ -14,11 +14,11 @@ body {
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
 
     display: grid;
-    grid-template-columns: 10vw min-content min-content min-content min-content 10vw;
+    grid-template-columns: 1em min-content auto auto auto ;
     grid-template-rows: minmax(1em,3em) auto;
     grid-template-areas:
-        '. logo name tagl .    . '
-        '. navi main main main .';
+        '. logo name tagl .     '
+        '. navi main main main ';
     gap: 1em;
     line-height: 1.5;
 }
@@ -57,6 +57,12 @@ img {
     font-size:3em;
 }
 
+pre{
+    overflow-x:auto;
+    margin:5%;
+    padding:0;
+    width:90%;
+}
 
 
 #tagline {
@@ -131,6 +137,7 @@ h3 {
 
 
 .entrygrid{
+    overflow-x:auto;
     margin:1rem;
     border:1px solid black;
     display: grid;
@@ -162,14 +169,12 @@ h3 {
             'main main main '
     }
     .definition{max-width:80vw;}
-    #main{overflow-x:scroll;}
-    nav { display: flex; flex-flow: row wrap; justify-content: space-around; overflow-x:scroll;}
+    nav { display: flex; flex-flow: row wrap; justify-content: space-around; overflow-x:auto;}
     nav > hr { margin:0px;}
     
     #logo{ display:none;}
     .merge > pre { margin:0px; }
     .entrygrid{
         grid-template-columns: /* */;
-        overflow-x:scroll;
     }
 }

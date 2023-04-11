@@ -99,7 +99,7 @@ Use 'help list' for more options
 """
 
 
-list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data:str/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
+list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
 class Linkmail(cmd.Cmd):
     intro =intro
     prompt = "> "
@@ -194,6 +194,7 @@ class Linkmail(cmd.Cmd):
         logging.debug(q)
         lst = []
         lk_get_all(lk,q,lambda pkt: lst.append(pkt))
+        lst.sort(key = lambda pkt: pkt.create)
         self.print_list(lst)
 
     def do_open(self,idx):
@@ -242,5 +243,5 @@ while True:
     try:
         dloop.cmdloop()
     except Exception as e:
-        logging.warn(e, exc_info=True)
+        logging.warning(e, exc_info=True)
 
