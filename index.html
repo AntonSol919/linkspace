@@ -98,9 +98,9 @@ antonsol919@gmail.com.</p>
 Organizing files in folders. For example
 "/linkspace/homepage/index.html". This proved extremely powerful. So
 much so, that the (early) Web, specifically HTTP, is essentially nothing
-more than a way to talk to file systems around the world. i.e. <a
-href="http://antonsol919.github.io/linkspace/index.html">"https://antonsol919.github.io/linkspace/index.html"</a>.
-Linkspace takes this a step further.</p>
+more than a way to talk to file systems around the world. i.e.
+"https://antonsol919.github.io/linkspace/index.html" Linkspace takes
+this a step further.</p>
 <p>To get an idea of what linkspace lets us do we can look at an example
 of a message board. Initially it only contains someone complaing about a
 coffee machine and an attached image. Someone else starts a thread about
@@ -148,7 +148,7 @@ example, an SQL database is a special case of a tree. It is built on top
 of multiple sorted lists under table names. Essentially their rows are
 "/table<em>name/primary</em>key = value", and a SQL query can address
 multiple entries.</p>
-<p>My point is not to compare linkspace to HTTP or to replace SQL. I
+<p>The point is not to compare linkspace to HTTP or to replace SQL. I
 bring them up as an argument for the unreasonable effectiveness of
 organizing data in a (sorted) tree.</p>
 <p>Exchanging data can be thought of as combining <strong>your
@@ -216,7 +216,7 @@ data by its path (e.g. "image/BrokenMachine.jpg") or by its hash:</p>
 <span id="hh4">[HASH_4]</span>
 <span></span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 </div>
 <div class="op">+</div>
 <div class="entrygrid big">
@@ -241,7 +241,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 <span id="hh4">[HASH_4]</span>
 <span></span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span></span>
@@ -262,14 +262,8 @@ from the group. The exchange of data happens in the background. The
 application only has to deal with the tree and the new entries. It
 doesn't have to manage connections.</p>
 <p>The group indicates the set of intended recipients. An application
-should ask the user which group to use. A group is made up by one or
-more members that have set up a method of exchange.</p>
-<p>There are three somewhat special groups:</p>
-<ul>
-<li>the [#:0] group with nobody but you.</li>
-<li>'Your key XOR other key' is a group with two members.</li>
-<li>The [#:pub] group with everybody as a member.</li>
-</ul>
+should ask the user which group to use. A group is made up by members
+that have set up a method of exchange.</p>
 <div class="entrygrid big">
 
 <span id="hh3">[HASH_3]</span>
@@ -280,7 +274,7 @@ more members that have set up a method of exchange.</p>
 <span id="hh4">[HASH_4]</span>
 <span>message_board<br>[#:example:com]</span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span>message_board  [#:example:com]</span>
@@ -310,11 +304,11 @@ different set of <a href="#option2">values</a>. Which is why I'm
 proposing the more general term 'supernet'.</p>
 <p><strong>Q</strong>: How would it handle unwanted content /
 spam?<br />
-<strong>A</strong>: Someone can sign a list of 'accepted' entries, and
-you can filter based on that. Effectively emulating the current state of
-affairs. Furthermore, linkspace gives us extra tools: Proof of work on
-hashes, and proof of association public keys vouching for another (i.e.
-friends of friends).</p>
+<strong>A</strong>: You could trust a specific signature to whitelist or
+blacklist and filter based on that. Effectively emulating the current
+state of affairs. Furthermore, linkspace gives us extra tools: Proof of
+work on hashes, and proof of association public keys vouching for
+another (i.e. friends of friends).</p>
 <h1 id="why">Why?</h1>
 <p>This protocol came to be for two reasons.</p>
 <p>Reason 1: I found it overly complex to build multi-user systems.</p>
@@ -362,14 +356,16 @@ doesn't seem to happen when the building blocks are a costly chain of
 consent.</p>
 <p>Option 3, a supernet, is the option that makes more sense to me. It
 splits up the hosts and doesn't encode scarcity as a core principle.</p>
-<p>In a supernet there are two new roles. One to provide servers to
-relay data, and one to build applications that run on the supernet. It
-prevents both from having too much leverage and chasing the wrong
-incentives.</p>
-<p>If someone in the system abuses their position the user can change it
-up without losing access to their history and relations to others. If
-for nothing else, a supernet is worth it to get us more useful
-competition.</p>
+<p>In linkspace the role of host is split up between:</p>
+<ul>
+<li>providing groups with servers to relay data</li>
+<li>Developing domain applications that run on linkspace</li>
+</ul>
+<p>It prevents both from having too much leverage and chasing the wrong
+incentives. Should someone in the system abuses their position the user
+can change it up without losing access to their history and relations to
+others. If for nothing else, a supernet is worth it to get us more
+useful competition.</p>
 <p>Whether this all works out as intended, I have no idea.</p>
 <p>My hope is we can look back at the current era of the internet and
 recognize it for what it is. Digital fiefdoms. The step forward is to
@@ -413,9 +409,9 @@ bindings for sales:yourcompany:com. That registration can set up a
 binding for the key @:bob:sales:yourcompany:com.</p>
 <h3>Do I require a registration?</h3>
 <p>Nothing in linkspace requires a registration. Everything can be done
-without. In fact, <em>:env names you set up for your own use (similarly
-to /etc/hosts), and </em>:local are meant for names you share between
-peers. Registrations allow you to pick an unambiguous name to be known
+without. In fact, *:env names you set up for your own use (similarly to
+/etc/hosts), and *:local are meant for names you share between peers.
+Registrations allow you to pick an unambiguous name to be known
 publicly, and they support the project financially.</p>
 <h3>How can I register?</h3>
 <p>The following top level authorities have been assigned, and you can

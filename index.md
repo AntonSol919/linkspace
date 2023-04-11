@@ -36,7 +36,7 @@ For the less adventurous you can open an issue on GitHub or email me at antonsol
 In the 1960s we invented the electronic hierachical filesystem.
 Organizing files in folders. For example "/linkspace/homepage/index.html". This proved extremely powerful.
 So much so, that the (early) Web, specifically HTTP, is essentially nothing more than a way to talk to file systems around the world.
-i.e. ["https://antonsol919.github.io/linkspace/index.html"](http://antonsol919.github.io/linkspace/index.html).
+i.e. "https://antonsol919.github.io/linkspace/index.html"
 Linkspace takes this a step further.
 
 To get an idea of what linkspace lets us do we can look at an example of a message board.
@@ -88,7 +88,7 @@ This is more true than might be aparent. It's not just HTTP.
 For example, an SQL database is a special case of a tree. It is built on top of multiple sorted lists under table names.
 Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
 
-My point is not to compare linkspace to HTTP or to replace SQL.
+The point is not to compare linkspace to HTTP or to replace SQL.
 I bring them up as an argument for the unreasonable effectiveness of organizing data in a (sorted) tree.
 
 Exchanging data can be thought of as combining **your tree** with **another tree**.
@@ -160,7 +160,7 @@ An upside of using hashes, is that we can choose to link to other data by its pa
 <span id="hh4">[HASH_4]</span>
 <span></span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 </div>
 
 <div class="op">+</div>
@@ -189,7 +189,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 <span id="hh4">[HASH_4]</span>
 <span></span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span></span>
@@ -214,13 +214,8 @@ It doesn't have to manage connections.
 
 The group indicates the set of intended recipients.
 An application should ask the user which group to use.
-A group is made up by one or more members that have set up a method of exchange.
+A group is made up by members that have set up a method of exchange.
 
-There are three somewhat special groups:
-
-- the [#:0] group with nobody but you.
-- 'Your key XOR other key' is a group with two members.
-- The [#:pub] group with everybody as a member.
 
 <div class="entrygrid big">
 
@@ -232,7 +227,7 @@ There are three somewhat special groups:
 <span id="hh4">[HASH_4]</span>
 <span>message_board<br>[#:example:com]</span>
 <span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
-<span>fix pls? image/BrokenMachine.jpg<br>[@:alice:sales:com]</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
 
 <span id="hh5">[HASH_5]</span>
 <span>message_board  [#:example:com]</span>
@@ -256,7 +251,7 @@ A few notes to prevent some confusion.
 **A**: Only if you think git is a blockchain. There are neither 'blocks', nor a strict 'chain'. Most blockchains also have a different set of [values](#option2). Which is why I'm proposing the more general term 'supernet'.
 
 **Q**: How would it handle unwanted content / spam?  
-**A**: Someone can sign a list of 'accepted' entries, and you can filter based on that. Effectively emulating the current state of affairs. 
+**A**: You could trust a specific signature to whitelist or blacklist and filter based on that. Effectively emulating the current state of affairs. 
 Furthermore, linkspace gives us extra tools: Proof of work on hashes, and proof of association public keys vouching for another (i.e. friends of friends).
 
 # Why?{#why}
@@ -310,11 +305,13 @@ That doesn't seem to happen when the building blocks are a costly chain of conse
 Option 3, a supernet, is the option that makes more sense to me.
 It splits up the hosts and doesn't encode scarcity as a core principle.
 
-In a supernet there are two new roles.
-One to provide servers to relay data, and one to build applications that run on the supernet.
-It prevents both from having too much leverage and chasing the wrong incentives.
+In linkspace the role of host is split up between:
 
-If someone in the system abuses their position the user can change it up without losing access to their history and relations to others.
+- providing groups with servers to relay data
+- Developing domain applications that run on linkspace
+
+It prevents both from having too much leverage and chasing the wrong incentives.
+Should someone in the system abuses their position the user can change it up without losing access to their history and relations to others.
 If for nothing else, a supernet is worth it to get us more useful competition.
 
 Whether this all works out as intended, I have no idea.
@@ -349,7 +346,7 @@ I plan to build something similar DNS over UDP.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
 Registrations are open.
 Read this page to find out how.
-
+    
 ### What does a registration do?
 
 It gives you binding right for all sub registration.
@@ -366,7 +363,7 @@ That registration can set up a binding for the key @:bob:sales:yourcompany:com.
 
 Nothing in linkspace requires a registration.
 Everything can be done without.
-In fact, *:env names you set up for your own use (similarly to /etc/hosts), and *:local are meant for names you share between peers.
+In fact, \*:env names you set up for your own use (similarly to /etc/hosts), and \*:local are meant for names you share between peers.
 Registrations allow you to pick an unambiguous name to be known publicly, and they support the project financially.
 
 ### How can I register?
