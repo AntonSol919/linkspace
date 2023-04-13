@@ -996,7 +996,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "abe",
  "anyhow",
@@ -1022,7 +1022,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "arrayvec 0.7.2",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-pkt"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "arrayvec 0.7.2",
@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-py"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "linkspace",

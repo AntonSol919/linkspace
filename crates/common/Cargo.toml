@@ -1,6 +1,6 @@
 [package]
 name = "linkspace-common"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MPL-2.0"
 authors = ["Azon <AntonSol919@gmail.com>"]
@@ -22,8 +22,8 @@ full=["fs", "cli"]
 [dependencies]
 abe = { path = "../abe", version = "0.1.0"}
 byte-fmt = { path = "../byte-fmt", version = "0.1.0"}
-linkspace-pkt = { path = "../pkt", version = "0.1.0"}
-linkspace-core= { path = "../core",default-features=false, version = "0.1.0"}
+linkspace-pkt = { path = "../pkt", version = "0.1.1"}
+linkspace-core= { path = "../core",default-features=false, version = "0.1.1"}
 linkspace-argon2-identity = { path = "../argon2-identity", version = "0.1.0"}
 
 anyhow = "1.0.69"

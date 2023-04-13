@@ -1,6 +1,6 @@
 [package]
 name = "linkspace-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MPL-2.0"
 authors = ["Azon <AntonSol919@gmail.com>"]
@@ -17,7 +17,7 @@ inmem = ["rpds"]
 
 [dependencies]
 dunce = "1.0.2"
-linkspace-pkt = { path = "../pkt",features=["keygen"], version="0.1.0"}
+linkspace-pkt = { path = "../pkt",features=["keygen"], version="0.1.1"}
 linkspace-cryptography = { path = "../cryptography",features=["keygen"],version="0.1.0"}
 ipcbus = { path = "../ipcbus", version = "0.1.0"}
 serde = { version = "1.0.139", features = ["derive","rc"] }
