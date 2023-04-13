@@ -6,7 +6,7 @@ PKG_DIR=$(R)/build/linkspace-pkg
 # cargo doesn't take --debug so make sure you update the rules as well. 
 RTARGET:=release
 
-all: x64 aarch64
+all: aarch64 x64
 x64: pkg-x86_64-unknown-linux-gnu
 i686: pkg-x86_64-unknown-linux-musl # doesn't support python
 aarch64: pkg-aarch64-unknown-linux-gnu

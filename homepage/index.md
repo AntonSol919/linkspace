@@ -21,10 +21,9 @@ Linkspace is a supernet with the following highlights:
 
 Check out the [Basics](#basics) for an introduction.
 [Download](#download) to give it a try and say hi on the test group.
-Check out the [Guide](./docs/guide/index.html) if you're up for practical stuff.
+Check out the [Guide](./docs/guide/index.html) if you're interested in the technical breakdown.
 
-The packet and database layout are stable, but that's about it.
-Expect stuff to be incomplete and undocumented.
+The packet and database layout are stable, but some things are incomplete or undocumented.
 
 Any feedback, questions, and ideas for improvements are welcome!
 
@@ -89,12 +88,12 @@ For example, an SQL database is a special case of a tree. It is built on top of 
 Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
 
 The point is not to compare linkspace to HTTP or to replace SQL.
-I bring them up as an argument for the unreasonable effectiveness of organizing data in a (sorted) tree.
+I bring them up as an argument for the effectiveness of organizing data in a (sorted) tree.
 
 Exchanging data can be thought of as combining **your tree** with **another tree**.
 We've dubbed words to describe specific cases such as:
 '__creating posts__', '__uploading image__', '__upvote/like a post__', '__stream a video __', etc.
-Fundamentally they can be viewed as merging trees, and having an application provide a pleasant interface.
+Fundamentally they can be viewed as merging trees, with an application providing a pleasant interface.
 
 The majority of the internet that people interact with today follows a single host design.
 A design where you make a request to get the only 'real' copy of the tree.
@@ -203,7 +202,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 
 </div>
 
-Entries in linkspace have two fields that preceed the path.
+Entries in linkspace have two fields that precede the path.
 A **domain** field and **group** field.
 Essentially each (domain, group) has its own tree.
 An application picks a domain name to use. 
@@ -241,7 +240,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 
 These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well and referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
 
-If you're on a unix give it a [try](#Download). (It runs on Windows but I've not yet build method of exchanging data between peers for it)
+If you're on a unix give it a [try](#Download). (It runs on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust)
 For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
 
 ### Q&A
@@ -252,7 +251,7 @@ A few notes to prevent some confusion.
 
 **Q**: How would it handle unwanted content / spam?  
 **A**: You could trust a specific signature to whitelist or blacklist and filter based on that. Effectively emulating the current state of affairs. 
-Furthermore, linkspace gives us extra tools: Proof of work on hashes, and proof of association public keys vouching for another (i.e. friends of friends).
+Furthermore, linkspace gives us extra tools: Proof of work on hashes, and proof of association with public keys vouching for another (i.e. friends of friends).
 
 # Why?{#why}
 
@@ -285,9 +284,9 @@ As I see it there are three options:
 
 In Option 1, our current web, the host has unilateral control as it relays data between users.
 Furthermore, many popular hosts are the result of an environment where winner keeps all.
-They're build for optimal exploitation of their users.
+They're built for optimal exploitation of their users.
 Everything is permitted to keep it that way.
-**lock-in** the users, and **lock-out** any threat to the platform's place in your life.
+**Lock-in** the users, and **lock-out** any threat to the platform's place in your life.
 
 We should break these locks.
 
@@ -298,11 +297,11 @@ They encode scarcity, and using them is relatively expensive.
 Very few systems require that.
 Trusting an administrator is cheaper and works really well.
 
-Scarcity makes them attractive for the people already invested, but these properties are antithetical to the process of development.
+Scarcity makes blockchains attractive for the people already invested, but these properties are antithetical to the process of development.
 Successful systems are build from small incremental improvements.
-That doesn't seem to happen when the building blocks are a costly chain of consent.
+That dynamic doesn't seem to take place when the building blocks are a costly chain of consent.
 
-Option 3, a supernet, is the option that makes more sense to me.
+Option 3, a supernet like linkspace, is the option that makes more sense to me.
 It splits up the hosts and doesn't encode scarcity as a core principle.
 
 In linkspace the role of host is split up between:
@@ -311,13 +310,13 @@ In linkspace the role of host is split up between:
 - Developing domain applications that run on linkspace
 
 It prevents both from having too much leverage and chasing the wrong incentives.
-Should someone in the system abuses their position the user can change it up without losing access to their history and relations to others.
+Should someone in the system abuses their position the user can change things up without losing access to their history and relations to others.
 If for nothing else, a supernet is worth it to get us more useful competition.
 
 Whether this all works out as intended, I have no idea.
 
 My hope is we can look back at the current era of the internet and recognize it for what it is.
-Digital fiefdoms.
+digital fiefdoms.
 The step forward is to take full control over who lords over us.
 
 Help speed things along.
@@ -387,7 +386,7 @@ If you represent a university you can get your name for free.
 
 Linkspace is easy to integrate with blockchains (or can be used to create new blockchains).
 You are free to build on it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes I prefer fiat money and a tiny transaction save a lot of trouble w.r.t. identification if you lose the private key.
+However, in an effort to put food on the table and pay taxes I prefer fiat money and a 1 cent transaction save a lot of trouble w.r.t. identification if you lose the private key.
 Other top level authorities set their own price and how to pay it.
 
 ## Claim a name{#claim}

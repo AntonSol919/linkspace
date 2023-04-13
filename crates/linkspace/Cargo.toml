@@ -1,6 +1,6 @@
 [package]
 name = "linkspace"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Azon <AntonSol919@gmail.com>"]
 license = "MPL-2.0"

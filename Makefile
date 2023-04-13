@@ -13,7 +13,7 @@ install-python:
 
 docs:
 	cargo +nightly doc -p linkspace --target-dir ./build --no-deps
-	cp -r ./build/doc ./docs/cargo-doc
+	cp -r ./build/doc/ ./docs/cargo-doc
 
 homepage:
 	make -C ./homepage

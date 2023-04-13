@@ -21,10 +21,9 @@ which acts as de facto administrator by virtue of hosting the data.
 
 Check out [Basics](https://antonsol919.github.io/linkspace/index.html#basics) for an introduction.
 [Download](https://antonsol919.github.io/linkspace/index.html#download) to give it a try and say hi on the test group.
-Check out the [Guide](./docs/guide/index.html) if you're up for practical stuff.
+Check out the [Guide](./docs/guide/index.html) if you're interested in the technical breakdown.
 
-The packet and database layout are stable, but that's about it.
-Expect stuff to be incomplete and undocumented.
+The packet and database layout are stable, but some things are incomplete or undocumented.
 
 Any feedback, questions, and ideas for improvements are welcome!
 
