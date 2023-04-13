@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 image = { version = "0.24", features = ["jpeg", "png"] }
 imageproc = {version="0.23"}
-liblinkspace = {path ="../../../../crates/liblinkspace"}
+linkspace = {path ="../../../../crates/linkspace"}
 tracing = "0.1.37"

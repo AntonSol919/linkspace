@@ -7,7 +7,7 @@
 pub mod blob;
 pub mod blobmap;
 
-use liblinkspace::{
+use linkspace::{
     anyhow::{self},
     cli::{
         clap::{Parser, Subcommand},

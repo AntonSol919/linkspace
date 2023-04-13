@@ -7,7 +7,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::app::*;
 use egui::{vec2, CentralPanel, Image, Rect, SidePanel, TextureHandle};
-use imageboard_rs::{liblinkspace::prelude::Ptr, ImageStream, Place};
+use imageboard_rs::{linkspace::prelude::Ptr, ImageStream, Place};
 
 pub struct Body {
     pub show_boards_panel: bool,

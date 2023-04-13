@@ -17,6 +17,6 @@ description = "a stdio implementation for a linkspace handshake"
 
 [dependencies]
 
-liblinkspace = { path = "../../crates/liblinkspace"}
+linkspace = { path = "../../crates/linkspace"}
 linkspace-common = { path = "../../crates/common" }
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }

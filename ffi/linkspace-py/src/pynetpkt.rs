@@ -6,8 +6,8 @@
 
 use std::str::FromStr;
 
-use liblinkspace::misc::FieldEnum;
-use liblinkspace::prelude::*;
+use ::linkspace::misc::FieldEnum;
+use ::linkspace::prelude::*;
 use pyo3::{basic::CompareOp, prelude::*, types::PyBytes};
 
 use misc::{RecvPkt, ReroutePkt};
@@ -43,7 +43,7 @@ impl Pkt {
         Ok(PyBytes::new(py, &v))
     }
     pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
-        use liblinkspace::misc::TreeEntry;
+        use linkspace::misc::TreeEntry;
         let self_key = TreeEntry::from_pkt(0.into(), &self.0).ok_or(self.0.hash_ref());
         let other_key = TreeEntry::from_pkt(0.into(), &other.0).ok_or(other.0.hash_ref());
         match op {
@@ -152,7 +152,7 @@ impl Pkt {
     #[setter]
     pub fn set_netflags(&mut self, f: u8) {
         self.0.net_header.flags =
-            unsafe { liblinkspace::prelude::NetFlags::from_bits_unchecked(f) };
+            unsafe { linkspace::prelude::NetFlags::from_bits_unchecked(f) };
     }
     #[setter]
     pub fn set_hop(&mut self, b: [u8; 4]) {
@@ -277,8 +277,8 @@ impl Link {
     }
 }
 
-impl Into<liblinkspace::prelude::Link> for Link {
-    fn into(self) -> liblinkspace::prelude::Link {
+impl Into<linkspace::prelude::Link> for Link {
+    fn into(self) -> linkspace::prelude::Link {
         prelude::Link {
             tag: self.tag.into(),
             ptr: self.ptr.into(),

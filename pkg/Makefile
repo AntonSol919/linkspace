@@ -30,6 +30,6 @@ cli-%:
 
 py-%:
 	mkdir -p $(PKG_DIR)/python/
-	cd $(R)/.. && cross build --$(RTARGET) --target $* -p liblinkspace-py
-	cp $(LKB)/$*/$(RTARGET)/liblinkspace.so $(PKG_DIR)/python/liblinkspace.so
-	cp $(R)/../ffi/liblinkspace-py/liblinkspace.pyi $(PKG_DIR)/python/liblinkspace.pyi
+	cd $(R)/.. && cross build --$(RTARGET) --target $* -p linkspace-py
+	cp $(LKB)/$*/$(RTARGET)/liblinkspace.so $(PKG_DIR)/python/linkspace.so
+	cp $(R)/../ffi/linkspace-py/linkspace.pyi $(PKG_DIR)/python/linkspace.pyi

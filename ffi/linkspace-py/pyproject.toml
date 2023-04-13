@@ -1,5 +1,5 @@
 [project]
-name = "liblinkspace"
+name = "linkspace"
 
 [build-system]
 requires = ["maturin>=0.14,<0.15"]

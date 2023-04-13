@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 
-liblinkspace = { path = "../../crates/liblinkspace"}
+linkspace = { path = "../../crates/linkspace"}
 linkspace-common = { path = "../../crates/common" }
 clap = "*"
 termion = "2.0.1"

@@ -34,7 +34,7 @@ impl From<PktPredicates> for Query {
 /**
 See the (guide#query)[./guide/index.html].
 A set of predicates and options.
-Create with liblinkspace::lk_query, extend with lk_query_append, and stringify with lk_query_str
+Create with linkspace::lk_query, extend with lk_query_append, and stringify with lk_query_str
 Argument to lk_get and lk_watch.
 **/
 #[derive(Debug, Clone, Default)]

@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use liblinkspace::{
+use linkspace::{
     anyhow,
     cli::{clap, clap::Parser, opts::CommonOpts},
     prelude::*,
@@ -36,7 +36,7 @@ pub(crate) fn encode(common: CommonOpts, opts: Encode) -> anyhow::Result<()> {
     let group = opts.group.eval(&common.eval_ctx())?;
     let inp = stdin();
     let mut out = std::io::stdout().lock();
-    liblinkspace::protocols::impex::blob::into_blob::<_, _, std::io::Result<LkHash>>(
+    linkspace::protocols::impex::blob::into_blob::<_, _, std::io::Result<LkHash>>(
         group,
         opts.domain,
         inp,
@@ -53,6 +53,6 @@ pub(crate) fn checkout(common: CommonOpts, hexpr: HashExpr) -> anyhow::Result<()
     let env = common.env()?;
     let head = hexpr.eval(&common.eval_ctx())?;
     let reader = env.get_reader()?;
-    liblinkspace::protocols::impex::blob::checkout(&reader, std::io::stdout().lock(), head)?;
+    linkspace::protocols::impex::blob::checkout(&reader, std::io::stdout().lock(), head)?;
     Ok(())
 }

@@ -6,13 +6,13 @@ install-lk:
 	cargo +nightly install --path ./cli/lns
 
 build:
-	cargo +nightly build -p liblinkspace
+	cargo +nightly build -p linkspace
 
 install-python:
-	make -C ./ffi/liblinkspace-py install
+	make -C ./ffi/linkspace-py install
 
 docs:
-	cargo +nightly doc -p liblinkspace --target-dir ./build --no-deps
+	cargo +nightly doc -p linkspace --target-dir ./build --no-deps
 	cp -r ./build/doc ./docs/cargo-doc
 
 homepage:

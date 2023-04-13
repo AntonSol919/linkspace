@@ -8,7 +8,7 @@ use egui::{ColorImage, TextEdit, TextureHandle, Vec2, Widget};
 use image::RgbaImage;
 use imageboard_rs::Klets;
 use imageboard_rs::{
-    liblinkspace::{self as lk, lk_encode, lk_process, linkspace::lk_info},
+    linkspace::{self as lk, lk_encode, lk_process, linkspace::lk_info},
     ImgHandle,
 };
 use lk::prelude::*;

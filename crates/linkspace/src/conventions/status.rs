@@ -33,7 +33,7 @@ The reply process links can start with init:[#:0] at first and should point to p
 A request is only made 'once' per timeout.
 I.e. a process checks if a request was made since now-timeout, before making a new request, and returns after last_req+timeout.
 **/
-use crate::{*, linkspace::{lk_get_all, lk_watch2}};
+use crate::{*, runtime::{lk_get_all, lk_watch2}};
 pub const STATUS_PATH: IPathC<16> = ipath1(concat_bytes!([255], b"status"));
 
 #[derive(Copy, Clone)]

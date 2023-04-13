@@ -9,10 +9,10 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use liblinkspace::misc::RecvPkt;
-use liblinkspace::linkspace::lk_get_all;
-use liblinkspace::{abe::lk_split_abe, lk_query };
-use liblinkspace::{lk_encode, lk_eval, lk_open, prelude::*};
+use linkspace::misc::RecvPkt;
+use linkspace::linkspace::lk_get_all;
+use linkspace::{abe::lk_split_abe, lk_query };
+use linkspace::{lk_encode, lk_eval, lk_open, prelude::*};
 
 use clap::Parser;
 
@@ -76,7 +76,7 @@ fn main() -> LkResult<()> {
     let mut query = lk_query(None);
     let mut ok = Ok(true);
     let mut i = 0;
-    // arguments ould have been typed DGPExpr. This shows one way to parse manually while only importing liblinkspace
+    // arguments ould have been typed DGPExpr. This shows one way to parse manually while only importing linkspace
     lk_split_abe(&dgpe, b"/", |expr: &str, _ctr: u8| {
         i += 1;
         ok = match i {
@@ -170,7 +170,7 @@ fn main() -> LkResult<()> {
         path.pop();
         Ok(())
     }
-    let p = liblinkspace::linkspace::lk_info(&lk).path;
+    let p = linkspace::linkspace::lk_info(&lk).path;
     println!("fixme");
     println!("{:?}",p);
     fmt_node(&mut vec![],&mut vec![], &root, &cli, &mut std::io::stdout())?;

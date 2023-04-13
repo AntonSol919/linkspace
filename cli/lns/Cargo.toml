@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 
 linkspace-common = { path = "../../crates/common" }
-liblinkspace = { path = "../../crates/liblinkspace"}
+linkspace = { path = "../../crates/linkspace"}
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }

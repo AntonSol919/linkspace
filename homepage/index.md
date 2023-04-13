@@ -420,7 +420,7 @@ Unzip, follow the./linkspace-pkg/README.md to connect to a server.
 The package contains:
 
 - the `lk` CLI
-- `liblinkspace.so` you can import with python.
+- `linkspace.so` you can import with python.
 - linkmail and imageboard domain applications.
 - anyhost exchange.
 

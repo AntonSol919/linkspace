@@ -6,8 +6,8 @@
 #![allow(dead_code, unused_variables)]
 use std::ops::ControlFlow;
 
-use liblinkspace::misc::{ cb};
-use liblinkspace::{ lk_process_while };
+use linkspace::misc::{ cb};
+use linkspace::{ lk_process_while };
 use linkspace_common::cli::{clap };
 use linkspace_common::runtime::handlers::PktStreamHandler;
 use linkspace_common::{
@@ -52,8 +52,8 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     let SetStatus { args, data, link } = ss;
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
-    use liblinkspace::prelude::*;
-    use liblinkspace::conventions::status::*;
+    use linkspace::prelude::*;
+    use linkspace::conventions::status::*;
     let status = LkStatus {
         domain,
         group,
@@ -106,7 +106,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
     let timeout = timeout;
-    use liblinkspace::conventions::status::*;
+    use linkspace::conventions::status::*;
     let status = LkStatus {
         domain,
         group,
@@ -125,7 +125,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     }
 
     let out = common.open(&write)?;
-    let lk : liblinkspace::Linkspace= common.runtime()?.into();
+    let lk : linkspace::Linkspace= common.runtime()?.into();
     let mut write= common.clone().multi_writer(out);
 
     let ok = Rc::new(std::cell::Cell::new(false));

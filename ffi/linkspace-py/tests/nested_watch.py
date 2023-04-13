@@ -1,4 +1,4 @@
-from liblinkspace import *
+from linkspace import *
 from datetime import datetime
 
 lk = lk_open("./private",create=True)

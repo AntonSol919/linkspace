@@ -7,12 +7,12 @@
 pub mod utils;
 
 use image::{GenericImage, GenericImageWatch, ImageOutputFormat, RgbaImage};
-pub use liblinkspace;
-use liblinkspace::query::lk_hash_query;
+pub use linkspace;
+use linkspace::query::lk_hash_query;
 pub use utils::ImgHandle;
 
-use liblinkspace::conventions::LkKeyFlags;
-use liblinkspace::{prelude::*, *};
+use linkspace::conventions::LkKeyFlags;
+use linkspace::{prelude::*, *};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::ControlFlow;

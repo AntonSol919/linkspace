@@ -1,5 +1,5 @@
 #!/bin/env python3
-from liblinkspace import *
+from linkspace import *
 import os
 import sys
 if len(sys.argv) < 2:

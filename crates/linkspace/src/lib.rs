@@ -16,7 +16,7 @@
 #![doc = include_str!("../README.md")]
 #![doc = r#"
 
-The functions re-exported below is essentially the entire liblinkspace interface.
+The functions re-exported below is essentially the entire linkspace interface.
 Bindings in other languages follow the same pattern.
 
 [prelude] includes some additional utilities.
@@ -75,7 +75,7 @@ pub mod point {
     create a datapoint with upto MAX_CONTENT_SIZE bytes and wrap it as a [NetPktBox]
 
     ```
-    # use liblinkspace::{*,prelude::*,abe::*};
+    # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
     let datap = lk_datapoint(b"Some data")?;
     assert_eq!(datap.hash().to_string(), "ay01_aEzVcp0scyCgKqfugoQSXGW4iefLgAZRxRp9sY");
@@ -94,7 +94,7 @@ pub mod point {
 
     create a new linkpoint [NetPktBox]
     ```
-    # use liblinkspace::{*,prelude::{*,endian_types::*},abe::*};
+    # use linkspace::{*,prelude::{*,endian_types::*},abe::*};
     # fn main() -> LkResult{
 
     let datap = lk_datapoint(b"this is a datapoint")?;
@@ -215,7 +215,7 @@ pub mod abe {
     See [lk_split_abe] for different delimiter behavior
 
     ```
-    # use liblinkspace::{*,prelude::*,abe::*};
+    # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
     assert_eq!( b"abc" as &[u8]    , lk_eval( "abc" ,())?, );
     assert_eq!( &[0u8,1,255] as &[u8], lk_eval( r#"\0\x01\xff"# ,())?,);
@@ -272,7 +272,7 @@ pub mod abe {
     Exec callback for each expr between control characters (':', '/', '\n', '\t').
     The last delimiter can be '\0'.
     ```
-    # use liblinkspace::abe::lk_split_abe;
+    # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
     lk_split_abe("this:is/the:example\nnewline",b"/",|expr,ctr| { v.push((expr,ctr)); true} );
     assert_eq!(v,&[("this",b':'), ("is/the",b':'), ("example",b'\n'),("newline",0)])
@@ -300,7 +300,7 @@ pub mod abe {
     accepts a list of func to try and encode.
     This function can also be used as the evaluator '[/?:..]'.
     ```
-    # use liblinkspace::{*,abe::*};
+    # use linkspace::{*,abe::*};
     # fn main() -> LkResult{
     let bytes= lk_eval("[u32:8]",())?;
     assert_eq!(bytes,&[0,0,0,8]);
@@ -468,7 +468,7 @@ pub mod query {
     The known options are found in [KnownOptions].
 
     ```
-    # use liblinkspace::{*,prelude::*,abe::*};
+    # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
 
     let mut query = lk_query(None);
@@ -609,10 +609,10 @@ pub mod key {
     }
 }
 
-pub use linkspace::{
+pub use runtime::{
     lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch, Linkspace,
 };
-pub mod linkspace {
+pub mod runtime {
     /**
     The linkspace runtime.
 

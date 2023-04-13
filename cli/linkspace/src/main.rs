@@ -22,7 +22,7 @@ use std::{
 };
 
 use anyhow::{ensure };
-use liblinkspace::query::PredicateType;
+use linkspace::query::PredicateType;
 use linkspace_common::{
     cli::{
         clap,
@@ -340,7 +340,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             /*
             let inp = common.reader()?;
             let mut out = stdout();
-            let mut buffer = liblinkspace::databuffer::Buffer::default();
+            let mut buffer = linkspace::databuffer::Buffer::default();
             for p in inp {
                 let released = buffer.push(p?);
                 for pkt in released {
@@ -482,7 +482,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             watch.watch_opts.aliases.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.into_query(&ctx)?;
-            let req = liblinkspace::conventions::lk_pull_req(&query.into())?;
+            let req = linkspace::conventions::lk_pull_req(&query.into())?;
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;
@@ -492,7 +492,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Init => {
             common.linkspace.init = true;
             let lk = common.runtime()?.into();
-            let x = liblinkspace::linkspace::lk_info(&lk);
+            let x = linkspace::runtime::lk_info(&lk);
             println!("{:?}",x);
         },
     }

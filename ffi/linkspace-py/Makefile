@@ -14,17 +14,17 @@ watch-dev: setup_env
 	. .env/bin/activate && ( watchexec -r -e rs -- maturin develop )
 
 doc: build
-	. .env/bin/activate && pdoc liblinkspace
+	. .env/bin/activate && pdoc linkspace
 
 # this is a temporary hack https://pyo3.rs/v0.18.2/python_typing_hints
 typestub: setup_env
-	. .env/bin/activate && (pip install mypy ; stubgen -p liblinkspace)
-	mv out/liblinkspace/liblinkspace.pyi ./
-	cp ./liblinkspace.pyi ../../target/debug/
+	. .env/bin/activate && (pip install mypy ; stubgen -p linkspace)
+	mv out/linkspace/linkspace.pyi ./
+	cp ./linkspace.pyi ../../target/debug/
 	rm -r out
 
 build: setup_env
 	. .env/bin/activate && (  maturin build )
 
 install: build
-	pip install --force-reinstall ../../target/wheels/liblinkspace-*.whl
+	pip install --force-reinstall ../../target/wheels/linkspace-*.whl

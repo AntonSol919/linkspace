@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use liblinkspace::{
+use linkspace::{
     anyhow,
     cli::{clap, clap::Parser, opts::CommonOpts, WriteDest},
     prelude::*,
@@ -49,7 +49,7 @@ fn checkout(common: CommonOpts, opts: Checkout) -> anyhow::Result<()> {
     if opts.r#async {
         todo!()
     } else {
-        liblinkspace::protocols::impex::blobmap::checkout::checkout_now(
+        linkspace::protocols::impex::blobmap::checkout::checkout_now(
             reader, tq, &opts.dest, 0, false,
         )?;
     }
@@ -60,13 +60,13 @@ pub(crate) fn encode(common: CommonOpts, opts: Encode) -> anyhow::Result<()> {
     let dgs = opts.dgs.eval(&common.eval_ctx())?;
     let for_each = move |pkt: NetPktParts| common.write_multi_dest(&opts.dest, &pkt, None);
     if opts.r#async {
-        liblinkspace::protocols::impex::blobmap::checkin::encode_forever(
+        linkspace::protocols::impex::blobmap::checkin::encode_forever(
             for_each,
             opts.source,
             dgs,
         )?;
     } else {
-        liblinkspace::protocols::impex::blobmap::checkin::encode_now(for_each, &opts.source, &dgs)?;
+        linkspace::protocols::impex::blobmap::checkin::encode_now(for_each, &opts.source, &dgs)?;
     }
     Ok(())
 }
