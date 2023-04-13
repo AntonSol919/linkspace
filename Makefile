@@ -1,4 +1,4 @@
-.PHONY: install-lk build build-lkpy docs homepage git-checkin publish
+.PHONY: install-lk build build-python docs homepage git-checkin publish
 
 install-lk:
 	cargo +nightly install --path ./cli/linkspace
@@ -8,7 +8,7 @@ install-lk:
 build:
 	cargo +nightly build -p liblinkspace
 
-install-lkpy:
+install-python:
 	make -C ./ffi/liblinkspace-py install
 
 docs:

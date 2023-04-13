@@ -974,6 +974,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "liblinkspace-py"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "liblinkspace",
+ "pyo3",
+ "ref-cast",
+ "smallvec",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "linkspace-argon2-identity"
 version = "0.1.0"
 dependencies = [
@@ -1098,19 +1111,6 @@ name = "linux-raw-sys"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
-
-[[package]]
-name = "lkpy"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "liblinkspace",
- "pyo3",
- "ref-cast",
- "smallvec",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "lmdb-rkv"

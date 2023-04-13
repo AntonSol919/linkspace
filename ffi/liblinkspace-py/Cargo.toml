@@ -1,10 +1,10 @@
 [package]
-name = "lkpy"
+name = "liblinkspace-py"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "lkpy"
+name = "liblinkspace"
 crate-type = ["cdylib"]
 
 [dependencies]

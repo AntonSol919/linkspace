@@ -15,7 +15,8 @@ use anyhow::Context;
 use ref_cast::RefCast;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::Duration};
 
-use liblinkspace::{prelude::*, abe::ctx::{UserData, self} };
+use ::liblinkspace as liblinkspace_rs;
+use ::liblinkspace::{prelude::*, abe::ctx::{UserData, self} };
 use pyo3::{
     prelude::*,
     types::{PyBytes,  PyTuple},
@@ -55,7 +56,7 @@ impl PktHandler for PyPktStreamHandler {
     fn handle_pkt(
         &mut self,
         pkt: &dyn NetPkt,
-        _lk: &liblinkspace::Linkspace,
+        _lk: &liblinkspace_rs::Linkspace,
     ) -> std::ops::ControlFlow<()> {
         let apkt = Pkt::from_dyn(pkt);
         match Python::with_gil(|py| call_cont_py(py, &self.on_match, (apkt,))) {
@@ -76,8 +77,8 @@ impl PktHandler for PyPktStreamHandler {
     }
     fn stopped(
         &mut self,
-        _query: liblinkspace::Query,
-        _lk: &liblinkspace::Linkspace,
+        _query: liblinkspace_rs::Query,
+        _lk: &liblinkspace_rs::Linkspace,
         _reason: misc::StopReason,
         _total: u32,
         _new: u32,
@@ -131,7 +132,7 @@ fn common_args(
 }
 
 #[pyclass]
-pub struct SigningKey(pub liblinkspace::SigningKey);
+pub struct SigningKey(pub liblinkspace_rs::SigningKey);
 #[pymethods]
 impl SigningKey{
     #[getter]
@@ -144,15 +145,15 @@ use tracing::debug_span;
 
 #[pyfunction]
 pub fn lk_keygen() -> SigningKey {
-    SigningKey(liblinkspace::key::lk_keygen())
+    SigningKey(liblinkspace_rs::key::lk_keygen())
 }
 #[pyfunction]
 pub fn lk_keystr(key: &SigningKey, password: &[u8]) -> String {
-    liblinkspace::key::lk_keystr(&key.0, password)
+    liblinkspace_rs::key::lk_keystr(&key.0, password)
 }
 #[pyfunction]
 pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<SigningKey> {
-    Ok(SigningKey(liblinkspace::key::lk_keyopen(id, password)?))
+    Ok(SigningKey(liblinkspace_rs::key::lk_keyopen(id, password)?))
 }
 
 const E:&[u8]=&[];
@@ -164,13 +165,13 @@ pub fn lk_key(
     name: &str,
     create: bool,
 ) -> anyhow::Result<SigningKey> {
-    liblinkspace::lk_key(&lk.0, password, name, create).map(SigningKey)
+    liblinkspace_rs::lk_key(&lk.0, password, name, create).map(SigningKey)
 }
 
 #[pyfunction]
 pub fn lk_datapoint(data: &PyAny) -> anyhow::Result<Pkt> {
     Ok(pynetpkt::Pkt::from_dyn(
-        &liblinkspace::point::lk_datapoint_ref(bytelike(data)?)?,
+        &liblinkspace_rs::point::lk_datapoint_ref(bytelike(data)?)?,
     ))
 }
 #[pyfunction]
@@ -184,7 +185,7 @@ pub fn lk_linkpoint(
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
-    let pkt = liblinkspace::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
+    let pkt = liblinkspace_rs::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
@@ -200,7 +201,7 @@ pub fn lk_keypoint(
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
     let pkt =
-        liblinkspace::point::lk_keypoint_ref(domain, group, &*path, &*links, data, create, &key.0)?;
+        liblinkspace_rs::point::lk_keypoint_ref(domain, group, &*path, &*links, data, create, &key.0)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 
@@ -212,12 +213,12 @@ fn pptr(p: Option<&Pkt>) -> Option<&dyn NetPkt> {
 pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt) -> anyhow::Result<&'a PyBytes> {
     // TODO remove this copy
     let mut v = vec![];
-    liblinkspace::point::lk_write(&pkt.0, &mut v)?;
+    liblinkspace_rs::point::lk_write(&pkt.0, &mut v)?;
     Ok(PyBytes::new(py, &v))
 }
 #[pyfunction]
 pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> anyhow::Result<(Pkt, &[u8])> {
-    let p = liblinkspace::point::lk_read(buf, validate, allow_private)?;
+    let p = liblinkspace_rs::point::lk_read(buf, validate, allow_private)?;
     let size = p.size();
     Ok((Pkt::from_dyn(&p), &buf[size..]))
 }
@@ -235,7 +236,7 @@ pub fn lk_eval<'a>(
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
-    let bytes = liblinkspace::varctx::lk_eval(uctx, expr )?;
+    let bytes = liblinkspace_rs::varctx::lk_eval(uctx, expr )?;
     Ok(PyBytes::new(py, &*bytes))
 }
 #[pyfunction]
@@ -246,7 +247,7 @@ pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>) -> anyho
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
-    let out= liblinkspace::varctx::lk_eval(uctx, expr )?;
+    let out= liblinkspace_rs::varctx::lk_eval(uctx, expr )?;
     match String::from_utf8(out){
         Ok(v) => Ok(v),
         Err(e) => {
@@ -257,35 +258,35 @@ pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>) -> anyho
 }
 #[pyfunction]
 pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> {
-    Ok(liblinkspace::abe::lk_encode(bytes, options.unwrap_or("")))
+    Ok(liblinkspace_rs::abe::lk_encode(bytes, options.unwrap_or("")))
 }
 #[pyclass(unsendable)]
 #[derive(Clone, RefCast)]
 #[repr(transparent)]
-pub struct Linkspace(pub(crate) liblinkspace::Linkspace);
+pub struct Linkspace(pub(crate) liblinkspace_rs::Linkspace);
 
 #[pyfunction]
 #[pyo3(signature =(path="",create=false))]
 pub fn lk_open(path: &str, create: bool) -> anyhow::Result<Linkspace> {
-    Ok(Linkspace(liblinkspace::lk_open(
+    Ok(Linkspace(liblinkspace_rs::lk_open(
         if path.is_empty(){None} else {Some(Path::new(path))},
         create,
     )?))
 }
 #[pyfunction]
 pub fn lk_save(runtime: &Linkspace, pkt: &Pkt) -> anyhow::Result<bool> {
-    Ok(liblinkspace::lk_save(&runtime.0, pkt.0.netpktptr())?)
+    Ok(liblinkspace_rs::lk_save(&runtime.0, pkt.0.netpktptr())?)
 }
 #[pyfunction]
 pub fn lk_save_all<'o>(runtime: &Linkspace, pkts: &'o PyAny) -> anyhow::Result<usize> {
     let pkts :Vec<Pkt>= pkts.iter()?.map(|o| o.and_then(|o:&PyAny| o.extract())).try_collect()?;
     let lst :Vec<_>= pkts.iter().map(|p| p.0.netpktptr() as &dyn NetPkt).collect();
-    Ok(liblinkspace::linkspace::lk_save_all(&runtime.0, &lst)?)
+    Ok(liblinkspace_rs::linkspace::lk_save_all(&runtime.0, &lst)?)
 }
 
 #[pyclass]
 #[derive(Clone)]
-pub struct Query(pub(crate) liblinkspace::Query);
+pub struct Query(pub(crate) liblinkspace_rs::Query);
 #[pymethods]
 impl Query{
     pub fn __str__(&self) -> String { lk_query_print(self, true) }
@@ -293,12 +294,12 @@ impl Query{
 
 #[pyfunction]
 pub fn lk_query(copy_from: Option<&Query>) -> Query {
-    Query(liblinkspace::lk_query(copy_from.map(|v| &v.0)))
+    Query(liblinkspace_rs::lk_query(copy_from.map(|v| &v.0)))
 }
 #[pyfunction]
 pub fn lk_hash_query(hash: &PyAny) -> anyhow::Result<Query> {
     let hash = LkHash::try_fit_bytes_or_b64(bytelike(hash)?)?;
-    Ok(Query(liblinkspace::query::lk_hash_query(hash)))
+    Ok(Query(liblinkspace_rs::query::lk_hash_query(hash)))
 }
 fn bytelike(p: &PyAny) -> PyResult<&[u8]> {
     p.extract::<&[u8]>()
@@ -320,22 +321,22 @@ pub fn lk_query_parse(
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uctx = ctx::ctx(udata)?;
     let lst :Vec<&str> = statements.iter().map(|p| p.extract::<&str>()).try_collect()?;
-    let query = liblinkspace::varctx::lk_query_parse(uctx,query.0, &*lst)?;
+    let query = liblinkspace_rs::varctx::lk_query_parse(uctx,query.0, &*lst)?;
     Ok(Query(query))
 }
 #[pyfunction]
 pub fn lk_query_push(query: Query, field: &str, op: &str, bytes: &PyAny) -> LkResult<Query> {
-    let q = liblinkspace::lk_query_push(query.0, field, op, bytelike(bytes)?)?;
+    let q = liblinkspace_rs::lk_query_push(query.0, field, op, bytelike(bytes)?)?;
     Ok(Query(q))
 }
 #[pyfunction]
 #[pyo3(signature =(query,as_expr=false))]
 pub fn lk_query_print(query: &Query, as_expr: bool) -> String {
-    liblinkspace::lk_query_print(&query.0, as_expr)
+    liblinkspace_rs::lk_query_print(&query.0, as_expr)
 }
 #[pyfunction]
 pub fn lk_query_clear(query: &mut Query) {
-    liblinkspace::query::lk_query_clear(&mut query.0)
+    liblinkspace_rs::query::lk_query_clear(&mut query.0)
 }
 
 fn call_cont_py(
@@ -353,7 +354,7 @@ fn call_cont_py(
 
 #[pyfunction]
 pub fn lk_get(lk: &Linkspace, query: &Query) -> anyhow::Result<Option<Pkt>> {
-    liblinkspace::linkspace::lk_get_ref(&lk.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
+    liblinkspace_rs::linkspace::lk_get_ref(&lk.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
 // Returning an iterator would force us to keep the readtxn open
@@ -364,7 +365,7 @@ pub fn lk_get_all(
     cb: PyFunc,
 ) -> anyhow::Result<u32> {
     let mut cb_err = Ok(());
-    let count = liblinkspace::linkspace::lk_get_all(&lk.0, &query.0, &mut |pkt| {
+    let count = liblinkspace_rs::linkspace::lk_get_all(&lk.0, &query.0, &mut |pkt| {
         let pkt = Pkt::from_dyn(pkt);
         let mut cont = false;
         cb_err = call_cont_py(py, &cb, (pkt,)).map(|c| cont = c);
@@ -385,12 +386,12 @@ pub fn lk_watch(
     let watch_handler = PyPktStreamHandler { on_match, on_close,on_err };
     let (file, line) = call_ctx(py);
     let span = debug_span!("lk_watch",%file,%line);
-    liblinkspace::linkspace::lk_watch2(&lk.0, &query.0, watch_handler, span)
+    liblinkspace_rs::linkspace::lk_watch2(&lk.0, &query.0, watch_handler, span)
 }
 #[pyfunction]
 pub fn lk_list_watches(py: Python, lk: &Linkspace, cb: PyFunc) -> PyResult<PyObject> {
     let mut r = Ok(py.None());
-    liblinkspace::linkspace::lk_list_watches(&lk.0, &mut |id, query| {
+    liblinkspace_rs::linkspace::lk_list_watches(&lk.0, &mut |id, query| {
         if r.is_err() {
             return;
         };
@@ -401,7 +402,7 @@ pub fn lk_list_watches(py: Python, lk: &Linkspace, cb: PyFunc) -> PyResult<PyObj
 
 #[pyfunction]
 pub fn lk_process(lk: &Linkspace) -> [u8; 8] {
-    liblinkspace::lk_process(&lk.0).0
+    liblinkspace_rs::lk_process(&lk.0).0
 }
 
 #[pyfunction]
@@ -426,7 +427,7 @@ pub fn lk_process_while(
     let mut empty_watches = false;
     let watch = watch.map(|id| (id,watch_finish.unwrap_or(false)));
     while !empty_watches && until > check_at {
-        empty_watches = liblinkspace::lk_process_while(&lk.0,watch, max_wait, check_at)?;
+        empty_watches = liblinkspace_rs::lk_process_while(&lk.0,watch, max_wait, check_at)?;
         tracing::trace!("Checking signals");
         Python::with_gil(|py| py.check_signals())?;
         check_at = check_at.saturating_add(CHECK_SIGNALS_INTERVAL);
@@ -443,7 +444,7 @@ pub fn lk_status_set(
     objtype: &[u8],
     instance: Option<&[u8]>,
 ) -> anyhow::Result<()> {
-    use liblinkspace::conventions::status::*;
+    use liblinkspace_rs::conventions::status::*;
     let group = GroupID::try_fit_bytes_or_b64(group)?;
     let domain = Domain::try_fit_byte_slice(domain)?;
     let status_ctx = LkStatus {
@@ -459,7 +460,7 @@ pub fn lk_status_set(
             let val = callback.call0(py)?;
             let bytes = bytelike(val.as_ref(py))?;
 
-            let pkt = liblinkspace::lk_linkpoint(domain, group, path, &[link], bytes, None);
+            let pkt = liblinkspace_rs::lk_linkpoint(domain, group, path, &[link], bytes, None);
             tracing::info!("Status result {:?}",pkt);
             pkt
         })
@@ -476,7 +477,7 @@ pub fn lk_status_poll(
     instance: Option<&[u8]>,
     watch_id: Option<&[u8]>
 ) -> anyhow::Result<()> {
-    use liblinkspace::conventions::status::*;
+    use liblinkspace_rs::conventions::status::*;
     let timeout = Stamp::try_from(timeout)?;
     let group = GroupID::try_fit_bytes_or_b64(group)?;
     let domain = Domain::try_fit_byte_slice(domain)?;
@@ -496,7 +497,7 @@ pub fn lk_status_poll(
 
 #[pyfunction]
 pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Result<&'o PyBytes> {
-    let hash = liblinkspace::conventions::lk_pull(&lk.0, &query.0)?;
+    let hash = liblinkspace_rs::conventions::lk_pull(&lk.0, &query.0)?;
     Ok(PyBytes::new(py, &hash.0))
 }
 
@@ -508,9 +509,9 @@ pub struct LkInfo {
 }
 #[pyfunction]
 pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
-    let liblinkspace::linkspace::LkInfo{
+    let liblinkspace_rs::linkspace::LkInfo{
         path
-    }= liblinkspace::linkspace::lk_info(&lk.0);
+    }= liblinkspace_rs::linkspace::lk_info(&lk.0);
     Ok(LkInfo{path:path.into()})
 }
 
@@ -520,7 +521,7 @@ pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
 /** linkspace python bindings. follows the liblinkspace api (https://antonsol919.github.io/linkspace/docs/cargo-doc/liblinkspace/index.html)
 **/
 #[pymodule]
-fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
+fn liblinkspace(py: Python, m: &PyModule) -> PyResult<()> {
     let filter = tracing_subscriber::EnvFilter::from_default_env();
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -588,7 +589,7 @@ fn lkpy(py: Python, m: &PyModule) -> PyResult<()> {
 #[pyfunction]
 #[pyo3(signature=(bytes,mini=false))]
 pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
-    let b = liblinkspace::prelude::B64(bytes);
+    let b = liblinkspace_rs::prelude::B64(bytes);
     if mini{b.b64_mini()} else{b.to_string()}
 }
 #[pyfunction]
@@ -597,7 +598,7 @@ pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyByt
         .iter()?
         .map(|i| i.and_then(PyAny::extract::<&[u8]>))
         .try_collect::<Vec<_>>()?;
-    let sp = liblinkspace::prelude::spath_buf(&path);
+    let sp = liblinkspace_rs::prelude::spath_buf(&path);
     Ok(PyBytes::new(py, &sp.spath_bytes()))
 }
 

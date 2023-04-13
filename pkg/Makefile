@@ -8,7 +8,7 @@ RTARGET:=release
 
 all: x64 aarch64
 x64: pkg-x86_64-unknown-linux-gnu
-i686: pkg-x86_64-unknown-linux-musl # doesn't support lkpy
+i686: pkg-x86_64-unknown-linux-musl # doesn't support python
 aarch64: pkg-aarch64-unknown-linux-gnu
 
 pkg-%: clean common cli-% py-%
@@ -29,6 +29,7 @@ cli-%:
 	cp $(LKB)/$*/$(RTARGET)/linkspace-lns $(PKG_DIR)/bin/
 
 py-%:
-	cd $(R)/.. && cross build --$(RTARGET) --target $* -p lkpy
-	cp $(LKB)/$*/$(RTARGET)/liblkpy.so $(PKG_DIR)/lkpy.so
-	cp $(R)/../ffi/liblinkspace-py/lkpy.pyi $(PKG_DIR)/
+	mkdir -p $(PKG_DIR)/python/
+	cd $(R)/.. && cross build --$(RTARGET) --target $* -p liblinkspace-py
+	cp $(LKB)/$*/$(RTARGET)/liblinkspace.so $(PKG_DIR)/python/liblinkspace.so
+	cp $(R)/../ffi/liblinkspace-py/liblinkspace.pyi $(PKG_DIR)/python/liblinkspace.pyi

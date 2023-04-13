@@ -1,7 +1,7 @@
 #!/bin/env python3
 import os,sys,logging,tempfile,subprocess,shlex,functools,cmd,argparse,getpass
 from typing import Tuple,List
-from lkpy import *
+from liblinkspace import *
 from pathlib import Path
 
 #logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)

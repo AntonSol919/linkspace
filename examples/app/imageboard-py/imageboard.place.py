@@ -1,5 +1,5 @@
 #!/bin/env python3
-from lkpy import *
+from liblinkspace import *
 import sys
 if len(sys.argv) < 5:
     sys.exit('Usage: imagefile boardname x y')
