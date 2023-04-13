@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["PRIVATE","PUBLIC"],"mod":["abe","consts","conventions","key","linkspace","misc","point","prelude","query","varctx"],"struct":["SigningKey"],"trait":["PktHandler"],"type":["LkError","LkResult"]};

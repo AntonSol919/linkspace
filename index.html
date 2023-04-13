@@ -85,9 +85,9 @@ administrator by virtue of hosting the data.</p>
 <p>Check out the <a href="#basics">Basics</a> for an introduction. <a
 href="#download">Download</a> to give it a try and say hi on the test
 group. Check out the <a href="./docs/guide/index.html">Guide</a> if
-you're up for practical stuff.</p>
-<p>The packet and database layout are stable, but that's about it.
-Expect stuff to be incomplete and undocumented.</p>
+you're interested in the technical breakdown.</p>
+<p>The packet and database layout are stable, but some things are
+incomplete or undocumented.</p>
 <p>Any feedback, questions, and ideas for improvements are welcome!</p>
 <p>Of course the preferred way is to try and contact me by downloading
 the zip and sending a message to the test group. For the less
@@ -149,14 +149,14 @@ of multiple sorted lists under table names. Essentially their rows are
 "/table<em>name/primary</em>key = value", and a SQL query can address
 multiple entries.</p>
 <p>The point is not to compare linkspace to HTTP or to replace SQL. I
-bring them up as an argument for the unreasonable effectiveness of
-organizing data in a (sorted) tree.</p>
+bring them up as an argument for the effectiveness of organizing data in
+a (sorted) tree.</p>
 <p>Exchanging data can be thought of as combining <strong>your
 tree</strong> with <strong>another tree</strong>. We've dubbed words to
 describe specific cases such as: '<strong>creating posts</strong>',
 '<strong>uploading image</strong>', '<strong>upvote/like a
 post</strong>', '<strong>stream a video </strong>', etc. Fundamentally
-they can be viewed as merging trees, and having an application provide a
+they can be viewed as merging trees, with an application providing a
 pleasant interface.</p>
 <p>The majority of the internet that people interact with today follows
 a single host design. A design where you make a request to get the only
@@ -254,7 +254,7 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 </span>
 
 </div>
-<p>Entries in linkspace have two fields that preceed the path. A
+<p>Entries in linkspace have two fields that precede the path. A
 <strong>domain</strong> field and <strong>group</strong> field.
 Essentially each (domain, group) has its own tree. An application picks
 a domain name to use. When running it specifies what data is required
@@ -292,9 +292,10 @@ referencing other packets by hash is not done inside the data but <a
 href="./docs/guide/index.html#lk_linkpoint">adjacent</a> together with a
 'tag'.</p>
 <p>If you're on a unix give it a <a href="#Download">try</a>. (It runs
-on Windows but I've not yet build method of exchanging data between
-peers for it) For details on the exact layout of the tree and other
-practical stuff see the <a href="./docs/guide/index.html">Guide</a>.</p>
+on Windows, but an exchange like <a
+href="./docs/guide/index.html#anyhost">anyhost</a> needs to be ported to
+rust) For details on the exact layout of the tree and other practical
+stuff see the <a href="./docs/guide/index.html">Guide</a>.</p>
 <h3>Q&amp;A</h3>
 <p>A few notes to prevent some confusion.</p>
 <p><strong>Q</strong>: Is this a blockchain?<br />
@@ -307,7 +308,7 @@ spam?<br />
 <strong>A</strong>: You could trust a specific signature to whitelist or
 blacklist and filter based on that. Effectively emulating the current
 state of affairs. Furthermore, linkspace gives us extra tools: Proof of
-work on hashes, and proof of association public keys vouching for
+work on hashes, and proof of association with public keys vouching for
 another (i.e. friends of friends).</p>
 <h1 id="why">Why?</h1>
 <p>This protocol came to be for two reasons.</p>
@@ -337,9 +338,9 @@ is how most of the internet currently works.</li>
 </ol>
 <p>In Option 1, our current web, the host has unilateral control as it
 relays data between users. Furthermore, many popular hosts are the
-result of an environment where winner keeps all. They're build for
+result of an environment where winner keeps all. They're built for
 optimal exploitation of their users. Everything is permitted to keep it
-that way. <strong>lock-in</strong> the users, and
+that way. <strong>Lock-in</strong> the users, and
 <strong>lock-out</strong> any threat to the platform's place in your
 life.</p>
 <p>We should break these locks.</p>
@@ -349,13 +350,14 @@ of our digital space going forward. I don't see how. They encode
 scarcity, and using them is relatively expensive. Very few systems
 require that. Trusting an administrator is cheaper and works really
 well.</p>
-<p>Scarcity makes them attractive for the people already invested, but
-these properties are antithetical to the process of development.
-Successful systems are build from small incremental improvements. That
-doesn't seem to happen when the building blocks are a costly chain of
-consent.</p>
-<p>Option 3, a supernet, is the option that makes more sense to me. It
-splits up the hosts and doesn't encode scarcity as a core principle.</p>
+<p>Scarcity makes blockchains attractive for the people already
+invested, but these properties are antithetical to the process of
+development. Successful systems are build from small incremental
+improvements. That dynamic doesn't seem to take place when the building
+blocks are a costly chain of consent.</p>
+<p>Option 3, a supernet like linkspace, is the option that makes more
+sense to me. It splits up the hosts and doesn't encode scarcity as a
+core principle.</p>
 <p>In linkspace the role of host is split up between:</p>
 <ul>
 <li>providing groups with servers to relay data</li>
@@ -363,12 +365,12 @@ splits up the hosts and doesn't encode scarcity as a core principle.</p>
 </ul>
 <p>It prevents both from having too much leverage and chasing the wrong
 incentives. Should someone in the system abuses their position the user
-can change it up without losing access to their history and relations to
-others. If for nothing else, a supernet is worth it to get us more
-useful competition.</p>
+can change things up without losing access to their history and
+relations to others. If for nothing else, a supernet is worth it to get
+us more useful competition.</p>
 <p>Whether this all works out as intended, I have no idea.</p>
 <p>My hope is we can look back at the current era of the internet and
-recognize it for what it is. Digital fiefdoms. The step forward is to
+recognize it for what it is. digital fiefdoms. The step forward is to
 take full control over who lords over us.</p>
 <p>Help speed things along. Support the project by registering a LNS
 name.</p>
@@ -432,7 +434,7 @@ If you represent a university you can get your name for free.</p>
 <p>Linkspace is easy to integrate with blockchains (or can be used to
 create new blockchains). You are free to build on it as you wish
 (MPL-2.0 license). However, in an effort to put food on the table and
-pay taxes I prefer fiat money and a tiny transaction save a lot of
+pay taxes I prefer fiat money and a 1 cent transaction save a lot of
 trouble w.r.t. identification if you lose the private key. Other top
 level authorities set their own price and how to pay it.</p>
 <h2 id="claim">Claim a name</h2>
@@ -461,7 +463,7 @@ href="./download/linkspace-aarch64-unknown-linux-gnu.zip">linkspace-aarch64.zip<
 <p>The package contains:</p>
 <ul>
 <li>the <code>lk</code> CLI</li>
-<li><code>lkpy.so</code> you can import with python.</li>
+<li><code>linkspace.so</code> you can import with python.</li>
 <li>linkmail and imageboard domain applications.</li>
 <li>anyhost exchange.</li>
 </ul>

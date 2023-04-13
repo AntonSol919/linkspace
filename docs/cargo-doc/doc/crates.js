@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["liblinkspace"];
+window.ALL_CRATES = ["linkspace"];

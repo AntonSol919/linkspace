@@ -1,4 +1,4 @@
 var sourcesIndex = JSON.parse('{\
-"liblinkspace":["",[["conventions",[],["mod.rs","status.rs"]]],["interop.rs","lib.rs"]]\
+"linkspace":["",[["conventions",[],["mod.rs","status.rs"]]],["interop.rs","lib.rs"]]\
 }');
 createSourceSidebar();
