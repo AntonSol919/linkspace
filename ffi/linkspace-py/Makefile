@@ -28,3 +28,6 @@ build: setup_env
 
 install: build
 	pip install --force-reinstall ../../target/wheels/linkspace-*.whl
+
+publish: setup_env
+	podman run --rm --env PYPI -v   ../../:/linkspace "messense/manylinux2014-cross:x86_64" sh -c 'cd linkspace/ffi/linkspace-py ;  bash ./publish.sh'
