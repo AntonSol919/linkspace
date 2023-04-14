@@ -36,19 +36,19 @@ pub struct LinkspaceOpts {
         short,
         long,
         env = "LK_DIR",
-        help = "linkspace root - defaults to $HOME/linkspace"
+        help = "linkspace dir - defaults to $HOME/linkspace"
     )]
-    pub root: Option<PathBuf>,
+    pub dir: Option<PathBuf>,
     #[clap(
         long,
         env = "LK_INIT",
-        help = "create root if it does not exists"
+        help = "create dir if it does not exists"
     )]
     pub init: bool,
 }
 impl LinkspaceOpts {
     pub fn root(&self) -> io::Result<PathBuf> {
-        crate::static_env::find_linkspace(self.root.as_deref())
+        crate::static_env::find_linkspace(self.dir.as_deref())
     }
     pub fn eval(&self, v: &str) -> anyhow::Result<ABList> {
         Ok(eval(&self.eval_ctx(), &parse_abe(v)?)?)
@@ -66,7 +66,7 @@ impl LinkspaceOpts {
         Ok(self.root()?.join("keys"))
     }
     pub fn runtime_io(&self) -> io::Result<Linkspace> {
-        crate::static_env::open_linkspace_root(self.root.as_deref(), self.init)
+        crate::static_env::open_linkspace_root(self.dir.as_deref(), self.init)
     }
     pub fn runtime(&self) -> anyhow::Result<Linkspace> {
         self.runtime_io().context("error opening runtime")
