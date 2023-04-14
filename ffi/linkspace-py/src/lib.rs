@@ -11,7 +11,7 @@
     duration_constants
 )]
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use ref_cast::RefCast;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::Duration};
 
@@ -52,6 +52,7 @@ struct PyPktStreamHandler {
     on_close: Option<PyFunc>,
     on_err: Option<PyFunc>
 }
+
 impl PktHandler for PyPktStreamHandler {
     fn handle_pkt(
         &mut self,
@@ -59,21 +60,30 @@ impl PktHandler for PyPktStreamHandler {
         _lk: &linkspace_rs::Linkspace,
     ) -> std::ops::ControlFlow<()> {
         let apkt = Pkt::from_dyn(pkt);
-        match Python::with_gil(|py| call_cont_py(py, &self.on_match, (apkt,))) {
-            Ok(true) => ControlFlow::Continue(()),
-            Ok(false) => ControlFlow::Break(()),
-            Err(e) => {
-                if let Some(f) = &self.on_err{
-                    let apkt = Pkt::from_dyn(pkt);
-                    match Python::with_gil(|py| call_cont_py(py, f, (e,apkt,&self.on_match))){
-                        Ok(true) => return ControlFlow::Continue(()),
-                        Ok(false) => {},
-                        Err(e) => tracing::warn!(?e,"Yo dog i heard i liked errors"),
+        Python::with_gil(|py| {
+            match call_cont_py(py, &self.on_match, (apkt,)) {
+                Ok(true) => ControlFlow::Continue(()),
+                Ok(false) => ControlFlow::Break(()),
+                Err(e) => {
+                    if let Some(f) = &self.on_err{
+                        let apkt = Pkt::from_dyn(pkt);
+                        match call_cont_py(py, f, (&e,apkt,&self.on_match)){
+                            Ok(true) => return ControlFlow::Continue(()),
+                            Ok(false) => {},
+                            Err(on_err_err) => {
+                                tracing::warn!(%e,tb=e.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?")),
+                                               %on_err_err,tbee=on_err_err.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?")),
+                                               "Yo dog i heard you liked errors")
+                            },
+                        }
+                    }else {
+                        let tb = e.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?"));
+                        tracing::warn!(%e,tb,"default error handler (add on_err function to capture this event) ")
                     }
-                }else { tracing::warn!("default error handler " )}
-                return ControlFlow::Break(());
+                    return ControlFlow::Break(());
+                }
             }
-        }
+        })
     }
     fn stopped(
         &mut self,
@@ -521,7 +531,9 @@ pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
 **/
 #[pymodule]
 fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
-    let filter = tracing_subscriber::EnvFilter::from_default_env();
+    let filter = tracing_subscriber::EnvFilter::builder()
+        .with_default_directive(tracing::metadata::LevelFilter::WARN.into())
+        .from_env().map_err(|e| anyhow!("RUST_LOG error {:?}",e))?;
     tracing_subscriber::fmt()
         .with_env_filter(filter)
         .pretty()

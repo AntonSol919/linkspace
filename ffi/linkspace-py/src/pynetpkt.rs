@@ -4,11 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::str::FromStr;
+use std::{str::FromStr, hash::{Hash, Hasher}};
 
 use ::linkspace::misc::FieldEnum;
 use ::linkspace::prelude::*;
 use pyo3::{basic::CompareOp, prelude::*, types::PyBytes};
+use std::collections::hash_map::DefaultHasher;
 
 use misc::{RecvPkt, ReroutePkt};
 
@@ -220,7 +221,7 @@ impl Pkt {
     }
 }
 
-#[pyclass(sequence)]
+#[pyclass]
 pub struct Links {
     pkt: NetPktArc,
     idx: usize,
@@ -232,7 +233,8 @@ impl Links {
         slf
     }
     fn __len__(&self) -> usize{ self.pkt.get_links().len()}
-    fn __getitem__(&self,idx:usize) -> Option<Link>{
+    fn __getitem__(&self,idx:isize) -> Option<Link>{
+        let idx = if idx < 0 { self.__len__().wrapping_add_signed(idx)} else {idx as usize};
         self.pkt.get_links().get(idx).copied().map(Into::into)
     }
 
@@ -241,11 +243,16 @@ impl Links {
         self.idx += 1;
         this.map(Into::into)
     }
+    fn __hash__(&self) -> u64{
+        let mut hasher = DefaultHasher::new();
+        self.pkt.get_links().hash(&mut hasher);
+        hasher.finish()
+    }
 }
 
 /// Link for a linkpoint
 #[pyclass]
-#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd)]
+#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[repr(C)]
 pub struct Link {
     pub tag: [u8; 16],
@@ -274,6 +281,11 @@ impl Link {
         let tag = PyBytes::new(py, &self.tag).repr().unwrap();
         let ptr = PyBytes::new(py, &self.ptr).repr().unwrap();
         format!("Link({tag},{ptr})")
+    }
+    pub fn __hash__(&self) -> u64{
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
     }
     fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
         op.matches(self.cmp(&other))

@@ -202,7 +202,11 @@ impl Linkspace {
         let mut latest_processed_id = Stamp::ZERO;
         let last_new_pkt = Instant::now();
         let current_state = match watch_id{
-            Some((id,is_done)) => Some((id,is_done,self.watch_state(id).context("watch id not found")?)),
+            Some((id,is_done)) => Some(
+                (id,is_done,self.watch_state(id)
+                 .with_context(|| anyhow::anyhow!("watch id '{}' not found",AB(id)))?
+                )
+            ),
             None => None
         };
         // check the 3 break conditions, and update 'next_check' as required for next check
