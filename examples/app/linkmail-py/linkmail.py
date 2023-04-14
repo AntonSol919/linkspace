@@ -6,33 +6,36 @@ from pathlib import Path
 
 #logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 parser = argparse.ArgumentParser(description='Linkmail')
-parser.add_argument('--linkspace', dest='linkspace', type=str,
-                    default="",help='use linkspace (default: $HOME/linkspace)')
-parser.add_argument('--group', dest='group', type=str,
-                    default=os.environ.get('GROUP',''),help='group (default: $GROUP)')
-parser.add_argument('--key', dest='key', type=str,
-                    default=os.environ.get('LK_KEY'),help='use key (default: [me:local])')
-args = parser.parse_args()
 
-lk = lk_open(path=args.linkspace,create=True)
+parser.add_argument('--root', dest='root', type=str,
+                    default="",help='location of the linkspace (default: $LK_DIR | $HOME/linkspace)')
+parser.add_argument('--group', dest='group', type=str,
+                    default=os.environ.get('LK_GROUP','[#:pub]'),help='group (default: $LK_GROUP | [#:pub])')
+parser.add_argument('--key', dest='key', type=str,
+                    default=os.environ.get('LK_KEY',"me:local"),help='use key (default: $LK_KEY | me:local)')
+parser.add_argument('--password', dest='password',
+                    default=os.environ.get('LK_PASS',None),help='use key (defaults: $LK_PASS )')
+
+args = parser.parse_args()
+lk = lk_open(path=args.root,create=True)
 print(lk_info(lk).path)
 
-keyname ="me:local"
-password=""
+keyname =args.key
+password=args.password
 group_name = args.group
 group=lk_eval(group_name)
-common_q = lk_query_parse(lk_query(),"domain:=:linkmail","group:=:"+group_name)
 try:
     print("Using key:",lk_eval2str(f"[@:{keyname}/?b]"))
 except:
     print(keyname , " not found - we'll try creating it")
-passw = getpass.getpass(prompt='Password> ', stream=None)
+passw = password if not password == None else getpass.getpass(prompt='Password> ', stream=None)
 print("Unlocking key");
 key = lk_key(lk,password=lk_eval(passw),name=keyname,create=True)
-lk_process(lk) # required for lk_encode
+lk_process(lk) # required for lk_encode to pick up name if lk_key just generated
 keyname = lk_encode(key.pubkey,"@/b") # ensure we use the preferred name for this key
 print(f"Key ok: ",keyname);
 
+common_q = lk_query_parse(lk_query(),"domain:=:linkmail","group:=:"+group_name)
 lk_keypoint = functools.partial(lk_keypoint,key=key,domain=b"linkmail",group=group)
 lk_linkpoint = functools.partial(lk_linkpoint,domain=b"linkmail",group=group)
 

@@ -42,7 +42,7 @@ pub fn find_linkspace(root: Option<&Path>) -> io::Result<PathBuf> {
         None => {
             let path = root
                 .map(|v| v.to_path_buf())
-                .or_else(|| std::env::var_os("LINKSPACE").map(PathBuf::from))
+                .or_else(|| std::env::var_os("LK_DIR").map(PathBuf::from))
                 .or_else(|| {
                     std::env::var_os("HOME")
                         .map(PathBuf::from)

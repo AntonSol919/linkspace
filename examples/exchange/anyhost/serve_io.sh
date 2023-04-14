@@ -11,9 +11,9 @@ trap "fin" EXIT
 cd $SESSION
 echo SESSION=$SESSION 
 echo THEIR_KEY=$THEIR_KEY
-echo GROUP=$GROUP
+echo LK_GROUP=$LK_GROUP
 echo PID=$PID
-GROUP="[b:$GROUP]"
+LK_GROUP="[b:$LK_GROUP]"
 THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
@@ -22,9 +22,9 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-export LINKSPACE_NO_CHECK=true
+export LK_NO_CHECK=true
 # save reads from std. i.e. what the client is sending
-LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
+LK_NO_CHECK=false lk save --new db --new stdout \
         --old file:>( lk printf "$PID Ignored [hash:str] (old)" >&2 ) \
    | lk printf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
@@ -33,7 +33,7 @@ LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
         --write db  > /dev/null &
 
 # Read new request keypoints and return their content
-lk watch --new "[f:exchange]:$GROUP:/pull/$GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
+lk watch --new "[f:exchange]:$LK_GROUP:/pull/$LK_GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
     | lk printf --inspect ">>>>Pull req [hash:str]\n[data]\n<<<<$PID " \
     | lk multi-watch \
     | lk dedup \

@@ -25,7 +25,7 @@ path_encode is used to print the path name component, by default this will use l
 Use --path-encode "b:32" to only encode 32 byte long components as base64
 **/
 struct Cli {
-    #[clap(short, long, env = "LINKSPACE")]
+    #[clap(short, long, env = "LK_DIR")]
     linkspace: Option<PathBuf>,
     dgpe: String,
     #[clap(

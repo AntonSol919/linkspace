@@ -17,3 +17,8 @@ In the second run
 source ./common
 linkmail.py
 ```
+
+## Testing locally
+
+- ./try-local/host.session.tmux.sh creates a new instance and start an exchange.
+- ./try-local/session.tmux.sh [NAME] creates a new instance and connect to the host.

@@ -68,7 +68,7 @@ fn open_env(path: &Path, mut mapsize: usize, flags: EnvironmentFlags) -> Environ
         };
         let os_err = std::io::Error::last_os_error();
         if os_err.kind() == ErrorKind::OutOfMemory {
-            panic!("{os_err:?}\nLINKSPACE_LMDB_MAPSIZE={mapsize}");
+            panic!("{os_err:?}\nLK_LMDB_MAPSIZE={mapsize}");
         }
         tracing::warn!(?i, ?err, ?os_err, "DB Open");
         if i == 5 {
@@ -124,8 +124,8 @@ pub fn open(path: &Path, make_dir: bool) -> std::io::Result<RawBTreeEnv> {
         file.write_all(&id)?;
         file.flush()?;
     }
-    let mapsize = std::env::var("LINKSPACE_LMDB_MAPSIZE")
-        .map(|v| v.parse().expect("LINKSPACE_LMDB_MAPSIZE to be u32"))
+    let mapsize = std::env::var("LK_LMDB_MAPSIZE")
+        .map(|v| v.parse().expect("LK_LMDB_MAPSIZE to be u32"))
         .unwrap_or(DEFAULT_MAP_SIZE);
     let env = Arc::new(open_env(
         path,

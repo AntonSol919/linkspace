@@ -1,4 +1,5 @@
-export GROUP=[#:test]
+export LK_GROUP=[#:test]
 export PYTHONPATH=$PWD/python
 export PATH=$(find $PWD -maxdepth 2 -mindepth 1 -type d | sed -z 's/\n/:/g'):$PATH
-export PS1="lk - $PS1"
+export PS1="lk - ${PS1:-\$}"
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)

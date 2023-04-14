@@ -3,18 +3,18 @@ set -euo pipefail
 
 export PORT=${PORT:-"5020"}
 echo My Key $(lk key)
-export GROUP=$(lk eval "[:$GROUP/?b]")
-echo Serving $GROUP $PORT 
-export LINKSPACE_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
+export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
+echo Serving $LK_GROUP $PORT 
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 
 function fin (){
     kill -9 -- -$$
     kill -9 -- $(jobs -p) 2>/dev/null || true
-    echo Disconnected - $GROUP $PORT
+    echo Disconnected - $LK_GROUP $PORT
 }
 trap "fin" EXIT
 
-lk set-status exchange $GROUP process anyhost-client --data "abe:OK\nPID:$$\nwe're hosting" &
+lk set-status exchange $LK_GROUP process anyhost-client --data "abe:OK\nPID:$$\nwe're hosting" &
 
 socat tcp-listen:$PORT,fork exec:"handshake.sh serve serve_io.sh",fdout=4 &
 

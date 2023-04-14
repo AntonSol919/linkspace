@@ -13,7 +13,7 @@ use super::{opts::CommonOpts };
 #[derive(Parser, Clone, Debug)]
 pub struct KeyOpts {
     /// (abe) password argon2 encrypted signing key
-    #[clap(long, alias = "pass", env = "LINKSPACE_PASS")]
+    #[clap(long, alias = "pass", env = "LK_PASS")]
     password: Option<String>,
     /// print password - is always in abtxt format
     #[clap(long)]
@@ -22,7 +22,7 @@ pub struct KeyOpts {
     #[clap(short, long)]
     utf8_password: bool,
     /// local key name - e.g. my:home:local
-    #[clap(short, long, env = "LINKSPACE_KEY",default_value="me:local")]
+    #[clap(short, long, env = "LK_KEY",default_value="me:local")]
     key: NameExpr,
     /// use specific enckey instead of looking for key. can be $argon str or (claim) hash
     #[clap(short, long)]
@@ -242,7 +242,6 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
                 lns::setup_special_keyclaim(&rt, name, &enckey,false)?
             };
             print(enckey,pubkey)
-            
         }
     }
     Ok(())

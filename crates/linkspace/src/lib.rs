@@ -596,7 +596,7 @@ pub mod key {
     /** linkspace stored identity
 
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
-    empty name defaults to ( i.e. \[@:local\] )
+    empty name defaults to ( i.e. \[@:me:local\] )
     **/
     pub fn lk_key(
         linkspace: &Linkspace,
@@ -605,7 +605,7 @@ pub mod key {
         create: bool,
     ) -> LkResult<SigningKey> {
         super::varctx::lk_key(super::abe::ctx::ctx(().into())?,linkspace,password,name,create)
-        
+
     }
 }
 
@@ -633,7 +633,7 @@ pub mod runtime {
     use super::*;
     /// open a linkspace runtime.
     ///
-    /// will look at `path` or $LINKSPACE or '$HOME'
+    /// will look at `path` or $LK_DIR or '$HOME'
     /// and open 'PATH/linkspace' unless the basename of PATH is linkspacel 'linkspace'
     ///
     /// A runtime is used in many arguments.

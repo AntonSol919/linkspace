@@ -313,7 +313,7 @@ With the added benefit that you can address your own public key as ~[@:me:local]
 #+begin_ctabs
 #+begin_sh
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  export LINKSPACE=/tmp/linkspace
+  export LK_DIR=/tmp/linkspace
   lk --init key --decrypt-cost 0 --password "my secret" # remove the --decrypt-cost. it speeds up building this doc
 #+END_SRC
 

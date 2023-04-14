@@ -28,7 +28,7 @@ linkp = lk_linkpoint(domain=b"imageboard",
                      links=links)
 # print(lk_eval2str("Placing new image [pkt]",linkp))
 
-# instance looks for 'path' arg | $LINKSPACE env | $HOME/linkspace
+# instance looks for 'path' arg | $LK_DIR env | $HOME/linkspace
 lk = lk_open(create=True) 
 
 # write the point to the linkspace instance

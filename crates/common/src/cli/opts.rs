@@ -35,13 +35,13 @@ pub struct LinkspaceOpts {
     #[clap(
         short,
         long,
-        env = "LINKSPACE",
+        env = "LK_DIR",
         help = "linkspace root - defaults to $HOME/linkspace"
     )]
     pub root: Option<PathBuf>,
     #[clap(
         long,
-        env = "LINKSPACE_INIT",
+        env = "LK_INIT",
         help = "create root if it does not exists"
     )]
     pub init: bool,
@@ -86,7 +86,7 @@ pub struct IOOpts {
         global = true,
         alias = "private_group",
         long,
-        env = "PRIVATE_GROUP",
+        env = "LK_PRIVATE",
         help = "enable io of linkpoints in [#:0]"
     )]
     private: bool,
@@ -100,28 +100,28 @@ pub struct IOOpts {
 pub struct OutOpts {
     #[clap(
         long,
-        env = "WRITE_PRIVATE",
+        env = "LK_PRIVATE_WRITE",
         help = "enable output of linkpoints in [#:0]"
     )]
-    write_private: Option<bool>,
+    private_write: Option<bool>,
 }
 #[derive(Parser, Debug, Clone, Copy)]
 pub struct InOpts {
     #[clap(
         long,
-        env = "READ_PRIVATE",
+        env = "LK_PRIVATE_READ",
         help = "enable input of linkpoints in [#:0]"
     )]
-    pub(crate) read_private: Option<bool>,
+    pub(crate) private_read: Option<bool>,
     #[clap(
         long,
-        env = "LINKSPACE_HOP",
+        env = "LK_HOP",
         help = "toggle hop netheader incr. true for commands unless stated otherwise"
     )]
     pub(crate) hop: Option<bool>,
     #[clap(
         long,
-        env = "LINKSPACE_NO_CHECK",
+        env = "LK_NO_CHECK",
         help = "skip validating hashes and signatures"
     )]
     pub no_check: bool,
@@ -129,7 +129,7 @@ pub struct InOpts {
 impl InOpts {
     pub fn pkt_reader<P: std::io::Read>(self, reader: P) -> NetPktDecoder<P> {
         NetPktDecoder {
-            allow_private: self.read_private.unwrap_or(false),
+            allow_private: self.private_read.unwrap_or(false),
             reader,
             hop: self.hop.unwrap_or(true),
             validate: !self.no_check,
@@ -143,27 +143,27 @@ impl CommonOpts {
     }
     pub fn enable_private_group(&mut self) {
         self.io.private = true;
-        self.io.inp.read_private = Some(true);
-        self.io.out.write_private = Some(true)
+        self.io.inp.private_read = Some(true);
+        self.io.out.private_write = Some(true)
     }
     pub fn mut_write_private(&mut self) -> &mut Option<bool> {
-        &mut self.io.out.write_private
+        &mut self.io.out.private_write
     }
     pub fn mut_read_private(&mut self) -> &mut Option<bool> {
-        &mut self.io.inp.read_private
+        &mut self.io.inp.private_read
     }
     pub fn write_private(&self) -> Option<bool> {
         if self.io.private {
             Some(true)
         } else {
-            self.io.out.write_private
+            self.io.out.private_write
         }
     }
     pub fn read_private(&self) -> Option<bool> {
         if self.io.private {
             Some(true)
         } else {
-            self.io.inp.read_private
+            self.io.inp.private_read
         }
     }
     pub fn check_private(&self, pkt: impl NetPkt) -> Option<impl NetPkt> {

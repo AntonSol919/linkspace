@@ -10,8 +10,8 @@ trap "fin" EXIT
 cd $SESSION
 echo SESSION=$SESSION
 echo THEIR_KEY=$THEIR_KEY
-echo GROUP=$GROUP
-GROUP="[b:$GROUP]"
+echo LK_GROUP=$LK_GROUP
+LK_GROUP="[b:$LK_GROUP]"
 THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
@@ -20,12 +20,12 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-lk set-status exchange $GROUP process anyhost-client --data "abe:OK\nPID:$$\nSESSION:$SESSION" &
+lk set-status exchange $LK_GROUP process anyhost-client --data "abe:OK\nPID:$$\nSESSION:$SESSION" &
 
-export LINKSPACE_NO_CHECK=true
+export LK_NO_CHECK=true
 
 # save reads from stdin, ie. the server 
-LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
+LK_NO_CHECK=false lk save --new db --new stdout \
     | lk printf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
@@ -33,15 +33,15 @@ LINKSPACE_NO_CHECK=false lk save --new db --new stdout \
               --write db &
 
 # read the pull request made by other apps and place them into the group
-lk --private watch --new "[f:exchange]:[#:0]:/pull/$GROUP:**" \
+lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
     | lk --private rewrite \
-                --group $GROUP \
+                --group $LK_GROUP \
                 --write db --write stdout sign-all \
     | lk p  ">>>>new request [hash:str]\n[data]\n<<<<" &
 
 
 # This group exchange requires us to send all the data to the server
-lk watch --bare --mode log-asc -- "group:=:$GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
+lk watch --bare --mode log-asc -- "group:=:$LK_GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
     | lk get-links \
     | lk dedup \
     | lk printf --inspect "[now:str] SENDING [hash:str]" \

@@ -38,7 +38,7 @@ pub struct PrintFmtOpts {
     /// delimiter to print between packets.
     #[clap(short, long, default_value = "\\n")]
     delimiter: TypedABE<Vec<u8>>,
-    #[clap(value_parser=parse_abe,default_value=&DEFAULT_PKT, action = clap::ArgAction::Append, env="LINKSPACE_PRINTF")]
+    #[clap(value_parser=parse_abe,default_value=&DEFAULT_PKT, action = clap::ArgAction::Append, env="LK_PRINTF")]
     fmt: Vec<Vec<ABE>>,
 }
 

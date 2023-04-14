@@ -11,7 +11,7 @@ A mode defines when a claim is 'live'.
 The modes are :
 - the public roots (:com , :dev, :free etc) - authorities vote and claims have fast path based lookup.
 - a :local admin, creates keypoints to other 'roots' creating a chain of names. 
-- the :env claims are simply claims stored as files in the LINKSPACE directory
+- the :env claims are claims stored as files in the LK_DIR directory
 
 an admin key/process creates a local lookup & reverse-lookup table such that each can quickly be resolved.
 Every part of this is not yet fully implemented.

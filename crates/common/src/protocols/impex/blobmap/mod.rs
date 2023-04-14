@@ -24,7 +24,7 @@ pub enum Mode {
 pub struct FsSyncOpts {
     #[clap(short, long)]
     pub file_first: bool,
-    #[clap(long, env = "LINKSPACE_SYNC", default_value = "./ssync")]
+    #[clap(long, env = "LK_SYNC", default_value = "./ssync")]
     pub root: PathBuf,
     #[clap(short, long,action=clap::ArgAction::Count)]
     pub clean: u8,
