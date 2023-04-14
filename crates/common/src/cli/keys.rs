@@ -22,7 +22,7 @@ pub struct KeyOpts {
     #[clap(short, long)]
     utf8_password: bool,
     /// local key name - e.g. my:home:local
-    #[clap(short, long, env = "LK_KEY",default_value="me:local")]
+    #[clap(short, long, env = "LK_KEYNAME",default_value="me:local")]
     key: NameExpr,
     /// use specific enckey instead of looking for key. can be $argon str or (claim) hash
     #[clap(short, long)]

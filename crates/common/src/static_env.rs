@@ -54,7 +54,7 @@ pub fn find_linkspace(root: Option<&Path>) -> io::Result<PathBuf> {
     }
 }
 
-pub fn open_linkspace_root(root: Option<&Path>, new: bool) -> io::Result<Linkspace> {
+pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspace> {
     let path = find_linkspace(root)?;
     Ok(LINKSPACE.with(|rt| {
         rt.get_or_try_init(|| {

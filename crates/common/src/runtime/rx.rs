@@ -13,7 +13,7 @@ use linkspace_pkt::reroute::ShareArcPkt;
 use std::{
     borrow::{Borrow, Cow},
     cell::{Cell, OnceCell, RefCell},
-    ops::{Add, ControlFlow},
+    ops::{ ControlFlow},
     rc::{Rc, Weak},
     time::{Duration, Instant},
 };
@@ -182,7 +182,6 @@ impl Linkspace {
 
     /**
     continiously trigger watch callbacks unless
-    - max_wait has elapsed between new packets - return false
     - until time has been reached - returns false
     - watch_id has matched at least once - returns true
     - no more watch callbacks exists - returns true
@@ -190,24 +189,23 @@ impl Linkspace {
     #[instrument(skip(self))]
     pub fn run_while(
         &self,
-        max_wait: Option<Duration>,
         last_step: Option<Instant>,
         watch_id: Option<(&WatchIDRef,bool)>
     ) -> anyhow::Result<bool> {
+        // TODO - cleanup - this was modified to remove max_wait, but not cleaned up beyond removing the argument.
         if self.exec.is_running.get() {
             bail!("already running")
         }
         tracing::trace!(
             last_step_in=?last_step.map(|i| i-Instant::now()),
-            ?max_wait,
             "run while");
         let mut latest_processed_id = Stamp::ZERO;
-        let mut last_new_pkt = Instant::now();
+        let last_new_pkt = Instant::now();
         let current_state = match watch_id{
             Some((id,is_done)) => Some((id,is_done,self.watch_state(id).context("watch id not found")?)),
             None => None
         };
-        // check the 4 break conditions, and update 'next_check' as required for next check
+        // check the 3 break conditions, and update 'next_check' as required for next check
         loop {
             let new_recv_id = self.process();
             if let Some((wid,is_done,(qid,eid))) = current_state{
@@ -241,26 +239,8 @@ impl Linkspace {
                 next_check = next_check.min(last_step_constraint);
             }
 
-            if latest_processed_id == new_recv_id {
-                // wait condition depends on last update
-                if let Some(mw) = max_wait {
-                    let wait_next = match last_new_pkt.add(mw).checked_duration_since(newtime) {
-                        Some(v) => newtime + v,
-                        None => {
-                            tracing::debug!("max_wait reached");
-                            return Ok(false);
-                        }
-                    };
-                    tracing::trace!(
-                        next_check=?d(next_check),
-                        wait_next =?d(next_check),
-                        "Set no_new_packet constraint"
-                    );
-                    next_check = next_check.min(wait_next);
-                }
-            } else {
+            if latest_processed_id != new_recv_id {
                 latest_processed_id = new_recv_id;
-                last_new_pkt = newtime;
             }
 
             match self.next_work() {

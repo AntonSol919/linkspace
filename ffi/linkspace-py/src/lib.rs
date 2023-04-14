@@ -266,10 +266,10 @@ pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> 
 pub struct Linkspace(pub(crate) linkspace_rs::Linkspace);
 
 #[pyfunction]
-#[pyo3(signature =(path="",create=false))]
-pub fn lk_open(path: &str, create: bool) -> anyhow::Result<Linkspace> {
+#[pyo3(signature =(dir="",create=false))]
+pub fn lk_open(dir: &str, create: bool) -> anyhow::Result<Linkspace> {
     Ok(Linkspace(linkspace_rs::lk_open(
-        if path.is_empty(){None} else {Some(Path::new(path))},
+        if dir.is_empty(){None} else {Some(Path::new(dir))},
         create,
     )?))
 }
@@ -410,7 +410,6 @@ pub fn lk_process_while(
     lk: &Linkspace,
     watch: Option<&[u8]>,
     watch_finish:Option<bool>,
-    max_wait: Option<&[u8]>,
     until: Option<&[u8]>,
 ) -> anyhow::Result<bool> {
     let as_stamp = |opt| match opt{
@@ -418,7 +417,7 @@ pub fn lk_process_while(
         Some(v) if v == &[0;8] => Ok(Stamp::MAX),
         Some(v) => Stamp::try_from(v)
     };
-    let max_wait = as_stamp(max_wait)?;
+
     let until = as_stamp(until)?;
 
     // we do a little dance to check signals ( Ctr+C )  every 1 second
@@ -427,7 +426,7 @@ pub fn lk_process_while(
     let mut empty_watches = false;
     let watch = watch.map(|id| (id,watch_finish.unwrap_or(false)));
     while !empty_watches && until > check_at {
-        empty_watches = linkspace_rs::lk_process_while(&lk.0,watch, max_wait, check_at)?;
+        empty_watches = linkspace_rs::lk_process_while(&lk.0,watch, check_at)?;
         tracing::trace!("Checking signals");
         Python::with_gil(|py| py.check_signals())?;
         check_at = check_at.saturating_add(CHECK_SIGNALS_INTERVAL);
@@ -505,14 +504,14 @@ pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Res
 #[pyclass]
 #[pyo3(get_all)]
 pub struct LkInfo {
-    pub path:PathBuf
+    pub dir:PathBuf
 }
 #[pyfunction]
 pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
     let linkspace_rs::runtime::LkInfo{
-        path
+        dir
     }= linkspace_rs::runtime::lk_info(&lk.0);
-    Ok(LkInfo{path:path.into()})
+    Ok(LkInfo{dir:dir.into()})
 }
 
 

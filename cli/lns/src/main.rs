@@ -183,7 +183,7 @@ fn main() -> anyhow::Result<()> {
         Cmd::Ls { name } => {
             let ctx = common.eval_ctx();
             let name = name.eval(&ctx)?;
-            if name.claim_group().is_none(){ bail!("ls not supported for 'env' names. just look at {:?}",common.env()?.location())}
+            if name.claim_group().is_none(){ bail!("ls not supported for 'env' names. just look at {:?}",common.env()?.dir())}
             let rt = common.env()?;
             let reader = rt.get_reader()?;
             for c_ok in lns::utils::list_all_potential_claims_with_prefix(&reader,&name){

@@ -49,7 +49,7 @@ impl Debug for BTreeEnv {
 pub use ipcbus::ProcBus;
 
 impl BTreeEnv {
-    pub fn location(&self) -> &Path {
+    pub fn dir(&self) -> &Path {
         &self.location
     }
     pub fn open(path: PathBuf, make_dir: bool) -> io::Result<BTreeEnv> {
@@ -89,7 +89,7 @@ impl BTreeEnv {
     #[instrument(ret,skip(bytes))]
     pub fn set_env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
         tracing::trace!(bytes=%AB(bytes));
-        let path = self.location().join("env").join(check_path(path.as_ref())?);
+        let path = self.dir().join("env").join(check_path(path.as_ref())?);
         let r: anyhow::Result<()> = try {
             std::fs::create_dir_all(path.parent().unwrap())?;
             let mut file = if overwrite {
@@ -104,7 +104,7 @@ impl BTreeEnv {
     #[instrument(ret)]
     // notfound_err simplifies context errors
     pub fn env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug,notfound_err:bool) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = self.location().join("env").join(check_path(path.as_ref())?);
+        let path = self.dir().join("env").join(check_path(path.as_ref())?);
         use std::io::ErrorKind::*;
         match std::fs::read(&path){
             Ok(k) => Ok(Some(k)),

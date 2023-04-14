@@ -16,6 +16,7 @@
 - Create folder import/export example (Update cli/impex)
 - Exchange with bloom filter(+count)
 - status-pull should take an optional max_age - allows checking if any process ever set a status without setting the timeout to max.
+- lk_pull_close 
 
 
 # API updates

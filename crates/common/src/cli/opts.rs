@@ -36,7 +36,7 @@ pub struct LinkspaceOpts {
         short,
         long,
         env = "LK_DIR",
-        help = "linkspace dir - defaults to $HOME/linkspace"
+        help = "location of the linkspace instance - defaults to $HOME/linkspace"
     )]
     pub dir: Option<PathBuf>,
     #[clap(
@@ -66,7 +66,7 @@ impl LinkspaceOpts {
         Ok(self.root()?.join("keys"))
     }
     pub fn runtime_io(&self) -> io::Result<Linkspace> {
-        crate::static_env::open_linkspace_root(self.dir.as_deref(), self.init)
+        crate::static_env::open_linkspace_dir(self.dir.as_deref(), self.init)
     }
     pub fn runtime(&self) -> anyhow::Result<Linkspace> {
         self.runtime_io().context("error opening runtime")

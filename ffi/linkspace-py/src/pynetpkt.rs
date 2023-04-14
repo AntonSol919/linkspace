@@ -232,7 +232,7 @@ impl Links {
         slf
     }
     fn __len__(&self) -> usize{ self.pkt.get_links().len()}
-    fn __get_item__(&self,idx:usize) -> Option<Link>{
+    fn __getitem__(&self,idx:usize) -> Option<Link>{
         self.pkt.get_links().get(idx).copied().map(Into::into)
     }
 

@@ -640,8 +640,8 @@ pub mod runtime {
     /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// You can open the same instance in multiple threads (sharing their db session & ipc ) and across multiple processes.
     /// moving an open linkspace across threads is not supported.
-    pub fn lk_open(path: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
-        let rt = linkspace_common::static_env::open_linkspace_root(path, create)?;
+    pub fn lk_open(dir: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
+        let rt = linkspace_common::static_env::open_linkspace_dir(dir, create)?;
         let mut eval_ctx = crate::abe::ctx::LK_EVAL_CTX_RT.borrow_mut();
         if eval_ctx.is_none() {
             *eval_ctx = Some(rt.clone())
@@ -749,20 +749,15 @@ pub mod runtime {
     /** process the log of new packets continuously
 
     will return when:
-    - max_wait has elapsed between new packets - return false
-      e.g. lk_eval("[s:+1M]") or 0u64 to ignore
-    - until time has been reached - returns false
+    - until time stamp has been reached - returns false
       e.g. lk_eval("[now:+1M]") or 0u64 to ignore
     - (watch_id,false) was triggered - returns true
     - (watch_id,true) was finished - returns true
     - no more watch callbacks exists - returns true
     **/
-    pub fn lk_process_while(lk: &Linkspace,watch_id:Option<(&WatchIDRef,bool)>, d_max_wait: Stamp, at_until: Stamp) -> LkResult<bool> {
-        let max_wait = (d_max_wait != Stamp::ZERO)
-            .then_some(std::time::Duration::from_micros(d_max_wait.get()));
-
+    pub fn lk_process_while(lk: &Linkspace,watch_id:Option<(&WatchIDRef,bool)>, at_until: Stamp) -> LkResult<bool> {
         let until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
-        lk.0.run_while(max_wait, until,watch_id)
+        lk.0.run_while(until,watch_id)
     }
 
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
@@ -772,11 +767,11 @@ pub mod runtime {
     }
     #[derive(Debug)]
     pub struct LkInfo<'o> {
-        pub path: &'o std::path::Path,
+        pub dir: &'o std::path::Path,
     }
     pub fn lk_info(lk: &Linkspace) -> LkInfo {
         LkInfo {
-            path: lk.0.env().location(),
+            dir: lk.0.env().dir(),
         }
     }
 }

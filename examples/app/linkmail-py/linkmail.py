@@ -8,32 +8,31 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description='Linkmail')
 
 parser.add_argument('--dir', dest='dir', type=str,
-                    default="",help='location of the linkspace (default: $LK_DIR | $HOME/linkspace)')
+                    default="",help='location of the linkspace instance (default: $LK_DIR | $HOME/linkspace)')
 parser.add_argument('--group', dest='group', type=str,
                     default=os.environ.get('LK_GROUP','[#:pub]'),help='group (default: $LK_GROUP | [#:pub])')
 parser.add_argument('--key', dest='key', type=str,
-                    default=os.environ.get('LK_KEY',"me:local"),help='use key (default: $LK_KEY | me:local)')
+                    default=os.environ.get('LK_KEYNAME',"me:local"),help='use key (default: $LK_KEYNAME | me:local)')
 parser.add_argument('--password', dest='password',
-                    default=os.environ.get('LK_PASS',None),help='use key (defaults: $LK_PASS )')
+                    default=os.environ.get('LK_PASS'),help='use key (defaults: $LK_PASS )')
 
 args = parser.parse_args()
-lk = lk_open(path=args.root,create=True)
-print(lk_info(lk).path)
+lk = lk_open(dir=args.dir,create=True)
+print(lk_info(lk).dir)
 
-group_name = args.group
-group=lk_eval(group_name)
+group=lk_eval(args.group)
 try:
     print("Using key:",lk_eval2str(f"[@:{args.key}/?b]"))
 except:
     print(args.key , " not found - we'll try creating it")
-passw = arif not password == None else getpass.getpass(prompt='Password> ', stream=None)
-print("Unlocking key", passw);
-key = lk_key(lk,password=lk_eval(passw),name=args.key,create=True)
+args.password = args.password if args.password is not None else getpass.getpass(prompt='Password> ', stream=None)
+print("Unlocking key", args.password);
+key = lk_key(lk,password=lk_eval(args.password),name=args.key,create=True)
 lk_process(lk) # required for lk_encode to pick up name if lk_key just generated
 args.key = lk_encode(key.pubkey,"@/b") # ensure we use the preferred name for this key
 print(f"Key ok: ",args.key);
 
-common_q = lk_query_parse(lk_query(),"domain:=:linkmail","group:=:"+group_name)
+common_q = lk_query_parse(lk_query(),"domain:=:linkmail","group:=:"+args.group)
 lk_keypoint = functools.partial(lk_keypoint,key=key,domain=b"linkmail",group=group)
 lk_linkpoint = functools.partial(lk_linkpoint,domain=b"linkmail",group=group)
 
@@ -143,15 +142,22 @@ class Linkmail(cmd.Cmd):
     def do_status(self,_):
         ex_status = get_exchange_status(True)
         if not ex_status:
-            print(f"No exchange running for {group_name} - pull requests will be ignored")
+            print(f"No exchange running for {args.group} - pull requests will be ignored")
+            return 
+        print(f"Exchange for {args.group} ok:")
         for e in ex_status:
             print(lk_eval2str("([hash/2mini]) [comp2]/[comp3]\\n[data]\\n",e))
 
     def do_pull(self,path = "",):
         """Notify the exchange process to start pulling messages (from [path])"""
-        if not get_exchange_status():
-            print(f"No exchange running for {group_name} - pull requests will be ignored")
+        ex_status = get_exchange_status()
+        if not ex_status:
+            print(f"No exchange running for {args.group} - pull requests will be ignored")
             return
+        print(f"Pulling from {args.group}")
+        logging.debug(ex_status)
+
+        
         q = lk_query(common_q)
         path_b = lk_eval(f"[/~/mail/{path}]")
         # we use the path in binary form. Two strings might differ but eval to the same bytes
@@ -172,7 +178,7 @@ class Linkmail(cmd.Cmd):
         print(str(pkt))
         if (input("Ok[Y/n]?") or "Y") in "Yy":
             if not get_exchange_status():
-                if not ( input(f"No exchange running for {group_name} - Write anyways? [Y/n]") or "Y" in "Yy" ):
+                if not ( input(f"No exchange running for {args.group} - Write anyways? [Y/n]") or "Y" in "Yy" ):
                     return
             lk_save(lk,pkt)
             self.links=[]
@@ -235,7 +241,6 @@ class Linkmail(cmd.Cmd):
 dloop = Linkmail()
 
 new_mail = lk_query_parse(lk_query(common_q),":id:incoming","prefix:=:/mail","i_index:<:[u32:0]")
-logging.debug("new_mail",str(new_mail))
 lk_watch(lk,new_mail,lambda p: dloop.new_mail_pkt(p))
 
 dloop.do_pull("")
