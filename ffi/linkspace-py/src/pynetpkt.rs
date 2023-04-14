@@ -211,20 +211,19 @@ impl Pkt {
     }
 
     #[getter]
-    pub fn links(slf: PyRef<Self>) -> Option<Links> {
-        let _ = slf.0.links()?;
+    pub fn links(&self) -> Option<Links> {
+        let _ = self.0.links()?;
         Some(Links {
-            pkt: slf.into(),
+            pkt: self.0.pkt.pkt.clone(),
             idx: 0,
         })
     }
 }
 
-#[pyclass]
-#[pyo3(get_all)]
+#[pyclass(sequence)]
 pub struct Links {
-    pub pkt: Py<Pkt>,
-    pub idx: usize,
+    pkt: NetPktArc,
+    idx: usize,
 }
 
 #[pymethods]
@@ -232,20 +231,21 @@ impl Links {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>, py: Python<'_>) -> Option<Link> {
-        let this = slf.pkt.borrow(py).0.get_links().get(slf.idx).copied();
-        slf.idx += 1;
-        this.map(Into::into)
+    fn __len__(&self) -> usize{ self.pkt.get_links().len()}
+    fn __get_item__(&self,idx:usize) -> Option<Link>{
+        self.pkt.get_links().get(idx).copied().map(Into::into)
     }
-    fn __traverse__(&self, visit: pyo3::PyVisit<'_>) -> Result<(), pyo3::PyTraverseError> {
-        visit.call(&self.pkt)
+
+    fn __next__(&mut self) -> Option<Link> {
+        let this = self.pkt.get_links().get(self.idx).copied();
+        self.idx += 1;
+        this.map(Into::into)
     }
 }
 
 /// Link for a linkpoint
 #[pyclass]
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd)]
 #[repr(C)]
 pub struct Link {
     pub tag: [u8; 16],
@@ -274,6 +274,9 @@ impl Link {
         let tag = PyBytes::new(py, &self.tag).repr().unwrap();
         let ptr = PyBytes::new(py, &self.ptr).repr().unwrap();
         format!("Link({tag},{ptr})")
+    }
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
+        op.matches(self.cmp(&other))
     }
 }
 
