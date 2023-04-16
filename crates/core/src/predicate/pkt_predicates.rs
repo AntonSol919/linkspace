@@ -49,19 +49,19 @@ pub struct PktPredicates {
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct StatePredicates {
     pub i_branch: TestSet<u32>,
-    pub i_index: TestSet<u32>,
+    pub i_db: TestSet<u32>,
     pub i_new: TestSet<u32>,
     pub i_query: TestSet<u32>,
 }
 impl StatePredicates {
     pub fn check_db(&self) -> bool {
-        self.i_branch.has_any() && self.i_index.has_any()
+        self.i_branch.has_any() && self.i_db.has_any()
     }
 
     pub fn idx(&mut self, i: QScope) -> &mut TestSet<u32> {
         match i {
             QScope::Branch => &mut self.i_branch,
-            QScope::Index => &mut self.i_index,
+            QScope::Index => &mut self.i_db,
             QScope::New => &mut self.i_new,
             QScope::Query => &mut self.i_query,
         }
@@ -70,7 +70,7 @@ impl StatePredicates {
         if !self.i_query.has_any() {
             anyhow::bail!("maximum number of results is 0")
         }
-        if !self.i_new.has_any() && (!self.i_index.has_any() || !self.i_branch.has_any()) {
+        if !self.i_new.has_any() && (!self.i_db.has_any() || !self.i_branch.has_any()) {
             anyhow::bail!("both new and log have no accept conditions");
         }
         Ok(())
@@ -102,7 +102,7 @@ impl PktPredicates {
         recv_stamp: Bound::DEFAULT,
         state: StatePredicates {
             i_branch: TestSet::DEFAULT,
-            i_index: TestSet::DEFAULT,
+            i_db: TestSet::DEFAULT,
             i_new: TestSet::DEFAULT,
             i_query: TestSet::DEFAULT,
         },

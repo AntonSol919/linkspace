@@ -101,7 +101,7 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
         anyhow::bail!("db and null dest not supported");
     }
     if let Some(mut query) = cli_query.into_query(&common)? {
-        query.add_option("id", &[b"<cli>"]);
+        query.add_option("wid", &[b"<cli>"]);
         let rt = common.runtime()?;
         let span = debug_span!("linkspace-cli watch");
         let out = common.multi_writer(write);

@@ -422,7 +422,7 @@ pub fn lk_process(lk: &Linkspace) -> [u8; 8] {
 #[pyfunction]
 pub fn lk_process_while(
     lk: &Linkspace,
-    id: Option<&[u8]>,
+    wid: Option<&[u8]>,
     timeout: Option<&[u8]>,
 ) -> anyhow::Result<isize> {
     // we do a little dance to check signals ( Ctr+C )  every 1 second
@@ -431,7 +431,7 @@ pub fn lk_process_while(
     loop{
         let mut check_at = Instant::now() + Duration::SECOND;
         if let Some(u) = until { check_at = check_at.min(u) };
-        let result = linkspace_rs::runtime::_lk_process_while(&lk.0,id, Some(check_at))?;
+        let result = linkspace_rs::runtime::_lk_process_while(&lk.0,wid, Some(check_at))?;
         Python::with_gil(|py| py.check_signals())?;
         if result != 0 || Some(check_at) ==  until { return Ok(result)}
     }
@@ -470,7 +470,7 @@ pub fn lk_status_set(
 #[pyfunction]
 pub fn lk_status_poll(
     lk: &Linkspace,
-    id: &[u8],
+    wid: &[u8],
     timeout: &[u8],
     group: &[u8],
     domain: &[u8],
@@ -493,7 +493,7 @@ pub fn lk_status_poll(
         on_close: None,
         on_err:None
     };
-    lk_status_poll(&lk.0,id, status_ctx, timeout, handler)
+    lk_status_poll(&lk.0,wid, status_ctx, timeout, handler)
 }
 
 #[pyfunction]

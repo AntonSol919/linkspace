@@ -389,7 +389,7 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<u32> {
         let mode = query.get_mode()?;
-        let id = query.id().transpose()?.context("watch always requires the :id option")?;
+        let id = query.wid().transpose()?.context("watch always requires the :id option")?;
         let follow = query.get_known_opt(KnownOptions::Follow);
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.

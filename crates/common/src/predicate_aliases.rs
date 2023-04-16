@@ -28,8 +28,8 @@ pub struct PredicateAliases {
     /// only match locally indexed pkts           | i_new:=:{u32:0}
     #[clap(long, alias = "no-new")]
     pub index: bool,
-    /// only match new unindexed pkts             | i_index:=:{u32:0}
-    #[clap(long, alias = "no-index")]
+    /// only match new unindexed pkts             | i_db:=:{u32:0}
+    #[clap(long, alias = "no-db")]
     pub new: bool,
 
     /// match upto max packets.                   | i:<:{u32:max}
@@ -39,7 +39,7 @@ pub struct PredicateAliases {
     /// match upto max per (dm,grp,path,key) pkts | i:<:{u32:max_branch}
     #[clap(long)]
     pub max_branch: Option<u32>,
-    /// match upto max from local index           | i_index:<:{u32:max_index}
+    /// match upto max from local index           | i_db:<:{u32:max_index}
     #[clap(long)]
     pub max_index: Option<u32>,
     /// match upto max unindexed pkts             | i_new:<:{u32:max_new}
@@ -55,11 +55,11 @@ pub struct PredicateAliases {
     pub unsigned: bool,
 
     #[clap(long)]
-    /// Add :id option (generates id)
+    /// Add :wid option (generates wid)
     pub watch: bool,
     #[clap(long)]
-    /// set :id option id (implies --watch)
-    pub id: Option<AnyABE>,
+    /// set :wid option (implies --watch)
+    pub wid: Option<AnyABE>,
     #[clap(long)]
     /// Add :follow option
     pub follow: bool,
@@ -82,7 +82,7 @@ impl PredicateAliases {
             max_index,
             max_new,
             watch,
-            id,
+            wid,
             follow,
             ttl,
         } = self;
@@ -107,8 +107,8 @@ impl PredicateAliases {
         let new = new.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
         let log = index.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
 
-        let watch = id.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
-            .map(|v| abev!( : (KnownOptions::Id.to_string()) : +(v)).into());
+        let watch = wid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
+            .map(|v| abev!( : (KnownOptions::Wid.to_string()) : +(v)).into());
 
         let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}).into());
 

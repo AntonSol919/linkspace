@@ -147,7 +147,7 @@ impl<C: super::db::Cursors> IReadTxn<C> {
                 tracing::trace!(ok,pkt=%linkspace_pkt::pkt_fmt(pkt.pkt),"filter log");
                 ok
             });
-        let nth_log_set = predicates.state.i_index.iter(0);
+        let nth_log_set = predicates.state.i_db.iter(0);
 
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
     }
@@ -170,7 +170,7 @@ impl<C: super::db::Cursors> IReadTxn<C> {
             .inspect(|p| tracing::trace!(pkt=?&**p,"pkt"))
             .filter(move |pkt| tests.test(**pkt));
 
-        let nth_log_set = rules.state.i_index.iter(0);
+        let nth_log_set = rules.state.i_db.iter(0);
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
     }
 
@@ -230,7 +230,7 @@ impl<C: super::db::Cursors> IReadTxn<C> {
                 tracing::trace!(ok,pkt=%linkspace_pkt::pkt_fmt(pkt.pkt),"filter log");
                 ok
             });
-        let nth_log_set = rules.state.i_index.iter(0);
+        let nth_log_set = rules.state.i_db.iter(0);
 
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
     }

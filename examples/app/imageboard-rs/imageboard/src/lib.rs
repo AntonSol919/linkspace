@@ -227,7 +227,7 @@ impl Klets {
         let querystr = [
             "domain:=:imageboard\n",
             "group:=:{#:pub}\n",
-            //"i_index:<:{u32:1}\n", // only the latest is enough
+            //"i_db:<:{u32:1}\n", // only the latest is enough
             "prefix:=:",
             &BOARDS.into_ipathbuf().append(board.as_bytes()).to_string(),
             "\n",

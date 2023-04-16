@@ -223,7 +223,7 @@ use crate::prelude::predicate_type::PredicateType;
 pub enum QScope {
     #[display("i_branch")]
     Branch,
-    #[display("i_index")]
+    #[display("i_db")]
     Index,
     #[display("i_new")]
     New,

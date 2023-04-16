@@ -57,8 +57,8 @@ impl Display for Query {
 pub enum KnownOptions {
     /// which index to walk when reading from the database
     Mode,
-    /// The arg is the ID under which to operate. Can be overwritten or closed. Is required for lk_watch but not for lk_get*.
-    Id,
+    /// The arg is the watch id under which to operate. Can be overwritten or closed. Is required for lk_watch but not for lk_get*.
+    Wid,
     /// try and also return the linked packets.
     Follow,
     /// (not supported by lk_watch) - append the request on finish - ignores the first callback Break to deliver the request on dropping
@@ -71,7 +71,7 @@ impl KnownOptions {
     }
     pub fn iter_all() -> impl Iterator<Item = Self> {
         use KnownOptions::*;
-        [Mode, Id, Follow, NotifyClose ].into_iter()
+        [Mode, Wid, Follow, NotifyClose ].into_iter()
     }
 }
 
@@ -124,8 +124,8 @@ impl Query {
             Ok(abl.lst.get(2).map(|v| v.0.as_slice()).unwrap_or(&[]))
         })
     }
-    pub fn id(&self) -> Option<anyhow::Result<&[u8]>> {
-        self.get_option_bytes(KnownOptions::Id.to_string().as_bytes())
+    pub fn wid(&self) -> Option<anyhow::Result<&[u8]>> {
+        self.get_option_bytes(KnownOptions::Wid.to_string().as_bytes())
     }
     pub fn mode(&self) -> Option<anyhow::Result<Mode>> {
         self.get_option_bytes(KnownOptions::Mode.to_string().as_bytes())

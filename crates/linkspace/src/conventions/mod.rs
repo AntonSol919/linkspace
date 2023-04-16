@@ -41,7 +41,7 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
         .as_eq()
         .context("requires exact domain predicate")?
         .into();
-    let id = query.0.id().transpose()?.context("missing :id option")?;
+    let id = query.0.wid().transpose()?.context("missing :id option")?;
     let data = query.0.to_string();
     tracing::trace!(data);
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);

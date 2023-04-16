@@ -61,7 +61,7 @@ def update_image(pkt):
         # we need a uniq id to register this query under.
         wid = bytearray(pkt.hash)
         wid.extend(link.ptr)
-        q = lk_query_push(q,"","id",bytes(wid))
+        q = lk_query_push(q,"","wid",bytes(wid))
         
         # print("Looking for ",lk_query_print(q,True))
         # we could get with 'lk_get(lk,q)' but to give new packets a chance to arrive we've set recv < now+3s so we will watch them.

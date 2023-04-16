@@ -11,12 +11,12 @@ create_stamp = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 
 lk = lk_open(create=True)
 ok = lk_status_poll(lk,
-               id=b"ex",
+               wid=b"ex",
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=PUBLIC,
                objtype=b"process")
-if not ok and lk_process_while(lk,id=b"ex") == 0:
+if not ok and lk_process_while(lk,wid=b"ex") == 0:
     sys.exit("No exchange process active?") # not strictly necessary, but otherwise pull does nothing
 else:
     print("Exchange ok");
@@ -27,7 +27,7 @@ group:=:[#:pub]
 domain:=:imageboard
 path:=:/[0]
 create:>=:[now:-1D]
-:id:[0]
+:wid:[0]
 """
 query = lk_query_parse(lk_query(),query_string,argv=[boardname])
 
@@ -42,6 +42,6 @@ def update_img(pkt):
     create = lk_eval2str("[create:str]",pkt)
     os.system(f"{script_dir}/imageboard.view.py {boardname} {create}")
 
-query = lk_query_parse(query,"i_index:<:[u32:0]") # we only care for new stuff
+query = lk_query_parse(query,"i_db:<:[u32:0]") # we only care for new stuff
 lk_watch(lk,query, update_img)
 lk_process_while(lk)

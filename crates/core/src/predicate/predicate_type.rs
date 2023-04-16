@@ -70,7 +70,7 @@ predty!( enum PredicateType {
     DataSize => ("data_size",LINK,r"\[u16:0\]","the byte size of the data field"),
     Recv => ("recv",DATA,r"\[now:+1D\]","the recv time of a packet"),
     IBranch => ("i_branch",LINK,r"\[u32:0\]","total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise"),
-    IIndex  => ("i_index",EMPTY,r"\[u32:0\]","total packets read from local index"),
+    IDb  => ("i_db",EMPTY,r"\[u32:0\]","total packets read from local instance"),
     INew  => ("i_new",EMPTY,r"\[u32:0\]","total newly received packets"),
     I => ("i",EMPTY,r"\[u32:0\]","total matched packets"),
     Hop => ("hop",EMPTY,r"\[u16:5\]","(mutable) number of hops"),
