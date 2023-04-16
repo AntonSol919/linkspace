@@ -18,7 +18,7 @@ create\\t[create:str]\\n\
 links\\t[links_len:str]\\n\
 [/links:\\t[tag:str] [ptr:str]\\n]\\n\
 data\\t[data_size:str]\\n\
-[data:str]\\n\
+[data/?a]\\n\
 ";
 pub static DEFAULT_FMT: LazyLock<Vec<ABE>> = LazyLock::new(|| parse_abe(DEFAULT_PKT).unwrap());
 pub static DEFAULT_POINT_FMT: LazyLock<Vec<ABE>> =

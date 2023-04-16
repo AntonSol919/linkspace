@@ -6,7 +6,7 @@
 use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing, Out, WriteDestSpec},
     predicate_aliases::{ExtWatchCLIOpts },
-    prelude::{query_mode::Mode, TypedABE, *},
+    prelude::{query_mode::Mode,  *},
 };
 
 #[derive(Debug, Args, Clone,Default)]
@@ -68,8 +68,6 @@ impl PrintABE {
 pub struct CLIQuery {
     #[clap(flatten)]
     pub print: PrintABE,
-    #[clap(long, default_value = "default")]
-    pub id: TypedABE<Vec<u8>>,
     #[clap(long, default_value = "tree-desc")]
     pub mode: Option<Mode>,
     #[clap(flatten)]
@@ -84,11 +82,6 @@ impl CLIQuery {
         if inner_mode.is_none() || inner_mode != self.mode {
             let st = self.mode.unwrap_or_default().to_string();
             select.add_option(&KnownOptions::Mode.to_string(), &[st.as_bytes()]);
-        }
-        let inner_id = select.id().transpose()?;
-        let id = self.id.eval(&ctx)?;
-        if inner_id != Some(&id) {
-            select.add_option(&KnownOptions::Id.to_string(), &[&id]);
         }
         if self.print.do_print() {
             self.print.print_query(&select.into(), &mut std::io::stdout())?;
@@ -107,7 +100,8 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
     if write.iter().any(|v| matches!(v.out, Out::Db)) {
         anyhow::bail!("db and null dest not supported");
     }
-    if let Some(query) = cli_query.into_query(&common)? {
+    if let Some(mut query) = cli_query.into_query(&common)? {
+        query.add_option("id", &[b"<cli>"]);
         let rt = common.runtime()?;
         let span = debug_span!("linkspace-cli watch");
         let out = common.multi_writer(write);

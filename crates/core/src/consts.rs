@@ -12,7 +12,7 @@ pub use linkspace_pkt::consts::*;
 pub use linkspace_pkt::consts as pkt_consts;
 
 pub static TEST_GROUP_PKT : LazyLock<NetPktBox> = LazyLock::new(|| datapoint(b"Test Group", NetPktHeader::EMPTY).as_netbox());
-pub static TEST_GROUP_ID : LazyLock<LkHash> = LazyLock::new(|| TEST_GROUP_PKT.hash());
+pub static TEST_GROUP : LazyLock<LkHash> = LazyLock::new(|| TEST_GROUP_PKT.hash());
 pub static PUBLIC_GROUP_PKT : LazyLock<NetPktBox> = LazyLock::new(|| datapoint(b"Hello, Sol", NetPktHeader::EMPTY).as_netbox());
 pub static SINGLE_LINK_PKT: LazyLock<NetPktBox> = LazyLock::new(|| linkpoint(
         PRIVATE,
@@ -51,7 +51,7 @@ fn correct_public_ids() {
 pub fn static_pkts() -> Vec<NetPktBox> {
     let links = [
         Link::new("pub", PUBLIC),
-        Link::new("test", *TEST_GROUP_ID),
+        Link::new("test", *TEST_GROUP),
     ];
     let mut list = vec![];
     // This is mostly to ensure code never depends on stamps being uniq or within some range.

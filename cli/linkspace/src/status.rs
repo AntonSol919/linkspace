@@ -131,14 +131,14 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let ok = Rc::new(std::cell::Cell::new(false));
     let isokc = ok.clone();
 
-    lk_status_poll(&lk, status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
+    lk_status_poll(&lk,b"status", status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
         if pkt.get_links().is_empty() || pkt.data().is_empty(){
             panic!()
         }
         isokc.set(true);
         write.handle_pkt(&pkt, lk.as_impl())?;
         if multi { ControlFlow::Continue(())}else {ControlFlow::Break(())}
-    }),None)?;
+    }))?;
     // We only have a single watch. Will be dropped after recv predicate becomes imposible.
     lk_process_while(&lk,None, Stamp::ZERO)?;
     anyhow::ensure!(ok.get(),"no resposne after {:?}",timeout);

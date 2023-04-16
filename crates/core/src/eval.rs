@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::consts::PRIVATE;
 use crate::consts::PUBLIC;
-use crate::consts::TEST_GROUP_ID;
+use crate::consts::TEST_GROUP;
 pub use crate::stamp_fmt::StampEF;
 pub use linkspace_pkt::abe::eval::*;
 pub use linkspace_pkt::abe::*;
@@ -50,7 +50,7 @@ impl EvalScopeImpl for StaticLNS {
                 apply: |_, i, _, _| match i[0] {
                     b"0" => ApplyResult::Value(PRIVATE.0.to_vec()),
                     b"pub" => ApplyResult::Value(PUBLIC.0.to_vec()),
-                    b"test" => ApplyResult::Value(TEST_GROUP_ID.0.to_vec()),
+                    b"test" => ApplyResult::Value(TEST_GROUP.0.to_vec()),
                     _ => ApplyResult::NoValue,
                 },
                 info: ScopeFuncInfo {
@@ -66,7 +66,7 @@ impl EvalScopeImpl for StaticLNS {
                         "[#:0]"
                     } else if g == PUBLIC {
                         "[#:pub]"
-                    } else if g == *TEST_GROUP_ID {
+                    } else if g == *TEST_GROUP {
                         "[#:test]"
                     } else {
                         return ApplyResult::NoValue;
@@ -102,7 +102,7 @@ fn _rev_lookup(i: &[&[u8]], group_mode: Option<bool>) -> ApplyResult {
     let b = B64::try_fit_slice(i[0])?;
     match b {
         b if b == PUBLIC => Ok(b"[#:pub]".to_vec()),
-        b if b == *TEST_GROUP_ID => Ok(b"[#:test]".to_vec()),
+        b if b == *TEST_GROUP => Ok(b"[#:test]".to_vec()),
         b if b == PRIVATE => match group_mode {
             Some(false) => Ok(b"[@:none]".to_vec()),
             _ => Ok(b"[#:0]".to_vec()),

@@ -178,10 +178,10 @@ impl<C> Default for Matcher<C> {
     }
 }
 impl<C> Matcher<C> {
-    pub fn get(&self, watch_id: &WatchIDRef) -> Option<&WatchEntry<C>>{
+    pub fn get(&self, id: &WatchIDRef) -> Option<&WatchEntry<C>>{
         self
             .watch_entries
-            .binary_search_by_key(&watch_id, |e| &e.id).ok().and_then(|i|self.watch_entries.get(i))
+            .binary_search_by_key(&id, |e| &e.id).ok().and_then(|i|self.watch_entries.get(i))
     }
     pub fn register(&mut self, watch_e: WatchEntry<C>) -> Option<WatchEntry<C>> {
         let ok = watch_e.recv_bounds.high > linkspace_pkt::now().get();
@@ -202,13 +202,13 @@ impl<C> Matcher<C> {
     }
     pub fn deregister(
         &mut self,
-        watch_id: &WatchIDRef,
+        id: &WatchIDRef,
         range: bool,
         mut on_drop: impl FnMut(WatchEntry<C>),
     ) -> usize {
         match self
             .watch_entries
-            .binary_search_by_key(&watch_id, |e| &e.id)
+            .binary_search_by_key(&id, |e| &e.id)
         {
             Ok(i) => {
                 if !range {
@@ -218,7 +218,7 @@ impl<C> Matcher<C> {
                 } else {
                     let c = self.watch_entries[i..]
                         .iter()
-                        .take_while(|v| v.id.starts_with(watch_id))
+                        .take_while(|v| v.id.starts_with(id))
                         .count();
                     for w in self.watch_entries.drain(i..c + i) {
                         on_drop(w)

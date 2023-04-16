@@ -1,4 +1,5 @@
 #!/bin/env python3
+import os
 from linkspace import *
 import sys
 if len(sys.argv) < 5:
@@ -9,8 +10,11 @@ y = int(y)
 if x > 1000 or y > 1000:
     sys.exit('X and Y coordinates should be < 1000')
 
+
+
 imgdata = open(imagefile,'rb').read()
-# this will error if the file is to large ( 2^16 - 512) 
+# this will error if the file is to large ( 2^16 - 512 ). 
+# To use bigger files you can manually split/merge them, or wait for a convention to stabilize 
 datap = lk_datapoint(imgdata)
 # we can access the point's fields as bytes such as datap.hash, turn those into b64
 # print("Saving image ",base64(datap.hash))
@@ -23,7 +27,7 @@ print(lk_eval2str("Using image [hash:str]",datap))
 tag = f"{x:08d}{y:08d}".encode() # Everything in linkspace is plain bytes
 links = [Link(tag,datap.hash)]
 linkp = lk_linkpoint(domain=b"imageboard",
-                     group=PUBLIC, # default
+                     group=lk_eval(os.environ.get("LK_GROUP","[#:pub]")),
                      path=[boardname.encode()],
                      links=links)
 # print(lk_eval2str("Placing new image [pkt]",linkp))

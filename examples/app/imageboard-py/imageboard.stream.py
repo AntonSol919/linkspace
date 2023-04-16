@@ -10,20 +10,16 @@ create_stamp = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 
 
 lk = lk_open(create=True)
-status = []
-lk_status_poll(lk,
-               lambda pkt: status.append(pkt) or False, # we're only interested in any reply. (We could check the data for OK)
-               timeout=lk_eval("[s:+10s]"),
+ok = lk_status_poll(lk,
+               id=b"ex",
+               timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=PUBLIC,
                objtype=b"process")
-lk_process_while(lk)
-
-if len(status) == 0:
+if not ok and lk_process_while(lk,id=b"ex") == 0:
     sys.exit("No exchange process active?") # not strictly necessary, but otherwise pull does nothing
 else:
-    print("Exchange status: ");
-    print(str(status[0].data,'utf8'))
+    print("Exchange ok");
 
 
 query_string = """

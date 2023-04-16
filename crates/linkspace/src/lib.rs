@@ -627,6 +627,8 @@ pub mod runtime {
     #[repr(transparent)]
     pub struct Linkspace(pub(crate) linkspace_common::runtime::Linkspace);
 
+    use std::time::Instant;
+
     use linkspace_common::prelude::WatchIDRef;
     use tracing::{debug_span };
 
@@ -746,20 +748,21 @@ pub mod runtime {
     pub fn lk_process(rt: &Linkspace) -> Stamp {
         rt.0.process()
     }
-    /** process the log of new packets continuously
-
-    will return when:
-    - until time stamp has been reached - returns false
-      e.g. lk_eval("[now:+1M]") or 0u64 to ignore
-    - (watch_id,false) was triggered - returns true
-    - (watch_id,true) was finished - returns true
-    - no more watch callbacks exists - returns true
-    **/
-    pub fn lk_process_while(lk: &Linkspace,watch_id:Option<(&WatchIDRef,bool)>, at_until: Stamp) -> LkResult<bool> {
-        let until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
-        lk.0.run_while(until,watch_id)
+    /**
+    continuously process callbacks until:
+    - timeout time has passed
+    - wid = Some and wid is matched => if removed 1, if waiting for more -1
+    - wid = None => no more callbacks (1) 
+     **/
+    pub fn lk_process_while(lk: &Linkspace,wid:Option<&WatchIDRef>, timeout: Stamp) -> LkResult<isize> {
+        let timeout = (timeout != Stamp::ZERO).then(|| Instant::now() + std::time::Duration::from_micros(timeout.get()));
+        _lk_process_while(lk, wid, timeout)
     }
-
+    #[doc(hidden)]
+    // simplifies python ffi bindings
+    pub fn _lk_process_while(lk: &Linkspace,wid:Option<&WatchIDRef>, timeout: Option<Instant>) -> LkResult<isize> {
+        lk.0.run_while(timeout,wid)
+    }
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
         for el in lk.0.dbg_watches().0.entries() {
             cb(&el.id, Query::from_impl(&*el.query))
@@ -783,7 +786,7 @@ pub use conventions::lk_pull;
 pub use consts::{PRIVATE, PUBLIC};
 pub mod consts {
     pub use linkspace_common::core::consts::pkt_consts::*;
-    pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC};
+    pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC,TEST_GROUP};
 }
 pub use misc::cb;
 pub mod misc {

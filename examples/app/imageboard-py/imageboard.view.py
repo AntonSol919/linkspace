@@ -13,19 +13,22 @@ if not os.path.exists(boardfile):
     os.system(f"magick convert -size 1000x1000 xc:transparent PNG32:{boardfile}")
 
 lk = lk_open(create=True)
+group_expr = os.environ.get("LK_GROUP","[#:pub]")
+group = lk_eval(group_expr)
+
 
 # You can parse multiple statements as abe.
 # The usual ABE context is available, and you can extend it with argv
 query_string = """
-group:=:[#:pub]
 domain:=:imageboard
-path:=:/[0]
-create:>=:[1/u64]
+group:=:[0]
+path:=:/[1]
+create:>=:[2/u64]
 """
-query = lk_query_parse(lk_query(),query_string,argv=[boardname,str(create_stamp)])
+query = lk_query_parse(lk_query(),query_string,argv=[group_expr,boardname,str(create_stamp)])
+
 # or use templates. if you're just interested in the string
 query = lk_query_parse(query,f"create:>=:[:{str(create_stamp)}/u64]")
-
 # Or if you have the exact bytes
 create_b = create_stamp.to_bytes(8,byteorder='big')
 query = lk_query_parse(query,f"create:>=:[0]",argv=[create_b])

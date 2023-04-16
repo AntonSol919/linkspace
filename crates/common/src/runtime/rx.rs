@@ -181,47 +181,41 @@ impl Linkspace {
     }
 
     /**
-    continiously trigger watch callbacks unless
-    - until time has been reached - returns false
-    - watch_id has matched at least once - returns true
-    - no more watch callbacks exists - returns true
+    continuously process callbacks until:
+    - now > last_step => returns 0
+    - wid = Some and wid is matched => if removed 1, if waiting for more -1
+    - wid = None => no more callbacks (1) 
      **/
     #[instrument(skip(self))]
     pub fn run_while(
         &self,
         last_step: Option<Instant>,
-        watch_id: Option<(&WatchIDRef,bool)>
-    ) -> anyhow::Result<bool> {
-        // TODO - cleanup - this was modified to remove max_wait, but not cleaned up beyond removing the argument.
+        watch_id: Option<&WatchIDRef>
+    ) -> anyhow::Result<isize> {
         if self.exec.is_running.get() {
             bail!("already running")
         }
         tracing::trace!(
             last_step_in=?last_step.map(|i| i-Instant::now()),
             "run while");
-        let mut latest_processed_id = Stamp::ZERO;
         let last_new_pkt = Instant::now();
         let current_state = match watch_id{
-            Some((id,is_done)) => Some(
-                (id,is_done,self.watch_state(id)
-                 .with_context(|| anyhow::anyhow!("watch id '{}' not found",AB(id)))?
-                )
-            ),
-            None => None
+            Some(id) => Some((id,self.watch_state(id).with_context(||anyhow::anyhow!("watch id '{}' not found",AB(id)))?)),
+            _ => None
         };
-        // check the 3 break conditions, and update 'next_check' as required for next check
+        // check the break conditions, and update 'next_check' as required for next check
         loop {
-            let new_recv_id = self.process();
-            if let Some((wid,is_done,(qid,eid))) = current_state{
+            let _log_head = self.process();
+            if let Some((wid,(qid,eid))) = current_state{
                 let (v_qid,v_eid) = match self.watch_state(wid){
                     Some(v) => v,
                     None => {
                         tracing::debug!("watch was dropped");
-                        return Ok(true);
+                        return Ok(1);
                     }
                 };
-                if v_eid != eid { tracing::debug!("Watch was overwritten"); return Ok(true);}
-                if !is_done && v_qid != qid { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(true);}
+                if v_eid != eid { tracing::debug!("Watch was overwritten"); return Ok(1);}
+                if v_qid != qid { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(-1);}
             }
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
@@ -232,7 +226,7 @@ impl Linkspace {
                     Some(v) => v,
                     None => {
                         tracing::debug!("last_step reached");
-                        return Ok(false);
+                        return Ok(0);
                     }
                 };
                 let last_step_constraint = newtime+wait_dur;
@@ -241,10 +235,6 @@ impl Linkspace {
                     last_step_constraint=?d(last_step_constraint),
                     "set Until constraining");
                 next_check = next_check.min(last_step_constraint);
-            }
-
-            if latest_processed_id != new_recv_id {
-                latest_processed_id = new_recv_id;
             }
 
             match self.next_work() {
@@ -269,7 +259,7 @@ impl Linkspace {
                 }
                 Err(_) => {
                     tracing::debug!("no more callbacks");
-                    return Ok(true);
+                    return Ok(1);
                 }
             };
 
@@ -306,8 +296,8 @@ impl Linkspace {
         let _g = tracing::error_span!("Processing txn", ?from, ?upto).entered();
         let txn = txn;
         tracing::trace!("Lock cbs");
-        let mut lk = self.exec.cbs.borrow_mut();
-        self.drain_pending(&mut lk);
+        let mut lock = self.exec.cbs.borrow_mut();
+        self.drain_pending(&mut lock);
         self.exec.is_running.set(true);
         let i = 0;
         let mut count = Rc::strong_count(&txn);
@@ -329,7 +319,7 @@ impl Linkspace {
                 pkt,
             };
 
-            lk.0.trigger(
+            lock.0.trigger(
                 *pkt,
                 |p| {
                     let r = p.handle_pkt(&pkt, self);
@@ -347,9 +337,9 @@ impl Linkspace {
             );
         }
         tracing::debug!(npkts = i, "Updated Finished");
-        self.drain_pending(&mut lk);
-        // We don't do things setup in post_funcs
-        lk.1.drain_filter(|(func, span)| {
+        self.drain_pending(&mut lock);
+        // We don't do any setup in post_funcs
+        lock.1.drain_filter(|(func, span)| {
             let _ = span.enter();
             {
                 let cont = func(from, &this);
@@ -360,7 +350,7 @@ impl Linkspace {
         });
         self.exec.is_running.set(false);
         self.exec.process_upto.set(upto);
-        std::mem::drop((txn, lk));
+        std::mem::drop((txn, lock));
         if self.exec.written.get() {
             tracing::trace!("Written true");
             return self.process();
@@ -399,7 +389,7 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<u32> {
         let mode = query.get_mode()?;
-        let id = query.id().transpose()?.context("watch_query now always requires the :id option")?;
+        let id = query.id().transpose()?.context("watch always requires the :id option")?;
         let follow = query.get_known_opt(KnownOptions::Follow);
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.

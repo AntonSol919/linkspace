@@ -13,7 +13,7 @@
 
 use anyhow::{Context, anyhow};
 use ref_cast::RefCast;
-use std::{ops::ControlFlow, path::{Path, PathBuf}, time::Duration};
+use std::{ops::ControlFlow, path::{Path, PathBuf}, time::{Duration, Instant}};
 
 use ::linkspace as linkspace_rs;
 use ::linkspace::{prelude::*, abe::ctx::{UserData, self} };
@@ -48,7 +48,7 @@ fn call_ctx(_py: Python) -> (&'static str, i32) {
 pub type PyFunc = Py<PyAny>;
 
 struct PyPktStreamHandler {
-    on_match: PyFunc,
+    on_match: Option<PyFunc>,
     on_close: Option<PyFunc>,
     on_err: Option<PyFunc>
 }
@@ -60,8 +60,12 @@ impl PktHandler for PyPktStreamHandler {
         _lk: &linkspace_rs::Linkspace,
     ) -> std::ops::ControlFlow<()> {
         let apkt = Pkt::from_dyn(pkt);
+        let on_match = match &self.on_match{
+            Some(f) => f,
+            None => return ControlFlow::Continue(())
+        };
         Python::with_gil(|py| {
-            match call_cont_py(py, &self.on_match, (apkt,)) {
+            match call_cont_py(py, on_match, (apkt,)) {
                 Ok(true) => ControlFlow::Continue(()),
                 Ok(false) => ControlFlow::Break(()),
                 Err(e) => {
@@ -389,7 +393,7 @@ pub fn lk_watch(
     py: Python,
     lk: &Linkspace,
     query: &Query,
-    on_match: PyFunc,
+    on_match: Option<PyFunc>,
     on_close: Option<PyFunc>,
     on_err: Option<PyFunc>,
 ) -> anyhow::Result<u32> {
@@ -418,31 +422,19 @@ pub fn lk_process(lk: &Linkspace) -> [u8; 8] {
 #[pyfunction]
 pub fn lk_process_while(
     lk: &Linkspace,
-    watch: Option<&[u8]>,
-    watch_finish:Option<bool>,
-    until: Option<&[u8]>,
-) -> anyhow::Result<bool> {
-    let as_stamp = |opt| match opt{
-        None => Ok(Stamp::MAX),
-        Some(v) if v == &[0;8] => Ok(Stamp::MAX),
-        Some(v) => Stamp::try_from(v)
-    };
-
-    let until = as_stamp(until)?;
-
+    id: Option<&[u8]>,
+    timeout: Option<&[u8]>,
+) -> anyhow::Result<isize> {
     // we do a little dance to check signals ( Ctr+C )  every 1 second
-    const CHECK_SIGNALS_INTERVAL: Stamp = Stamp::new(Duration::SECOND.as_micros() as u64);
-    let mut check_at = now().saturating_add(CHECK_SIGNALS_INTERVAL);
-    let mut empty_watches = false;
-    let watch = watch.map(|id| (id,watch_finish.unwrap_or(false)));
-    while !empty_watches && until > check_at {
-        empty_watches = linkspace_rs::lk_process_while(&lk.0,watch, check_at)?;
-        tracing::trace!("Checking signals");
+    let timeout = timeout.map(Stamp::try_from).transpose()?.filter(|v| *v != Stamp::ZERO);
+    let until =  timeout.map(|t| Instant::now() + Duration::from_micros(t.get()));
+    loop{
+        let mut check_at = Instant::now() + Duration::SECOND;
+        if let Some(u) = until { check_at = check_at.min(u) };
+        let result = linkspace_rs::runtime::_lk_process_while(&lk.0,id, Some(check_at))?;
         Python::with_gil(|py| py.check_signals())?;
-        check_at = check_at.saturating_add(CHECK_SIGNALS_INTERVAL);
-        check_at = check_at.max(now());
+        if result != 0 || Some(check_at) ==  until { return Ok(result)}
     }
-    Ok(empty_watches)
 }
 #[pyfunction]
 pub fn lk_status_set(
@@ -478,14 +470,14 @@ pub fn lk_status_set(
 #[pyfunction]
 pub fn lk_status_poll(
     lk: &Linkspace,
-    callback: PyFunc,
+    id: &[u8],
     timeout: &[u8],
     group: &[u8],
     domain: &[u8],
     objtype: &[u8],
+    callback: Option<PyFunc>,
     instance: Option<&[u8]>,
-    watch_id: Option<&[u8]>
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
     use linkspace_rs::conventions::status::*;
     let timeout = Stamp::try_from(timeout)?;
     let group = GroupID::try_fit_bytes_or_b64(group)?;
@@ -501,7 +493,7 @@ pub fn lk_status_poll(
         on_close: None,
         on_err:None
     };
-    lk_status_poll(&lk.0, status_ctx, timeout, handler,watch_id)
+    lk_status_poll(&lk.0,id, status_ctx, timeout, handler)
 }
 
 #[pyfunction]
@@ -591,6 +583,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 
     m.add("PRIVATE", PyBytes::new(py, &consts::PRIVATE.0))?;
+    m.add("TEST_GROUP", PyBytes::new(py, &**consts::TEST_GROUP))?;
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
     m.add("DEFAULT_PKT", abe::DEFAULT_PKT)?;
 

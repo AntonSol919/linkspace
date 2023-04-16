@@ -73,13 +73,13 @@ def user_write_mail(links = [],notes = "") -> Tuple[str,List[Link],str]:
 
 def get_exchange_status(watch_finish=False):
     status =[] 
-    lk_status_poll(lk,
-               lambda pkt: status.append(pkt) ,
+    lk_status_poll(lk,id=b"status",
+               callback=lambda pkt: status.append(pkt) ,
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=group,
-               objtype=b"process",watch_id=b"status")
-    ok = lk_process_while(lk,watch=b"status",watch_finish=watch_finish)
+               objtype=b"process")
+    ok = lk_process_while(lk,watch=b"status")
     return status
 
 intro = """
