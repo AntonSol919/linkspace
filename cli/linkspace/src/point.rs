@@ -15,9 +15,6 @@ pub struct PointOpts {
     #[clap(long, conflicts_with = "create")]
     pub create_int: Option<Stamp>,
 
-    #[clap(short, long)]
-    pub link: Vec<LinkExpr>,
-
     #[clap(long)]
     pub sign: bool,
     #[clap(flatten)]
@@ -27,6 +24,9 @@ pub struct PointOpts {
     #[clap(long)]
     pub data: Option<ReadSource>,
     pub dgs: DGPExpr,
+
+    #[clap(last=true)]
+    pub link: Vec<LinkExpr>,
 }
 
 pub fn build<'o>(
