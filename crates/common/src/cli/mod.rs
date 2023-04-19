@@ -177,6 +177,7 @@ pub struct ReadSource {
 impl FromStr for ReadSource {
     type Err = anyhow::Error;
 
+    #[tracing::instrument]
     fn from_str(st: &str) -> Result<Self, Self::Err> {
         use abe::ast::*;
         let (kind,expr) = st.split_once(':').unwrap_or((st,""));
@@ -187,6 +188,8 @@ impl FromStr for ReadSource {
         let mut read_as = ReadAs::Raw;
         let abe = parse_abe(expr)?;
         let mut it = abe.split(|v| v.is_colon());
+        if abe.is_empty() { it.next();}
+        tracing::trace!(?abe,?kind,"readsrc");
         let source = match kind {
             "abe" => {
                 let expr = it.as_slice().to_vec();
@@ -198,14 +201,15 @@ impl FromStr for ReadSource {
                 });
             }
             "-" if !live => DataSource::Stdin,
-            "stdout" => DataSource::Stdin,
+            "stdin" => DataSource::Stdin,
             "file" => {
                 let name = it.next().context("missing filename")?.to_vec();
                 DataSource::File(name.into())
             }
-            _ => anyhow::bail!("unknown type - accepts stdout | file | abe )"),
+            _ => anyhow::bail!("unknown type - accepts stdin | file | abe )"),
         };
         if let Some(n) = it.next() {
+            tracing::trace!(?n,"Arg");
             anyhow::ensure!(
                 as_bytes(single(n)?)? == b"pkt",
                 "unknown options - accepts :pkt[:..expr] got {n:?}"
