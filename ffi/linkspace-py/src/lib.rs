@@ -170,16 +170,14 @@ pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<Sign
     Ok(SigningKey(linkspace_rs::key::lk_keyopen(id, password)?))
 }
 
-const E:&[u8]=&[];
 #[pyfunction]
-#[pyo3(signature =(lk,password=E,name="me:local",create=false))]
 pub fn lk_key(
     lk: &Linkspace,
-    password: &[u8],
-    name: &str,
-    create: bool,
+    password: Option<&[u8]>,
+    name: Option<&str>,
+    create: Option<bool>,
 ) -> anyhow::Result<SigningKey> {
-    linkspace_rs::lk_key(&lk.0, password, name, create).map(SigningKey)
+    linkspace_rs::lk_key(&lk.0, password, name, create.unwrap_or(false)).map(SigningKey)
 }
 
 #[pyfunction]

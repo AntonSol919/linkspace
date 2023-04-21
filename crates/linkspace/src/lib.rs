@@ -600,8 +600,8 @@ pub mod key {
     **/
     pub fn lk_key(
         linkspace: &Linkspace,
-        password: &[u8],
-        name: &str,
+        password: Option<&[u8]>,
+        name: Option<&str>,
         create: bool,
     ) -> LkResult<SigningKey> {
         super::varctx::lk_key(super::abe::ctx::ctx(().into())?,linkspace,password,name,create)
@@ -853,6 +853,8 @@ pub mod misc {
 /// Functions with a custom eval context
 pub mod varctx {
 
+    use std::borrow::{Cow };
+
     use super::*;
     use crate::abe::ctx::LkCtx;
     use linkspace_common::abe::{eval::eval, parse_abe};
@@ -880,22 +882,34 @@ pub mod varctx {
     pub fn lk_key(
         ctx:LkCtx,
         linkspace: &Linkspace,
-        password: &[u8],
-        name: &str,
+        password: Option<&[u8]>,
+        name: Option<&str>,
         create: bool,
     ) -> LkResult<SigningKey> {
         use linkspace_common::protocols::lns;
+
+        let name = match name {
+            Some(v) => Cow::Borrowed(v),
+            None => std::env::var("LK_KEYNAME").map(Cow::Owned).unwrap_or(Cow::Borrowed("me:local"))
+        };
+        let password = match password{
+            Some(v) => Cow::Borrowed(v),
+            None => match std::env::var("LK_PASS"){
+                Ok(abe) => Cow::Owned(eval(&ctx.as_dyn(),&parse_abe(&abe)?)?.concat()),
+                Err(_e) => Cow::Borrowed(&[] as &[u8]),
+            }
+        };
         let expr = parse_abe(&name)?;
-        let name : lns::name::Name= eval(&ctx.as_dyn(), &expr)?.try_into()?;
+        let name : lns::name::Name = eval(&ctx.as_dyn(), &expr)?.try_into()?;
         match lns::lookup_enckey(&linkspace.0, &name)?{
             Some((_,enckey)) => {
-                Ok(linkspace_common::identity::decrypt(&enckey, password)?)
+                Ok(linkspace_common::identity::decrypt(&enckey, &password)?)
             }
             None => {
                 if create {
                     use super::key::*;
                     let key = lk_keygen();
-                    let enckey = super::key::lk_keystr(&key, password);
+                    let enckey = super::key::lk_keystr(&key, &password);
                     lns::setup_special_keyclaim(&linkspace.0, name, &enckey, false)?;
                     Ok(key)
                 } else {
