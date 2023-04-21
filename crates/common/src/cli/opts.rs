@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{
-    io::{self, stdin, Stdin},
-    path::PathBuf,
+    io::{self, stdin },
+    path::PathBuf, fs::OpenOptions,
 };
 
 use crate::{
@@ -80,7 +80,7 @@ impl LinkspaceOpts {
     }
 }
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone,Copy)]
 pub struct IOOpts {
     #[clap(
         global = true,
@@ -96,7 +96,7 @@ pub struct IOOpts {
     pub out: OutOpts,
 }
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone,Copy)]
 pub struct OutOpts {
     #[clap(
         long,
@@ -105,7 +105,7 @@ pub struct OutOpts {
     )]
     private_write: Option<bool>,
 }
-#[derive(Parser, Debug, Clone, Copy)]
+#[derive(Parser, Debug, Clone,Copy )]
 pub struct InOpts {
     #[clap(
         long,
@@ -181,7 +181,7 @@ impl CommonOpts {
             .try_collect()
     }
     pub fn open_read(&self, r: Option<&ReadSource>) -> anyhow::Result<Reader> {
-        ReadSource::into_reader(r, self.io.inp, &self.eval_ctx())
+        ReadSource::into_reader(r, self.io.inp.clone(), &self.eval_ctx())
     }
     pub fn write_dest(
         &self,
@@ -235,8 +235,15 @@ impl CommonOpts {
             write_pkt2(&None, p, &ctx.eval_ctx(), &mut out)
         }
     }
-    pub fn inp_reader(&self) -> io::Result<NetPktDecoder<Stdin>> {
-        let inp = stdin(); // Do not buffer. cli like handshake must not buffer partial packets and have  subsequent programs fail
+    pub fn inp_reader(&self,inp: &PktIn) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {
+        // Do not buffer. cli like handshake must not buffer partial packets and have  subsequent programs fail
+        let inp :Box<dyn std::io::Read> = match inp.pkt_in.as_str(){
+            "-" => Box::new(stdin()),
+            o => {
+                let file = OpenOptions::new().create(false).read(true).write(false).open(o)?;
+                Box::new(file)
+            }
+        };
         Ok(NetPktDecoder {
             allow_private: self.read_private().unwrap_or(false),
             reader: inp,
@@ -244,4 +251,10 @@ impl CommonOpts {
             validate: !self.io.inp.no_check,
         })
     }
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct PktIn{
+    #[clap(long,help="input file for reading packets - ignored for most commands",default_value="-")]
+    pub pkt_in: String
 }

@@ -13,7 +13,7 @@ use std::{
 
 use crate::point::PointOpts;
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::CommonOpts, tracing, Reader, WriteDest, WriteDestSpec},
+    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, Reader, WriteDest, WriteDestSpec},
     core::stamp_fmt::DurationStr,
     prelude::*,
 };
@@ -44,6 +44,8 @@ does nothing
 **/
 pub struct Collect {
     #[clap(flatten)]
+    pkt_in: PktIn,
+    #[clap(flatten)]
     build: PointOpts,
 
     /// destination for incoming packets
@@ -69,8 +71,6 @@ pub struct Collect {
     /// Add a link pointing to a previous created packet with the tag
     #[clap(long)]
     chain_tag: Option<Tag>,
-    //#[clap(long)]
-    //no_incomplete:bool
 }
 
 pub struct Collector {
@@ -163,7 +163,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         .map(|v| v.eval(&eval_ctx))
         .try_collect()?;
     tracing::debug!(?initial_links, "Initial");
-    let inp = common.inp_reader()?;
+    let inp = common.inp_reader(&c_opts.pkt_in)?;
     if c_opts.build.sign {
         let _ = c_opts.build.key.identity(common, false)?;
     }
@@ -219,7 +219,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                         }
                     }
                 });
-                tracing::debug!(?inp, "interval Ok");
+                tracing::debug!("interval Ok");
 
                 for p in inp {
                     first.call_once(|| ());

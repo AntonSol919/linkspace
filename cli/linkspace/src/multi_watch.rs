@@ -7,7 +7,7 @@ use std::thread::JoinHandle;
 
 use anyhow::{ Context};
 use linkspace_common::{
-    cli::{clap, clap::Args, opts::CommonOpts, tracing  },
+    cli::{clap, clap::Args, opts::{CommonOpts, PktIn}, tracing  },
     core::pull::read_pull_pkt,
     prelude::*,
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
@@ -21,6 +21,8 @@ Read multiple queries from pkts on stdin.
 #[derive(Args, Clone)]
 #[group(skip)]
 pub struct MultiWatch {
+    #[clap(flatten)]
+    inp:PktIn,
     #[clap(flatten)]
     print: PrintABE,
     /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
@@ -42,7 +44,7 @@ pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Resul
     let ctx = Arc::new((common, multi_watch));
     let handle: JoinHandle<anyhow::Result<()>> =
         run_until_spawn_thread(rx.clone(), move |spawner| -> anyhow::Result<()> {
-            let inp = ctx.0.inp_reader().context("reader open failed")?;
+            let inp = ctx.0.inp_reader(&ctx.1.inp).context("reader open failed")?;
             for pkt in inp {
                 tracing::debug!(?pkt, "inp packet");
                 let pkt = pkt?;

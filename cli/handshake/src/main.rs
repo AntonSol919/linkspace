@@ -6,7 +6,7 @@
 #![feature(unix_sigpipe)]
 use linkspace_common::{
     anyhow::{self, Context},
-    cli::{clap::Parser, keys::KeyOpts, opts::CommonOpts, *},
+    cli::{clap::Parser, keys::KeyOpts, opts::{CommonOpts, PktIn}, *},
     pkt_reader,
     prelude::NetPktFatPtr,
 };
@@ -30,6 +30,8 @@ pub struct Opts {
     key: KeyOpts,
     #[clap(subcommand)]
     mode: Handshake,
+    #[clap(flatten)]
+    inp: PktIn,
 }
 
 #[derive(Parser, Debug)]
@@ -64,6 +66,7 @@ fn main() -> anyhow::Result<()> {
         max_diff_secs,
         key,
         mode,
+        inp,
     } = Opts::parse();
     common.default_hop();
     let mut forward = common.open(&forward)?;
@@ -72,7 +75,7 @@ fn main() -> anyhow::Result<()> {
     let c2 = common.clone();
     let mut writer = |pkt: &NetPktFatPtr| c2.write_multi_dest(&mut write, &**pkt, None);
     use linkspace_common::protocols::handshake::*;
-    let mut pkt_inp = common.inp_reader()?;
+    let mut pkt_inp = common.inp_reader(&inp)?;
     let mut inp = std::iter::from_fn(move || {
         Some(match pkt_inp.next()? {
             Ok(p) => common

@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use anyhow::ensure;
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::CommonOpts, tracing, Out, WriteDest, WriteDestSpec},
+    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, Out, WriteDest, WriteDestSpec},
     prelude::*,
 };
 
@@ -19,6 +19,8 @@ pub struct SaveForward {
     /// add stdout to both --old and --dest
     #[clap(short, long)]
     forward_stdout: bool,
+    #[clap(flatten)]
+    pkt_in: PktIn,
 }
 
 pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
@@ -27,13 +29,14 @@ pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
         mut new,
         mut old,
         forward_stdout,
+        pkt_in,
     } = opts;
     if forward_stdout {
         new.push(WriteDest::stdout());
         old.push(WriteDest::stdout());
     }
     let env = common.env()?;
-    let inp = common.inp_reader()?;
+    let inp = common.inp_reader(&pkt_in)?;
     let mut new = common.open(&new)?;
     let mut old = common.open(&old)?;
     ensure!(

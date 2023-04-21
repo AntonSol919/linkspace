@@ -8,7 +8,7 @@ use linkspace_common::{
         clap,
         clap::{Parser, ValueEnum},
         keys::KeyOpts,
-        opts::CommonOpts,
+        opts::{CommonOpts, PktIn},
         ReadSource, Reader, WriteDestSpec,
     },
     core::eval::Scope,
@@ -26,6 +26,9 @@ rewrite --create "[create:+1D]"
 // TODO add Vec<linkmut { filter, add, map, }>
 #[derive(Parser)]
 pub struct Rewrite {
+    #[clap(flatten)]
+    pkt_in: PktIn,
+
     #[clap(long, default_value = "stdout")]
     pub write: Vec<WriteDestSpec>,
     #[clap(long, default_value = "null")]
@@ -114,13 +117,14 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
         sign_mode,
         key,
         data,
+        pkt_in,
         ..
     } = &ropts;
     let ctx = common.eval_ctx();
     if matches!(sign_mode, SignMode::SignAll | SignMode::Resign) {
         key.identity(&common, true)?;
     }
-    let inp = common.inp_reader()?;
+    let inp = common.inp_reader(pkt_in)?;
     let data = Some(data.clone());
     let mut reader = common.open_read(data.as_ref())?;
     let mut write = common.open(&write)?;

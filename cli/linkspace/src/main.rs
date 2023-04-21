@@ -28,7 +28,7 @@ use linkspace_common::{
         clap,
         clap::Parser,
         keys,
-        opts::{CommonOpts, LinkspaceOpts},
+        opts::{CommonOpts, LinkspaceOpts, PktIn},
         tracing, WriteDestSpec,
     },
     core::{
@@ -230,11 +230,19 @@ enum Command {
         capacity: usize,
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
+        #[clap(flatten)]
+        pkt_in: PktIn
     },
     /// mutate the netheader of packets
-    Route { field_mut: Vec<MutFieldExpr> },
+    Route {
+        #[clap(flatten)]
+        pkt_in: PktIn,
+        field_mut: Vec<MutFieldExpr> ,
+    },
     /// Output known link.ptr packets ( this is not the same as setting :follow )
     GetLinks {
+        #[clap(flatten)]
+        pkt_in: PktIn,
         /// writedest of stdin packets
         #[clap(short, long, default_value = "stdout")]
         forward: Vec<WriteDestSpec>,
@@ -349,9 +357,9 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             */
         }
-        Command::Dedup { capacity, write } => {
+        Command::Dedup { capacity, write, pkt_in } => {
             common.enable_private_group();
-            let inp = common.inp_reader()?;
+            let inp = common.inp_reader(&pkt_in)?;
             let mut deduper = linkspace_common::pkt_stream_utils::QuickDedup::new(capacity);
             let mut dest = common.open(&write)?;
             for p in inp {
@@ -364,9 +372,9 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Collect(cmd) => collect::collect(&common, cmd)?,
         Command::Rewrite(cmd) => rewrite::rewrite(&common, cmd)?,
-        Command::GetLinks { forward, write } => {
+        Command::GetLinks { forward, write,pkt_in } => {
             let store = common.env()?;
-            let inp = common.inp_reader()?;
+            let inp = common.inp_reader(&pkt_in)?;
             // FIXME : set proper Linked Futer Packets
             //let netflag = if prepend_links { NetFlag::LinkedInFuturePkt}else { NetFlag::LinkedInPreviousPkt}.into();
             let mut write = common.open(&write)?;
@@ -447,11 +455,11 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             out.flush()?;
         }
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
-        Command::Route { field_mut } => {
+        Command::Route { field_mut , pkt_in} => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
             common.enable_private_group();
             common.io.inp.no_check = true;
-            let inp = common.inp_reader()?;
+            let inp = common.inp_reader(&pkt_in)?;
             let mut out = WriteDestSpec::stdout().open(&common.eval_ctx())?.unwrap();
             for p in inp {
                 let mut p = p?;

@@ -7,7 +7,7 @@ use anyhow::Context;
 use linkspace_common::{
     cli::{
         clap::{self, Parser},
-        opts::CommonOpts,
+        opts::{CommonOpts, PktIn},
         tracing, WriteDest, WriteDestSpec,
     },
     prelude::{TypedABE, *},
@@ -19,6 +19,8 @@ Format packets from stdin according to a template.
 **/
 #[derive(Parser, Clone)]
 pub struct PrintFmtOpts {
+    #[clap(flatten)]
+    pkt_in: PktIn,
     /// set forward to stdout and print to stderr. Similar to `| tee >( linkspace printf >&2 )`
     #[clap(long)]
     inspect: bool,
@@ -51,6 +53,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
         delimiter,
         fmt,
         join_delimiter,
+        pkt_in,
     } = popts;
     let write_private = common.write_private().unwrap_or(true);
     common.mut_read_private().get_or_insert(true);
@@ -86,7 +89,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
         out = &mut stdo;
     }
     let mut forward = common.open(&forward)?;
-    let inp = common.inp_reader()?;
+    let inp = common.inp_reader(&pkt_in)?;
     let mut first = true;
     for p in inp {
         let pkt = p?;
