@@ -473,7 +473,7 @@ pub mod query {
 
     let mut query = lk_query(None);
 
-    // Add an entire set
+    // Add multiple predicates and options at once.
     let query_str = "
     group:=:[#:pub]
     domain:=:[a:hello]
@@ -493,12 +493,12 @@ pub mod query {
     // Predicates get merged if they overlap
     lk_query_push(&mut query,"create","<",&lk_eval("[now:-1D]",())?)?;
 
-    // As you can see with
+    // As shown with:
     println!("{}",lk_query_print(&query,false));
     # Ok(())}
     ```
 
-    **/
+    */
     #[derive(Default, Clone)]
     pub struct Query(pub(crate) linkspace_common::core::query::Query);
 

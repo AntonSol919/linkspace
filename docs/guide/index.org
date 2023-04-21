@@ -1,21 +1,10 @@
 #+TITLE: The Linkspace Guide
 #+AUTHOR: Anton Sol
-#+OPTIONS: H:4 num:nil \n:nil ::nil |:t ^:{}  *:t author:nil email:nil creator:nil 
-#+OPTIONS: html-style:nil
+
+#+SETUPFILE: ../utils.org
+#+INCLUDE: "../utils.js" export html 
 
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
-
-#+HTML_HEAD: <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-#+HTML_HEAD: <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-
-#+HTML_HEAD: <script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
-#+HTML_HEAD: <script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
-#+HTML_HEAD: <script type="text/javascript" src="./tabs.js"></script>
-#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
-
-#+LANGUAGE: en
 
 #+BEGIN_VERSE
 This document is kept up to date on a best effort basis.
@@ -47,11 +36,11 @@ e.g. git, bitcoin, nostr, linkspace
 The supernet paradigm is a trade-off.
 Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
 This has upsides[fn::
-The homepage contains a more about various properties. However, there is one I lack a word for.
+The homepage contains a list of various properties. However, there is one I lack a word for.
 Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
 They're well-designed if they run under the assumption of incomplete/bad state.
 In linkspace this is an obvious requirement, and linkspace attempts to make it simple.
-That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are the facts of life.
+That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
 ] and downsides.
 
 
@@ -227,7 +216,7 @@ A packets' location refers to its (Domain, Group, Path) triple.
 All values, including the Path, contain arbitrary bytes.
 
 The max space is shared between the links and data so beware that too much data and links won't fit into a single packet
-[fn::To overcome this, just create a new linkpoint, either as a collecting or with a special tag that points to a next linkpoint] .
+[fn::To overcome this, create a new linkpoint, either as a collecting or with a special tag that points to a next linkpoint] .
 
 #+BEGIN_VERSE
 Packet hashes, GroupID's, and public keys are 32 bytes.
@@ -247,15 +236,21 @@ Instead, 'create' defaults to the current time ( microseconds since epoch ), and
 
 The command ~lk link~ builds a linkpoint packets and output's it to stdout by default.
 Whenever a cli commands deal with (domain, group, path) tuples, they are set from the first argument: ~DOMAIN:GROUP:PATH~.
-Here two links are added with the tags ~first_tag_1~ and ~another_tag~
+Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
 
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  lk link "a_domain:[#:pub]:/dir1/dir2/thing" \
-            -l first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
-            -l another_tag:[#:pub] \
+  lk link "a_domain:[#:pub]:/dir1/dir2/thing" -- \
+            first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
+            another_tag:[#:pub] \
   | lk printf
   
+#+END_SRC
+
+There are various ways to add data. The two common are ~--data stdin~ and ~--data file:./somefile~ .
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello | lk link my_domain --data stdin | lk printf
 #+END_SRC
 
 #+END_sh
@@ -378,8 +373,8 @@ e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 
 
 ** lk_write and lk_read
-The vast majority of developers should not have to deal with IO and the byte representation of packets.
-Unless you're writing an exchange process.
+Serialize / Deserialize from the byte representation.
+Unless you're writing an exchange process, a developer shouldn't have to deal with this level of IO.
 
 * ABE
 :PROPERTIES:
@@ -485,9 +480,11 @@ but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ 
 
 #+Begin_VERSE
 The rest of this chapter goes further in depth.
-Understanding ABE in depth is not critical.
+Knowing ABE is not a requirement. Depending on the context there are other ways.
+E.g. In python you can stick to using bytes objects, where possible the cli accepts a base64 string, etc. 
+Its a language of convenience. 
 With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters the reader can choose to
-skip to the next chapter [[Query]] and return here for reference later.
+skip to the next chapter [[Query]] and return here for reference.
 #+end_VERSE
 
 
@@ -594,7 +591,7 @@ It evaluates the inner scope for each link with setting the ~tag~ and ~ptr~ func
 ~printf~ is ~eval~ that reads packets from stdin and puts them in scope.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
-  lk link "::" -l tag1:[#:0] -l tag2:[#:pub] | \
+  lk link "::" -- tag1:[#:0] tag2:[#:pub] | \
       lk printf "HASH:[hash/?b]\n[/links:TAG = [tag:str] PTR = [ptr:str] \n]"
 #+END_SRC
 
@@ -628,7 +625,7 @@ ABE expressions evaluate into a list of [ (bytes,?sep) ].
 Sometimes each element has a different meaning, e.g. [ ( domain , : ) , (group , _) ] in the CLI arguments.
 You can process this list with ~lk_split_abe~. 
 
-But in the majority of cases we don't care about the list and just want a single result.
+But in the majority of cases we don't care about the list and only want a single result.
 ~lk_eval~ does just that. It interprets the separators as plain characters.
 
 Finally, consider what you would expect to happen when an evaluator takes a ABE expression as its final argument:
@@ -918,10 +915,11 @@ Similar to lk_query_parse, but only adds a single statement and the last field e
   lk_query_print(q)
 #+END_SRC
 
-#+CAPTION: Adding contradictions/defining an empty set, returns an error.
+ Adding a contradictions returns an error.
+
 #+begin_src python :session lkpy :exports both :results value verbatim
   try:
-    r = lk_query_push(q,"data_size",">",bytes([0,100])) #greater than 100
+    r = lk_query_push(q,"data_size",">",bytes([0,100])) # greater than 100 and smaller than 3 can not both be true
   except Exception as e :
     r = ("That's not possible",e)
   r
@@ -964,7 +962,7 @@ Setting pubkey or signature excludes link and data points.
 #+Begin_VERSE
 ~group~ requires 32 bytes but will try to parse base64.
 ~domain~ requires 16 bytes but will prepend '\0' if too few bytes are given
-~path~ and ~prefix~ only take the "\=" op, and take spath bytes. I.e. ~path:=:[//hello/world]~, but will accept ~/hello/world~ as well
+~path~ and ~prefix~ only take the = op. Their value is the spath bytes ~path:=:[//hello/world]~, but they'll accept ~/hello/world~ as well
 #+end_VERSE
 
 Besides the fields in a point, predicates also apply to the hash and variable net header fields.

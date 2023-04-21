@@ -9,6 +9,7 @@
 - Add aliases for predicates such that decimal can be used - translate "log_entry<0"  into "i_log:<:[u32:0]"
 - Specify standardized HTML structure / HTTP URL Request structure.
 - i_branch/i_db/i predicate names 
+- have lk_pull check for exchange status. 
 
 # Pending
 
