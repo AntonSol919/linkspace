@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/linkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-a4c7ec2e5b837b95.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="linkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0-nightly (2eaeb1eee 2023-04-05)" data-search-js="search-bc5a112813b5d712.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" data-theme-light-css="light-db279b6232be9c13.css" data-theme-dark-css="dark-cf923f49f397b216.css" data-theme-ayu-css="ayu-be46fdc453a55015.css" ></div><script src="../../static.files/storage-d4a1a279bad1a0c0.js"></script><script defer src="../../static.files/source-script-1b95b7cca98b26e5.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-8e6affb8c73a5ff1.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-db279b6232be9c13.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-cf923f49f397b216.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../linkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/linkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="linkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (5cdb7886a 2023-04-15)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../linkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -911,7 +911,19 @@
 <a href="#911" id="911">911</a>
 <a href="#912" id="912">912</a>
 <a href="#913" id="913">913</a>
-</pre><pre class="rust"><code><span class="comment">// Copyright Anton Sol
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+</pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1386,12 +1398,12 @@ See guide#ABE to understand its use and indepth explanation.
 
     let mut query = lk_query(None);
 
-    // Add an entire set
+    // Add multiple predicates and options at once.
     let query_str = &quot;
     group:=:[#:pub]
     domain:=:[a:hello]
     prefix:=:/some/path
-    :id:default
+    :wid:default
     &quot;;
     lk_query_parse(&amp;mut query,query_str,())?;
     // Optionally with user data such as an argv
@@ -1406,12 +1418,12 @@ See guide#ABE to understand its use and indepth explanation.
     // Predicates get merged if they overlap
     lk_query_push(&amp;mut query,&quot;create&quot;,&quot;&lt;&quot;,&amp;lk_eval(&quot;[now:-1D]&quot;,())?)?;
 
-    // As you can see with
+    // As shown with:
     println!(&quot;{}&quot;,lk_query_print(&amp;query,false));
     # Ok(())}
     ```
 
-    **/
+    */
     </span><span class="attr">#[derive(Default, Clone)]
     </span><span class="kw">pub struct </span>Query(<span class="kw">pub</span>(<span class="kw">crate</span>) linkspace_common::core::query::Query);
 
@@ -1509,16 +1521,16 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="doccomment">/** linkspace stored identity
 
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
-    empty name defaults to ( i.e. \[@:local\] )
+    empty name defaults to ( i.e. \[@:me:local\] )
     **/
     </span><span class="kw">pub fn </span>lk_key(
         linkspace: <span class="kw-2">&amp;</span>Linkspace,
-        password: <span class="kw-2">&amp;</span>[u8],
-        name: <span class="kw-2">&amp;</span>str,
+        password: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+        name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         create: bool,
     ) -&gt; LkResult&lt;SigningKey&gt; {
         <span class="kw">super</span>::varctx::lk_key(<span class="kw">super</span>::abe::ctx::ctx(().into())<span class="question-mark">?</span>,linkspace,password,name,create)
-        
+
     }
 }
 
@@ -1540,21 +1552,23 @@ See guide#ABE to understand its use and indepth explanation.
     #[repr(transparent)]
     </span><span class="kw">pub struct </span>Linkspace(<span class="kw">pub</span>(<span class="kw">crate</span>) linkspace_common::runtime::Linkspace);
 
+    <span class="kw">use </span>std::time::Instant;
+
     <span class="kw">use </span>linkspace_common::prelude::WatchIDRef;
     <span class="kw">use </span>tracing::{debug_span };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="doccomment">/// open a linkspace runtime.
     ///
-    /// will look at `path` or $LINKSPACE or &#39;$HOME&#39;
+    /// will look at `path` or $LK_DIR or &#39;$HOME&#39;
     /// and open &#39;PATH/linkspace&#39; unless the basename of PATH is linkspacel &#39;linkspace&#39;
     ///
     /// A runtime is used in many arguments.
     /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// You can open the same instance in multiple threads (sharing their db session &amp; ipc ) and across multiple processes.
     /// moving an open linkspace across threads is not supported.
-    </span><span class="kw">pub fn </span>lk_open(path: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>std::path::Path&gt;, create: bool) -&gt; std::io::Result&lt;Linkspace&gt; {
-        <span class="kw">let </span>rt = linkspace_common::static_env::open_linkspace_root(path, create)<span class="question-mark">?</span>;
+    </span><span class="kw">pub fn </span>lk_open(dir: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>std::path::Path&gt;, create: bool) -&gt; std::io::Result&lt;Linkspace&gt; {
+        <span class="kw">let </span>rt = linkspace_common::static_env::open_linkspace_dir(dir, create)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>eval_ctx = <span class="kw">crate</span>::abe::ctx::LK_EVAL_CTX_RT.borrow_mut();
         <span class="kw">if </span>eval_ctx.is_none() {
             <span class="kw-2">*</span>eval_ctx = <span class="prelude-val">Some</span>(rt.clone())
@@ -1617,7 +1631,7 @@ See guide#ABE to understand its use and indepth explanation.
     watch packets matching the query - both already in the db and new packets on arrival
 
     Calls `cb` for each matching packet.
-    If the `query` contains the id option ( e.g. &#39;:id:example&#39; ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    If the `query` contains the id option ( e.g. &#39;:wid:example&#39; ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
     The watch is dropped when
     - the cb returns &#39;break&#39; ( usually false )
     - [[lk_stop]] is called with the matching id
@@ -1646,7 +1660,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="macro">tracing::debug_span!</span>(<span class="string">&quot;{}&quot;</span>, name)
     }
 
-    <span class="doccomment">/// close lk_watch watches based on the watch id &#39;:id:example&#39; in the query.
+    <span class="doccomment">/// close lk_watch watches based on the watch id &#39;:wid:example&#39; in the query.
     </span><span class="kw">pub fn </span>lk_stop(rt: <span class="kw-2">&amp;</span>Linkspace, id: <span class="kw-2">&amp;</span>[u8], range: bool) {
         <span class="kw">if </span>range {
             rt.<span class="number">0</span>.close_range(id)
@@ -1659,25 +1673,21 @@ See guide#ABE to understand its use and indepth explanation.
     </span><span class="kw">pub fn </span>lk_process(rt: <span class="kw-2">&amp;</span>Linkspace) -&gt; Stamp {
         rt.<span class="number">0</span>.process()
     }
-    <span class="doccomment">/** process the log of new packets continuously
-
-    will return when:
-    - max_wait has elapsed between new packets - return false
-      e.g. lk_eval(&quot;[s:+1M]&quot;) or 0u64 to ignore
-    - until time has been reached - returns false
-      e.g. lk_eval(&quot;[now:+1M]&quot;) or 0u64 to ignore
-    - (watch_id,false) was triggered - returns true
-    - (watch_id,true) was finished - returns true
-    - no more watch callbacks exists - returns true
-    **/
-    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,watch_id:<span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>WatchIDRef,bool)&gt;, d_max_wait: Stamp, at_until: Stamp) -&gt; LkResult&lt;bool&gt; {
-        <span class="kw">let </span>max_wait = (d_max_wait != Stamp::ZERO)
-            .then_some(std::time::Duration::from_micros(d_max_wait.get()));
-
-        <span class="kw">let </span>until = (at_until != Stamp::ZERO).then(|| pkt::as_instance(at_until).into());
-        lk.<span class="number">0</span>.run_while(max_wait, until,watch_id)
+    <span class="doccomment">/**
+    continuously process callbacks until:
+    - timeout time has passed
+    - wid = Some and wid is matched =&gt; if removed 1, if waiting for more -1
+    - wid = None =&gt; no more callbacks (1) 
+     **/
+    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,wid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>WatchIDRef&gt;, timeout: Stamp) -&gt; LkResult&lt;isize&gt; {
+        <span class="kw">let </span>timeout = (timeout != Stamp::ZERO).then(|| Instant::now() + std::time::Duration::from_micros(timeout.get()));
+        _lk_process_while(lk, wid, timeout)
     }
-
+    <span class="attr">#[doc(hidden)]
+    </span><span class="comment">// simplifies python ffi bindings
+    </span><span class="kw">pub fn </span>_lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,wid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>WatchIDRef&gt;, timeout: <span class="prelude-ty">Option</span>&lt;Instant&gt;) -&gt; LkResult&lt;isize&gt; {
+        lk.<span class="number">0</span>.run_while(timeout,wid)
+    }
     <span class="kw">pub fn </span>lk_list_watches(lk: <span class="kw-2">&amp;</span>Linkspace, cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>Query)) {
         <span class="kw">for </span>el <span class="kw">in </span>lk.<span class="number">0</span>.dbg_watches().<span class="number">0</span>.entries() {
             cb(<span class="kw-2">&amp;</span>el.id, Query::from_impl(<span class="kw-2">&amp;*</span>el.query))
@@ -1685,11 +1695,11 @@ See guide#ABE to understand its use and indepth explanation.
     }
     <span class="attr">#[derive(Debug)]
     </span><span class="kw">pub struct </span>LkInfo&lt;<span class="lifetime">&#39;o</span>&gt; {
-        <span class="kw">pub </span>path: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>std::path::Path,
+        <span class="kw">pub </span>dir: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>std::path::Path,
     }
     <span class="kw">pub fn </span>lk_info(lk: <span class="kw-2">&amp;</span>Linkspace) -&gt; LkInfo {
         LkInfo {
-            path: lk.<span class="number">0</span>.env().location(),
+            dir: lk.<span class="number">0</span>.env().dir(),
         }
     }
 }
@@ -1701,7 +1711,7 @@ See guide#ABE to understand its use and indepth explanation.
 <span class="kw">pub use </span>consts::{PRIVATE, PUBLIC};
 <span class="kw">pub mod </span>consts {
     <span class="kw">pub use </span>linkspace_common::core::consts::pkt_consts::<span class="kw-2">*</span>;
-    <span class="kw">pub use </span>linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC};
+    <span class="kw">pub use </span>linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC,TEST_GROUP};
 }
 <span class="kw">pub use </span>misc::cb;
 <span class="kw">pub mod </span>misc {
@@ -1768,6 +1778,8 @@ See guide#ABE to understand its use and indepth explanation.
 <span class="doccomment">/// Functions with a custom eval context
 </span><span class="kw">pub mod </span>varctx {
 
+    <span class="kw">use </span>std::borrow::{Cow };
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::abe::ctx::LkCtx;
     <span class="kw">use </span>linkspace_common::abe::{eval::eval, parse_abe};
@@ -1795,22 +1807,34 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="kw">pub fn </span>lk_key(
         ctx:LkCtx,
         linkspace: <span class="kw-2">&amp;</span>Linkspace,
-        password: <span class="kw-2">&amp;</span>[u8],
-        name: <span class="kw-2">&amp;</span>str,
+        password: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+        name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         create: bool,
     ) -&gt; LkResult&lt;SigningKey&gt; {
         <span class="kw">use </span>linkspace_common::protocols::lns;
+
+        <span class="kw">let </span>name = <span class="kw">match </span>name {
+            <span class="prelude-val">Some</span>(v) =&gt; Cow::Borrowed(v),
+            <span class="prelude-val">None </span>=&gt; std::env::var(<span class="string">&quot;LK_KEYNAME&quot;</span>).map(Cow::Owned).unwrap_or(Cow::Borrowed(<span class="string">&quot;me:local&quot;</span>))
+        };
+        <span class="kw">let </span>password = <span class="kw">match </span>password{
+            <span class="prelude-val">Some</span>(v) =&gt; Cow::Borrowed(v),
+            <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>std::env::var(<span class="string">&quot;LK_PASS&quot;</span>){
+                <span class="prelude-val">Ok</span>(abe) =&gt; Cow::Owned(eval(<span class="kw-2">&amp;</span>ctx.as_dyn(),<span class="kw-2">&amp;</span>parse_abe(<span class="kw-2">&amp;</span>abe)<span class="question-mark">?</span>)<span class="question-mark">?</span>.concat()),
+                <span class="prelude-val">Err</span>(_e) =&gt; Cow::Borrowed(<span class="kw-2">&amp;</span>[] <span class="kw">as </span><span class="kw-2">&amp;</span>[u8]),
+            }
+        };
         <span class="kw">let </span>expr = parse_abe(<span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>;
-        <span class="kw">let </span>name : lns::name::Name= eval(<span class="kw-2">&amp;</span>ctx.as_dyn(), <span class="kw-2">&amp;</span>expr)<span class="question-mark">?</span>.try_into()<span class="question-mark">?</span>;
+        <span class="kw">let </span>name : lns::name::Name = eval(<span class="kw-2">&amp;</span>ctx.as_dyn(), <span class="kw-2">&amp;</span>expr)<span class="question-mark">?</span>.try_into()<span class="question-mark">?</span>;
         <span class="kw">match </span>lns::lookup_enckey(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, <span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>{
             <span class="prelude-val">Some</span>((<span class="kw">_</span>,enckey)) =&gt; {
-                <span class="prelude-val">Ok</span>(linkspace_common::identity::decrypt(<span class="kw-2">&amp;</span>enckey, password)<span class="question-mark">?</span>)
+                <span class="prelude-val">Ok</span>(linkspace_common::identity::decrypt(<span class="kw-2">&amp;</span>enckey, <span class="kw-2">&amp;</span>password)<span class="question-mark">?</span>)
             }
             <span class="prelude-val">None </span>=&gt; {
                 <span class="kw">if </span>create {
                     <span class="kw">use </span><span class="kw">super</span>::key::<span class="kw-2">*</span>;
                     <span class="kw">let </span>key = lk_keygen();
-                    <span class="kw">let </span>enckey = <span class="kw">super</span>::key::lk_keystr(<span class="kw-2">&amp;</span>key, password);
+                    <span class="kw">let </span>enckey = <span class="kw">super</span>::key::lk_keystr(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span>password);
                     lns::setup_special_keyclaim(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, name, <span class="kw-2">&amp;</span>enckey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(key)
                 } <span class="kw">else </span>{

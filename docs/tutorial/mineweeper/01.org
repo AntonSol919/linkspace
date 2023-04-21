@@ -1,0 +1,337 @@
+#+TITLE:  Playing Mineweeper
+#+SUBTITLE: A Linkspace Application Tutorial
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../../utils.org
+#+INCLUDE: "../../utils.js" export html 
+
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
+
+This is the first a series of tutorials to showcase linkspace.
+A proof of concept for a new foundational layer for the digital space.
+linkspace is a multi-participant protocol where we can talk about data instead of at servers. 
+
+We'll look at Bob.
+
+[[../images/bob-hi.png]]
+
+Bob build the greatest and must impressive game ever.
+MineWeeper: A Multiplayer minesweeper clone where players take turns. 
+
+The follow knowledge/skills are assumed:
+
+- a basic level of python ( You know what ~val = int(input("value")~ does )
+- basic devops (a terminal doesn't scare you, worst case you'll google what ~xargs~ is )
+- the difference between a string and bytes
+- What a cryptographic hash and public keys is 
+- As a plus, its nice if you've shared in the misery of administrating a server with user accounts/registrations.
+- Curious enough to hack together tools to do what you want it to do (OpenGPT isn't going to solve this one)
+
+In linkspace the responsibilities for things are different then you might be used to.
+
+An application developer has drastically fewer responsibilities.
+Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application is dealing with. 
+Instead these things are either irrelevant or are setup once and shared for any and all application in linkspace. 
+The app developer can stick to: bytes, linking to bytes, and getting bytes from the either by a pointer or a path the developer chose. 
+
+This tutorial won't be about those users and how they setup their linkspace instance and group,
+but it will contain a few tips on emulating a local version for testing. 
+
+Linkspace aims to be simple compared to what an equivalent stack would look like.
+If your usecase is streaming data between two points over a socket, linkspace will obviously lose that proposition. 
+But the moment its more than that, such as having 'user' and multiple people interacting, linkspace might be the simplest solution.
+
+Note however, I do mean simple, not easy.
+Linkspace is 30 years behind in tooling to make things as easy as the web is today.
+
+Before you continue, please check this consent form to not hold Bob accountable for the dumb stuff you share and do.
+
+#+BEGIN_EXPORT HTML
+<div> 
+<input type="checkbox" id="consent" name="consent">
+<fieldset id="consent-form">
+    <legend>Consent form</legend>
+    <label for="consent">Click to Consent [ ] </label>
+</fieldset>
+<div id="consent-ok">
+<img src="../images/bob-cheer.png" alt="bob-cheer.png">
+<p>With that piece of vital and productive administration out of the way, lets first take Bob's game for a spin.</p>
+</div>
+</div>
+
+#+END_export
+
+
+* Bob's Hotseat MineWeeper
+
+Bob's game is perfect.
+However, there is one tiny, little, detail missing.
+
+It only works in hotseat mode.
+That is, every player has to be at the same keyboard taking turns.
+
+Bob's a friendly guy, but he doesn't want you coming to his house. 
+Instead, he'll build something real quick, such that anybody can play it with their friends over the internet.
+
+No biggy. 
+
+But first, the game in hotseat mode: 
+
+It reads in the game setup such as the list of players.
+Players take turns entering which cell to reveal until someone triggers a Boom! or no more safe cells exist.
+
+#+begin_verse
+This post was made for version 0.1.5
+Download and extract the zip.
+Paths and commands are relative to this directory.
+To give hotseat mineweeper a try: 
+~python ./app/mineweeper-py/mineweeper-hotseat.py~
+#+end_verse
+
+#+begin_py
+#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper-hotseat.py" src python
+#+end_py
+
+Bob's a little disappointed with the graphics.
+[[../images/bob-doubt.png]]
+He's waiting for those VC bucks to hire professionals to port it to the next Unreal Engine with RTX graphics in VR.
+
+#+begin_ctabs
+#+begin_info
+Contrary to Bob, we don't care much for the details of MineWeeper.
+But for completion sake you can take a peek.
+Code can be found in the ./app/mineweeper-py/mineweeper.py
+#+end_info
+
+#+begin_py
+#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper.py" src python
+#+end_py
+#+end_ctabs
+
+* Game on
+
+After searching high and low, our friend Bob reaches for enlightenment.
+
+[[../images/bob-enlightend.png/]]
+
+
+He finds linkspace.
+
+A thoroughly untested protocol with very few users.
+But he figures its the best solution to make MineWeeper a true multiplayer game.
+
+With linkspace:
+- his (administrative) workload drops dramatically compared to some hosted solutions
+- the game will stay playable without him spending a penny,
+- user network/account/group problems can be solved once (hopefully by someone else).
+
+Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
+One day you run out of words to explain their Wifi password doesn't work on your website, even if they reset their router.
+
+So Bob likes the idea of building a user interface, and outsourcing the user support group.
+
+Developing _any_ linkspace system boils down to:
+
+- Gather up some bytes you want sent around in a packet.
+- Optionally: set a path, add links to other packets, sign it.
+- Save the result.
+- Build a query: a list of predicates for a packet (e.g. pubkey, hash, path). 
+- Get or watch for those results.
+
+#+begin_verse
+This design is the same for other systems, most notably an exchange process.
+#+end_verse
+
+Bob see's linkspace as a library that moves the bytes around between players.
+
+In the linkspace world, Bob's game is a domain application.
+A program providing a friendly interface reading/writing the bytes that the developer wants shared around.
+
+When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
+This is done by a linkspace group exchange process.
+More on them another day.
+
+Bob's a smart guy.
+He recognizes that his game has two distinct phases. 
+
+- Finding the people to start playing it with.
+- Actually taking turns to play the game.
+
+He'll start with 'play the game', and build the lobby system for proposing/joining/starting a game later.
+
+Bob's not set on the details. But it appears something like: 
+
+- A list of (player names, pubkey).
+- A row, column, mine_rate
+- Either the location of every mine, or a seed for an RNG to generate it.
+
+#+begin_verse
+In this setup everybody knows the board, but we'll touch on [[Cheating][Cheating]] later.
+#+end_verse
+
+For now, Bob will assume three players agree the following packet started the game.
+
+ # #+BEGIN_SRC bash :session cli0 :exports result :results output verbatim :cache yes
+ # cat ../../../examples/private/setup.pkt  | lk p
+ # #+END_SRC
+
+#+RESULTS[120bdb7bb9e047a26774463083e95ad81197dd8c]:
+#+begin_example
+type	LinkPoint
+hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
+group	[#:test]
+domain	mineweeper
+path	
+pubkey	[@:none]
+create	1682062494375521
+links	0
+
+data	278
+{
+    "rows":20,
+    "columns": 20,
+    "mine_rate":0.3,
+    "players":[
+        ["alice", "iyfplTMDFj3Jw8XwdfwvXs9ZVgwwYZNsQ3E7cS55kLQ"],
+        ["bob", "qfurOQ2oTD1Xc9dQf_gX2MXbsbALdXQ_XemF0aTlj6U"],
+        ["charlie", "2SYK3NlS8k4ELKWR6CmqIQAiPrMosr5LioK7456jnDY"]
+    ]
+}
+#+end_example
+
+The data fields is just bytes, and Bob decides to encode the fields as JSON.
+A 'seed' field doesn't seem to be necessary, as the hash of the packet can fill the role. 
+
+#+begin_ctabs
+#+begin_info
+Bob isn't infallible, so in building this he needs to test it locally.
+The ./try-local folder contains two script to create a dummy network.
+They requires tmux to be installed (available in most package managers)
+#+end_info
+
+#+begin_setup
+You can create an instance with a simple exchange process running by starting:
+
+#+begin_src bash
+./try-local/host.session.tmux.sh
+#+end_src
+
+For any number of additional instances you want to create and connect, open a terminal and execute:
+#+begin_src bash
+./try-local/session.tmux.sh bob #changing this name
+#+end_src
+
+Finally, we have to create the initial packet and share them.
+One method to do so is as follows:
+
+#+begin_src bash 
+  cd private
+  cat ./*/name_key > setup.json
+  # You'll have to edit this setup.json by hand to look like the json above. 
+  lk link mineweeper:[#:test] --data file:./setup.json > setup.pkt
+
+  # Manually save this packet to each instance
+  find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
+#+end_src
+
+#+end_setup
+#+end_ctabs
+
+
+* Multiplayer
+
+The general outline will be:
+
+- open the instance and your key. 
+- read the 'game_pkt' that starts the game by its hash.
+- load the settings, including a list of [player names,pubkeys]
+- A turn is a signed packet with json data containing [x,y] for the cell to reveal.
+- Turns are ordered by having the first link be a pointer to the previous turn.
+  the first turn will link pointer back to the game_pkt
+
+In other words, a turn usually means waiting for a signed packet from the current player to become known.
+
+#+begin_verse
+The best docs are usually [[../cargo-doc/linkspace/index.html][linkspace]].
+#+end_verse
+
+#+begin_py
+#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper-multiplayer.py" src python
+#+end_py
+
+
+* Cheating
+
+There are basically three ways to deal with cheating.
+
+Lets quickly review what is normal today.
+
+Opening a game on your phone or browser usually means it connects to a single host.
+This host receives your moves, it checks his local hidden state, and return you a result.
+In one sense this is better, only the host can cheat.
+On the other hand, only the host can cheat and we wouldn't know about it.
+
+*** Who cares?
+The option you should take by default.
+Most games can be cheated.
+Scrabble or Chess can use helper tools you can't detect, most shooter games have aimbots and 'see-through-walls' cheats.
+
+Most players are not cheaters, even if they could.
+Trusting your peers save a lot of hassle.
+For a game like MineWeeper that's fine.
+
+*** Emulate host/client
+One option is to emulate a host/client setup.
+The first player could act as host and watch for turns and reply with the result.
+
+A slight tweak already makes this more fair than what is normal today.
+The host could have their game_pkt contain a link to a datapacket with the game field, without actually making it available.
+Once the game is done, the host can release the packet and players could check if the host was honest.
+
+*** Rng-esus died for your sins
+There are a number of ways to define a set of rules that make the game random without a 'host'.
+There are two obstacles:
+- Agreeing on a random value nobody can tamper with.
+- How to deal with the cell numbers that represent how many mines surround it.
+
+The random number is relatively minor.
+Depending on the level of 'certainty' you want, you can have everybody acknowledge the turn, await those packets and use the XOR of those ack.hash to generate a random val. 
+#+begin_src python
+  # we have to fix the create value, otherwise others can tweak it in their benefit. 
+  ack_link = Link("ack",player_turn_pkt.hash)
+  ack_pkt = lk_keypoint( create=player_turn_pkt.create, link = [ack_link])~
+  acked = dict()
+  def collect_acks(ack_pkt):
+      if list(ack_pkt.link) == [ack_link] and ack_pkt.create == ack_pkt.create:
+          acked.insert(pkt.pubkey,pkt.hash)
+          if len(acked) == players:
+              return False
+
+  lk_watch(lk,lk_query_parse(q,":wid:acks"),collect_acks)
+  lk_process_while(wid="acks")
+  seed = itertools.reduce(lambda xored, hash: xored ^ hash, acked.values())
+
+#+end_src
+
+That leaves us with the larger issue. Showing a number of surrounding mines, without letting cheaters peek into which ones are non-mines.
+Not impossible, just annoying.
+One solution is add a 'solver' into game that determines the probability based on the current revealed cells.
+Then generate a value with the seed as shown above and adjust for the probability to determine if a cell is a mine.
+
+* A dose of reality
+
+In the next installment Bob will continue his journey to building the best game ever.
+This time by building a lobby system so its actually playable.
+
+In the meantime, a little expectation management is in order.
+Various components and systems required for linkspace are still in their early days.
+It Works On My Machine^{tm}.
+Some tools and standards don't exist yet (e.g. Group Membership) or are only partially implemented.
+
+Its a project to rebuild the internet into something better.
+But that means taking 10 steps back before we go forward.
+At version 0.1.5 its reached parity with early 1980's. Email works, but not particularly well.
+
+However, there are currently no todo's that would break Bob's program as it is now.
+And every improvement such as, user admin tools, exchange process, etc improve the ease with which users can use a linkspace application.
