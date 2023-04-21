@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-04-21 Fri 14:17 -->
+<!-- 2023-04-21 Fri 15:18 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Playing Mineweeper</title>
@@ -28,21 +28,21 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgab30ddc">Bob's Hotseat MineWeeper</a></li>
-<li><a href="#orgfa6d43c">Game on</a></li>
-<li><a href="#org0305fa9">Multiplayer</a></li>
-<li><a href="#orgcf9dcb4">Cheating</a>
+<li><a href="#orgf46d026">Bob's Hotseat MineWeeper</a></li>
+<li><a href="#org1b42ada">Game on</a></li>
+<li><a href="#org3abea5b">Multiplayer</a></li>
+<li><a href="#org211c37e">Cheating</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org32ec3e2">Who cares?</a></li>
-<li><a href="#org4493a83">Emulate host/client</a></li>
-<li><a href="#org45b186a">Rng-esus died for your sins</a></li>
+<li><a href="#org22bfeb8">Who cares?</a></li>
+<li><a href="#org071a277">Emulate host/client</a></li>
+<li><a href="#orga6b9569">Rng-esus died for your sins</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org4fde860">A dose of reality</a></li>
+<li><a href="#orgffffb14">A dose of reality</a></li>
 </ul>
 </div>
 </nav>
@@ -80,22 +80,26 @@ linkspace is a multi-participant protocol where we can talk about data instead o
 </p>
 
 <p>
-We'll look at Bob.
+We'll follow Bob in his journey of world domination.
 </p>
 
 
-<figure id="org2461a6e">
+<figure id="org637a00a">
 <img src="../images/bob-hi.png" alt="bob-hi.png">
 
 </figure>
 
 <p>
-Bob build the greatest and must impressive game ever.
+First things first.
+Bob build the greatest and must impressive game ever.  
+</p>
+
+<p>
 MineWeeper: A Multiplayer minesweeper clone where players take turns. 
 </p>
 
 <p>
-The follow knowledge/skills are assumed:
+To follow along, the follow knowledge/skills are assumed:
 </p>
 
 <ul class="org-ul">
@@ -115,12 +119,13 @@ In linkspace the responsibilities for things are different then you might be use
 An application developer has drastically fewer responsibilities.
 Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application is dealing with. 
 Instead these things are either irrelevant or are setup once and shared for any and all application in linkspace. 
-The app developer can stick to: bytes, linking to bytes, and getting bytes from the either by a pointer or a path the developer chose. 
+The app developer can stick to thinking about, bytes, linking to bytes,
+and reading them either by following the link or reading them by an agreed upon path name.
 </p>
 
 <p>
-This tutorial won't be about those users and how they setup their linkspace instance and group,
-but it will contain a few tips on emulating a local version for testing. 
+This tutorial won't be about users and how they setup their linkspace instance and groups.
+But it does contain a few tips on emulating a local version for testing.
 </p>
 
 <p>
@@ -151,9 +156,9 @@ Before you continue, please check this consent form to not hold Bob accountable 
 </div>
 
 
-<div id="outline-container-orgab30ddc" class="outline-2">
-<h2 id="orgab30ddc">Bob's Hotseat MineWeeper</h2>
-<div class="outline-text-2" id="text-orgab30ddc">
+<div id="outline-container-orgf46d026" class="outline-2">
+<h2 id="orgf46d026">Bob's Hotseat MineWeeper</h2>
+<div class="outline-text-2" id="text-orgf46d026">
 <p>
 Bob's game is perfect.
 However, there is one tiny, little, detail missing.
@@ -170,15 +175,15 @@ Instead, he'll build something real quick, such that anybody can play it with th
 </p>
 
 <p>
-No biggy. 
+No biggy.
 </p>
 
 <p>
-But first, the game in hotseat mode: 
+But first, how does the game work in hotseat mode:
 </p>
 
 <p>
-It reads in the game setup such as the list of players.
+It asks the user for a list of player names.
 Players take turns entering which cell to reveal until someone triggers a Boom! or no more safe cells exist.
 </p>
 
@@ -190,7 +195,7 @@ To give hotseat mineweeper a try:<br>
 <code>python ./app/mineweeper-py/mineweeper-hotseat.py</code><br>
 </p>
 
-<div class="py" id="orgfa761bd">
+<div class="py" id="org82514e2">
 <div class="org-src-container">
 <pre class="src src-python">from mineweeper import MineWeeper, clear_screen, NoSuchCell,AlreadyRevealed
 import re,random
@@ -221,12 +226,12 @@ while game.print_game_state():
 
 <p>
 Bob's a little disappointed with the graphics.
-<img src="../images/bob-doubt.png" alt="bob-doubt.png">
 He's waiting for those VC bucks to hire professionals to port it to the next Unreal Engine with RTX graphics in VR.
+<img src="../images/bob-doubt.png" alt="bob-doubt.png">
 </p>
 
-<div class="ctabs" id="org9573c5a">
-<div class="info" id="org75b30bc">
+<div class="ctabs" id="org92a1370">
+<div class="info" id="orge0594ef">
 <p>
 Contrary to Bob, we don't care much for the details of MineWeeper.
 But for completion sake you can take a peek.
@@ -235,7 +240,7 @@ Code can be found in the ./app/mineweeper-py/mineweeper.py
 
 </div>
 
-<div class="py" id="orgf3a8dee">
+<div class="py" id="orge3a89b4">
 <div class="org-src-container">
 <pre class="src src-python">import random
 import itertools
@@ -350,15 +355,15 @@ class MineWeeper():
 </div>
 </div>
 
-<div id="outline-container-orgfa6d43c" class="outline-2">
-<h2 id="orgfa6d43c">Game on</h2>
-<div class="outline-text-2" id="text-orgfa6d43c">
+<div id="outline-container-org1b42ada" class="outline-2">
+<h2 id="org1b42ada">Game on</h2>
+<div class="outline-text-2" id="text-org1b42ada">
 <p>
 After searching high and low, our friend Bob reaches for enlightenment.
 </p>
 
 
-<figure id="org9e307ad">
+<figure id="org7f5e5fa">
 <img src="../images/bob-enlightend.png/" alt="">
 
 </figure>
@@ -374,13 +379,21 @@ But he figures its the best solution to make MineWeeper a true multiplayer game.
 </p>
 
 <p>
-With linkspace, his (administrative) workload drops dramatically, the game will stay playable without him spending a penny,
-and user (network/account/group) problems can be solved once (hopefully by someone else) instead of them blaming Bob.
+With linkspace:
+</p>
+<ul class="org-ul">
+<li>his (administrative) workload drops dramatically compared to some hosted solutions</li>
+<li>the game will stay playable without him spending a penny,</li>
+<li>user network/account/group problems can be solved once (hopefully by someone else).</li>
+</ul>
+
+<p>
+Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
+One day you run out of words to explain their Wifi password doesn't work on your website, even if they reset their router.
 </p>
 
 <p>
-Users who lost their Wifi password or forgot their account name will bother their group.
-Bob likes this better than them bothering him
+So Bob likes the idea of building a user interface, and outsourcing the user support group.
 </p>
 
 <p>
@@ -400,7 +413,10 @@ This design is the same for other systems, most notably an exchange process.<br>
 </p>
 
 <p>
-Bob see's linkspace as a library that moves the bytes around between players. 
+Bob see's linkspace as a library that moves the bytes around between players.
+</p>
+
+<p>
 In the linkspace world, Bob's game is a domain application.
 A program providing a friendly interface reading/writing the bytes that the developer wants shared around.
 </p>
@@ -408,21 +424,12 @@ A program providing a friendly interface reading/writing the bytes that the deve
 <p>
 When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
 This is done by a linkspace group exchange process.
-More on them another day. 
+More on them another day.
 </p>
 
 <p>
 Bob's a smart guy.
-</p>
-
-
-<figure id="orgca54456">
-<img src="../images/bob-smart.png" alt="bob-smart.png">
-
-</figure>
-
-<p>
-Bob recognizes that his game has two distinct phases. 
+He recognizes that his game has two distinct phases. 
 </p>
 
 <ul class="org-ul">
@@ -435,24 +442,24 @@ He'll start with 'play the game', and build the lobby system for proposing/joini
 </p>
 
 <p>
-Bob's not set on the details, for a minimum to start a game he needs:
+Bob's not set on the details. But it appears something like: 
 </p>
 
 <ul class="org-ul">
 <li>A list of (player names, pubkey).</li>
 <li>A row, column, mine_rate</li>
-<li>Either the entire field, or a seed for the RNG so each user.</li>
+<li>Either the location of every mine, or a seed for an RNG to generate it.</li>
 </ul>
 
 <p class="verse">
-In this setup everybody knows the board, but we'll touch on <a href="#orgcf9dcb4">Cheating</a> later.<br>
+In this setup everybody knows the board, but we'll touch on <a href="#org211c37e">Cheating</a> later.<br>
 </p>
 
 <p>
 For now, Bob will assume three players agree the following packet started the game.
 </p>
 
-<pre class="example" id="org0588c38">
+<pre class="example" id="orge9119cd">
 type	LinkPoint
 hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
 group	[#:test]
@@ -480,8 +487,8 @@ The data fields is just bytes, and Bob decides to encode the fields as JSON.
 A 'seed' field doesn't seem to be necessary, as the hash of the packet can fill the role. 
 </p>
 
-<div class="ctabs" id="orgc10458e">
-<div class="info" id="org89fbbf3">
+<div class="ctabs" id="orgce7241a">
+<div class="info" id="org99b0265">
 <p>
 Bob isn't infallible, so in building this he needs to test it locally.
 The ./try-local folder contains two script to create a dummy network.
@@ -490,7 +497,7 @@ They requires tmux to be installed (available in most package managers)
 
 </div>
 
-<div class="setup" id="org12815e3">
+<div class="setup" id="org4343221">
 <p>
 You can create an instance with a simple exchange process running by starting:
 </p>
@@ -531,9 +538,9 @@ find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setu
 </div>
 
 
-<div id="outline-container-org0305fa9" class="outline-2">
-<h2 id="org0305fa9">Multiplayer</h2>
-<div class="outline-text-2" id="text-org0305fa9">
+<div id="outline-container-org3abea5b" class="outline-2">
+<h2 id="org3abea5b">Multiplayer</h2>
+<div class="outline-text-2" id="text-org3abea5b">
 <p>
 The general outline will be:
 </p>
@@ -551,7 +558,11 @@ the first turn will link pointer back to the game_pkt</li>
 In other words, a turn usually means waiting for a signed packet from the current player to become known.
 </p>
 
-<div class="py" id="orgc745362">
+<p class="verse">
+The best docs are usually <a href="../cargo-doc/linkspace/index.html">linkspace</a>.<br>
+</p>
+
+<div class="py" id="org2f41562">
 <div class="org-src-container">
 <pre class="src src-python">#!/bin/env python3
 
@@ -727,12 +738,19 @@ while game.print_game_state():
 </div>
 
 
-<div id="outline-container-orgcf9dcb4" class="outline-2">
-<h2 id="orgcf9dcb4">Cheating</h2>
-<div class="outline-text-2" id="text-orgcf9dcb4">
+<div id="outline-container-org211c37e" class="outline-2">
+<h2 id="org211c37e">Cheating</h2>
+<div class="outline-text-2" id="text-org211c37e">
 <p>
 There are basically three ways to deal with cheating.
+Four if you count Bobs stern disapproval as a distinct option
 </p>
+
+
+<figure id="org1100a3b">
+<img src="../images/bob-angry.png" alt="bob-angry.png">
+
+</figure>
 
 <p>
 Lets quickly review what is normal today.
@@ -746,9 +764,9 @@ On the other hand, only the host can cheat and we wouldn't know about it.
 </p>
 </div>
 
-<div id="outline-container-org32ec3e2" class="outline-4">
-<h4 id="org32ec3e2">Who cares?</h4>
-<div class="outline-text-4" id="text-org32ec3e2">
+<div id="outline-container-org22bfeb8" class="outline-4">
+<h4 id="org22bfeb8">Who cares?</h4>
+<div class="outline-text-4" id="text-org22bfeb8">
 <p>
 The option you should take by default.
 Most games can be cheated.
@@ -763,9 +781,9 @@ For a game like MineWeeper that's fine.
 </div>
 </div>
 
-<div id="outline-container-org4493a83" class="outline-4">
-<h4 id="org4493a83">Emulate host/client</h4>
-<div class="outline-text-4" id="text-org4493a83">
+<div id="outline-container-org071a277" class="outline-4">
+<h4 id="org071a277">Emulate host/client</h4>
+<div class="outline-text-4" id="text-org071a277">
 <p>
 One option is to emulate a host/client setup.
 The first player could act as host and watch for turns and reply with the result.
@@ -779,21 +797,21 @@ Once the game is done, the host can release the packet and players could check i
 </div>
 </div>
 
-<div id="outline-container-org45b186a" class="outline-4">
-<h4 id="org45b186a">Rng-esus died for your sins</h4>
-<div class="outline-text-4" id="text-org45b186a">
+<div id="outline-container-orga6b9569" class="outline-4">
+<h4 id="orga6b9569">Rng-esus died for your sins</h4>
+<div class="outline-text-4" id="text-orga6b9569">
 <p>
 There are a number of ways to define a set of rules that make the game random without a 'host'.
-There are two issues:
+There are two obstacles:
 </p>
 <ul class="org-ul">
-<li>Getting a random value nobody can tamper with in their turn</li>
+<li>Agreeing on a random value nobody can tamper with.</li>
 <li>How to deal with the cell numbers that represent how many mines surround it.</li>
 </ul>
 
 <p>
 The random number is relatively minor.
-Depending on the level of 'certainty' you want, you can have everybody ack a turn, and use the XOR of those ack.hash to generate a random val. 
+Depending on the level of 'certainty' you want, you can have everybody acknowledge the turn, await those packets and use the XOR of those ack.hash to generate a random val. 
 </p>
 <div class="org-src-container">
 <pre class="src src-python"># we have to fix the create value, otherwise others can tweak it in their benefit. 
@@ -814,7 +832,7 @@ seed = itertools.reduce(lambda xored, hash: xored ^ hash, acked.values())
 </div>
 
 <p>
-That leaves us with the larger issue. Showing a number of surrounding mines, without letting cheaters peek into which ones.
+That leaves us with the larger issue. Showing a number of surrounding mines, without letting cheaters peek into which ones are non-mines.
 Not impossible, just annoying.
 One solution is add a 'solver' into game that determines the probability based on the current revealed cells.
 Then generate a value with the seed as shown above and adjust for the probability to determine if a cell is a mine.
@@ -823,9 +841,9 @@ Then generate a value with the seed as shown above and adjust for the probabilit
 </div>
 </div>
 
-<div id="outline-container-org4fde860" class="outline-2">
-<h2 id="org4fde860">A dose of reality</h2>
-<div class="outline-text-2" id="text-org4fde860">
+<div id="outline-container-orgffffb14" class="outline-2">
+<h2 id="orgffffb14">A dose of reality</h2>
+<div class="outline-text-2" id="text-orgffffb14">
 <p>
 In the next installment Bob will continue his journey to building the best game ever.
 This time by building a lobby system so its actually playable.
@@ -852,7 +870,7 @@ And every improvement such as, user admin tools, exchange process, etc improve t
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-04-21 Fri 14:17</p>
+<p class="date">Created: 2023-04-21 Fri 15:18</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
