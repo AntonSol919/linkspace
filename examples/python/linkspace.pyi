@@ -1,1 +1,0 @@
-../../ffi/linkspace-py/linkspace.pyi
