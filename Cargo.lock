@@ -965,7 +965,7 @@ checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 
 [[package]]
 name = "linkspace"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-cli"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "linkspace",
@@ -996,7 +996,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-common"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "abe",
  "anyhow",
@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-py"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "linkspace",

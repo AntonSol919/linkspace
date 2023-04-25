@@ -1,6 +1,6 @@
 [package]
 name = "linkspace"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2021"
 authors = ["Azon <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
@@ -19,5 +19,5 @@ description = "linkspace - a general purpose supernet"
 [dependencies]
 anyhow = "1.0.69"
 backtrace = "0.3.67"
-linkspace-common = { path = "../common", version = "0.1.1"}
+linkspace-common = { path = "../common", version = "0.2.0"}
 tracing = "0.1.37"
