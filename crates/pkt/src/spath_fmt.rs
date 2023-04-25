@@ -338,7 +338,7 @@ impl EvalScopeImpl for PathFE {
         }
         
         crate::abe::fncs!([
-            ("?path", 1..=1, "decode path", |_, i: &[&[u8]]| Ok(
+            ("?p", 1..=1, "decode path", |_, i: &[&[u8]]| Ok(
                 SPath::from_slice(i[0])?.to_string().into_bytes()
             )),
             (
@@ -354,7 +354,7 @@ impl EvalScopeImpl for PathFE {
                 }
             ),
             (@C
-                "path",
+                "p",
                 1..=8,
                 None,
                 "build path from arguments",
@@ -371,7 +371,7 @@ impl EvalScopeImpl for PathFE {
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
-                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for build spath. i.e. [//some/spath/val] creates the byte for /some/spath/val" }
+                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val" }
             },
             ScopeEval {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {

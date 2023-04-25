@@ -15,6 +15,6 @@ echo $name $(lk key --no-enckey --no-check) | tee ./name_key
 tmux -S tmux-socket new-session -s $name -n $name \; \
      send-keys " lk " \; \
      split-window -v  \; \
-     send-keys "lk --private watch :: --bare --mode log-asc | lk printf" C-m \; \
+     send-keys "lk --private watch :: --bare --new | lk printf" C-m \; \
      split-window -v \; \
      send-keys "$cmd" C-m 
