@@ -25,7 +25,7 @@ pub struct PktPredicates {
 
     pub var_flags: TestSet<u8>,
     pub var_hop: TestSet<u32>,
-    pub var_until: TestSet<u64>,
+    pub var_stamp: TestSet<u64>,
     pub var_ubits: [TestSet<u32>; 4],
 
     pub domain: TestSet<u128>,
@@ -88,7 +88,7 @@ impl PktPredicates {
         path_prefix: IPathBuf::DEFAULT,
         var_flags: TestSet::DEFAULT,
         var_hop: TestSet::DEFAULT,
-        var_until: TestSet::DEFAULT,
+        var_stamp: TestSet::DEFAULT,
         var_ubits: [TestSet::DEFAULT; 4],
         domain: TestSet::DEFAULT,
         group: TestSet::DEFAULT,
@@ -168,7 +168,7 @@ impl PktPredicates {
             links_len,
             var_flags,
             var_hop,
-            var_until,
+            var_stamp,
             var_ubits,
         } = self;
         use FieldEnum::*;
@@ -182,7 +182,7 @@ impl PktPredicates {
         as_rules_it2(PktTypeF, pkt_types.rules(), U8::new)
             .chain(as_rules_it2(VarNetFlagsF, var_flags.rules(), U8::new))
             .chain(as_rules_it2(VarHopF, var_hop.rules(), U32::new))
-            .chain(as_rules_it2(VarStampF, var_until.rules(), Stamp::new))
+            .chain(as_rules_it2(VarStampF, var_stamp.rules(), Stamp::new))
             .chain(as_rules_it2(VarUBits0F, var_ubits[0].rules(), U32::new))
             .chain(as_rules_it2(VarUBits1F, var_ubits[1].rules(), U32::new))
             .chain(as_rules_it2(VarUBits2F, var_ubits[2].rules(), U32::new))
@@ -286,7 +286,7 @@ impl PktPredicates {
                     FieldEnum::VarNetFlagsF => self.var_flags.try_add(op, U8::try_from(val)?.0)?,
                     FieldEnum::VarHopF => self.var_hop.try_add(op, U32::try_from(val)?.get())?,
                     FieldEnum::VarStampF => {
-                        self.var_until.try_add(op, U64::try_from(val)?.get())?
+                        self.var_stamp.try_add(op, U64::try_from(val)?.get())?
                     }
                     FieldEnum::VarUBits0F => {
                         self.var_ubits[0].try_add(op, U32::try_from(val)?.get())?

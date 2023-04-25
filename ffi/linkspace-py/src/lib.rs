@@ -66,8 +66,8 @@ impl PktHandler for PyPktStreamHandler {
         };
         Python::with_gil(|py| {
             match call_cont_py(py, on_match, (apkt,)) {
-                Ok(true) => ControlFlow::Continue(()),
-                Ok(false) => ControlFlow::Break(()),
+                Ok(true) => ControlFlow::Break(()),
+                Ok(false) => ControlFlow::Continue(()),
                 Err(e) => {
                     if let Some(f) = &self.on_err{
                         let apkt = Pkt::from_dyn(pkt);
@@ -374,13 +374,13 @@ pub fn lk_get_all(
     lk: &Linkspace,
     query: &Query,
     cb: PyFunc,
-) -> anyhow::Result<u32> {
+) -> anyhow::Result<i32> {
     let mut cb_err = Ok(());
     let count = linkspace_rs::runtime::lk_get_all(&lk.0, &query.0, &mut |pkt| {
         let pkt = Pkt::from_dyn(pkt);
-        let mut cont = false;
-        cb_err = call_cont_py(py, &cb, (pkt,)).map(|c| cont = c);
-        cont
+        let mut breaks = false;
+        cb_err = call_cont_py(py, &cb, (pkt,)).map(|c| breaks = c);
+        breaks
     })?;
     cb_err?;
     Ok(count)
@@ -435,7 +435,7 @@ pub fn lk_process_while(
 }
 
 #[pyfunction]
-#[pyo3(signature =(lk,id,range=False))]
+#[pyo3(signature =(lk,id,range=false))]
 pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
     linkspace_rs::runtime::lk_stop(&lk.0, id, range)
 }
@@ -601,7 +601,7 @@ pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
     if mini{b.b64_mini()} else{b.to_string()}
 }
 #[pyfunction]
-pub fn path<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
+pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
     let path = components
         .iter()?
         .map(|i| i.and_then(PyAny::extract::<&[u8]>))

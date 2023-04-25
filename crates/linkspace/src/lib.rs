@@ -664,24 +664,24 @@ pub mod runtime {
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
         linkspace_common::core::env::write_trait::save_pkts(&mut lk.0.get_writer(), pkts).map(|(i,_)|i)
     }
-    /// Run callback for every match for query in the database.
-    /// Stops early if the callback returns False.
-
+    /// Run callback for every match for the query in the database.
+    /// Break early if the callback returns true. 
+    /// If break => number of matches
+    /// If no break ( cb only returned false ) => -1 * Number of matches
     pub fn lk_get_all(
         lk: &Linkspace,
         query: &Query,
         cb: &mut dyn FnMut(&dyn NetPkt) -> bool,
-    ) -> LkResult<u32> {
+    ) -> LkResult<i32> {
         let mut c = 0;
         let r = lk.0.get_reader();
         let mode = query.0.get_mode()?;
+        let mut breaks = false;
         for p in r.query(mode, &query.0.predicates, &mut c)? {
-            let cont = (cb)(&p);
-            if !cont {
-                break;
-            }
+            breaks = (cb)(&p);
+            if breaks{break}
         }
-        Ok(c)
+        Ok(c as i32 * if breaks { 1 } else { -1} )
     }
 
     /// get the first result from the database matching the query.
@@ -808,6 +808,7 @@ pub mod misc {
         pub stopped: B,
     }
     pub fn nop_stopped(_: Query, _: &Linkspace, _: StopReason, _: u32, _: u32) {}
+
     pub fn cb<A, R, E>(
         mut handle_pkt: A,
     ) -> Cb<

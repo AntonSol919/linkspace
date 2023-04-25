@@ -7,11 +7,10 @@ use crate::*;
 /**
 Serializable length delimited &[&[u8]]. e.g. /hello/world.
 Holds an upto 8 components.
-Components are non-empty, length delimited, and have no strict encoding.
-They might contain arbitrary bytes such as '\\0' and '/'
+Components are non-empty, length delimited, bytes.
 
-[SPath] and [SPathBuf] are length delimited component. ( Simmilar to [std::path::Path] and [std::path::PathBuf]).
-[IPath] and [IPathBuf] are spath's with a [u8;8] prefix that holds the offset of each component.
+[SPath] and [SPathBuf] are similar to [std::path::Path] and [std::path::PathBuf].
+[IPath] and [IPathBuf] are SPath's with a [u8;8] prefix that holds the number of components and their offset.
 */
 use std::{borrow::Borrow, ops::Deref};
 

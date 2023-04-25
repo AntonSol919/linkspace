@@ -120,14 +120,14 @@ pub fn compile_predicates(
         state: _,
         var_flags,
         var_hop,
-        var_until,
+        var_stamp,
         var_ubits,
     } = r;
 
     let it = into_tests::<PktTypeF, _>(pkt_types)
         .chain(into_tests::<VarNetFlagsF, _>(var_flags))
         .chain(into_tests::<VarHopF, _>(var_hop))
-        .chain(into_tests::<VarStampF, _>(var_until))
+        .chain(into_tests::<VarStampF, _>(var_stamp))
         .chain(into_tests::<VarUBits0F, _>(&var_ubits[0]))
         .chain(into_tests::<VarUBits1F, _>(&var_ubits[1]))
         .chain(into_tests::<VarUBits2F, _>(&var_ubits[2]))

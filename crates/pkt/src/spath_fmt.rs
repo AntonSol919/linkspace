@@ -317,7 +317,7 @@ impl EvalScopeImpl for PathFE {
     fn about(&self) -> (String, String) {
         (
             "path".into(),
-            r"spath and ipath utils. Usually [//some/path] is the most readable".into(),
+            r"path utils. Usually [//some/path] is the most readable".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -338,28 +338,13 @@ impl EvalScopeImpl for PathFE {
         }
         
         crate::abe::fncs!([
-            ("?sp", 1..=1, "decode spath", |_, i: &[&[u8]]| Ok(
+            ("?path", 1..=1, "decode path", |_, i: &[&[u8]]| Ok(
                 SPath::from_slice(i[0])?.to_string().into_bytes()
             )),
-            ("?ip", 1..=1, "decode ipath", |_, i: &[&[u8]]| Ok(
-                IPath::from(i[0])?.to_string().into_bytes()
-            )),
             (
-                "ipcomp",
+                "path_idx",
                 2..=3,
-                "ipath select [start,?end]",
-                |_, i: &[&[u8]]| {
-                    Ok(IPath::from(i[0])?
-                        .range(parse_range(i)?)
-                        .ipath()
-                        .ipath_bytes()
-                        .to_vec())
-                }
-            ),
-            (
-                "spcomp",
-                2..=3,
-                "ipath select [start,?end]",
+                "path idx [start,?end]",
                 |_, i: &[&[u8]]| {
                     Ok(SPath::from_slice(i[0])?
                         .ipath()
@@ -368,17 +353,11 @@ impl EvalScopeImpl for PathFE {
                         .to_vec())
                 }
             ),
-            (
-                "ip",
-                1..=8,
-                "build ipath from arguments",
-                |_, i: &[&[u8]]| { Ok(IPathBuf::try_from_iter(i)?.ipath_bytes().to_vec()) }
-            ),
             (@C
-                "sp",
+                "path",
                 1..=8,
                 None,
-                "build spath from arguments",
+                "build path from arguments",
                 |_, i: &[&[u8]],_,_| { Ok(SPathBuf::try_from_iter(i)?.spath_bytes().to_vec()) },
                 encode_sp
             )

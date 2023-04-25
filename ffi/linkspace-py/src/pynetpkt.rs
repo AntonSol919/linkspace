@@ -160,8 +160,8 @@ impl Pkt {
         self.0.net_header.hop.0 = b
     }
     #[setter]
-    pub fn set_until(&mut self, until: [u8; 8]) {
-        self.0.net_header.stamp.0 = until;
+    pub fn set_stamp(&mut self, stamp: [u8; 8]) {
+        self.0.net_header.stamp.0 = stamp;
     }
     #[setter]
     pub fn set_ubits0(&mut self, b: [u8; 4]) {

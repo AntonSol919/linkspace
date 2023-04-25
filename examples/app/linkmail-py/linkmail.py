@@ -18,7 +18,7 @@ parser.add_argument('--password', dest='password',
 
 args = parser.parse_args()
 lk = lk_open(dir=args.dir,create=True)
-print(lk_info(lk).dir)
+print(lk_info(lk))
 
 group=lk_eval(args.group)
 try:
