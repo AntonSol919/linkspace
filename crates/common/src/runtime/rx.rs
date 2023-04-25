@@ -39,7 +39,7 @@ impl std::fmt::Debug for Linkspace {
 enum Pending {
     PostWatch { cb: PostTxnHandler, span: Span },
     NewWatch { watch_entry: RxEntry },
-    Close { id: WatchID, range: bool },
+    Close { id: QueryID, range: bool },
 }
 
 struct _ExecutorTxn {
@@ -174,23 +174,23 @@ impl Linkspace {
             }
         }
     }
-    fn watch_state(&self,id:&WatchIDRef) -> Option<(u32,usize)>{
+
+    fn watch_status(&self,id:&QueryIDRef) -> Option<WatchStatus>{
         let cbs = self.exec.cbs.borrow();
-        let e = cbs.0.get(id)?;
-        Some((e.nth_query,e.entry_id))
+        Some(cbs.0.get(id)?.status())
     }
 
     /**
     continuously process callbacks until:
     - now > last_step => returns 0
-    - wid = Some and wid is matched => if removed 1, if waiting for more -1
-    - wid = None => no more callbacks (1) 
+    - qid = Some and qid is matched => if removed 1, if waiting for more -1
+    - qid = None => no more callbacks (1) 
      **/
     #[instrument(skip(self))]
     pub fn run_while(
         &self,
         last_step: Option<Instant>,
-        watch_id: Option<&WatchIDRef>
+        user_qid: Option<&QueryIDRef>
     ) -> anyhow::Result<isize> {
         if self.exec.is_running.get() {
             bail!("already running")
@@ -199,23 +199,23 @@ impl Linkspace {
             last_step_in=?last_step.map(|i| i-Instant::now()),
             "run while");
         let last_new_pkt = Instant::now();
-        let current_state = match watch_id{
-            Some(id) => Some((id,self.watch_state(id).with_context(||anyhow::anyhow!("watch id '{}' not found",AB(id)))?)),
+        let current_state = match user_qid{
+            Some(id) => Some((id,self.watch_status(id).with_context(||anyhow::anyhow!("watch id '{}' not found",AB(id)))?)),
             _ => None
         };
         // check the break conditions, and update 'next_check' as required for next check
         loop {
             let _log_head = self.process();
-            if let Some((wid,(qid,eid))) = current_state{
-                let (v_qid,v_eid) = match self.watch_state(wid){
+            if let Some((user_qid,old_status)) = current_state{
+                let status = match self.watch_status(user_qid){
                     Some(v) => v,
                     None => {
                         tracing::debug!("watch was dropped");
                         return Ok(1);
                     }
                 };
-                if v_eid != eid { tracing::debug!("Watch was overwritten"); return Ok(1);}
-                if v_qid != qid { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(-1);}
+                if status.watch_id != old_status.watch_id { tracing::debug!("Watch was overwritten"); return Ok(1);}
+                if status.nth_query != old_status.nth_query { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(-1);}
             }
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
@@ -359,7 +359,7 @@ impl Linkspace {
         }
     }
 
-    pub fn read<F>(&self, hash: LkHash, rx: F, watchid: WatchID, span: Span) -> anyhow::Result<()>
+    pub fn read<F>(&self, hash: LkHash, rx: F, watchid: QueryID, span: Span) -> anyhow::Result<()>
     where
         F: FnOnce(&dyn NetPkt, &Linkspace) + 'static,
     {
@@ -389,7 +389,7 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<u32> {
         let mode = query.get_mode()?;
-        let id = query.wid().transpose()?.context("watch always requires the :id option")?;
+        let id = query.qid().transpose()?.context("watch always requires the :id option")?;
         let follow = query.get_known_opt(KnownOptions::Follow);
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.
@@ -419,7 +419,7 @@ impl Linkspace {
     /// only checks predicates, does not handle any options.
     pub fn watch(
         &self,
-        watch_id: &WatchIDRef,
+        watch_id: &QueryIDRef,
         mode: query_mode::Mode,
         q: Cow<Query>,
         mut onmatch: impl PktStreamHandler + 'static,
@@ -478,7 +478,7 @@ impl Linkspace {
     pub fn inner(&self) -> &BTreeEnv {
         &self.exec.env
     }
-    pub fn close(&self, id: impl AsRef<WatchIDRef>) {
+    pub fn close(&self, id: impl AsRef<QueryIDRef>) {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.0.deregister(id.as_ref(), false, |w| {
@@ -491,7 +491,7 @@ impl Linkspace {
             }),
         }
     }
-    pub fn close_range(&self, prefix: impl AsRef<WatchIDRef>) {
+    pub fn close_range(&self, prefix: impl AsRef<QueryIDRef>) {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.0.deregister(prefix.as_ref(), true, |w| {

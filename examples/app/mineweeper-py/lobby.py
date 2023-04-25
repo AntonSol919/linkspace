@@ -22,16 +22,16 @@ lk_keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=g
 lk_linkpoint = functools.partial(lk_linkpoint,domain=b"mineweeper",group=group)
 
 ls = []
-recent = lk_status_poll(lk,wid=b"status",callback=lambda x : ls.append(x),
+recent = lk_status_poll(lk,qid=b"status",callback=lambda x : ls.append(x),
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=group,
                objtype=b"process")
-proc_watch = lk_process_while(lk,wid=b"status")
+proc_watch = lk_process_while(lk,qid=b"status")
 if not recent and proc_watch == 0:
     exit("No exchange process active. ")
 
-lobbies_query = lk_query_parse(common_q,"prefix:=:/lobby","path_len:=:[u8:3]","create:>:[now:-10m]",":wid:get_lobby","i_branch:=:[u32:0]")
+lobbies_query = lk_query_parse(common_q,"prefix:=:/lobby","path_len:=:[u8:3]","create:>:[now:-10m]",":qid:get_lobby","i_branch:=:[u32:0]")
 lk_pull(lk,lk_query_parse(lobbies_query,":follow"))
 lk_process(lk)
 
@@ -90,11 +90,11 @@ class SetupLobby():
                            "pubkey:=:[pubkey]",
                            "create:>:[create]",
                            "i:=:[u32:0]",
-                           ":wid:start_game",
+                           ":qid:start_game",
                            pkt=self.host)
         go = []
         lk_watch(lk,q,callback= lambda x:go.append(x))
-        lk_process_while(lk,wid=b"start_game")
+        lk_process_while(lk,qid=b"start_game")
         if not go:
 
             return
@@ -123,6 +123,6 @@ setup.refresh()
 lk_watch(lk,lk_query_push(lobbies_query,"i_db","<",int(0).to_bytes(4)),lambda p: setup.new_packets.append(p))
 
 while True:
-    lk_process_while(lk,wid=b"get_lobby",timeout=lk_eval("[s:+2s]"))
+    lk_process_while(lk,qid=b"get_lobby",timeout=lk_eval("[s:+2s]"))
     lk_process(lk)
     setup.refresh()

@@ -73,13 +73,13 @@ def user_write_mail(links = [],notes = "") -> Tuple[str,List[Link],str]:
 
 def get_exchange_status(watch_finish=False):
     status =[] 
-    lk_status_poll(lk,wid=b"status",
+    lk_status_poll(lk,qid=b"status",
                callback=lambda pkt: status.append(pkt) ,
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=group,
                objtype=b"process")
-    ok = lk_process_while(lk,wid=b"status")
+    ok = lk_process_while(lk,qid=b"status")
     return status
 
 intro = """
@@ -161,7 +161,7 @@ class Linkmail(cmd.Cmd):
         q = lk_query(common_q)
         path_b = lk_eval(f"[/~/mail/{path}]")
         # we use the path in binary form. Two strings might differ but eval to the same bytes
-        q = lk_query_push(q,"","wid",path_b) 
+        q = lk_query_push(q,"","qid",path_b) 
 
         q = lk_query_push(q,"path","=",path_b)
         q = lk_query_push(q,"","follow",b"")
@@ -240,7 +240,7 @@ class Linkmail(cmd.Cmd):
 
 dloop = Linkmail()
 
-new_mail = lk_query_parse(lk_query(common_q),":wid:incoming","prefix:=:/mail","i_db:<:[u32:0]")
+new_mail = lk_query_parse(lk_query(common_q),":qid:incoming","prefix:=:/mail","i_db:<:[u32:0]")
 lk_watch(lk,new_mail,lambda p: dloop.new_mail_pkt(p))
 
 dloop.do_pull("")

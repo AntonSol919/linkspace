@@ -164,7 +164,7 @@ def lk_process_while(lk:Linkspace, qid:bytes|None=None,timeout:bytes|None=None) 
     """
     Continuously await new packets and lk_process until:
     - the timeout has expired:
-    - a query with qid and registered with lk_watch was hit.
+    - a query with qid and registered with lk_watch was hit at least once.
 
     timeout
     Args:
@@ -175,8 +175,8 @@ def lk_process_while(lk:Linkspace, qid:bytes|None=None,timeout:bytes|None=None) 
             or int(1000 * 1000 * 63).to_bytes(8)
     Returns:
         0 if a timeout has expired.
-        -1 if the wid is hit and is still actively waiting for more.
-        1 if the wid is hit and is no longer registered. .
+        -1 if the qid is hit and is still actively waiting for more.
+        1 if the qid is hit and is no longer registered. .
     """
     ...
 
@@ -237,11 +237,11 @@ def lk_watch(lk:Linkspace,query:Query,
     The watch is deregistered when:
     - on_match returns False
     - lk_stop is called with a matching qid
-    - the query is finished (The recv predicate is out of bound, the i_* predicate has reached its limit)
+    - the query is done (The recv predicate is out of bound, the i_* predicate has reached its limit)
 
     Args:
         lk:
-        query: A query used in lk_watch requires the 'wid' (watch id) option be set ( lk_query_parse(q,":wid:mywid") )
+        query: A query used in lk_watch requires the 'qid'  option be set ( lk_query_parse(q,":qid:myqid") )
         on_match:
         on_close:
         on_err:
@@ -258,7 +258,7 @@ def lk_pull(lk: Linkspace, query: Query):
 
     Args:
         lk: 
-        query: Must have a wid set
+        query: Must have a qid set
     """
     ...
 def lk_status_poll(*args, **kwargs) -> Any: ...

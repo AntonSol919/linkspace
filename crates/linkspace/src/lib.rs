@@ -478,7 +478,7 @@ pub mod query {
     group:=:[#:pub]
     domain:=:[a:hello]
     prefix:=:/some/path
-    :wid:default
+    :qid:default
     ";
     lk_query_parse(&mut query,query_str,())?;
     // Optionally with user data such as an argv
@@ -629,7 +629,7 @@ pub mod runtime {
 
     use std::time::Instant;
 
-    use linkspace_common::prelude::WatchIDRef;
+    use linkspace_common::prelude::QueryIDRef;
     use tracing::{debug_span };
 
     use super::*;
@@ -736,7 +736,7 @@ pub mod runtime {
         tracing::debug_span!("{}", name)
     }
 
-    /// close lk_watch watches based on the watch id ':wid:example' in the query.
+    /// close lk_watch watches based on the query id ':qid:example' in the query.
     pub fn lk_stop(rt: &Linkspace, id: &[u8], range: bool) {
         if range {
             rt.0.close_range(id)
@@ -752,21 +752,21 @@ pub mod runtime {
     /**
     continuously process callbacks until:
     - timeout time has passed
-    - wid = Some and wid is matched => if removed 1, if waiting for more -1
-    - wid = None => no more callbacks (1) 
+    - qid = Some and qid is matched at least once => if removed returns 1, if still registered returns -1
+    - qid = None => no more callbacks (1) 
      **/
-    pub fn lk_process_while(lk: &Linkspace,wid:Option<&WatchIDRef>, timeout: Stamp) -> LkResult<isize> {
+    pub fn lk_process_while(lk: &Linkspace,qid:Option<&QueryIDRef>, timeout: Stamp) -> LkResult<isize> {
         let timeout = (timeout != Stamp::ZERO).then(|| Instant::now() + std::time::Duration::from_micros(timeout.get()));
-        _lk_process_while(lk, wid, timeout)
+        _lk_process_while(lk, qid, timeout)
     }
     #[doc(hidden)]
     // simplifies python ffi bindings
-    pub fn _lk_process_while(lk: &Linkspace,wid:Option<&WatchIDRef>, timeout: Option<Instant>) -> LkResult<isize> {
-        lk.0.run_while(timeout,wid)
+    pub fn _lk_process_while(lk: &Linkspace,qid:Option<&QueryIDRef>, timeout: Option<Instant>) -> LkResult<isize> {
+        lk.0.run_while(timeout,qid)
     }
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
         for el in lk.0.dbg_watches().0.entries() {
-            cb(&el.id, Query::from_impl(&*el.query))
+            cb(&el.query_id, Query::from_impl(&*el.query))
         }
     }
     #[derive(Debug)]

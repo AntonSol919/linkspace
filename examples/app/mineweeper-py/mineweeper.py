@@ -28,9 +28,9 @@ class MineWeeper():
     loser = None
     game_round = 0
 
-    def __init__(self,players:list[str],rows:int,cols:int,mine_rate:float,seed:bytes):
+    def __init__(self, players: list[str], rows: int, cols: int, mine_rate: float, seed: bytes) -> object:
         self.players = players
-        self.rows =rows;
+        self.rows = rows;
         self.cols = cols
         self.mine_rate = mine_rate
         self.seed = seed
@@ -47,6 +47,7 @@ class MineWeeper():
         return (player_id,self.players[player_id])
 
     def is_mine(self,row:int,col:int) -> bool:
+
         random.seed(self.seed + row.to_bytes(length=4) + col.to_bytes(length=4))
         return random.random() < self.mine_rate
 

@@ -315,8 +315,8 @@ Depending on the level of 'certainty' you want, you can have everybody acknowled
           if len(acked) == players:
               return False
 
-  lk_watch(lk,lk_query_parse(q,":wid:acks"),collect_acks)
-  lk_process_while(wid="acks")
+  lk_watch(lk,lk_query_parse(q,":qid:acks"),collect_acks)
+  lk_process_while(qid="acks")
   seed = itertools.reduce(lambda xored, hash: xored ^ hash, acked.values())
 
 #+end_src

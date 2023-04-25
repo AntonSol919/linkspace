@@ -1,8 +1,3 @@
-
-
-
-
-
 #!/bin/env python3
 
 import sys, json,re
@@ -51,13 +46,13 @@ common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:[group]","pa
 print(lk_query_print(common_q, True))
 
 # Pull signals the exchange process to start gathering the data from the query.
-# For queries that aren't pulled, wid's only clash _per thread_.
+# For queries that aren't pulled, qid's only clash _per thread_.
 # We are pulling this query, and we might be playing two games at once.
 # By using the game_pkt.hash we ensure its unique enough.
-pull_q = lk_query_push(common_q,"","wid", b"game"+game_pkt.hash)
+pull_q = lk_query_push(common_q,"","qid", b"game"+game_pkt.hash)
 # lk_query_push and *_parse can both achieve the same result.
 # The equivalent in lk_query_parse would be:
-# pull_q = lk_query_parse(common_q,":wid:game[hash]", pkt=game_pkt)
+# pull_q = lk_query_parse(common_q,":qid:game[hash]", pkt=game_pkt)
 # Sometimes one is more convenient than the other.
 
 # Signal the exchange process to gather the relevant packets.
@@ -146,7 +141,7 @@ while game.print_game_state():
             print("Cheating",game.is_mine(int(row),int(col)))
             if "y" in input("?"):
                 lk_save(lk,pkt)
-                prev_ptr = Link("prev",pkt.hash)
+                prev_ptr = Link("prev",pkt.hash,True)
             # lk_process updates our database pointer to the latest packet
             # and runs any callbacks setup with lk_watch.
             # In this case there are none.
@@ -157,8 +152,8 @@ while game.print_game_state():
             print(e)
     else:
         print("Waiting")
-        # A watch always requires a wid. You can overwrite and remove the callback with this wid. 
-        q = lk_query_push(q,"","wid","move")
+        # When using a query in lk_watch, the query requires a qid. Using this qid you can overwrite or remove the callback. 
+        q = lk_query_push(q,"","qid","move")
 
         # Processing packets for a query that we haven't received but are expecting is done with lk_watch.
         # By default lk_watch also iterates over the packets we already received and are in the database.
@@ -178,4 +173,4 @@ while game.print_game_state():
         # Our case is relatively simple.
         # There is only one watch, and only one reason for it to be done.
         # The current player made a move, and we can continue to the next round
-        lk_process_while(lk,wid=b"move")
+        lk_process_while(lk,qid=b"move")

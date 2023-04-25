@@ -20,20 +20,26 @@ use crate::{
     prelude::{Bound, Query},
 };
 
-pub type WatchID = Vec<u8>;
-pub type WatchIDRef = [u8];
-pub type WatchIDExpr = TypedABE<Vec<u8>>;
+pub type QueryID = Vec<u8>;
+pub type QueryIDRef = [u8];
+pub type QueryIDExpr = TypedABE<Vec<u8>>;
 
 /// [[WatchEntry]] with no associated context
 pub type BareWatch = WatchEntry<()>;
 #[thread_local]
-static ENTRY_ID:Cell<usize>=Cell::new(0);
+static WATCH_ID:Cell<usize>=Cell::new(0);
+
+#[derive(Copy,Clone)]
+pub struct WatchStatus{
+    pub watch_id : usize,
+    pub nth_query: u32
+}
 
 #[derive(Debug)]
 /// Stored predicates, predicate state, identity, and associated ctx \<C\> ( usually a callback )
 pub struct WatchEntry<C> {
-    pub entry_id: usize,
-    pub id: WatchID,
+    pub watch_id: usize,
+    pub query_id: QueryID,
     pub tests: Vec<Box<dyn PktStreamTest>>,
     pub nth_query: u32,
     pub i_query: TestSet<u32>,
@@ -46,8 +52,11 @@ pub struct WatchEntry<C> {
     pub span: tracing::Span,
 }
 impl<C> WatchEntry<C> {
+    pub fn status(&self) -> WatchStatus{
+        WatchStatus { watch_id: self.watch_id, nth_query:self.nth_query }
+    }
     pub fn new(
-        id: WatchID,
+        id: QueryID,
         query: Query,
         nth_query: u32,
         ctx: C,
@@ -77,8 +86,8 @@ impl<C> WatchEntry<C> {
         ensure!(i_new.has_any(), "watch budget empty");
         ensure!(i_query.info(nth_query).val.is_some(), "watch budget empty");
         Ok(WatchEntry {
-            entry_id: ENTRY_ID.update(|i| i.saturating_add(1)),
-            id,
+            watch_id: WATCH_ID.update(|i| i.saturating_add(1)),
+            query_id: id,
             query: Box::new(query),
             tests,
             recv_bounds,
@@ -93,9 +102,9 @@ impl<C> WatchEntry<C> {
     }
     pub fn map<N>(self, new_ctx: N) -> (C, WatchEntry<N>) {
         let WatchEntry {
-            entry_id,
+            watch_id,
             tests,
-            id,
+            query_id: id,
             query,
             ctx,
             span,
@@ -109,9 +118,9 @@ impl<C> WatchEntry<C> {
         (
             ctx,
             WatchEntry {
-                entry_id,
+                watch_id,
                 tests,
-                id,
+                query_id: id,
                 query,
                 ctx: new_ctx,
                 span,
@@ -178,10 +187,10 @@ impl<C> Default for Matcher<C> {
     }
 }
 impl<C> Matcher<C> {
-    pub fn get(&self, id: &WatchIDRef) -> Option<&WatchEntry<C>>{
+    pub fn get(&self, id: &QueryIDRef) -> Option<&WatchEntry<C>>{
         self
             .watch_entries
-            .binary_search_by_key(&id, |e| &e.id).ok().and_then(|i|self.watch_entries.get(i))
+            .binary_search_by_key(&id, |e| &e.query_id).ok().and_then(|i|self.watch_entries.get(i))
     }
     pub fn register(&mut self, watch_e: WatchEntry<C>) -> Option<WatchEntry<C>> {
         let ok = watch_e.recv_bounds.high > linkspace_pkt::now().get();
@@ -189,7 +198,7 @@ impl<C> Matcher<C> {
         match (
             ok,
             self.watch_entries
-                .binary_search_by_key(&watch_e.id.as_ref(), |v| &v.id),
+                .binary_search_by_key(&watch_e.query_id.as_ref(), |v| &v.query_id),
         ) {
             (true, Ok(i)) => Some(::std::mem::replace(&mut self.watch_entries[i], watch_e)),
             (false, Ok(i)) => Some(self.watch_entries.remove(i)),
@@ -202,13 +211,13 @@ impl<C> Matcher<C> {
     }
     pub fn deregister(
         &mut self,
-        id: &WatchIDRef,
+        id: &QueryIDRef,
         range: bool,
         mut on_drop: impl FnMut(WatchEntry<C>),
     ) -> usize {
         match self
             .watch_entries
-            .binary_search_by_key(&id, |e| &e.id)
+            .binary_search_by_key(&id, |e| &e.query_id)
         {
             Ok(i) => {
                 if !range {
@@ -218,7 +227,7 @@ impl<C> Matcher<C> {
                 } else {
                     let c = self.watch_entries[i..]
                         .iter()
-                        .take_while(|v| v.id.starts_with(id))
+                        .take_while(|v| v.query_id.starts_with(id))
                         .count();
                     for w in self.watch_entries.drain(i..c + i) {
                         on_drop(w)

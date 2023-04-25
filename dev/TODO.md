@@ -23,7 +23,7 @@
 
 # API updates
 
-- lk_pull default watch id == domain/group.
+- lk_pull default query id == domain/group.
 - Add custom ABE callback for a user defined scope
 - Add FilterScope 'scope' that errors on seing a specific func/eval to, for example, prevent readhash and conf
 
@@ -56,7 +56,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 Probably want a non-borrow-lock solution.
 instead of a cmd queue we could do a 'close' as
 WatchEntry{ update_now: RefCell<Result<(),Option<Box<WatchEntry>>>>> ...} and check update_now after pkt_handle is complete
-must clarify nested watch_id open semantics.
+must clarify nested query open semantics.
 - DGPDExpr should impl ABEValidator and be split up into two types. One where the spath length is know and one where it can be dynamic
 - PktPredicates.index(RuleType) -> &mut dyn FieldPred
 - :mode:hash-* iteration should use uint_set_info

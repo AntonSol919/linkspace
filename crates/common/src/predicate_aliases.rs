@@ -55,11 +55,11 @@ pub struct PredicateAliases {
     pub unsigned: bool,
 
     #[clap(long)]
-    /// Add :wid option (generates wid)
+    /// Add :qid option (generates qid)
     pub watch: bool,
     #[clap(long)]
-    /// set :wid option (implies --watch)
-    pub wid: Option<AnyABE>,
+    /// set :qid option (implies --watch)
+    pub qid: Option<AnyABE>,
     #[clap(long)]
     /// Add :follow option
     pub follow: bool,
@@ -82,7 +82,7 @@ impl PredicateAliases {
             max_index,
             max_new,
             watch,
-            wid,
+            qid,
             follow,
             ttl,
         } = self;
@@ -107,8 +107,8 @@ impl PredicateAliases {
         let new = new.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
         let log = index.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
 
-        let watch = wid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
-            .map(|v| abev!( : (KnownOptions::Wid.to_string()) : +(v)).into());
+        let watch = qid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
+            .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)).into());
 
         let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}).into());
 

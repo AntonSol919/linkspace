@@ -84,7 +84,7 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
 
 
 /// It is up to the caller to ensure 'lk_process' is called accodingly. Impl [PktHandler::stopped] to capture the timeout event.
-pub fn lk_status_poll(lk:&Linkspace,wid:&[u8],status:LkStatus, d_timeout:Stamp, mut cb: impl PktHandler + 'static) -> LkResult<bool>{
+pub fn lk_status_poll(lk:&Linkspace,qid:&[u8],status:LkStatus, d_timeout:Stamp, mut cb: impl PktHandler + 'static) -> LkResult<bool>{
     let span = debug_span!("status_poll",?status,?d_timeout);
     let _ = span.enter();
     let mut ok = false;
@@ -113,7 +113,7 @@ pub fn lk_status_poll(lk:&Linkspace,wid:&[u8],status:LkStatus, d_timeout:Stamp, 
     query = lk_query_push(query, "data_size", ">", &*U16::ZERO)?;
     query = lk_query_push(query, "links_len", ">", &*U16::ZERO)?;
     query = lk_query_push(query, "recv", "<", &*wait_until)?;
-    query = lk_query_push(query, "", "wid", wid)?;
+    query = lk_query_push(query, "", "qid", qid)?;
     lk_watch2(lk, &query, cb,span)?;
     Ok(ok)
 }
@@ -153,7 +153,7 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
     q = lk_query_push(q, "prefix", "=", prefix.spath_bytes())?;
     // We only care about new packets. Worst case a request was received and timeout between our init and this cb.
     q = lk_query_push(q, "i_db", "<", &*U32::ZERO)?;
-    q = lk_query_push(q, "", "wid", &[b"status-update" as &[u8],&*now()].concat())?;
+    q = lk_query_push(q, "", "qid", &[b"status-update" as &[u8],&*now()].concat())?;
     lk_watch2(&lk, &q, cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
         let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype};
         let p = pkt.get_ipath();

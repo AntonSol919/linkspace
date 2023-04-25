@@ -6,7 +6,7 @@ lk_process(lk)
 
 q = lk_query()
 lk_query_parse(q,"""
-:wid:test
+:qid:test
 :mode:log-asc
 i_db:<:[u32:0]
 """)
