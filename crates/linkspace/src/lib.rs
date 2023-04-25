@@ -575,7 +575,7 @@ pub mod key {
     use super::LkResult;
     use linkspace_common::identity;
 
-    pub fn lk_keystr(key: &SigningKey, password: &[u8]) -> String {
+    pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
         identity::encrypt(
             key,
             password,
@@ -664,8 +664,9 @@ pub mod runtime {
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
         linkspace_common::core::env::write_trait::save_pkts(&mut lk.0.get_writer(), pkts).map(|(i,_)|i)
     }
-    /// [lk_watch] but only for currently indexed packets. Don't forget to [lk_process]
-    /// Terminates early when `cb` returns false
+    /// Run callback for every match for query in the database.
+    /// Stops early if the callback returns False.
+
     pub fn lk_get_all(
         lk: &Linkspace,
         query: &Query,
@@ -683,13 +684,13 @@ pub mod runtime {
         Ok(c)
     }
 
-    /// get a single packet. Don't forget to [lk_process]
+    /// get the first result from the database matching the query.
     pub fn lk_get(lk: &Linkspace, query: &Query) -> LkResult<Option<NetPktBox>> {
         lk_get_ref(lk, query, &mut |v| v.as_netbox())
     }
-    /** read a single packet mmap-ed packet. Don't forget to [lk_process]
+    /** read a single packet mmap-ed packet. 
     This means that [NetPkt::net_header_mut] is unavailable.
-    You can wrap it in a [crate::misc::ReroutePkt] to change this or [NetPkt::as_netbox] to allocate and mutate.
+    To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
     **/
     pub fn lk_get_ref<A>(
         lk: &Linkspace,
@@ -703,17 +704,17 @@ pub mod runtime {
         Ok(opt_pkt.map(|v| (cb)(v)))
     }
     /**
-    watch packets matching the query - both already in the db and new packets on arrival
-
-    Calls `cb` for each matching packet.
-    If the `query` contains the id option ( e.g. ':wid:example' ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    Before returning, calls cb for every packet in the database.
+    Then registers the query under its 'qid' option ( .e.g. set by lk_query_parse(q,":qid:myqid) )
+    During a [[lk_process]] or [[lk_process_while]] call,
+    for every new packet matching the query, runs the callback. 
+    
     The watch is dropped when
     - the cb returns 'break' ( usually false )
     - [[lk_stop]] is called with the matching id
     - the predicate set will never match again ( 'i' counters and recv )
 
-    returns the number matches in the local index.
-    i.e. the number of times cb was called immediatly.
+    returns the number of matches in the local database.
     **/
     pub fn lk_watch(lk: &Linkspace, query: &Query, cb: impl PktHandler + 'static) -> LkResult<u32> {
         lk_watch2(lk, query, cb, debug_span!("lk_watch - (untraced)"))
@@ -909,7 +910,7 @@ pub mod varctx {
                 if create {
                     use super::key::*;
                     let key = lk_keygen();
-                    let enckey = super::key::lk_keystr(&key, &password);
+                    let enckey = super::key::lk_enckey(&key, &password);
                     lns::setup_special_keyclaim(&linkspace.0, name, &enckey, false)?;
                     Ok(key)
                 } else {

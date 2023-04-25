@@ -162,8 +162,8 @@ pub fn lk_keygen() -> SigningKey {
     SigningKey(linkspace_rs::key::lk_keygen())
 }
 #[pyfunction]
-pub fn lk_keystr(key: &SigningKey, password: &[u8]) -> String {
-    linkspace_rs::key::lk_keystr(&key.0, password)
+pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
+    linkspace_rs::key::lk_enckey(&key.0, password)
 }
 #[pyfunction]
 pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<SigningKey> {
@@ -369,7 +369,6 @@ pub fn lk_get(lk: &Linkspace, query: &Query) -> anyhow::Result<Option<Pkt>> {
     linkspace_rs::runtime::lk_get_ref(&lk.0, &query.0, &mut |pkt| Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
-// Returning an iterator would force us to keep the readtxn open
 pub fn lk_get_all(
     py: Python,
     lk: &Linkspace,
@@ -434,6 +433,13 @@ pub fn lk_process_while(
         if result != 0 || Some(check_at) ==  until { return Ok(result)}
     }
 }
+
+#[pyfunction]
+#[pyo3(signature =(lk,id,range=False))]
+pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
+    linkspace_rs::runtime::lk_stop(&lk.0, id, range)
+}
+
 #[pyfunction]
 pub fn lk_status_set(
     lk: &Linkspace,
@@ -548,7 +554,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_write, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_keygen, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_keystr, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_enckey, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_keyopen, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_eval, m)?)?;
