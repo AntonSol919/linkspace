@@ -176,14 +176,14 @@ fid! {[
     (DataSizeF,b'B',"data_size",PointTypeFlags::DATA),
     (PathF,b'p',"path",PointTypeFlags::LINK),
     (IPathF,b'P',"ipath",PointTypeFlags::LINK),
-    (PathComp0F,b'0',"comp0",PointTypeFlags::LINK),
-    (PathComp1F,b'1',"comp1",PointTypeFlags::LINK),
-    (PathComp2F,b'2',"comp2",PointTypeFlags::LINK),
-    (PathComp3F,b'3',"comp3",PointTypeFlags::LINK),
-    (PathComp4F,b'4',"comp4",PointTypeFlags::LINK),
-    (PathComp5F,b'5',"comp5",PointTypeFlags::LINK),
-    (PathComp6F,b'6',"comp6",PointTypeFlags::LINK),
-    (PathComp7F,b'7',"comp7",PointTypeFlags::LINK),
+    (PathComp0F,b'0',"path0",PointTypeFlags::LINK),
+    (PathComp1F,b'1',"path1",PointTypeFlags::LINK),
+    (PathComp2F,b'2',"path2",PointTypeFlags::LINK),
+    (PathComp3F,b'3',"path3",PointTypeFlags::LINK),
+    (PathComp4F,b'4',"path4",PointTypeFlags::LINK),
+    (PathComp5F,b'5',"path5",PointTypeFlags::LINK),
+    (PathComp6F,b'6',"path6",PointTypeFlags::LINK),
+    (PathComp7F,b'7',"path7",PointTypeFlags::LINK),
     (DataF,b'b',"data",PointTypeFlags::DATA)
 ]}
 
@@ -289,35 +289,35 @@ field_ptr!([
     (PathComp0F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp0()),
+        .path0()),
     (PathComp1F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp1()),
+        .path1()),
     (PathComp2F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp2()),
+        .path2()),
     (PathComp3F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp3()),
+        .path3()),
     (PathComp4F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp4()),
+        .path4()),
     (PathComp5F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp5()),
+        .path5()),
     (PathComp6F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp6()),
+        .path6()),
     (PathComp7F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()
-        .comp7()),
+        .path7()),
     (VarNetFlagsF, NetFlags, |pkt: &'o T| &pkt
         .net_header_ref()
         .flags),

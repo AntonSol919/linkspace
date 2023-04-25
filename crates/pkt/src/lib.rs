@@ -242,7 +242,7 @@ where
         self.tail().map(|v| v.ipath)
     }
 
-    fn spath(&self) -> Option<&SPath> {
+    fn path(&self) -> Option<&SPath> {
         self.tail().map(|v| v.ipath.spath())
     }
 
@@ -263,7 +263,7 @@ where
     }
 
     fn get_spath(&self) -> &SPath {
-        self.spath().unwrap_or_else(|| SPath::empty())
+        self.path().unwrap_or_else(|| SPath::empty())
     }
 
     fn get_data_str(&self) -> Result<&str, core::str::Utf8Error> {

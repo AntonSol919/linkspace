@@ -286,39 +286,39 @@ impl IPath {
     #[inline(always)]
     pub fn comp(&self, i: usize) -> &[u8] {
         static COMPS: [fn(&IPath) -> &[u8]; 8] = [
-            IPath::comp0,
-            IPath::comp1,
-            IPath::comp2,
-            IPath::comp3,
-            IPath::comp4,
-            IPath::comp5,
-            IPath::comp6,
-            IPath::comp7,
+            IPath::path0,
+            IPath::path1,
+            IPath::path2,
+            IPath::path3,
+            IPath::path4,
+            IPath::path5,
+            IPath::path6,
+            IPath::path7,
         ];
         COMPS[i](self)
     }
-    pub const fn comp0(&self) -> &[u8] {
+    pub const fn path0(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[0].first()
     }
-    pub const fn comp1(&self) -> &[u8] {
+    pub const fn path1(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[1].first()
     }
-    pub const fn comp2(&self) -> &[u8] {
+    pub const fn path2(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[2].first()
     }
-    pub const fn comp3(&self) -> &[u8] {
+    pub const fn path3(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[3].first()
     }
-    pub const fn comp4(&self) -> &[u8] {
+    pub const fn path4(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[4].first()
     }
-    pub const fn comp5(&self) -> &[u8] {
+    pub const fn path5(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[5].first()
     }
-    pub const fn comp6(&self) -> &[u8] {
+    pub const fn path6(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[6].first()
     }
-    pub const fn comp7(&self) -> &[u8] {
+    pub const fn path7(&self) -> &[u8] {
         pre_idx_comp(&self.ipath_bytes)[7].first()
     }
 }

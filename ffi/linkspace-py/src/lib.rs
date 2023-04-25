@@ -601,7 +601,7 @@ pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
     if mini{b.b64_mini()} else{b.to_string()}
 }
 #[pyfunction]
-pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
+pub fn path<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
     let path = components
         .iter()?
         .map(|i| i.and_then(PyAny::extract::<&[u8]>))

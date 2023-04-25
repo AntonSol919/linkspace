@@ -75,7 +75,7 @@ class SetupLobby():
                print("Save ok")
                self.host = lk_keypoint(path=lobby_path,links=[Link(self.my_name,key.pubkey)])
                lk_save(lk,self.host)
-               self.lobby_query = lk_query_parse(lobbies_query,"i_branch:=:[u32:0]","path:=:[spath]",pkt=self.host)
+               self.lobby_query = lk_query_parse(lobbies_query,"i_branch:=:[u32:0]","path:=:[path]",pkt=self.host)
                self.stage = "host_await_players"
            elif i >= 0 and i < len(opts):
                

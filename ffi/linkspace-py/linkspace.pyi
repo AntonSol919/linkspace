@@ -31,21 +31,22 @@ class SigningKey:
 class Query: ...
 
 class Pkt:
-    comp0: bytes
-    comp1: bytes
-    comp2: bytes
-    comp3: bytes
-    comp4: bytes
-    comp5: bytes
-    comp6: bytes
-    comp7: bytes
+    ipath: bytes
+    path: bytes
+    path0: bytes
+    path1: bytes
+    path2: bytes
+    path3: bytes
+    path4: bytes
+    path5: bytes
+    path6: bytes
+    path7: bytes
     create: bytes
     data: bytes
     domain: bytes
     group: bytes
     hash: bytes
     hop: bytes
-    ipath: bytes
     links: bytes
     netflags: bytes
     path_len: bytes
@@ -54,7 +55,6 @@ class Pkt:
     pubkey: bytes
     recv: bytes
     signature: bytes
-    spath: bytes
     ubits0: bytes
     ubits1: bytes
     ubits2: bytes
@@ -279,4 +279,4 @@ def lk_read(bytes:bytes,validate:bool=True,allow_private:bool=False) -> tuple[Pk
     """
     ...
 
-def spath(*args, **kwargs) -> Any: ...
+def path(*args, **kwargs) -> Any: ...

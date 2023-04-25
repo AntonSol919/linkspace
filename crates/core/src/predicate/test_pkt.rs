@@ -64,7 +64,7 @@ pub struct SPathPrefix(SPathBuf);
 impl PktStreamTest for SPathPrefix {
     fn test(&self, pkt: &NetPktPtr) -> bool {
         // FIXME: impl ipath starts_with and replace this
-        pkt.spath().map(|p| p.starts_with(&self.0)).unwrap_or(false)
+        pkt.path().map(|p| p.starts_with(&self.0)).unwrap_or(false)
     }
     fn get_field(&self) -> RuleType {
         RuleType::PrefixPath
