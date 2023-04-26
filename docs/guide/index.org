@@ -4,6 +4,7 @@
 #+SETUPFILE: ../utils.org
 #+INCLUDE: "../utils.js" export html 
 
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 
 #+BEGIN_VERSE
@@ -69,7 +70,7 @@ The end of this document contains examples.
 
 
 This guide uses Python and (Bash) CLI snippets.
-You can [[https://antonsol919.github.io/linkspace/download.html][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
+You can [[https://antonsol919.github.io/linkspace/index.html#download][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
 
 ** Building 
 
@@ -1010,7 +1011,7 @@ An exchange process will for instance add a ':boomfilter' only it understands.
 #+begin_example
 hash         - the point hash e.g. \[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]
 group        - group id e.g. \[#:pub\]
-domain       - domain - if fewer then 16 bytes, prepadded with   e.g. \[a:example\]
+domain       - domain - if fewer than 16 bytes, prepadded with   e.g. \[a:example\]
 prefix       - path prefix - only accepts '=' op e.g. /hello/world
 path         - exact path - only accepts '=' op e.g. /hello/world
 pubkey       - public key used to sign point e.g. \[@:me:local\]
@@ -1020,7 +1021,7 @@ links_len    - the number of links in a packet e.g. \[u16:0\]
 data_size    - the byte size of the data field e.g. \[u16:0\]
 recv         - the recv time of a packet e.g. \[now:+1D\]
 i_branch     - total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise e.g. \[u32:0\]
-i_index      - total packets read from local index e.g. \[u32:0\]
+i_db         - total packets read from local instance e.g. \[u32:0\]
 i_new        - total newly received packets e.g. \[u32:0\]
 i            - total matched packets e.g. \[u32:0\]
 hop          - (mutable) number of hops e.g. \[u16:5\]
@@ -1036,7 +1037,7 @@ point_size   - exact point size - (netpkt_size - 32b header - 32b hash) e.g. \[u
 The following options are available
 
 	:mode
-	:watch
+	:qid
 	:follow
 	:notify-close
 
@@ -1052,20 +1053,19 @@ Arguments:
 Options:
   -p, --print-expr               print the query
       --print-text               print in ascii-byte-text format (ABE without '{..}' expressions)
-      --id <ID>                  [default: default]
-      --private                  enable io of linkpoints in [#:0] [env: PRIVATE_GROUP=]
       --mode <MODE>              [default: tree-desc]
+      --private                  enable io of linkpoints in [#:0] [env: LK_PRIVATE=]
   -b, --bare                     
       --index                    only match locally indexed pkts           | i_new:=:{u32:0}
-      --new                      only match new unindexed pkts             | i_index:=:{u32:0}
+      --new                      only match new unindexed pkts             | i_db:=:{u32:0}
       --max <MAX>                match upto max packets.                   | i:<:{u32:max}
       --max-branch <MAX_BRANCH>  match upto max per (dm,grp,path,key) pkts | i:<:{u32:max_branch}
-      --max-index <MAX_INDEX>    match upto max from local index           | i_index:<:{u32:max_index}
+      --max-index <MAX_INDEX>    match upto max from local index           | i_db:<:{u32:max_index}
       --max-new <MAX_NEW>        match upto max unindexed pkts             | i_new:<:{u32:max_new}
       --signed                   match only signed pkts                    | pubkey:>:{@:none}
       --unsigned                 match only unsigned pkts                  | pubkey:=:{@:none}
-      --watch                    Add :watch option
-      --watch-id <WATCH_ID>      set :watch option id (implies --watch)
+      --watch                    Add :qid option (generates qid)
+      --qid <QID>                set :qid option (implies --watch)
       --follow                   Add :follow option
       --ttl <TTL>                add recv:<:{now:+..}
   -h, --help                     Print help
@@ -1280,7 +1280,7 @@ They handle byte values, and you can concatenate them to get their common subset
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
 #+END_VERSE
 linkmail is a app to write messages in a group.
 Note that it will complain if you have not also started an exchange process for the group.
@@ -1303,7 +1303,7 @@ Note that it will complain if you have not also started an exchange process for 
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
 #+END_VERSE
 
 This is a basic domain application example.
@@ -1353,7 +1353,7 @@ It works, but it could be done better by having only a single python instance ru
 :END:
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/exchange
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/exchange
 #+END_VERSE
 
 #+begin_ctabs

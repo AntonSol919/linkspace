@@ -923,6 +923,8 @@
 <a href="#923" id="923">923</a>
 <a href="#924" id="924">924</a>
 <a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1403,7 +1405,7 @@ See guide#ABE to understand its use and indepth explanation.
     group:=:[#:pub]
     domain:=:[a:hello]
     prefix:=:/some/path
-    :wid:default
+    :qid:default
     &quot;;
     lk_query_parse(&amp;mut query,query_str,())?;
     // Optionally with user data such as an argv
@@ -1500,7 +1502,7 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="kw">use </span><span class="kw">super</span>::LkResult;
     <span class="kw">use </span>linkspace_common::identity;
 
-    <span class="kw">pub fn </span>lk_keystr(key: <span class="kw-2">&amp;</span>SigningKey, password: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+    <span class="kw">pub fn </span>lk_enckey(key: <span class="kw-2">&amp;</span>SigningKey, password: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
         identity::encrypt(
             key,
             password,
@@ -1554,7 +1556,7 @@ See guide#ABE to understand its use and indepth explanation.
 
     <span class="kw">use </span>std::time::Instant;
 
-    <span class="kw">use </span>linkspace_common::prelude::WatchIDRef;
+    <span class="kw">use </span>linkspace_common::prelude::QueryIDRef;
     <span class="kw">use </span>tracing::{debug_span };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1589,32 +1591,33 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="kw">pub fn </span>lk_save_all(lk: <span class="kw-2">&amp;</span>Linkspace, pkts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt]) -&gt; std::io::Result&lt;usize&gt; {
         linkspace_common::core::env::write_trait::save_pkts(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.get_writer(), pkts).map(|(i,<span class="kw">_</span>)|i)
     }
-    <span class="doccomment">/// [lk_watch] but only for currently indexed packets. Don&#39;t forget to [lk_process]
-    /// Terminates early when `cb` returns false
+    <span class="doccomment">/// Run callback for every match for the query in the database.
+    /// Break early if the callback returns true. 
+    /// If break =&gt; number of matches
+    /// If no break ( cb only returned false ) =&gt; -1 * Number of matches
     </span><span class="kw">pub fn </span>lk_get_all(
         lk: <span class="kw-2">&amp;</span>Linkspace,
         query: <span class="kw-2">&amp;</span>Query,
         cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt) -&gt; bool,
-    ) -&gt; LkResult&lt;u32&gt; {
+    ) -&gt; LkResult&lt;i32&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>c = <span class="number">0</span>;
         <span class="kw">let </span>r = lk.<span class="number">0</span>.get_reader();
         <span class="kw">let </span>mode = query.<span class="number">0</span>.get_mode()<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>breaks = <span class="bool-val">false</span>;
         <span class="kw">for </span>p <span class="kw">in </span>r.query(mode, <span class="kw-2">&amp;</span>query.<span class="number">0</span>.predicates, <span class="kw-2">&amp;mut </span>c)<span class="question-mark">? </span>{
-            <span class="kw">let </span>cont = (cb)(<span class="kw-2">&amp;</span>p);
-            <span class="kw">if </span>!cont {
-                <span class="kw">break</span>;
-            }
+            breaks = (cb)(<span class="kw-2">&amp;</span>p);
+            <span class="kw">if </span>breaks{<span class="kw">break</span>}
         }
-        <span class="prelude-val">Ok</span>(c)
+        <span class="prelude-val">Ok</span>(c <span class="kw">as </span>i32 * <span class="kw">if </span>breaks { <span class="number">1 </span>} <span class="kw">else </span>{ -<span class="number">1</span>} )
     }
 
-    <span class="doccomment">/// get a single packet. Don&#39;t forget to [lk_process]
+    <span class="doccomment">/// get the first result from the database matching the query.
     </span><span class="kw">pub fn </span>lk_get(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query) -&gt; LkResult&lt;<span class="prelude-ty">Option</span>&lt;NetPktBox&gt;&gt; {
         lk_get_ref(lk, query, <span class="kw-2">&amp;mut </span>|v| v.as_netbox())
     }
-    <span class="doccomment">/** read a single packet mmap-ed packet. Don&#39;t forget to [lk_process]
+    <span class="doccomment">/** read a single packet mmap-ed packet. 
     This means that [NetPkt::net_header_mut] is unavailable.
-    You can wrap it in a [crate::misc::ReroutePkt] to change this or [NetPkt::as_netbox] to allocate and mutate.
+    To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
     **/
     </span><span class="kw">pub fn </span>lk_get_ref&lt;A&gt;(
         lk: <span class="kw-2">&amp;</span>Linkspace,
@@ -1628,17 +1631,17 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="prelude-val">Ok</span>(opt_pkt.map(|v| (cb)(v)))
     }
     <span class="doccomment">/**
-    watch packets matching the query - both already in the db and new packets on arrival
-
-    Calls `cb` for each matching packet.
-    If the `query` contains the id option ( e.g. &#39;:wid:example&#39; ) the `cb` is also called for all new packets during [[lk_process]] and [[lk_process_while]].
+    Before returning, calls cb for every packet in the database.
+    Then registers the query under its &#39;qid&#39; option ( .e.g. set by lk_query_parse(q,&quot;:qid:myqid) )
+    During a [[lk_process]] or [[lk_process_while]] call,
+    for every new packet matching the query, runs the callback. 
+    
     The watch is dropped when
     - the cb returns &#39;break&#39; ( usually false )
     - [[lk_stop]] is called with the matching id
     - the predicate set will never match again ( &#39;i&#39; counters and recv )
 
-    returns the number matches in the local index.
-    i.e. the number of times cb was called immediatly.
+    returns the number of matches in the local database.
     **/
     </span><span class="kw">pub fn </span>lk_watch(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query, cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>) -&gt; LkResult&lt;u32&gt; {
         lk_watch2(lk, query, cb, <span class="macro">debug_span!</span>(<span class="string">&quot;lk_watch - (untraced)&quot;</span>))
@@ -1660,7 +1663,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="macro">tracing::debug_span!</span>(<span class="string">&quot;{}&quot;</span>, name)
     }
 
-    <span class="doccomment">/// close lk_watch watches based on the watch id &#39;:wid:example&#39; in the query.
+    <span class="doccomment">/// close lk_watch watches based on the query id &#39;:qid:example&#39; in the query.
     </span><span class="kw">pub fn </span>lk_stop(rt: <span class="kw-2">&amp;</span>Linkspace, id: <span class="kw-2">&amp;</span>[u8], range: bool) {
         <span class="kw">if </span>range {
             rt.<span class="number">0</span>.close_range(id)
@@ -1676,21 +1679,21 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="doccomment">/**
     continuously process callbacks until:
     - timeout time has passed
-    - wid = Some and wid is matched =&gt; if removed 1, if waiting for more -1
-    - wid = None =&gt; no more callbacks (1) 
+    - qid = Some and qid is matched at least once =&gt; if removed returns 1, if still registered returns -1
+    - qid = None =&gt; no more callbacks (1) 
      **/
-    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,wid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>WatchIDRef&gt;, timeout: Stamp) -&gt; LkResult&lt;isize&gt; {
+    </span><span class="kw">pub fn </span>lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,qid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>QueryIDRef&gt;, timeout: Stamp) -&gt; LkResult&lt;isize&gt; {
         <span class="kw">let </span>timeout = (timeout != Stamp::ZERO).then(|| Instant::now() + std::time::Duration::from_micros(timeout.get()));
-        _lk_process_while(lk, wid, timeout)
+        _lk_process_while(lk, qid, timeout)
     }
     <span class="attr">#[doc(hidden)]
     </span><span class="comment">// simplifies python ffi bindings
-    </span><span class="kw">pub fn </span>_lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,wid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>WatchIDRef&gt;, timeout: <span class="prelude-ty">Option</span>&lt;Instant&gt;) -&gt; LkResult&lt;isize&gt; {
-        lk.<span class="number">0</span>.run_while(timeout,wid)
+    </span><span class="kw">pub fn </span>_lk_process_while(lk: <span class="kw-2">&amp;</span>Linkspace,qid:<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>QueryIDRef&gt;, timeout: <span class="prelude-ty">Option</span>&lt;Instant&gt;) -&gt; LkResult&lt;isize&gt; {
+        lk.<span class="number">0</span>.run_while(timeout,qid)
     }
     <span class="kw">pub fn </span>lk_list_watches(lk: <span class="kw-2">&amp;</span>Linkspace, cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>Query)) {
         <span class="kw">for </span>el <span class="kw">in </span>lk.<span class="number">0</span>.dbg_watches().<span class="number">0</span>.entries() {
-            cb(<span class="kw-2">&amp;</span>el.id, Query::from_impl(<span class="kw-2">&amp;*</span>el.query))
+            cb(<span class="kw-2">&amp;</span>el.query_id, Query::from_impl(<span class="kw-2">&amp;*</span>el.query))
         }
     }
     <span class="attr">#[derive(Debug)]
@@ -1732,6 +1735,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">pub </span>stopped: B,
     }
     <span class="kw">pub fn </span>nop_stopped(<span class="kw">_</span>: Query, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Linkspace, <span class="kw">_</span>: StopReason, <span class="kw">_</span>: u32, <span class="kw">_</span>: u32) {}
+
     <span class="kw">pub fn </span>cb&lt;A, R, E&gt;(
         <span class="kw-2">mut </span>handle_pkt: A,
     ) -&gt; Cb&lt;
@@ -1834,7 +1838,7 @@ See guide#ABE to understand its use and indepth explanation.
                 <span class="kw">if </span>create {
                     <span class="kw">use </span><span class="kw">super</span>::key::<span class="kw-2">*</span>;
                     <span class="kw">let </span>key = lk_keygen();
-                    <span class="kw">let </span>enckey = <span class="kw">super</span>::key::lk_keystr(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span>password);
+                    <span class="kw">let </span>enckey = <span class="kw">super</span>::key::lk_enckey(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span>password);
                     lns::setup_special_keyclaim(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, name, <span class="kw-2">&amp;</span>enckey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(key)
                 } <span class="kw">else </span>{

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["lk_key","lk_keygen","lk_keyopen","lk_keystr"]};
+window.SIDEBAR_ITEMS = {"fn":["lk_enckey","lk_key","lk_keygen","lk_keyopen"]};
