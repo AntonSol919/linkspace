@@ -360,7 +360,7 @@ fn call_cont_py(
     let as_bool = result.extract::<bool>(py);
     match as_bool {
         Ok(b) => Ok(b) as PyResult<bool>,
-        Err(_) => Ok(true),
+        Err(_) => Ok(false),
     }
 }
 
