@@ -41,3 +41,6 @@ div#text-table-of-contents{
 #consent:checked ~ #consent-ok{
     display:block;
 }
+
+h1.title{ margin-bottom:0px !important;}
+p.subtitle{ color:grey;}

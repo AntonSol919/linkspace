@@ -270,7 +270,7 @@ Or put more practically:
 The users can use a chat app to talk to a group and open a different app to play scrabble with that same group.
 
 Similarly, from a developer's perspective, building something new can be fun.
-Building something new and having to build and manage a server, user accounts, groups, etc is a lot less fun.
+Building something new and having to build and manage servers, user accounts, groups, etc is a lot less fun.
 
 Reason 2: I wanted to provide an alternative answer to a key question that underpins how our society uses digital systems.
 
@@ -289,6 +289,11 @@ Everything is permitted to keep it that way.
 **Lock-in** the users, and **lock-out** any threat to the platform's place in your life.
 
 We should break these locks.
+
+This dynamic is widespread in online system, not just in social media.
+But to be clear, w.r.t. social media.
+Collectively training an algorithm to keep you engaged is a personal choice. It is not the crux of the matter.
+The problem is doing so in a paradigm where a few people have total and unshakable control over the experience of every user.
 
 [Option 2]{#option2}, blockchains.
 They are hyped to be many things, and some people believe blockchains will be the foundation of our digital space going forward.
@@ -320,7 +325,7 @@ digital fiefdoms.
 The step forward is to take full control over who lords over us.
 
 Help speed things along.
-Support the project by registering a LNS name.
+You can support the project by registering a LNS name.
 
 # LNS{#LNS}
 
@@ -340,12 +345,11 @@ It provides a way for naming groups and public keys.
 - @:me:local
 
 The top level names :local, :env, and :pub are special.
-The code to check the validity of a binding works well enough, but there is no automatic lookup.
-I plan to build something similar DNS over UDP.
+The code to check the validity of a binding works well enough, but the overall system is not finished yet.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
 Registrations are open.
 Read this page to find out how.
-    
+
 ### What does a registration do?
 
 It gives you binding right for all sub registration.

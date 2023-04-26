@@ -4,6 +4,7 @@
 #+SETUPFILE: ../utils.org
 #+INCLUDE: "../utils.js" export html 
 
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 
 #+BEGIN_VERSE
@@ -69,7 +70,7 @@ The end of this document contains examples.
 
 
 This guide uses Python and (Bash) CLI snippets.
-You can [[https://antonsol919.github.io/linkspace/download.html][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
+You can [[https://antonsol919.github.io/linkspace/index.html#download][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
 
 ** Building 
 
@@ -1279,7 +1280,7 @@ They handle byte values, and you can concatenate them to get their common subset
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
 #+END_VERSE
 linkmail is a app to write messages in a group.
 Note that it will complain if you have not also started an exchange process for the group.
@@ -1302,7 +1303,7 @@ Note that it will complain if you have not also started an exchange process for 
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
 #+END_VERSE
 
 This is a basic domain application example.
@@ -1352,7 +1353,7 @@ It works, but it could be done better by having only a single python instance ru
 :END:
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/download.html][pkg]] or in repository/examples/exchange
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/exchange
 #+END_VERSE
 
 #+begin_ctabs

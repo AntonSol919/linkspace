@@ -1,31 +1,33 @@
+
 # RFC - Up for debate
 
-- Add query seperator for building multiple? ( multi hash get )
 - Membership convention. How does a domain app get the members of a group? (probably requires admin key)
 - Semantics around removing packets form the local index
-- Add predicate type that fails if the predicate is already constrained.
 - Error packets. (Users must be able to 'fill' a hash entry with a error packet indicating they do not want it.)
 - Integrate/Standardize bloom options for queries
 - Add aliases for predicates such that decimal can be used - translate "log_entry<0"  into "i_log:<:[u32:0]"
 - Specify standardized HTML structure / HTTP URL Request structure.
 - i_branch/i_db/i predicate names 
 - have lk_pull check for exchange status. 
+- Add query seperator for building multiple? ( multi hash get )
+
 
 # Pending
 
 - each instance needs a administrator key. This prevents other programs from messing with LNS names or Group membership. 
-- LNS resolver
+- LNS UDP resolver
+- LNS recursive :local
+- Port anyhost exchange to rust 
 - Create folder import/export example (Update cli/impex)
 - Exchange with bloom filter(+count)
 - status-pull should take an optional max_age - allows checking if any process ever set a status without setting the timeout to max.
 - lk_pull_close 
+- LNS : Drop some roots, remove root names
 
 
 # API updates
 
-- lk_pull default query id == domain/group.
-- Add custom ABE callback for a user defined scope
-- Add FilterScope 'scope' that errors on seing a specific func/eval to, for example, prevent readhash and conf
+-
 
 # Should have
 
@@ -33,6 +35,7 @@
 - Packed queries: They're transmitted as text, but they can be packed into bytes.
 - :end:HASH option.
 - :start:HASH option
+- Add predicate operation type that fails if the predicate is already constrained.
 - notation for "acceptable queries" (see adota for some ideas).
 - inmem store - an old version exists but we need a proper interface over key-value db
 - Compile to WASM
@@ -41,13 +44,14 @@
 Every segment of a tree key could be in a different order. Most important is the public key.
 Having the keys ordered by 'first' might set a bad incentive. 
 - LNS pubkey should have the option to favor one name.
+- Add custom ABE callback for a user defined scope
 - abe : Missing a syntax to select a subset of links. (useful for :follow and lns in general)
 - predicate-aliases impls (--links)
 
 # Internals
 
 - Detangle field_ids abe and ruletype
-- should prob move to libmdbx
+- should prob switch lmdb to libmdbx
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.
 - make testset its own crate ( required for selectlink interface )
 - review all AS casts
@@ -69,5 +73,5 @@ must clarify nested query open semantics.
 detangle --pkt_in & --read_private options.
 
 
-# linkspace-py 
-Copy over documentation from rust
+# linkspace-py
+Improve function documentation

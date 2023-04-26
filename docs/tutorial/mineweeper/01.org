@@ -1,49 +1,47 @@
-#+TITLE:  Playing Mineweeper
+#+TITLE:  MineWeeper 
 #+SUBTITLE: A Linkspace Application Tutorial
 #+AUTHOR: Anton Sol
 
 #+SETUPFILE: ../../utils.org
 #+INCLUDE: "../../utils.js" export html 
 
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../../images/logo2.png">
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
 
 This is the first a series of tutorials to showcase linkspace.
-A proof of concept for a new foundational layer for the digital space.
-Linkspace is a multi-participant protocol where we can talk about data instead of at servers. 
+A protocol designed to be a foundational layer for our digital space.
+Linkspace is a [[https://antonsol919.github.io/linkspace/index.html][supernet]]. With it we can talk about data instead of at servers.
 
-We'll follow Bob in his journey of world domination.
+We'll follow Bob in his journey.
 
 [[../images/bob-hi.png]]
 
-First things first.
-Bob build the greatest and must impressive game ever.  
+He build the greatest and must impressive game ever.  
+Or so he says.
 
-MineWeeper: A Multiplayer minesweeper clone where players take turns. 
+The game is MineWeeper: A Multiplayer minesweeper clone where players take turns. 
 
 To follow along, the follow knowledge/skills are assumed:
 
 - a basic level of python (You know what ~val = int(input("value")~ does)
-- basic devops (a terminal doesn't scare you, worst case you'll google what ~xargs~ is)
+- basic devops (a terminal doesn't scare you, worst case you'll google what ~xargs~ does)
 - the difference between a string and bytes
-- What a cryptographic hash and public keys is 
-- As a plus, it's nice if you've shared in the misery of administrating a server with user accounts/registrations.
+- What a RNG seed is.
+- What a hash and public keys is.
 - Curious enough to hack together tools to do what you want it to do (OpenGPT isn't going to solve this one)
 
 In linkspace the responsibilities for things are different to what you might be used to.
 
 An application developer has drastically fewer responsibilities.
-Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application is dealing with. 
-Instead these things are either irrelevant or are set up once and shared for any and all application in linkspace. 
-The app developer can stick to thinking about, bytes, linking to bytes,
-and reading them either by following the link or reading them by an agreed upon path name.
+Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application has to deal with. 
+The app developer need only think about: bytes, linking to bytes, and reading bytes by link or path name.
 
-This tutorial won't be about users and how they set up their linkspace instance and groups.
-But it does contain a few tips on emulating a local version for testing.
+This tutorial won't be about the user or group setup.
 
 Linkspace aims to be simple compared to what an equivalent stack would look like.
-If your usecase is streaming data between two points over a socket, linkspace will obviously lose that proposition. 
-But the moment it's more than that, such as having 'user' and multiple people interacting, linkspace might be the simplest solution.
+If your usecase is streaming data between two points over a socket, linkspace will obviously lose that proposition.
+But once more things are added to the mix, such as having 'user' and multiple people interacting, linkspace might be the simplest solution.
 
 Note however, I do mean simple, not easy.
 Linkspace is 30 years behind in tooling to make things as easy as the web is today.
@@ -59,7 +57,7 @@ Before you continue, please check this consent form to not hold Bob accountable 
 </fieldset>
 <div id="consent-ok">
 <img src="../images/bob-cheer.png" alt="bob-cheer.png">
-<p>With that piece of vital and productive administration out of the way, let's first take Bob's game for a spin.</p>
+<p>With that piece of vital and productive administration out of the way, let's check out what Bob has build</p>
 </div>
 </div>
 
@@ -74,19 +72,19 @@ However, there is one tiny, little, detail missing.
 It only works in hotseat mode.
 That is, every player has to be at the same keyboard taking turns.
 
-Bob's a friendly guy, but he doesn't want you coming to his house. 
+Bob's a friendly guy, but he doesn't want you coming to his house.
 Instead, he'll build something real quick, such that anybody can play it with their friends over the internet.
 
 No biggy.
 
-But first, how does the game work in hotseat mode:
+First, how does the game work in hotseat mode?
 
 It asks the user for a list of player names.
-Players take turns entering which cell to reveal until someone triggers a Boom! Or no more safe cells exist.
+Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
 
 #+begin_verse
-This post was made for version 0.1.5
-Download and extract the zip.
+This post was made for version 0.2.0
+Download and extract the pkg zip.
 Paths and commands are relative to this directory.
 To give hotseat mineweeper a try: 
 ~python ./app/mineweeper-py/mineweeper-hotseat.py~
@@ -103,7 +101,7 @@ He's waiting for those VC bucks to hire professionals to port it to the next Unr
 #+begin_ctabs
 #+begin_info
 Contrary to Bob, we don't care much for the details of MineWeeper.
-In case you're interested checkout the py tab or ./app/mineweeper-py/mineweeper.py
+In case you're interested checkout the tab or open the code in ./app/mineweeper-py/mineweeper.py
 #+end_info
 
 #+begin_py
@@ -115,7 +113,7 @@ In case you're interested checkout the py tab or ./app/mineweeper-py/mineweeper.
 
 After searching high and low, our friend Bob reaches for enlightenment.
 
-[[../images/bob-enlightend.png/]]
+[[../images/bob-enlightend.png]]
 
 
 He finds linkspace.
@@ -129,50 +127,48 @@ With linkspace:
 - user network/account/group problems can be solved once (hopefully by someone else).
 
 Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
-One day you run out of words to explain a Wi-Fi password doesn't work on your website, no matter how many times they reset their router.
+So Bob likes the idea of building the application experience wigame without being  game without pretending to be a fullstack developer or binding 
 
-So Bob likes the idea of building a user interface, and outsourcing the user support group.
-
-Developing _any_ linkspace system boils down to:
+Developing linkspace system boils down to:
 
 - Gather some bytes you want sent around in a packet.
 - Optionally: set a path, add links to other packets, sign it.
-- Save the result.
+- Save that packet.
 - Build a query: a list of predicates for a packet (e.g. pubkey, hash, path). 
 - Get or watch for those results.
 
-#+begin_verse
-This design is the same for other systems, most notably an exchange process.
-#+end_verse
 
-Bob see's linkspace as a library that moves the bytes around between players.
+For Bob, the linkspace library is an abstraction that moves bytes around between players.
 
 In the linkspace world, Bob's game is a domain application.
 A program providing a friendly interface reading/writing the bytes that the developer wants to be shared around.
 
+#+begin_verse
 When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
-This is done by a linkspace group exchange process.
+This is done by a linkspace group exchange process. A group exchange process is build just like a domain application.
+But its role is to exchange all packets with its group ID to the members that require it.
 More on them another day.
+#+end_verse
 
-Bob's a smart guy.
-He recognizes that his game has two distinct phases. 
+Bob recognizes that his game has two distinct phases.
 
 - Finding the people to start playing it with.
 - Actually taking turns to play the game.
 
 He'll start with 'play the game', and build the lobby system for proposing/joining/starting a game later.
 
-Bob's not set on the details. But it'll probably need:
+He's not set on the details, but every game starts with at least the players knowing:
 
-- A list of (player names, pubkey).
-- A row, column, mine_rate
-- Either the location of every mine, or a seed for an RNG to generate it.
+- a list of (player names, pubkey).
+- number of rows & columns.
+- mine_rate.
+- RNG seed.
 
 #+begin_verse
 In this setup everybody knows the board, but we'll touch on [[Cheating][Cheating]] later.
 #+end_verse
 
-For an initial test, Bob will assume three players agree the following packet started the game.
+For an initial test, Bob will assume three players agreed that the following packet is the start of a game.
 
  # #+BEGIN_SRC bash :session cli0 :exports result :results output verbatim :cache yes
  # cat ../../../examples/private/setup.pkt  | lk p
@@ -203,7 +199,7 @@ data	278
 #+end_example
 
 The data field is just bytes, and Bob decides to encode the fields as JSON.
-A 'seed' field doesn't seem to be necessary, as the hash of the packet can fill the role. 
+A 'seed' field doesn't seem to be necessary, the hash of the packet can fill the role.
 
 #+begin_ctabs
 #+begin_info
@@ -245,20 +241,16 @@ One method to do so is as follows:
 
 * Multiplayer
 
-The general outline will be:
+The outline is as follows:
 
-- open the instance and your key. 
+- open the linkspace instance and a signing key. 
 - read the 'game_pkt' that starts the game by its hash.
 - load the settings, including a list of [player names,pubkeys]
-- A player_turn_pkt is a signed packet with json data containing [x,y] for the cell to reveal.
-- The player_turn_pkt are ordered by having the first link be a pointer to the previous turn.
-  The first player_turn_pkt will have a link back to the game_pkt.
 
-In other words, a turn usually means waiting for a signed packet from the current player to become known.
-
-#+begin_verse
-The best docs are usually [[../cargo-doc/linkspace/index.html][linkspace]].
-#+end_verse
+while not done:
+- Print the state
+- If its our turn, make a choice and save the move info
+- Else wait for the packet encoding the turn from the current player.
 
 #+begin_py
 #+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper-multiplayer.py" src python
@@ -267,26 +259,29 @@ The best docs are usually [[../cargo-doc/linkspace/index.html][linkspace]].
 
 * Cheating
 
-There are basically three ways to deal with cheating.
-Four if you count Bobs stern disapproval as a distinct option
+There are three ways to deal with cheating.
+
+Four if you count Bobs disapproval as an option.
 
 [[../images/bob-angry.png]]
 
-Let's quickly review what is normal today.
+Keep in mind what is normal today.
 
 Opening a game on your phone or browser usually means it connects to a single host.
 This host receives your moves, it checks his local hidden state, and return you a result.
 In one sense this is better, only the host can cheat.
-On the other hand, only the host can cheat, and we wouldn't know about it.
+On the other hand, only the host can cheat and nobody would know about it.
 
 *** Who cares?
 The option you should take by default.
-Most games can be cheated.
-Scrabble or Chess can use helper tools you can't detect, most shooter games have aimbots and 'see-through-walls' cheats.
+Most games _can_ be cheated, so the upside of making it more difficult has its limits.
+
+Scrabble or Chess can use helper tools you can't detect.
+Shooter games have aimbots and 'see-through-walls' cheats.
 
 Most players are not cheaters, even if they could.
 Trusting your peers save a lot of hassle.
-For a game like MineWeeper that's fine.
+For a game like MineWeeper that seems like a good solution.
 
 *** Emulate host/client
 One option is to emulate a host/client setup.
@@ -297,16 +292,19 @@ The host could have their game_pkt contain a link to a datapacket with the game 
 Once the game is done, the host can release the packet and players could check if the host was honest.
 
 *** Rng-esus died for your sins
-There are a number of ways to define a set of rules that make the game random without a 'host'.
+
+There are a number of ways to define a set of rules that make the game random without anyone knowing the full mine map.
+
 There are two obstacles:
 - Agreeing on a random value nobody can tamper with.
 - How to deal with the cell numbers that represent how many mines surround it.
 
-The random number is relatively minor.
-Depending on the level of 'certainty' you want, you can have everybody acknowledge the turn, await those packets and use the combined XOR of ever ack.hash to generate a random val. 
+One option for a random number is relatively simple.
+Every player acknowledges the turn before applying it.
+Once you have every ack packet you can combine the ack.hash generate a random val.
 #+begin_src python
-  # we have to enforce a value for the 'create' field, otherwise others can tweak it in their benefit.
   ack_link = Link("ack",player_turn_pkt.hash)
+  # Its best to enforce a value for the 'create' stamp so there is less ambigiouty on what the 'correct' packet must look like
   ack_pkt = lk_keypoint( create=player_turn_pkt.create, link = [ack_link])~
   acked = dict()
   def collect_acks(ack_pkt):
@@ -321,11 +319,14 @@ Depending on the level of 'certainty' you want, you can have everybody acknowled
 
 #+end_src
 
-That leaves us with the larger issue. Showing a number of surrounding mines, without letting cheaters peek into which ones are non-mines.
+That leaves us with the more difficult issue:
+
+Showing a number of surrounding mines, without letting cheaters peek into which ones are non-mines.
+
 Not impossible, just annoying.
 One solution is adding a 'solver' into game.
-Given the same information as a non-cheating player, it can calculate the probabilities of hidden fields based on the current revealed cells.
-By using a true random seed as shown above, and adjusting for a cell's probability of holding a mine, a un-cheatable game can be made.
+Just like a non-cheater, it can calculate the probabilities of hidden fields based on the revealed cells.
+By using a the random seed as shown above and adjusting for a cell's probability of holding a mine cheating becomes impossible.
 
 * A dose of reality
 
@@ -333,13 +334,14 @@ In the next installment Bob will continue his journey to building the best game 
 This time by building a lobby system so it's actually playable.
 
 In the meantime, a little expectation management is in order.
+
 Various components and systems required for linkspace are still in their early days.
 It Works On My Machine^{tm}.
-Some tools and standards don't exist yet (e.g. Group Membership) or are only partially implemented.
+Some tools and standards don't exist yet or are only partially implemented.
 
 It's a project to rebuild the internet into something better.
-But that means taking 10 steps back before we go forward.
-At version 0.1.5 its reached parity with early 1980s. Email works, but not particularly well.
+That means taking some steps backwards before going forward.
+At version 0.2.0 it has reached parity with early 1980s. Email works, but not particularly well.
 
-However, there are currently no to-do's that would break Bob's program as it is now.
-And every improvement such as, user admin tools, exchange process, etc improve the ease with which users can use a linkspace application.
+That being said, there are currently no breaking changes to Bob's program planned.
+And every improvement to other systems improves the experience of using a linkspace application.

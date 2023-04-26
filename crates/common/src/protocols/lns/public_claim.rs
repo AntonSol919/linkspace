@@ -60,6 +60,7 @@ pub fn walk_live_claims(reader: &ReadTxn, parent:LiveClaim, name_comps: &mut &SP
     predicates.path_len.add(crate::core::prelude::TestOp::Equal, 2);
     let mut claim_votes : LkHashMap<(Option<Claim>,Vec<RecvPkt>)>= Default::default();
     let mut _count = 0;
+    let max_required_votes = (parent.claim.authorities().count()+1)/2;
     for auth in parent.claim.authorities(){
         _count = 0;
         predicates.pubkey = TestSet::new_eq(auth.into());
@@ -68,7 +69,10 @@ pub fn walk_live_claims(reader: &ReadTxn, parent:LiveClaim, name_comps: &mut &SP
                 match vote.get_links().first(){
                     Some(l) if l.tag == VOTE_TAG =>{
                         match claim_votes.entry(l.ptr){
-                            std::collections::hash_map::Entry::Occupied(mut o) => {o.get_mut().1.push(vote.owned());},
+                            std::collections::hash_map::Entry::Occupied(mut o) => {
+                                o.get_mut().1.push(vote.owned());
+                                if o.get().1.len() >= max_required_votes { break};
+                            },
                             std::collections::hash_map::Entry::Vacant(v) =>{
                                 let o_claim = reader.read(&l.ptr)?;
                                 let claim = match o_claim {
