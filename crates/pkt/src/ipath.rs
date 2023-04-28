@@ -256,7 +256,10 @@ impl IPath {
 
     /// component count
     pub const fn path_len(&self) -> &u8 {
-        self.ipath_bytes.first().unwrap_or(&0)
+        match self.ipath_bytes.first(){
+            Some(v) => v,
+            None => &0,
+        }
     }
     pub const fn is_empty(&self) -> bool {
         self.len() == 0

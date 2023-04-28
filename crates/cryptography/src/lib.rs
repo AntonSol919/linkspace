@@ -5,10 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::fmt::Debug;
 
-#[cfg(feature = "keygen")]
 pub mod keygen;
-#[cfg(feature = "keygen")]
-pub use rand;
 
 pub use k256;
 pub use k256::ecdsa::Error;

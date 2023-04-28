@@ -1,31 +1,31 @@
 [package]
 name = "linkspace-pkt"
-version = "0.1.1"
-edition = "2021"
-license = "MPL-2.0"
-authors = ["Azon <AntonSol919@gmail.com>"]
-repository = "https://github.com/AntonSol919/linkspace"
 categories = []
 keywords = ["linkspace"]
 description = "Library for reading and writing linkspace packets"
 
-
-[features]
-default=["serde", "keygen"]
-keygen=["linkspace-cryptography/keygen"]
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
 
 [dependencies]
-static_assertions = "1.1.0"
-auto_impl = "1.0.1"
-linkspace-cryptography = { path ="../cryptography", version = "0.1.0"}
-byte-fmt = { path = "../byte-fmt" , version = "0.1.0"}
-serde = { version = "1.0.131", features = ["derive"], default-features = false, optional = true }
-thiserror = "1.0.31"
-bytes = "1.1.0"
-bitflags = "1.3.2"
+linkspace-cryptography = { path ="../cryptography", version = "0.2.0"}
+byte-fmt = { path = "../byte-fmt" , version = "0.2.0"}
+
+serde.workspace = true
+thiserror.workspace = true
+arrayvec.workspace=true
+anyhow.workspace=true
+static_assertions.workspace=true
+auto_impl.workspace=true
+bytes.workspace=true
+bitflags.workspace=true
+
 triomphe = "0.1.8"
-arrayvec = "0.7.2"
-anyhow = "1.0.69"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.80"

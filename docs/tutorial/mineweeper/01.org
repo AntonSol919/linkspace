@@ -10,8 +10,8 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
 
 This is the first a series of tutorials to showcase linkspace.
-A protocol designed to be a foundational layer for our digital space.
-Linkspace is a [[https://antonsol919.github.io/linkspace/index.html][supernet]]. With it we can talk about data instead of at servers.
+Imagine what you might build if we all hashed, saved, and linked the packets on our networks.
+Linkspace is such a [[https://antonsol919.github.io/linkspace/index.html][supernet]].
 
 We'll follow Bob in his journey.
 
@@ -87,11 +87,11 @@ This post was made for version 0.2.0
 Download and extract the pkg zip.
 Paths and commands are relative to this directory.
 To give hotseat mineweeper a try: 
-~python ./app/mineweeper-py/mineweeper-hotseat.py~
+~python ./examples/mineweeper/mineweeper-hotseat.py~
 #+end_verse
 
 #+begin_py
-#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper-hotseat.py" src python
+#+INCLUDE: "../../../examples/mineweeper/mineweeper-hotseat.py" src python
 #+end_py
 
 Bob's a little disappointed with the graphics.
@@ -105,7 +105,7 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 #+end_info
 
 #+begin_py
-#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper.py" src python
+#+INCLUDE: "../../../examples/mineweeper/mineweeper.py" src python
 #+end_py
 #+end_ctabs
 
@@ -127,7 +127,6 @@ With linkspace:
 - user network/account/group problems can be solved once (hopefully by someone else).
 
 Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
-So Bob likes the idea of building the application experience wigame without being  game without pretending to be a fullstack developer or binding 
 
 Developing linkspace system boils down to:
 
@@ -198,13 +197,13 @@ data	278
 }
 #+end_example
 
-The data field is just bytes, and Bob decides to encode the fields as JSON.
+Bob decides to encode this as JSON.
 A 'seed' field doesn't seem to be necessary, the hash of the packet can fill the role.
 
 #+begin_ctabs
 #+begin_info
 Bob isn't infallible, so in building this he needs to test it locally.
-The ./try-local folder contains two script to create a dummy network.
+The ./emulate folder contains two script to create and connect two instances locally.
 It requires tmux to be installed (available in most package managers)
 #+end_info
 
@@ -212,14 +211,14 @@ It requires tmux to be installed (available in most package managers)
 You can create an instance with a simple exchange process running by starting:
 
 #+begin_src bash
-./try-local/host.session.tmux.sh
+./emulate/host.session.tmux.sh
 #+end_src
 
 
 Open a terminal and execute the following to create additional instances automatically connect.
 
 #+begin_src bash
-./try-local/session.tmux.sh bob #changing this name
+./emulate/session.tmux.sh bob #changing this name
 #+end_src
 
 Finally, we have to create the initial packet and share them.
@@ -245,15 +244,15 @@ The outline is as follows:
 
 - open the linkspace instance and a signing key. 
 - read the 'game_pkt' that starts the game by its hash.
-- load the settings, including a list of [player names,pubkeys]
+- load the settings, including a list of [player names,pubkeys].
 
 while not done:
-- Print the state
-- If its our turn, make a choice and save the move info
-- Else wait for the packet encoding the turn from the current player.
+- Print the state.
+- If its our turn, make a choice and save the move info.
+- Else wait for the current player to make a move.
 
 #+begin_py
-#+INCLUDE: "../../../examples/app/mineweeper-py/mineweeper-multiplayer.py" src python
+#+INCLUDE: "../../../examples/mineweeper/mineweeper-multiplayer.py" src python
 #+end_py
 
 
@@ -281,7 +280,7 @@ Shooter games have aimbots and 'see-through-walls' cheats.
 
 Most players are not cheaters, even if they could.
 Trusting your peers save a lot of hassle.
-For a game like MineWeeper that seems like a good solution.
+For a game like MineWeeper that is enough.
 
 *** Emulate host/client
 One option is to emulate a host/client setup.
@@ -321,12 +320,12 @@ Once you have every ack packet you can combine the ack.hash generate a random va
 
 That leaves us with the more difficult issue:
 
-Showing a number of surrounding mines, without letting cheaters peek into which ones are non-mines.
+Showing the number of mines surrounding a cell, without letting cheaters peek into which ones are non-mines.
 
-Not impossible, just annoying.
-One solution is adding a 'solver' into game.
-Just like a non-cheater, it can calculate the probabilities of hidden fields based on the revealed cells.
-By using a the random seed as shown above and adjusting for a cell's probability of holding a mine cheating becomes impossible.
+One solution is to postpone determining which cell has the mine.
+We have to add a 'solver'.
+Just like a non-cheater, the solver can calculate the probabilities of hidden fields based on the revealed cells.
+With the random seed determined after making a move, and the cell mine probability adjusted for what is already revealed, cheating becomes impossible.
 
 * A dose of reality
 
@@ -341,7 +340,8 @@ Some tools and standards don't exist yet or are only partially implemented.
 
 It's a project to rebuild the internet into something better.
 That means taking some steps backwards before going forward.
-At version 0.2.0 it has reached parity with early 1980s. Email works, but not particularly well.
+At version 0.2.0 its reached the usability of 1980's email.
+It works, but its not pretty nor user friendly.
 
 That being said, there are currently no breaking changes to Bob's program planned.
 And every improvement to other systems improves the experience of using a linkspace application.

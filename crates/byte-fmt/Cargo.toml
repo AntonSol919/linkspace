@@ -1,25 +1,27 @@
 [package]
 name = "byte-fmt"
-version = "0.1.0"
-license = "MPL-2.0"
-edition = "2021"
-homepage = "https://antonsol919.github.io/linkspace/"
-authors = ["Azon <AntonSol919@gmail.com>"]
-repository = "https://github.com/AntonSol919/linkspace"
+version = "0.2.0"
+authors = ["Anton Sol <AntonSol919@gmail.com>"]
 categories = ["encoding","parsing"]
 keywords = ["base64","abe","newtype"]
 description = "B64 and AB newtype for parsing and printing"
 
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+abe = { path = "../abe" , version = "0.2.0"}
 
-abe = { path = "../abe" , version = "0.1.0"}
-serde = { version = "1.0.139", features = ["derive"] }
-base64 = "0.13.0"
-tracing = "0.1.35"
+serde.workspace=true
+base64.workspace=true
+tracing.workspace = true
+
 serde_bytes = "0.11.6"
 ruint = "1.7.0"
 
-[dev-dependencies]
-serde_json = "1.0.82"

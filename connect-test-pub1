@@ -1,0 +1,9 @@
+#!/bin/bash
+source ./activate
+lk init
+echo "Opening key $LK_KEYNAME"
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
+export LK_GROUP=[#:test]
+export SERVER=83.172.162.31:5020
+echo "Connecting to $SERVER"
+exec anyhost.connect.sh

@@ -18,11 +18,12 @@ mod params {
     }
     /// Attempts to decode the encoded string slice.
     pub fn decode_string(encoded: &str) -> Option<Decoded> {
+        use base64::prelude::*;
         let items = encoded.strip_prefix("$argon2d$v=19$")?;
         let mut items_it = items.split("$");
         let options = items_it.next()?;
-        let salt = base64::decode(items_it.next()?).ok()?;
-        let hash = base64::decode(items_it.next()?).ok()?;
+        let salt = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
+        let hash = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
         let mut opt_it = options.split(",").filter_map(|st| st.split_once("="))
             .zip(["m","t","p"])
             .filter(|((kind,_val),expect)| (kind == expect))
@@ -41,7 +42,7 @@ mod params {
 
 
 use argon2::Config;
-use linkspace_cryptography::*;
+use linkspace_cryptography::{* };
 
 pub use linkspace_cryptography::keygen;
 use thiserror::Error;
@@ -62,6 +63,7 @@ pub enum KeyError {
 }
 
 pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> String {
+    use base64::prelude::*;
     let (mem_cost, time_cost) = cost.unwrap_or(DEFAULT_COST);
     let config = Config {
         variant: argon2::Variant::Argon2d,
@@ -72,7 +74,7 @@ pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> S
     let encoded = argon2::hash_encoded(password, &key.pubkey_bytes(), &config).unwrap();
     // This is some dirty work to decode the internal argon representation so we can xor our secret
     let (conf,digest) = encoded.rsplit_once('$').unwrap();
-    let digest = base64::decode(digest).unwrap();
+    let digest = BASE64_STANDARD_NO_PAD.decode(digest).unwrap();
 
     let xored = digest
         .into_iter()
@@ -80,7 +82,7 @@ pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> S
         .map(|(a, b)| a ^ b)
         .collect::<Vec<_>>();
 
-    let encrypted_secret = base64::encode(xored);
+    let encrypted_secret = BASE64_STANDARD_NO_PAD.encode(xored);
     let result = String::from_iter([conf, "$", &*encrypted_secret]);
     if cfg!(debug_assertions) {
         decrypt(&result, password).unwrap();
@@ -136,6 +138,7 @@ pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
 #[test]
 pub fn test_encoding_decoding(){
     fn check_key(i:&str,pass:&[u8]){
+        println!("Checking {i}");
         let key = decrypt(i, pass).unwrap();
         let pubkey = pubkey(i).unwrap();
         let from_key = key.pubkey_bytes();
@@ -143,10 +146,14 @@ pub fn test_encoding_decoding(){
         let st = encrypt(&key, pass, None);
         assert_eq!(i,st)
     }
-    let empty = "$argon2d$v=19$m=16384,t=4,p=1$WXRa3NqtPwBpbyQPhEx1rCaMBKqiUDyZaecjdgIPLbY$EoCRQphpbp05CiLWEVncNE5zEqs4/K6KU2rrCtiSf0Y=";
+    let key = SigningKey::generate();
+    let e = encrypt(&key, b"hello", None);
+    check_key(&e, b"hello");
+
+    let empty = "$argon2d$v=19$m=16384,t=4,p=1$WXRa3NqtPwBpbyQPhEx1rCaMBKqiUDyZaecjdgIPLbY$EoCRQphpbp05CiLWEVncNE5zEqs4/K6KU2rrCtiSf0Y";
     check_key(empty,b"");
-    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0=";
+    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0";
     check_key(hello,b"hello");
-    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0=";
+    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0";
     assert!(decrypt(hello,b"not hello").is_err());
 }

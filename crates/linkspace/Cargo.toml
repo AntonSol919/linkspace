@@ -2,7 +2,7 @@
 name = "linkspace"
 version = "0.2.0"
 edition = "2021"
-authors = ["Azon <AntonSol919@gmail.com>"]
+authors = ["Anton Sol <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
 homepage = "https://antonsol919.github.io/linkspace/"
 documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
@@ -17,7 +17,7 @@ description = "linkspace - a general purpose supernet"
 [features]
 
 [dependencies]
-anyhow = "1.0.69"
+anyhow.workspace=true
 backtrace = "0.3.67"
 linkspace-common = { path = "../common", version = "0.2.0"}
-tracing = "0.1.37"
+tracing.workspace = true

@@ -134,6 +134,9 @@ enum Command {
         #[clap(long)]
         json: bool,
         abe: String,
+        /// Read stdin as argv [0]
+        #[clap(long,default_value_t)]
+        stdin: bool
     },
     /// abe   - eval expression for each pkt from stdin
     #[clap(alias="p",before_long_help=PKT_HELP.to_string())]
@@ -436,9 +439,21 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         )?,
         Command::Watch { watch, write } => watch::watch(common, watch,write)?,
         Command::Filter(filter) => filter::select(common, filter)?,
-        Command::Eval { json, abe } => {
+        Command::Eval { json, abe ,stdin} => {
             let abe = parse_abe(&abe)?;
+
+            use std::io::Read;
+            let mut argv = vec![];
+            let mut bytes = vec![];
+            if stdin{
+                std::io::stdin().read_to_end(&mut bytes)?;
+                tracing::trace!(?bytes);
+                argv.push(bytes.as_slice());
+            }
+            let argv = ArgV::try_fit(&argv).unwrap();
+
             let ctx = common.eval_ctx();
+            let ctx = ctx.scope(EScope(argv));
             let val = eval(&ctx, &abe)?;
             let mut out = std::io::stdout();
             if json {

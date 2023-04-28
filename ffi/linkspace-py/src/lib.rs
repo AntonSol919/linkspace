@@ -12,7 +12,6 @@
 )]
 
 use anyhow::{Context, anyhow};
-use ref_cast::RefCast;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::{Duration, Instant}};
 
 use ::linkspace as linkspace_rs;
@@ -273,7 +272,7 @@ pub fn lk_encode(bytes: &[u8], options: Option<&str>) -> anyhow::Result<String> 
     Ok(linkspace_rs::abe::lk_encode(bytes, options.unwrap_or("")))
 }
 #[pyclass(unsendable)]
-#[derive(Clone, RefCast)]
+#[derive(Clone )]
 #[repr(transparent)]
 pub struct Linkspace(pub(crate) linkspace_rs::Linkspace);
 

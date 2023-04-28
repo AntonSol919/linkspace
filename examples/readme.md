@@ -1,24 +1,17 @@
 # Examples
 
-This folder contains two application examples and a proof of concept group exchange.
-If you got this as the [pkg](https://antonsol919.github.io/linkspace/index.html#download) it comes bundled with the cli and python module.
+## Domain Applications
 
-Try and say hi by opening two shells:
-In the first connect to a test server.
-You'll need `socat` for this (available through most package managers).
+### linkmail
+A TUI to send each other messages.
 
-```bash
-./test-exchange
-```
+### mineweeper (WIP)
+A turn based minesweeper clone.
 
-In the second run
+### imageboard
+Create a collage of images.
 
-```bash
-source ./common
-linkmail.py
-```
+## Group Exchange
+### (anyhost)[./anyhost.exchange]
+A minimal POC server/client for testing.
 
-## Testing locally
-
-- ./try-local/host.session.tmux.sh creates a new instance and start an exchange.
-- ./try-local/session.tmux.sh [NAME] creates a new instance and connect to the host.

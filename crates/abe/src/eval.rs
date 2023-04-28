@@ -1493,7 +1493,7 @@ impl<'o> ArgV<'o>{
 }
 impl<'o> EvalScopeImpl for ArgV<'o>{
     fn about(&self) -> (String, String) {
-        ("user input list".into(), "Provide values, access with {0} {1} .. {7} ".into())
+        ("user input list".into(), "Provide values, access with [0] [1] .. [7] ".into())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([

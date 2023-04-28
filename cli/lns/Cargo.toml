@@ -1,12 +1,16 @@
 [package]
 name = "linkspace-lns"
-version = "0.1.0"
-edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
 
 [dependencies]
 
 linkspace-common = { path = "../../crates/common" }
 linkspace = { path = "../../crates/linkspace"}
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing-subscriber = {workspace=true,features=["env-filter"]}

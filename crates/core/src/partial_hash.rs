@@ -9,9 +9,9 @@ use crate::consts::B64_HASH_LENGTH;
 pub use arrayvec;
 use arrayvec::ArrayString;
 use linkspace_pkt::{base64_crate, LkHash};
-use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt, str::FromStr};
 use thiserror::Error;
+use base64_crate::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -30,7 +30,7 @@ b64 decoding rules regarding 1 or 2 characters are ignored
 */
 
 #[derive(
-    Default, Debug, Clone, Copy, Eq, Hash, PartialEq, Serialize, Deserialize, PartialOrd, Ord,
+    Default, Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord,
 )]
 
 pub struct PartialHash(pub ArrayString<B64_HASH_LENGTH>);
@@ -43,12 +43,7 @@ impl PartialHash {
             return None;
         }
         let mut res = [0; 32];
-        base64_crate::decode_config_slice(
-            self.0.as_bytes(),
-            base64_crate::URL_SAFE_NO_PAD,
-            res.as_mut_slice(),
-        )
-        .ok()?;
+        BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(self.0.as_bytes(), res.as_mut_slice()).ok()?;
         Some(res.into())
     }
     pub fn as_str(&self) -> &str {
@@ -72,12 +67,9 @@ impl PartialHash {
         let mut res = [0; 32];
         let mut st = [b'A'; B64_HASH_LENGTH];
         st[0..self.0.as_bytes().len()].copy_from_slice(self.0.as_bytes());
-        base64_crate::decode_config_slice(
-            unsafe { std::str::from_utf8_unchecked(&st) },
-            base64_crate::URL_SAFE_NO_PAD,
-            res.as_mut_slice(),
-        )
-        .unwrap();
+
+        let st = unsafe { std::str::from_utf8_unchecked(&st) };
+        BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(st,res.as_mut_slice()).unwrap();
         res
     }
     pub fn try_from_strlike(v: impl AsRef<[u8]>) -> Result<PartialHash, Error> {
@@ -87,8 +79,8 @@ impl PartialHash {
         }
         let mut b = [b'A'; B64_HASH_LENGTH];
         b[..b64.len()].copy_from_slice(b64);
-        // TODO , just  check character table ( hidden by b64 crate  -.-')
-        base64_crate::decode_config(&b[0..b64.len() & !3usize], base64_crate::URL_SAFE_NO_PAD)?;
+        // TODO , just  check character table 
+        BASE64_URL_SAFE_NO_PAD.decode(&b[0..b64.len() & !3usize])?;
         let mut arr = ArrayString::from_byte_string(&b).unwrap();
         arr.truncate(b64.len());
         Ok(PartialHash(arr))

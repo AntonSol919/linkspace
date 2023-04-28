@@ -7,7 +7,7 @@
 use std::time::Duration;
 
 use crate::{prelude::*, protocols::unicast_group};
-use anyhow::ensure;
+use anyhow::{ensure };
 pub const HANDSHAKE_D: Domain = ab(b"\xFFhandshake");
 
 pub const ID_SENTINAL_SPATH : IPathC<17>= ipath1(b"sentinal");
@@ -68,6 +68,7 @@ pub fn phase1_server_signs(
     };
     valid_stamp_range(*theirs.get_create_stamp(), max_diff_sec)?;
     let our_group = unicast_group(their_key, id.pubkey().into());
+    ensure!(our_group != PRIVATE,"Connecting to yourself (using the same key) is currently not supported");
     let links = [Link::new("auth", *theirs.hash())];
     Ok(Phase1(
         keypoint(

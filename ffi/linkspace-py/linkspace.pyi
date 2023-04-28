@@ -30,6 +30,9 @@ class SigningKey:
     pubkey: bytes
 class Query: ...
 
+class LkInfo:
+    dir : str
+
 class Pkt:
     path: bytes
     """The path bytes in spath encoding format. Use path0 up to path7 or path_list() to get each components."""
@@ -77,7 +80,7 @@ def lk_datapoint(data:bytes) -> Pkt: ...
 def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
                  links:list[Link] | None=None,data:bytes |str| None=None,
                  create:bytes | None =None) -> Pkt: ...
-def lk_keypoint(key: SigningKey,
+def linkmail_keypoint(key: SigningKey,
                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
@@ -135,7 +138,8 @@ def lk_get_all(lk:Linkspace, query:Query,cb:Callable[[Pkt],bool|None]) -> int:
 def lk_hash_query(hash:str|bytes) -> Query:
     """Shorthand for building a query that matches a single hash"""
     ...
-def lk_info(lk:Linkspace) -> dict:
+
+def lk_info(lk:Linkspace) -> LkInfo:
     """Misc info about the linkspace instance"""
     ...
 

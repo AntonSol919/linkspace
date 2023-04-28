@@ -9,8 +9,7 @@
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 A supernet is ideal when multiple participants want to own and administrate (part of) a digital system.
-This is in contrast to current technologies where users contact a single host,
-which acts as de facto administrator by virtue of hosting the data.
+This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
 
 [Linkspace](https://antonsol919.github.io/linkspace/index.html) is supernet with the following highlights:
 
@@ -27,5 +26,5 @@ The packet and database layout are stable, but some things are incomplete or und
 
 Any feedback, questions, and ideas for improvements are welcome!
 
-Of course the preferred way is to try and contact me by downloading the zip and sending a message to the test group.
-For the less adventurous you can open an issue on github or email me at antonsol919@gmail.com.
+Of course the preferred way is to send a message to the test group.
+For the less adventurous you can open an issue on GitHub.

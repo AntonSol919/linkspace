@@ -1,0 +1,7 @@
+export LK_GROUP=[#:test]
+export LK_DIR=$PWD
+export PYTHONPATH=$PWD/python
+export PATH=$(find $PWD/examples -maxdepth 1 -mindepth 1 -type d | sed -z 's/\n/:/g'):$PATH
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
+TMP=$(lk key --no-check --no-enckey | lk e --stdin [0/?b/2mini])
+export PS1="$TMP - ${PS1:-\$}"

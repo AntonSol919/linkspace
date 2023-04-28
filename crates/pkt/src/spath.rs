@@ -444,18 +444,15 @@ impl CheckedSPathIter {
         if len == 0 {
             return Some(Err(PathError::ZeroComponent));
         }
-        match self.spath.spath_bytes.get(..=len) {
-            None => Some(Err(PathError::TailLength)),
-            Some(segm) => {
-                let n = self.spath.spath_bytes.get(len + 1..).unwrap_or(&[]);
-                let n = unsafe { std::mem::transmute(n) };
-                Some(Ok((SPath::from_unchecked(segm), n)))
-            }
+        if self.spath.spath_bytes.len() <= len {
+            return Some(Err(PathError::TailLength));
         }
+        let (segm,rest) = self.spath.spath_bytes.split_at(len+1);
+        Some(Ok((SPath::from_unchecked(segm),unsafe { std::mem::transmute(rest)})))
     }
     pub const fn next_c(&self) -> Option<Result<(&[u8], &Self), PathError>> {
         match self.next_sp_c() {
-            Some(Ok((s, r))) => Some(Ok((s.spath_bytes.get(1..).unwrap(), r))),
+            Some(Ok((s, r))) => Some(Ok((s.spath_bytes.split_at(1).1, r))),
             Some(Err(e)) => Some(Err(e)),
             None => None,
         }

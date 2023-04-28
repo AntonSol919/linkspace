@@ -49,11 +49,12 @@ pub fn ab_slice<X>(i: &[X]) -> &[AB<X>] {
     unsafe { std::mem::transmute(i) }
 }
 
+use base64_crate::prelude::*;
 pub fn base64(b: impl AsRef<[u8]>) -> String {
-    base64_crate::encode_config(b.as_ref(), base64_crate::URL_SAFE_NO_PAD)
+    BASE64_URL_SAFE_NO_PAD.encode(b.as_ref())
 }
 pub fn base64_decode(st: impl AsRef<[u8]>) -> Result<Vec<u8>, DecodeError> {
-    base64::decode_config(st, base64::URL_SAFE_NO_PAD)
+    BASE64_URL_SAFE_NO_PAD.decode(st.as_ref())
 }
 
 pub fn b64(b: &[u8], mini: bool) -> String {
@@ -67,7 +68,7 @@ pub fn mini_b64(v: &[u8]) -> String {
     let mut r = String::with_capacity(10);
     let len = v.len();
     let padc = len / 8;
-    let st = base64::encode_config(v, base64::URL_SAFE_NO_PAD);
+    let st = base64(v);
     if v.len() <= 12 {
         return st;
     }
@@ -478,7 +479,7 @@ impl<const N: usize> B64<[u8; N]> {
             return Err(base64::DecodeError::InvalidLength);
         }
         let mut this: [u8; N] = [0; N];
-        let r = base64::decode_config_slice(s, base64::URL_SAFE_NO_PAD, &mut this)?;
+        let r = BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(s,&mut this)?;
         if r != N {
             panic!()
         };
