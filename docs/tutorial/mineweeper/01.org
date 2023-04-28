@@ -267,7 +267,7 @@ Four if you count Bobs disapproval as an option.
 Keep in mind what is normal today.
 
 Opening a game on your phone or browser usually means it connects to a single host.
-This host receives your moves, it checks his local hidden state, and return you a result.
+This host receives your moves, it checks their local hidden state, and return you a result.
 In one sense this is better, only the host can cheat.
 On the other hand, only the host can cheat and nobody would know about it.
 
@@ -280,7 +280,7 @@ Shooter games have aimbots and 'see-through-walls' cheats.
 
 Most players are not cheaters, even if they could.
 Trusting your peers save a lot of hassle.
-For a game like MineWeeper that is enough.
+For a game like MineWeeper that is usually enough.
 
 *** Emulate host/client
 One option is to emulate a host/client setup.
@@ -300,7 +300,7 @@ There are two obstacles:
 
 One option for a random number is relatively simple.
 Every player acknowledges the turn before applying it.
-Once you have every ack packet you can combine the ack.hash generate a random val.
+Once you have every ack packet you can combine the ack.hash bytes to get a random val nobody can tamper on their own.
 #+begin_src python
   ack_link = Link("ack",player_turn_pkt.hash)
   # Its best to enforce a value for the 'create' stamp so there is less ambigiouty on what the 'correct' packet must look like
@@ -325,6 +325,7 @@ Showing the number of mines surrounding a cell, without letting cheaters peek in
 One solution is to postpone determining which cell has the mine.
 We have to add a 'solver'.
 Just like a non-cheater, the solver can calculate the probabilities of hidden fields based on the revealed cells.
+
 With the random seed determined after making a move, and the cell mine probability adjusted for what is already revealed, cheating becomes impossible.
 
 * A dose of reality

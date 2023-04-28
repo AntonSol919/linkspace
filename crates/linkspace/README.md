@@ -18,9 +18,10 @@ This is in contrast to current technologies where users contact a single host wh
 - Path (URL like) addressable data
 - Group/Domain split
 
-Check out [Basics](https://antonsol919.github.io/linkspace/index.html#basics) for an introduction.
-[Download](https://antonsol919.github.io/linkspace/index.html#download) to give it a try and say hi on the test group.
-Check out the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're interested in the technical breakdown.
+[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction of the entire system.
+Check out the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html) if you're interested in the technical details.
+[Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
+to give it a try and say hi.
 
 The packet and database layout are stable, but some things are incomplete or undocumented.
 

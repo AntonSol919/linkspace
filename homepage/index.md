@@ -18,9 +18,10 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressable data
 - Group/Domain split
 
-Check out the [Basics](#basics) for an introduction.
-[Download](#download) to give it a try and say hi on the test group.
-Check out the [Guide](./docs/guide/index.html) if you're interested in the technical breakdown.
+[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction of the entire system.
+Check out the [Guide](./docs/guide/index.html) if you're interested in the technical details.
+[Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
+to give it a try and say hi.
 
 The packet and database layout are stable, but some things are incomplete or undocumented.
 
@@ -241,7 +242,7 @@ Effectively hoisting the back-end and its administration into the control of the
 
 These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well and referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
 
-If you're on a unix give it a [try](#Download). (It runs on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust)
+If you're on a unix give it a [try](https://github.com/AntonSol919/linkspace/releases) (It compiles on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust to be usable).
 For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
 
 ### Q&A
@@ -330,9 +331,12 @@ You can support the project by registering a public LNS name.
 
 # LNS{#LNS}
 
-LNS is built on top of linkspace. It reads and writes entries to the 'lns' domain.  
-It provides a way for naming groups and keys.  
-Both publicly by registering a name, and privately for your own convenience.  
+LNS is built on top of linkspace.  
+It uses the lns domain to be exact.  
+
+Groups and public keys are 32 bytes. Unreadable for humans.
+LNS enables us to assign them names.
+Both publicly by registering, and privately for your own convenience.  
 
 **Groups** look like:  
 
@@ -350,7 +354,7 @@ Both publicly by registering a name, and privately for your own convenience.
 The top level names :local, :env, and :pub are special.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
 
-The parts required are mostly build, but not yet enabled.
+LNS is currently only partially operational.
 
 Registrations for public names are open though.
 Read this page to find out how.
@@ -401,52 +405,22 @@ Other top level authorities set their own price and how to pay it.
 ## Claim a name{#claim}
 
 This currently requires a some work.
-To make a :free claim get the git repository, install rust and:
+To make a :free claim get download or clone the repo.
 
 ```terminal
-make install-lk
+source ./activate
 lk --init key --key 'YOUR_NAME:local' | tee enckey
 lk lns create-claim 'YOUR_NAME:free' --copy-from YOUR_NAME:local --until [now:+99Y] | tee lnsreq.lkp | lk p
 ```
 
 Keep the file 'enckey' (and the password you entered) safe.
 Email the lnsreq.lkp file to <antonsol919+lns@gmail.com>.
-I plan to accept :free name requests until some clown automatically applies for all common names.
-After which I'll probably put up a proof of work fence with some additional constraints on the name.
+I plan to accept :free name requests until it becomes a burden,
+ after which I'll probably put up a proof of work fence with some additional constraints on the name.
 
 Get a pull request accepted, and you get a :dev name.
 
 First come, first served.
-
-# Download{#download}
-
-Unzip, follow the./linkspace-pkg/README.md to connect to a server.
-
-- [linkspace-x86_64.zip](./download/linkspace-0.2.0-x86_64-unknown-linux-gnu.zip)
-- [linkspace-aarch64.zip](./download/linkspace-0.2.0-aarch64-unknown-linux-gnu.zip)
-
-## Git{#git}
-
-Currently, the primary repository is [GitHub](https://github.com/AntonSol919/linkspace)
-
-# Domains list{#domains}
-
-- [linkmail](./docs/guide/index.html#linkmail) (available in the [download](#download))
-- [imageboard](./docs/guide/index.html#imageboard) (available in the [download](#download))
-- lns
-
-# Groups{#groups}
-## Known (public) servers{#server}
-
-- [\#:test] - 83.172.162.31:5020
-
-  This is a potato behind a proxy, and I'm not filtering atm. (A great idea and I'm sure it will be filled with sunshine and rainbows.)
-
-  It'll get purged occasionally but come say hi using the download!
-
-## Exchange Process{#exchange}
-
-- [anyhost](./docs/guide/index.html#anyhost)
 
 # About {#about}
 

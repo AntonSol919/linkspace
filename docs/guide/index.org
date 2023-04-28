@@ -774,7 +774,7 @@ By default [[lk_key]] sets up the ~[@:me:local]~ identity.
 #+END_VERSE
 
 A query is a list of predicates and options used to define a set of packets.
-They're used in various ways, most notably you can use them to read ([[lk_get]], [[lk_get_all]]), await ([[lk_waitch]]) and request ([[lk_pull]]) packets.
+They're used in various ways, most notably you can use them to read ([[lk_get]], [[lk_get_all]]), await ([[lk_watch]]) and request ([[lk_pull]]) packets.
 
 ** lk_query
 :PROPERTIES:
