@@ -9,8 +9,7 @@ e.g. git, bitcoin, nostr, linkspace
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 A supernet is ideal when multiple participants want to own and administrate (part of) a digital system.
-This is in contrast to current technologies where users contact a single host,
-which acts as de facto administrator by virtue of hosting the data.
+This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
 
 Linkspace is a supernet with the following highlights:
 
@@ -19,16 +18,17 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressable data
 - Group/Domain split
 
-Check out the [Basics](#basics) for an introduction.
-[Download](#download) to give it a try and say hi on the test group.
-Check out the [Guide](./docs/guide/index.html) if you're interested in the technical breakdown.
+[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction of the entire system.
+Check out the [Guide](./docs/guide/index.html) if you're interested in the technical details.
+[Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
+to give it a try and say hi.
 
 The packet and database layout are stable, but some things are incomplete or undocumented.
 
 Any feedback, questions, and ideas for improvements are welcome!
 
-Of course the preferred way is to try and contact me by downloading the zip and sending a message to the test group.
-For the less adventurous you can open an issue on GitHub or email me at antonsol919@gmail.com.
+Of course the preferred way is to send a message to the test group.
+For the less adventurous you can open an issue on GitHub.
 
 # Basics {#basics}
 
@@ -93,12 +93,12 @@ I bring them up as an argument for the effectiveness of organizing data in a (so
 Exchanging data can be thought of as combining **your tree** with **another tree**.
 We've dubbed words to describe specific cases such as:
 '__creating posts__', '__uploading image__', '__upvote/like a post__', '__stream a video __', etc.
-Fundamentally they can be viewed as merging trees, with an application providing a pleasant interface.
+Fundamentally they can be viewed as merging trees, with a frontend application providing a pretty interface.
 
 The majority of the internet that people interact with today follows a single host design.
 A design where you make a request to get the only 'real' copy of the tree.
 For all its simplicity, this design has downsides.
-It becomes a single point of failure, links can become invalid, everybody has to re-invent authentication, every application has to re-invent dealing with IO errors, etc. Additionally, there are profound [consequences](#why) for the dynamic between host and user.
+It becomes a single point of failure, links can become invalid, everybody has to re-invent authentication, every application has to re-invent dealing with IO errors, etc. Additionally, there are profound [consequences](#reason2) for the dynamic between host and user.
 
 In linkspace there is no single 'real' copy, and thus no de facto administrator.
 Any number of participants can host (part of) a tree.
@@ -145,7 +145,7 @@ Each entry is cryptograhpically hashed, i.e. there exists a unique number to ref
 </div>
 
 
-An entry also carries a creation date, and __can__ be cryptographically signed.
+An entry also carries a creation date, and can be cryptographically signed.
 These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c], but we can refer to them by [lns](#LNS) name such as [@:anton:nl].
 
 An upside of using hashes, is that we can choose to link to other data by its path (e.g. "image/BrokenMachine.jpg") or by its hash:
@@ -237,10 +237,12 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 </span>
 
 </div>
+With [queries](./docs/guide/index.html#Query) we can read, filter, and request sets of packets.
+Effectively hoisting the back-end and its administration into the control of the users and simplifying the life of a front end developer.
 
 These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well and referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
 
-If you're on a unix give it a [try](#Download). (It runs on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust)
+If you're on a unix give it a [try](https://github.com/AntonSol919/linkspace/releases) (It compiles on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust to be usable).
 For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
 
 ### Q&A
@@ -272,7 +274,7 @@ The users can use a chat app to talk to a group and open a different app to play
 Similarly, from a developer's perspective, building something new can be fun.
 Building something new and having to build and manage servers, user accounts, groups, etc is a lot less fun.
 
-Reason 2: I wanted to provide an alternative answer to a key question that underpins how our society uses digital systems.
+[Reason 2]{#reason2}: I wanted to have an alternative answer to a key question that underpins how our society uses digital systems.
 
 **Who gets to __administrate__ the cat videos, taxi service, messages, and other data we share and see online?**
 
@@ -325,12 +327,17 @@ digital fiefdoms.
 The step forward is to take full control over who lords over us.
 
 Help speed things along.
-You can support the project by registering a LNS name.
+You can support the project by registering a public LNS name.
 
 # LNS{#LNS}
 
-LNS is built on top of linkspace. It reads and writes entries to the 'lns' domain.  
-It provides a way for naming groups and public keys.  
+LNS is built on top of linkspace.  
+It uses the lns domain to be exact.  
+
+Groups and public keys are 32 bytes. Unreadable for humans.
+LNS enables us to assign them names.
+Both publicly by registering, and privately for your own convenience.  
+
 **Groups** look like:  
 
 - \#:pub
@@ -345,9 +352,11 @@ It provides a way for naming groups and public keys.
 - @:me:local
 
 The top level names :local, :env, and :pub are special.
-The code to check the validity of a binding works well enough, but the overall system is not finished yet.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
-Registrations are open.
+
+LNS is currently only partially operational.
+
+Registrations for public names are open though.
 Read this page to find out how.
 
 ### What does a registration do?
@@ -396,66 +405,29 @@ Other top level authorities set their own price and how to pay it.
 ## Claim a name{#claim}
 
 This currently requires a some work.
-To make a :free claim get the git repository, install rust and:
+To make a :free claim get download or clone the repo.
 
 ```terminal
-make install-lk
+source ./activate
 lk --init key --key 'YOUR_NAME:local' | tee enckey
 lk lns create-claim 'YOUR_NAME:free' --copy-from YOUR_NAME:local --until [now:+99Y] | tee lnsreq.lkp | lk p
 ```
 
 Keep the file 'enckey' (and the password you entered) safe.
 Email the lnsreq.lkp file to <antonsol919+lns@gmail.com>.
-I plan to accept :free name requests until some clown automatically applies for all common names.
-After which I'll probably put up a proof of work fence with some additional constraints on the name.
+I plan to accept :free name requests until it becomes a burden,
+ after which I'll probably put up a proof of work fence with some additional constraints on the name.
 
 Get a pull request accepted, and you get a :dev name.
 
 First come, first served.
-
-# Download{#download}
-
-Unzip, follow the./linkspace-pkg/README.md to connect to a server.
-
-- [linkspace-x86_64.zip](./download/linkspace-x86_64-unknown-linux-gnu.zip)
-- [linkspace-aarch64.zip](./download/linkspace-aarch64-unknown-linux-gnu.zip)
-
-The package contains:
-
-- the `lk` CLI
-- `linkspace.so` you can import with python.
-- linkmail and imageboard domain applications.
-- anyhost exchange.
-
-## Git{#git}
-
-Currently, the primary repository is [GitHub](https://github.com/AntonSol919/linkspace)
-
-# Domains list{#domains}
-
-- [linkmail](./docs/guide/index.html#linkmail) (available in the [download](#download))
-- [imageboard](./docs/guide/index.html#imageboard) (available in the [download](#download))
-- lns
-
-# Groups{#groups}
-## Known (public) servers{#server}
-
-- [\#:test] - 83.172.162.31:5020
-
-  This is a potato behind a proxy, and I'm not filtering atm. (A great idea and I'm sure it will be filled with sunshine and rainbows.)
-
-  It'll get purged occasionally but come say hi using the download!
-
-## Exchange Process{#exchange}
-
-- [anyhost](./docs/guide/index.html#anyhost)
 
 # About {#about}
 
 Linkspace is currently an unfunded project, and is missing some key [features](https://github.com/AntonSol919/linkspace/blob/main/dev/TODO.md).
 Meaning I do other stuff to make a living and won't be available all the time.
 
-Please contact me directly if you're interested in supporting the project.
+You can contact me directly at <AntonSol919@gmail.com> if you're interested in supporting the project.
 Or if you want to talk about specific applications.
 
 ### Trademark

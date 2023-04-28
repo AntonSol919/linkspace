@@ -34,29 +34,20 @@
       <li >
         <a href="#LNS">LNS</a>
       </li>
-
-      <li>
-        <a href="#download">Download</a>
-      </li>
-      
-      <li >
-        <a href="#domains">Domains</a>
-      </li>
-      <li >
-        <a href="#groups">Groups</a>
-      </li>
       <li >
         <a href="#about">About</a>
       </li>
       <hr>
+      <li>
+        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
+      </li>
+
       <li>
         <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
       <li>
         <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
       </li>
-      
-
 
     </nav>
     

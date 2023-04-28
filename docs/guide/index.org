@@ -14,15 +14,19 @@ Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahea
 
 * Introduction
 
-Linkspace is a way to structure interlinked data into packets, addressable with a query, in order to build multi-participant applications.
+Linkspace is a packet format and processing library.
+Instead of providing or consuming streams of data, linkspace takes a different path.
+Packets of bytes are hashed, named, saved, and can reference other packets.
+
+This gives us a thin and powerful stack to build multiparty applications.
 [[../cargo-doc/linkspace/index.html][linkspace]] is the authoritative implementation.
 
 You should be familiar with the [[../../index.html#basics][basics]].
 
 Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
-This abstraction sidesteps or solves a number of difficulties inherent in organizing data as streams in applications.
-If entries include hashes to other entries I propose to classify it as a supernet[fn::
-I consider blockchains a subset of supernets.
+This abstraction sidesteps or solves a number of difficulties inherent in organizing data.
+If entries include hashes to other entries I consider it a supernet[fn::
+Blockchains are a subset of supernets.
 They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain.].
 
 #+BEGIN_VERSE
@@ -35,7 +39,7 @@ e.g. git, bitcoin, nostr, linkspace
 #+END_VERSE
 
 The supernet paradigm is a trade-off.
-Instead of processing ordered streams of network data, an application is a function over the partial view of potentially noisy interlinked state.
+Instead of processing ordered streams of network data, an application is a function over the partial view of interlinked state.
 This has upsides[fn::
 The homepage contains a list of various properties. However, there is one I lack a word for.
 Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
@@ -44,22 +48,19 @@ In linkspace this is an obvious requirement, and linkspace attempts to make it s
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
 ] and downsides.
 
-
 One issue with supernets built so far is that they are bound to their use-case.
 Linkspace is a general purpose supernet.
-It is built to be fast and simple.
+A developer claims a domain name like they would a port number, and their application can run for any group of users.
+Linkspace is designed to be fast and simple.
 
-Another distinction features of linkspace is the split between domains and groups.
-It separates the responsibility of 'User Interface & Data Structure' from the 'Members and the exchange of data'.
+It consists of 4 concepts.
 
-linkspace consists of 4 concepts.
-
-- [[Point]] - Bytes put into one of 3 kinds of packets
-- [[ABE]] - (Byte) templating for convenience
-- [[Query]] - A list of predicates and options for selecting packets
+- [[Point]] - Bytes that are named and reference other points by hash. Together with its hash and netheader form a packet.
+- [[ABE]] - (Byte) templating for convenience.
+- [[Query]] - A list of predicates and options for selecting packets.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
 
-This split and other common problems, are supported by a set of [[Conventions]].
+Common challenges are addressed by a set of [[Conventions]].
 
 The end of this document contains examples.
 
@@ -70,40 +71,26 @@ The end of this document contains examples.
 
 
 This guide uses Python and (Bash) CLI snippets.
-You can [[https://antonsol919.github.io/linkspace/index.html#download][download]] them or build it using the latest version from [[https://github.com/AntonSol919/linkspace][git]].
 
-** Building 
+** Binary
 
-*** linkspace-cli
+The [[https://antonsol919.github.io/linkspace/index.html#download][zip]] contains the CLI and python library and the examples used in this document.
 
- ~cargo +nightly install linkspace-cli~
+** Package manager
 
- or
+~cargo +nightly install linkspace-cli~
 
- ~make install-lk~
+~pip install linkspace~
 
- or
+** Build from source
 
-#+BEGIN_SRC bash
-cd cli/linkspace
-cargo install --path .
-#+END_SRC
+*** User
 
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-lk --version
-#+END_SRC
+ ~make install-lk install-python~
 
-*** linkspace python bindings
+*** Development
 
-~make install-python~ or:
-
-#+BEGIN_SRC bash
-cd ffi/linkspace-py
-make
-source ./.env/bin/activate
-python -i
->>> import * from linkspace
-#+END_SRC
+ ~source ./activate~ builds and sets PATH and PYTHONPATH env variables.
 
 * API overview
 :PROPERTIES:
@@ -161,8 +148,8 @@ There are 3 kinds of points. datapoints, linkpoints, and keypoints.
 A point has a maximum size of 2^{16}-512 bytes.
 
 Building a point is always combined with generating a hash and prepending a netheader.
-Together the [netheader, hash, point] form a netpacket.
-Functions usually deal with netpacket.
+Together the [netheader, hash, point] form a packet.
+Functions usually deal with packet.
 
 ** lk_datapoint
 :PROPERTIES:
@@ -786,9 +773,8 @@ By default [[lk_key]] sets up the ~[@:me:local]~ identity.
 [[../cargo-doc/linkspace/query/index.html][Rust docs]]
 #+END_VERSE
 
-A query is a list of predicates and options used to select a set of packets.
-An application can use them to read from the local instance with [[lk_watch]] and [[lk_get]].
-And also to make a request to an exchange process that will retrieve relevant packets from the group with [[lk_pull]].
+A query is a list of predicates and options used to define a set of packets.
+They're used in various ways, most notably you can use them to read ([[lk_get]], [[lk_get_all]]), await ([[lk_watch]]) and request ([[lk_pull]]) packets.
 
 ** lk_query
 :PROPERTIES:
@@ -809,11 +795,11 @@ pubkey:=:[@:me:local]
 create:>:[now:-1D]
 #+END_EXAMPLE
 
-A predicate can be set multiple times. e.g. We can add a create:<:[now:+1D]
-Queries are designed such that you can concatenate the string representation of two queries and get a new query.
-If the result can only ever be the empty set an error is returned.
+A predicate can be set multiple times. In the example above we could add ~create:<:[now:+2D]~ to constrain it further.
+Queries are designed such that you can concatenate their strings and get their union.
+If the result is the empty set an error is returned.
 
-There are only 4 basic test operations.
+There are 4 basic test operations and a couple of aliases.
 
 | Basic Op |                                   |
 |----------+-----------------------------------|
@@ -837,7 +823,7 @@ The following are shorthand and resolve to one or more of the basic tests.
 #+begin_ctabs
 #+begin_sh
 
-The CLI has various aliases that can act as a guide in creating queries by using ~print-query~.
+The CLI has options that can act as a guide in creating queries by using ~lk print-query --help~.
 
 #+BEGIN_VERSE 
 Many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:path:(?depth)~
@@ -855,11 +841,9 @@ lk print-query "my:[#:pub]:/hello:*" --signed
 
 #+begin_py
 #+begin_src python :session lkpy :exports both :results value verbatim
-  q = lk_query()
-  q = lk_query_push(q,"","hello",b"world")
-  # You can copy from an existing query.
-  other = lk_query(q)
-  lk_query_print(other)
+  template = lk_query_parse(lk_query(),"group:=:[#:pub]")
+  a_copy = lk_query(template)
+  lk_query_print(a_copy)
 #+end_src
 
 #+end_py
@@ -1280,14 +1264,14 @@ They handle byte values, and you can concatenate them to get their common subset
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples
 #+END_VERSE
 linkmail is a app to write messages in a group.
 Note that it will complain if you have not also started an exchange process for the group.
 #+end_info
 
 #+begin_py
-#+INCLUDE: "../../examples/app/linkmail-py/linkmail.py" src python
+#+INCLUDE: "../../examples/linkmail/linkmail.py" src python
 #+end_py
 
 #+end_ctabs
@@ -1323,13 +1307,13 @@ Building the collage is done by adding all images to a base image in 'create' or
 
 - placing images
   
-#+INCLUDE: "../../examples/app/imageboard/imageboard.place.sh" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.place.sh" src bash
 
 - viewing images
-#+INCLUDE: "../../examples/app/imageboard/imageboard.view.sh" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.view.sh" src bash
 
 - streaming images
-#+INCLUDE: "../../examples/app/imageboard/imageboard.stream.sh" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.sh" src bash
 #+end_sh
 
 
@@ -1337,13 +1321,13 @@ Building the collage is done by adding all images to a base image in 'create' or
 This is a straight-up copy of the bash script.
 It works, but it could be done better by having only a single python instance running.
 - placing images
-#+INCLUDE: "../../examples/app/imageboard-py/imageboard.place.py" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
 
 - viewing images
-#+INCLUDE: "../../examples/app/imageboard-py/imageboard.view.py" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.view.py" src bash
 
 - streaming images
-#+INCLUDE: "../../examples/app/imageboard-py/imageboard.stream.py" src bash
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
 #+end_py
 #+end_ctabs
 
@@ -1353,13 +1337,13 @@ It works, but it could be done better by having only a single python instance ru
 :END:
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/exchange
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/
 #+END_VERSE
 
 #+begin_ctabs
 #+begin_info
 #+BEGIN_VERSE
-Available in the repo/examples/exchange
+Available in the repo/examples/
 See repo/dev/exchange.md for some open design issues/notes.
 #+END_VERSE
 
@@ -1370,14 +1354,14 @@ It does no pruning before sending or receiving.
 #+begin_sh
 
 - anyhost client
-#+INCLUDE: "../../examples/exchange/anyhost/connect.sh" src bash
-#+INCLUDE: "../../examples/exchange/anyhost/client_io.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.connect.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.client-io.sh" src bash
 
 - handshake
-#+INCLUDE: "../../examples/exchange/anyhost/handshake.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.handshake.sh" src bash
 
 - anyhost server
-#+INCLUDE: "../../examples/exchange/anyhost/serve.sh" src bash
-#+INCLUDE: "../../examples/exchange/anyhost/serve_io.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.server.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.serve-io.sh" src bash
 #+end_sh
 #+end_ctabs

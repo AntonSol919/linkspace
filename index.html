@@ -34,29 +34,20 @@
       <li >
         <a href="#LNS">LNS</a>
       </li>
-
-      <li>
-        <a href="#download">Download</a>
-      </li>
-      
-      <li >
-        <a href="#domains">Domains</a>
-      </li>
-      <li >
-        <a href="#groups">Groups</a>
-      </li>
       <li >
         <a href="#about">About</a>
       </li>
       <hr>
+      <li>
+        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
+      </li>
+
       <li>
         <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
       <li>
         <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
       </li>
-      
-
 
     </nav>
     
@@ -73,8 +64,8 @@ e.g. git, bitcoin, nostr, linkspace
 talking <em>at</em> a server.</p>
 <p>A supernet is ideal when multiple participants want to own and
 administrate (part of) a digital system. This is in contrast to current
-technologies where users contact a single host, which acts as de facto
-administrator by virtue of hosting the data.</p>
+technologies where users contact a single host which acts as the de
+facto administrator.</p>
 <p>Linkspace is a supernet with the following highlights:</p>
 <ul>
 <li>Small and powerful API</li>
@@ -82,17 +73,20 @@ administrator by virtue of hosting the data.</p>
 <li>Path (URL like) addressable data</li>
 <li>Group/Domain split</li>
 </ul>
-<p>Check out the <a href="#basics">Basics</a> for an introduction. <a
-href="#download">Download</a> to give it a try and say hi on the test
-group. Check out the <a href="./docs/guide/index.html">Guide</a> if
-you're interested in the technical breakdown.</p>
+<p><a
+href="https://antonsol919.github.io/linkspace/index.html#basics">Basics</a>
+gives a high level introduction of the entire system. Check out the <a
+href="./docs/guide/index.html">Guide</a> if you're interested in the
+technical details. <a
+href="https://github.com/AntonSol919/linkspace/releases">Download</a>
+the latest release or clone from <a
+href="https://github.com/AntonSol919/linkspace">GitHub</a> to give it a
+try and say hi.</p>
 <p>The packet and database layout are stable, but some things are
 incomplete or undocumented.</p>
 <p>Any feedback, questions, and ideas for improvements are welcome!</p>
-<p>Of course the preferred way is to try and contact me by downloading
-the zip and sending a message to the test group. For the less
-adventurous you can open an issue on GitHub or email me at
-antonsol919@gmail.com.</p>
+<p>Of course the preferred way is to send a message to the test group.
+For the less adventurous you can open an issue on GitHub.</p>
 <h1 id="basics">Basics</h1>
 <p>In the 1960s we invented the electronic hierachical filesystem.
 Organizing files in folders. For example
@@ -156,16 +150,16 @@ tree</strong> with <strong>another tree</strong>. We've dubbed words to
 describe specific cases such as: '<strong>creating posts</strong>',
 '<strong>uploading image</strong>', '<strong>upvote/like a
 post</strong>', '<strong>stream a video </strong>', etc. Fundamentally
-they can be viewed as merging trees, with an application providing a
-pleasant interface.</p>
+they can be viewed as merging trees, with a frontend application
+providing a pretty interface.</p>
 <p>The majority of the internet that people interact with today follows
 a single host design. A design where you make a request to get the only
 'real' copy of the tree. For all its simplicity, this design has
 downsides. It becomes a single point of failure, links can become
 invalid, everybody has to re-invent authentication, every application
 has to re-invent dealing with IO errors, etc. Additionally, there are
-profound <a href="#why">consequences</a> for the dynamic between host
-and user.</p>
+profound <a href="#reason2">consequences</a> for the dynamic between
+host and user.</p>
 <p>In linkspace there is no single 'real' copy, and thus no de facto
 administrator. Any number of participants can host (part of) a tree.</p>
 <p>That does mean there is no way to uniquely identify an entry with
@@ -201,8 +195,8 @@ reference the entry.</p>
 <span>/thread/Tabs or spaces/msg</span>
 <span>Get a life</span>
 </div>
-<p>An entry also carries a creation date, and <strong>can</strong> be
-cryptographically signed. These cryptographic public keys look like
+<p>An entry also carries a creation date, and can be cryptographically
+signed. These cryptographic public keys look like
 [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c], but we can refer to
 them by <a href="#LNS">lns</a> name such as [@:anton:nl].</p>
 <p>An upside of using hashes, is that we can choose to link to other
@@ -285,17 +279,23 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 </span>
 
 </div>
+<p>With <a href="./docs/guide/index.html#Query">queries</a> we can read,
+filter, and request sets of packets. Effectively hoisting the back-end
+and its administration into the control of the users and simplifying the
+life of a front end developer.</p>
 <p>These are the basic concepts. With the most notable simplification
 being that: <a href="./docs/guide/index.html#lk_datapoint">Data
 entries</a> without a path, group, domain, etc exists as well and
 referencing other packets by hash is not done inside the data but <a
 href="./docs/guide/index.html#lk_linkpoint">adjacent</a> together with a
 'tag'.</p>
-<p>If you're on a unix give it a <a href="#Download">try</a>. (It runs
-on Windows, but an exchange like <a
+<p>If you're on a unix give it a <a
+href="https://github.com/AntonSol919/linkspace/releases">try</a> (It
+compiles on Windows, but an exchange like <a
 href="./docs/guide/index.html#anyhost">anyhost</a> needs to be ported to
-rust) For details on the exact layout of the tree and other practical
-stuff see the <a href="./docs/guide/index.html">Guide</a>.</p>
+rust to be usable). For details on the exact layout of the tree and
+other practical stuff see the <a
+href="./docs/guide/index.html">Guide</a>.</p>
 <h3>Q&amp;A</h3>
 <p>A few notes to prevent some confusion.</p>
 <p><strong>Q</strong>: Is this a blockchain?<br />
@@ -324,8 +324,9 @@ group.</p>
 <p>Similarly, from a developer's perspective, building something new can
 be fun. Building something new and having to build and manage servers,
 user accounts, groups, etc is a lot less fun.</p>
-<p>Reason 2: I wanted to provide an alternative answer to a key question
-that underpins how our society uses digital systems.</p>
+<p><span id="reason2">Reason 2</span>: I wanted to have an alternative
+answer to a key question that underpins how our society uses digital
+systems.</p>
 <p><strong>Who gets to <strong>administrate</strong> the cat videos,
 taxi service, messages, and other data we share and see
 online?</strong></p>
@@ -378,12 +379,14 @@ us more useful competition.</p>
 recognize it for what it is. digital fiefdoms. The step forward is to
 take full control over who lords over us.</p>
 <p>Help speed things along. You can support the project by registering a
-LNS name.</p>
+public LNS name.</p>
 <h1 id="LNS">LNS</h1>
-<p>LNS is built on top of linkspace. It reads and writes entries to the
-'lns' domain.<br />
-It provides a way for naming groups and public keys.<br />
-<strong>Groups</strong> look like:</p>
+<p>LNS is built on top of linkspace.<br />
+It uses the lns domain to be exact.</p>
+<p>Groups and public keys are 32 bytes. Unreadable for humans. LNS
+enables us to assign them names. Both publicly by registering, and
+privately for your own convenience.</p>
+<p><strong>Groups</strong> look like:</p>
 <ul>
 <li>#:pub</li>
 <li>#:myfancystore:com</li>
@@ -396,12 +399,12 @@ It provides a way for naming groups and public keys.<br />
 <li>@:john:nl</li>
 <li>@:me:local</li>
 </ul>
-<p>The top level names :local, :env, and :pub are special. The code to
-check the validity of a binding works well enough, but the overall
-system is not finished yet. You can take a look on how it integrates
-with linkspace in the <a
-href="./docs/guide/index.html#ABELNS">guide</a>. Registrations are open.
-Read this page to find out how.</p>
+<p>The top level names :local, :env, and :pub are special. You can take
+a look on how it integrates with linkspace in the <a
+href="./docs/guide/index.html#ABELNS">guide</a>.</p>
+<p>LNS is currently only partially operational.</p>
+<p>Registrations for public names are open though. Read this page to
+find out how.</p>
 <h3>What does a registration do?</h3>
 <p>It gives you binding right for all sub registration. That means if
 you register under @:yourcompany:com you can set up:</p>
@@ -443,67 +446,28 @@ pay taxes I prefer fiat money and a 1 cent transaction save a lot of
 trouble w.r.t. identification if you lose the private key. Other top
 level authorities set their own price and how to pay it.</p>
 <h2 id="claim">Claim a name</h2>
-<p>This currently requires a some work. To make a :free claim get the
-git repository, install rust and:</p>
-<pre class="terminal"><code>make install-lk
+<p>This currently requires a some work. To make a :free claim get
+download or clone the repo.</p>
+<pre class="terminal"><code>source ./activate
 lk --init key --key &#39;YOUR_NAME:local&#39; | tee enckey
 lk lns create-claim &#39;YOUR_NAME:free&#39; --copy-from YOUR_NAME:local --until [now:+99Y] | tee lnsreq.lkp | lk p</code></pre>
 <p>Keep the file 'enckey' (and the password you entered) safe. Email the
 lnsreq.lkp file to <a href="mailto:antonsol919+lns@gmail.com"
 class="email">antonsol919+lns@gmail.com</a>. I plan to accept :free name
-requests until some clown automatically applies for all common names.
-After which I'll probably put up a proof of work fence with some
-additional constraints on the name.</p>
+requests until it becomes a burden, after which I'll probably put up a
+proof of work fence with some additional constraints on the name.</p>
 <p>Get a pull request accepted, and you get a :dev name.</p>
 <p>First come, first served.</p>
-<h1 id="download">Download</h1>
-<p>Unzip, follow the./linkspace-pkg/README.md to connect to a
-server.</p>
-<ul>
-<li><a
-href="./download/linkspace-x86_64-unknown-linux-gnu.zip">linkspace-x86_64.zip</a></li>
-<li><a
-href="./download/linkspace-aarch64-unknown-linux-gnu.zip">linkspace-aarch64.zip</a></li>
-</ul>
-<p>The package contains:</p>
-<ul>
-<li>the <code>lk</code> CLI</li>
-<li><code>linkspace.so</code> you can import with python.</li>
-<li>linkmail and imageboard domain applications.</li>
-<li>anyhost exchange.</li>
-</ul>
-<h2 id="git">Git</h2>
-<p>Currently, the primary repository is <a
-href="https://github.com/AntonSol919/linkspace">GitHub</a></p>
-<h1 id="domains">Domains list</h1>
-<ul>
-<li><a href="./docs/guide/index.html#linkmail">linkmail</a> (available
-in the <a href="#download">download</a>)</li>
-<li><a href="./docs/guide/index.html#imageboard">imageboard</a>
-(available in the <a href="#download">download</a>)</li>
-<li>lns</li>
-</ul>
-<h1 id="groups">Groups</h1>
-<h2 id="server">Known (public) servers</h2>
-<ul>
-<li><p>[#:test] - 83.172.162.31:5020</p>
-<p>This is a potato behind a proxy, and I'm not filtering atm. (A great
-idea and I'm sure it will be filled with sunshine and rainbows.)</p>
-<p>It'll get purged occasionally but come say hi using the
-download!</p></li>
-</ul>
-<h2 id="exchange">Exchange Process</h2>
-<ul>
-<li><a href="./docs/guide/index.html#anyhost">anyhost</a></li>
-</ul>
 <h1 id="about">About</h1>
 <p>Linkspace is currently an unfunded project, and is missing some key
 <a
 href="https://github.com/AntonSol919/linkspace/blob/main/dev/TODO.md">features</a>.
 Meaning I do other stuff to make a living and won't be available all the
 time.</p>
-<p>Please contact me directly if you're interested in supporting the
-project. Or if you want to talk about specific applications.</p>
+<p>You can contact me directly at <a href="mailto:AntonSol919@gmail.com"
+class="email">AntonSol919@gmail.com</a> if you're interested in
+supporting the project. Or if you want to talk about specific
+applications.</p>
 <h3>Trademark</h3>
 <p>linkspace is a pending trademark of R.A.I.T. Solutions. Once
 registered I will likely use similar terms as git does for its
