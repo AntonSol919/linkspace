@@ -9,7 +9,7 @@ cd private/$name
 export LK_DIR=$PWD
 
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass --password "")
-echo $name $(lk key --no-enckey --no-check) | tee ./name_key
+echo $name $(lk key --no-enckey --no-check) | tee ./emulate_name_key
 
 tmux -S tmux-socket new-session -s $name -n $name \; \
      send-keys " lk " \; \

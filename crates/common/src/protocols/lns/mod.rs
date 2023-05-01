@@ -106,7 +106,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
             }))
         },
         Some(SpecialName::Local) => {
-            // No admin process exists yet so we just pretend something setup the correct :local claims
+            // No admin process exists yet so we pretend something setup the correct :local claims
              match local_claim::get_private_claim(&lk.get_reader(), name, None).into_ok()?{
                 Some(claim) => {
                     Ok(Ok(LiveClaim{
@@ -117,7 +117,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
                 None => Ok(Err(dummy_root(name))),
              }
         }
-        // The admin process doesn't exist yet so we just walk the chain for now
+        // The admin process doesn't exist yet so we walk the chain for now
         None => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.spath().iter(), issue_handler),
     }
 }

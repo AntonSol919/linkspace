@@ -34,7 +34,7 @@ query = lk_query_parse(lk_query(),query_string,argv=[boardname])
 #We signal the exchange process to gather the data
 lk_pull(lk,query)
 
-#we just wait for every packet and redraw the painting starting at the 'create' stamp
+#we wait for every packet and redraw the painting starting at the 'create' stamp
 script_dir = os.path.dirname(os.path.realpath(__file__))
 os.system(f"{script_dir}/imageboard.view.py {boardname} 0")
 
@@ -42,6 +42,6 @@ def update_img(pkt):
     create = lk_eval2str("[create:str]",pkt)
     os.system(f"{script_dir}/imageboard.view.py {boardname} {create}")
 
-query = lk_query_parse(query,"i_db:<:[u32:0]") # we only care for new stuff
+query = lk_query_parse(query,"i_db:<:[u32:0]") # we only care for packets not currently in the database. The new stuff
 lk_watch(lk,query, update_img)
 lk_process_while(lk)

@@ -144,7 +144,7 @@ A program providing a friendly interface reading/writing the bytes that the deve
 
 #+begin_verse
 When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
-This is done by a linkspace group exchange process. A group exchange process is build just like a domain application.
+This is done by a linkspace group exchange process. A group exchange process is build like a domain application.
 But its role is to exchange all packets with its group ID to the members that require it.
 More on them another day.
 #+end_verse
@@ -208,31 +208,45 @@ It requires tmux to be installed (available in most package managers)
 #+end_info
 
 #+begin_setup
-You can create an instance with a simple exchange process running by starting:
+
+You can create an instance with a basic exchange process by opening a terminal and:
 
 #+begin_src bash
-./emulate/host.session.tmux.sh
+  source ./activate # Builds and updates the PATH, set LK_DIR to ./private
+  # We want to emulate a entire group with multiple instances.
+  ./emulate/host.session.tmux.sh # This creates a new instance in ./private/alice, with its own key, and starts a host process
 #+end_src
 
-
-Open a terminal and execute the following to create additional instances automatically connect.
+Open a second terminal and execute the following to create additional instances that connects to the host.
 
 #+begin_src bash
-./emulate/session.tmux.sh bob #changing this name
+  source ./activate # to set the path
+  # creates a new instance in ./private/bob , with its own key key, and automatically connect to the host alice.
+  ./emulate/session.tmux.sh bob # change this name to add multiple sessions
 #+end_src
 
-Finally, we have to create the initial packet and share them.
+The bottom panel is the exchange process, the middle panel is watching the log, the upper panel is to run applications.
+You can test if the sessions are correctly connected by running ~linkmail.py~ and writing a message.
+
+Finally, we have to create the game packet and share it.
+Eventually this will be done with a lobby we'll create. Right now we have to manually create it for our test.
 One method to do so is as follows:
 
 #+begin_src bash 
   cd private
-  cat ./*/name_key > setup.json
-  # You'll have to edit this setup.json by hand to look like the json above. 
-  lk link mineweeper:[#:test] --data file:./setup.json > setup.pkt
+  cat ./*/emulate_name_key > setup.json
+  # You'll have to edit this setup.json by hand to look like the json above.
+  lk link mineweeper:[#:test] --data file:./setup.json | tee setup.pkt | lk printf
 
   # Manually save this packet to each instance
   find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
 #+end_src
+
+You should see the middle panel print this new packet.
+
+Finally, in each session we can use the upper panel to run:
+
+
 
 #+end_setup
 #+end_ctabs

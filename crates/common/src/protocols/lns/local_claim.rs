@@ -39,7 +39,7 @@ pub (crate) fn setup_local_keyclaim(
     claim: Claim,
     admin: Option<&SigningKey>,
 ) -> anyhow::Result<()> {
-    // We fake a claim chain and just insert it into the admin tree.
+    // We fake a claim chain and insert it into the admin tree.
     save_private_claim(lk, &claim, admin, &[],true)?;
     Ok(())
 }

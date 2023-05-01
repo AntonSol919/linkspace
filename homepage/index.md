@@ -78,17 +78,17 @@ The two are merged together to create the new state of the message board.
 </div>
 
 We'll call "image/BrokenMachine.jpg" a **path** pointing to [image data].
-One or more of these entries, a path + data, in a (sorted) hierachical set together we'll call a **tree**. We just saw what happens when we merge trees.
+One or more of these entries, a path + data, in a (sorted) hierachical set together we'll call a **tree**. We saw what happens when we merge trees.
 The internet as we know it is built on them.
 
 There are millions of hosts (i.e. servers) that serve such a tree, receive new entries, and do some processing.
 
 This is more true than might be aparent. It's not just HTTP.
 For example, an SQL database is a special case of a tree. It is built on top of multiple sorted lists under table names.
-Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
+Essentially their rows are "/table_name/primary_key = value". The SQL query can address and relate multiple entries.
 
 The point is not to compare linkspace to HTTP or to replace SQL.
-I bring them up as an argument for the effectiveness of organizing data in a (sorted) tree.
+I bring them up as an argument for the universal effectiveness of organizing data in a such a tree.
 
 Exchanging data can be thought of as combining **your tree** with **another tree**.
 We've dubbed words to describe specific cases such as:

@@ -5,19 +5,22 @@ import sys, json,re,functools
 from mineweeper import MineWeeper, clear_screen
 from linkspace import *
 
-# The players have agreed on the game setup and players.
-# The game setup was encoded in a linkspace.Pkt we agreed upon through some other system (like a game lobby)
-# The argument to this script is the hash of this Pkt. 
-game_hash = sys.argv[1] 
+# The players agreed on the game setup and players.
+# This was saved in a packet.
+# This script is launched with that Pkt.hash in base64.
 
-# Open the default instance and the default signing key
+game_hash = sys.argv[1]
+
+# Open the linkspace instance and our key. (Set with LK_DIR and LK_KEYNAME)
+
 lk = lk_open() 
 signing_key = lk_key(lk)
 
 # Get the game setup packet.
 game_pkt = lk_get(lk, lk_hash_query(game_hash)) or exit("No such game start")
+
 """
-The data of this game pkt is a json encoding similar to:
+We have decided the data will be json encoded and look like:
 {
     "rows":20,
     "columns": 20,
@@ -29,44 +32,50 @@ The data of this game pkt is a json encoding similar to:
     ]
 }
 """
+
 game_conf = json.loads(game_pkt.data.decode("utf-8"))
 
+# We print some game info.
 print("Starting game")
-# To notify the user about the group used, lets print the group name corresponding to the bytes in the game_pkt linkpoint
-# lk_encode takes bytes as an argument and tries various ways to print them in abe format.
+# lk_encode takes bytes and tries various ways to print them in readable abe format.
 print("group  :", lk_encode(game_pkt.group,"#/@/b"))
 print(game_conf)
 
-# The players are a subset of the users in a group.
-# Not every user is interested in every packet.
-# We have to make it obvious which packets are part of this game, so the players can query it and the others can ignore it.
-# We'll use this unique path to do so.
-game_path = path([b"game", game_pkt.hash])
+# The players are a subset of the members in a group.
+# They must signal what data they want from the group.
+# We make it unambiguous which packets are part of this game by reading/writing to a unique path.
+game_path = spath([b"game", game_pkt.hash])
+# Internally, paths are length separated bytes. Most arguments accept a string like /game/[b:AAAAA....] .
+# In our case we can skip this b64 encoding step.
 
-# We'll use slightly different queries throughout this process, but much of their predicates remain static.
-# This query will act as our template for more specific queries. 
-common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:[group]","path:=:[0]", pkt=game_pkt, argv=[game_path])
+# Every query has at least the following in common.
+common_q = lk_query_parse(
+    lk_query(),
+    "domain:=:mineweeper",
+    "group:=:[group]",
+    "path:=:[0]",
+    pkt=game_pkt, argv=[game_path]) #provides the [group] and [0] values
 
-# The [group] and [0] resolved to the bytes from the pkt and argv arguments respectively.
-# print(lk_query_print(common_q, True))
+# To inspect a query use print(lk_query_print(common_q, True))
 
-# The first use of our query is to signal the linkspace instance that we're interested in packets related to this game.
-# This signaling is done by writing the query to [f:exchange]:[#:0]:/[q.group]/[q.domain]/[q.qid] 
-# The lk_pull function encodes this convention and does some checking.  
+# We signal the group to send us packets by saving the query in a packet to a specific location.
+# Instead of doing so manually, we use lk_pull.
+# pulling requires the query to have a qid so we can remove it later.
 pull_q = lk_query_push(common_q,"","qid", b"game"+game_pkt.hash)
 lk_pull(lk, pull_q)
 
-# An exchange process reads this request.  
-# If everything is going to plan, all players will eventually receive packets saved by others that matches the query.
+# If everything is going to plan:
+# An exchange process reads the request, and ensure all players eventually receive packets from others that matches the query.
+# i.e. whenever we save a packet with the path 'game_path', the other players who ran lk_pull receive that packet.
 
-# A packet can be one of three types. ( Or to be exact, a packet is a [netheader,hash,point] and there are three types of points)
+# A packet is one of three types. (Or to be exact, a packet is a [netheader,hash,point] and there are three types of points)
 # A datapoint, linkpoint, or keypoint.
-# A datapoint only holds data.
-# A linkpoint has: data, a path name, and links (tag,hash) to other packets.
+# A datapoint holds: data.
+# A linkpoint holds: data, a path name, and links (tag,hash) to other packets.
 # A keypoint is a linkpoint with a cryptographic signature.
 # For our case we'll only use keypoints.
 
-# Its common to wrap the *point functions as we know the following arguments wont change.
+# Its common to wrap the *point functions when arguments wont change.
 new_keypoint = functools.partial(lk_keypoint, key=signing_key, domain=b"mineweeper", group=game_pkt.group, path=game_path)
 
 player_count = len(game_conf['players'])
@@ -76,7 +85,7 @@ for i, e in enumerate(game_conf['players']):
 players = list([e[0] for e in game_conf['players']])
 
 
-# By setting the seed to be the game_pkt.hash, every player will generate the same map of mines.
+# The pkt hash is used as a seed to generate the mine map.
 game = MineWeeper(    players=players,
     rows=game_conf['rows'],
     cols=game_conf['columns'],
@@ -84,28 +93,31 @@ game = MineWeeper(    players=players,
     seed=game_pkt.hash)
 input("Coordinates are row/vertical, col/horizontal.")
 
-# We expect the players to take turns in sequence until someone reveals a bomb.
-# Alice -> Bob -> Charlie -> Alice -> Bob -> ...
-
-# Each turn will be a keypoint, signed by the player, with the data being a json encoded [x,y] for the cell the player revealed.
-# By checking the pubkey of the Pkt we know who made the move, but we'll need a way to know which turn we're on.
-# One option is to add a {turn:int} field to the json.
-# We can be more strict and require each keypoint to link back to the prev turn.
-# To start, the first turn will link back to the game_pkt
+# Players take turns until someone reveals a bomb.
+# Its up to us as a developer to choose how to encode that.
+# We decide to encode a turn in a keypoint, signed by the player, with the data a json encoded [x,y] for the chosen cell.
+# The Pkt.pubkey indicates who made the move.
+# We could add a {turn:int} field to the json.
+# Instead, we chose to be more strict:
+# every turn will link to the previous turn.
+# This makes it obvious what happened if someone adds multiple moves for some reason.
+# The first turn will link back to the game_pkt
 prev_turn = Link("prev", game_pkt.hash)
 
-# We'll use a callback that receives packets matching (a subset of) our query. 
-# If the pkt argument has a link equal to prev_ptr it contains the json for the next turn. 
+# Packets that match (a subset of) our query are processed as follows:
+# If the pkt has its links equal to prev_ptr, and pubkey == current_player.pubkey => the data should contain the json for their turn.
 def find_and_do_next_move(player_turn_pkt):
     global prev_turn, game
-    if player_turn_pkt.links[0] == prev_turn:
+    if list(player_turn_pkt.links) == [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
         try:
             [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
             clear_screen()
             game.reveal(row, col)
             # Update our prev_ptr to the this packet. 
             prev_turn = Link("prev", player_turn_pkt.hash)
-            return True # stop looking
+
+            # Returning True stops this function from being called with more matches.
+            return True 
         except Exception as e :
             exit("Game was corrupted: " + str(e) )
 
@@ -113,19 +125,20 @@ while game.print_game_state():
     [pid,name] = game.current_player();
     [_name,b64_key] = game_conf['players'][pid]
 
-    # We know whose turn it is, so we'll narrow our query down to packets signed by the current player.
-    # We have the pubkey in base64 string encoding so we'll use lk_query_parse instead of lk_query_push
+    # We narrow our query to packets signed by the current player.
+    # We have their pubkey in a base64 string.
+    # lk_query_push and lk_query_parse can both update the query. The later handles strings formats instead of bytes.
     q = lk_query_parse(common_q,"pubkey:=:"+b64_key)
-    # (We don't have to lk_pull because it's a subset of what we're already pulling).
 
-    # To start off, we'll check if any of the packets we have locally represent the turn we're looking for.
-    # (As a side effect, we can close and open this script and continue were we left off)
+    # (We don't have to lk_pull. This query is a subset of what we're already pulling).
+
+    # To start check the database for a match.
+    # (As a side effect, a user can close and re-open the game and continue were they left off)
     # lk_get_all returns a positive number if the callback was finished by returning True.
     if lk_get_all(lk,q,find_and_do_next_move) > 0:
         continue
 
-    # We don't have the packet for the current turn. 
-    # If the current players key is our key, we should make a move.
+    # If no match found, check whose turn it is.
     if b64_key == b64(signing_key.pubkey):
         print("Your turn")
         try:
@@ -134,42 +147,42 @@ while game.print_game_state():
             pkt = new_keypoint(data=data,links=[prev_turn])
             print("Cheating ",game.is_mine(int(row),int(col)))
             if "y" in input("?"):
-                # We save the packet. An exchange process will ensure the other players get it. 
+                # We save the packet. An exchange process will ensure the other players get it.
                 lk_save(lk,pkt)
                 prev_turn = Link("prev",pkt.hash)
             # 'input("?")' might have taken the user a long time, 
             # and saving a packet doesn't update our local view of the database. 
             # To do so we have to process the new packets.
-            # In our case that doesn't do anything else.  
             lk_process(lk)
+            # This process triggers registered callbacks. Those won't exists at this stage.
         except Exception as e:
             print(e)
     else:
-        # If its not our turn, we'll have to wait for the packet of the current player to arrive. 
+        # We must wait for the packet of the current player to arrive.
         print("Waiting")
 
-        # lk_watch is like lk_get_all, but in addition the callback will also get called for matches during lk_process or lk_process_while.
+        # lk_watch is like lk_get_all, but in addition the callback also gets called for new packet matches during lk_process or lk_process_while.
 
-        # lk_watch requires we give our query a qid.
-        # This allows us to remove or overwrite it later.
-        # (in our case the cb will finish by returning True, so this isn't very relevant except for logging/debugging).
-        # We'll name our query 'move' 
-        q = lk_query_push(q,"","qid",b"move") # alternatively lk_query_parse(q,":qid:move")
+        # lk_watch requires we set a qid.
+        # With it we could remove or overwrite it later.
+        # (in our case the callback finishes by returning True, so the qid is only relevant w.r.t. logging/debugging).
 
-        # lk_watch, just like lk_get_all, starts with the database.
-        # We can skip this. We already used lk_get_all (and we haven't lk_process* since).
-        # To skip the db phase we add a predicate that i_db should be < 0 
-        q = lk_query_push(q,"i_db","<",int(0).to_bytes(4))
+        q = lk_query_push(q,"","qid",b"move") # eqv: lk_query_parse(q,":qid:move")
 
-        # If we had not set i_db:<:[u32:0] , lk_watch would check the database before saving the callback and returning. 
+        # lk_watch checks the database and calls our function, then saves the callback for later before returning.
+
         lk_watch(lk,q,find_and_do_next_move)
 
+        # You can add any number of callbacks per thread.
+
         # lk_process_while is similar to lk_process but can wait for new packets until a condition is met.
-        # Linkspace processes can get complex registering many callbacks with lk_watch and waiting for multiple unordered packets. 
-        # Our case is simple.
-        # There is only one watch, and only one reason for it to be done.
+        # We have one callback, so we'll wait forever until its finished.
         lk_process_while(lk,qid=b"move")
-        # The current player made a move, and we can continue to the next round
+
+        # The current player made a move. We continue to the next round
 
 # Our game is done
 print("Fin")
+
+# NOTE: We could have skipped checking packets from the database when using lk_watch. At that point we already did so with lk_get_all.
+# To do so add a i_db:<:0 predicate. We'll discuss those later.

@@ -228,6 +228,7 @@ pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt) -> anyhow::Result<&'a PyBytes> {
     Ok(PyBytes::new(py, &v))
 }
 #[pyfunction]
+#[pyo3(signature =(buf, validate=true,allow_private=false))]
 pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> anyhow::Result<(Pkt, &[u8])> {
     let p = linkspace_rs::point::lk_read(buf, validate, allow_private)?;
     let size = p.size();
