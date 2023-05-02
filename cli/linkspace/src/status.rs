@@ -59,6 +59,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
         group,
         objtype: &objtype,
         instance: instance.as_deref().or(Some(b"default")),
+        qid: b"<lk set status>"
     };
     let lk : Linkspace = common.runtime()?.into();
     let c= common.clone();
@@ -112,6 +113,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
         group,
         objtype: &objtype,
         instance: instance.as_deref(),
+        qid: b"<lk set status>"
     };
 
     let query : Query= lk_status_overwatch(status, timeout.stamp()).unwrap().into();
@@ -131,7 +133,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let ok = Rc::new(std::cell::Cell::new(false));
     let isokc = ok.clone();
 
-    lk_status_poll(&lk,b"status", status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
+    lk_status_poll(&lk,status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
         if pkt.get_links().is_empty() || pkt.data().is_empty(){
             panic!()
         }

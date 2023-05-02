@@ -629,7 +629,7 @@ pub mod runtime {
 
     use std::time::Instant;
 
-    use linkspace_common::prelude::QueryIDRef;
+    use linkspace_common::{prelude::QueryIDRef, saturating_cast, saturating_neg_cast};
     use tracing::{debug_span };
 
     use super::*;
@@ -681,7 +681,7 @@ pub mod runtime {
             breaks = (cb)(&p);
             if breaks{break}
         }
-        Ok(c as i32 * if breaks { 1 } else { -1} )
+        Ok(if breaks { saturating_cast(c)}else {saturating_neg_cast(c)})
     }
 
     /// get the first result from the database matching the query.
@@ -704,19 +704,22 @@ pub mod runtime {
         Ok(opt_pkt.map(|v| (cb)(v)))
     }
     /**
+    Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid) )
     Before returning, calls cb for every packet in the database.
-    Then registers the query under its 'qid' option ( .e.g. set by lk_query_parse(q,":qid:myqid) )
-    During a [[lk_process]] or [[lk_process_while]] call,
-    for every new packet matching the query, runs the callback. 
-    
-    The watch is dropped when
-    - the cb returns 'break' ( usually false )
-    - [[lk_stop]] is called with the matching id
-    - the predicate set will never match again ( 'i' counters and recv )
+    The absolute return value is the number of times the callback was called.
+    A positive value means the callback finished already.
 
-    returns the number of matches in the local database.
+    A 0 or negative value means it is registered and shall be called during
+    a [[lk_process]] or [[lk_process_while]] call,
+    for every new packet matching the query.
+    
+    The watch is finished when
+    - the cb returns 'break' (In other languages we map this to the boolean 'true')
+    - the predicate set will never match again (e.g. the 'i_*' or 'recv' predicate shall never match again )
+    - [[lk_stop]] is called with the matching id
+
     **/
-    pub fn lk_watch(lk: &Linkspace, query: &Query, cb: impl PktHandler + 'static) -> LkResult<u32> {
+    pub fn lk_watch(lk: &Linkspace, query: &Query, cb: impl PktHandler + 'static) -> LkResult<i32> {
         lk_watch2(lk, query, cb, debug_span!("lk_watch - (untraced)"))
     }
 
@@ -728,7 +731,7 @@ pub mod runtime {
         query: &Query,
         cb: impl PktHandler + 'static,
         span: tracing::Span,
-    ) -> LkResult<u32> {
+    ) -> LkResult<i32> {
         Ok(lk.0.watch_query(&query.0, interop::Handler(cb), span)?)
     }
     /// See [lk_watch2]

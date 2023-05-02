@@ -6,19 +6,16 @@ from mineweeper import MineWeeper, clear_screen
 from linkspace import *
 import re
 
-lkdir = os.environ.get("LK_DIR","")
-group_expr = os.environ.get("LK_GROUP","[#:test]")
-group = lk_eval(group_expr)
-key = os.environ.get("LK_KEYNAME","me:local")
-password = os.environ.get("LK_PASS","")
+group_name = os.environ.get("LK_GROUP","[#:test]")
+group = lk_eval(group_name)
 
-lk = lk_open(dir=lkdir,create=True)
-key = lk_key(lk,password=lk_eval(password),name=key,create=True)
+lk = lk_open()
+key = lk_key(lk)
 # key = lk_keygen()
 
-common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_expr)
-lk_keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
-lk_linkpoint = functools.partial(lk_linkpoint,domain=b"mineweeper",group=group)
+common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_name)
+keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
+linkpoint = functools.partial(lk_linkpoint,domain=b"mineweeper",group=group)
 
 ls = []
 recent = lk_status_poll(lk,qid=b"status",callback=lambda x : ls.append(x),

@@ -387,7 +387,7 @@ impl Linkspace {
         query: &Query,
         onmatch: impl PktStreamHandler + 'static,
         span: Span,
-    ) -> anyhow::Result<u32> {
+    ) -> anyhow::Result<i32> {
         let mode = query.get_mode()?;
         let id = query.qid().transpose()?.context("watch always requires the :id option")?;
         let follow = query.get_known_opt(KnownOptions::Follow);
@@ -425,7 +425,7 @@ impl Linkspace {
         mut onmatch: impl PktStreamHandler + 'static,
         start: Option<LkHash>,
         span: Span,
-    ) -> anyhow::Result<u32> {
+    ) -> anyhow::Result<i32> {
         if start.is_some() {
             panic!("todo")
         }
@@ -449,7 +449,7 @@ impl Linkspace {
             }
             tracing::debug!(?r,"Done with DB");
             if matches!(r, ControlFlow::Break(_)) {
-                return Ok(counter);
+                return Ok(crate::saturating_cast(counter))
             }
         }
         match RxEntry::new(watch_id.to_vec(), q.into_owned(), counter, Box::new(onmatch), span) {
@@ -459,7 +459,7 @@ impl Linkspace {
             }
             Err(r) => tracing::info!(e=?r,"Did not register"),
         }
-        Ok(counter)
+        Ok(crate::saturating_neg_cast(counter))
     }
 
     /// Add a function to be run after a txn.

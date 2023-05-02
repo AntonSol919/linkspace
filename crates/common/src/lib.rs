@@ -51,3 +51,11 @@ pub mod static_env;
 pub mod dgp;
 pub mod eval;
 pub mod predicate_aliases;
+
+
+pub fn saturating_cast(val:u32) -> i32{
+    val.min(i32::MAX as u32) as i32
+}
+pub fn saturating_neg_cast(val:u32) -> i32{
+    if val > (i32::MAX as u32 + 1) { i32::MIN} else { -(val as i32) }
+}

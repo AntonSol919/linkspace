@@ -109,80 +109,63 @@ prev_turn = Link("prev", game_pkt.hash)
 def find_and_do_next_move(player_turn_pkt):
     global prev_turn, game
     if list(player_turn_pkt.links) == [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
-        try:
-            [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
-            clear_screen()
-            game.reveal(row, col)
-            # Update our prev_ptr to the this packet. 
-            prev_turn = Link("prev", player_turn_pkt.hash)
-
-            # Returning True stops this function from being called with more matches.
-            return True 
-        except Exception as e :
-            exit("Game was corrupted: " + str(e) )
+        [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
+        clear_screen()
+        print("RECV ",player_turn_pkt)
+        game.reveal(row, col)
+        # Update our prev_ptr to the this packet. 
+        prev_turn = Link("prev", player_turn_pkt.hash)
+        # Returning True stops this function from being called with more matches.
+        return True
 
 while game.print_game_state():
     [pid,name] = game.current_player();
-    [_name,b64_key] = game_conf['players'][pid]
+    [_name,player_b64_key] = game_conf['players'][pid]
 
     # We narrow our query to packets signed by the current player.
     # We have their pubkey in a base64 string.
     # lk_query_push and lk_query_parse can both update the query. The later handles strings formats instead of bytes.
-    q = lk_query_parse(common_q,"pubkey:=:"+b64_key)
+    q = lk_query_parse(common_q,"pubkey:=:"+player_b64_key)
 
     # (We don't have to lk_pull. This query is a subset of what we're already pulling).
 
+    q = lk_query_push(q,"","qid",b"move") # eqv: lk_query_parse(q,":qid:move").
+
     # To start check the database for a match.
-    # (As a side effect, a user can close and re-open the game and continue were they left off)
-    # lk_get_all returns a positive number if the callback was finished by returning True.
-    if lk_get_all(lk,q,find_and_do_next_move) > 0:
+    # lk_watch first checks the database. If the callback returned True it returns a positive number.
+    # Otherwise 0 or negative to indicate the callback was registered and is waiting for new packets.
+    if lk_watch(lk,q,find_and_do_next_move)> 0:
+        # next turn
+        # (As a side effect of our design, a user can close and re-open the game and continue were they left off)
         continue
 
-    # If no match found, check whose turn it is.
-    if b64_key == b64(signing_key.pubkey):
-        print("Your turn")
-        try:
-            [row,col] = re.split('[;|, :]',input("Reveal:"))
-            data=json.dumps([int(row),int(col)])
-            pkt = new_keypoint(data=data,links=[prev_turn])
-            print("Cheating ",game.is_mine(int(row),int(col)))
-            if "y" in input("?"):
+    # If its our turn, do a move.
+    if player_b64_key == b64(signing_key.pubkey):
+        while True:
+            print("Your turn")
+            try:
+                [row,col] = re.split('[;|, :]',input("Reveal:"))
+                (row,col) = (int(row),int(col))
+                data=json.dumps([row,col])
+                game.get_revealable_cell(row,col)
+                if game.is_mine(row,col) and "c" in input("cheat?"):
+                    continue
+                pkt = new_keypoint(data=data,links=[prev_turn])
                 # We save the packet. An exchange process will ensure the other players get it.
+                # (This does not update our view of the database until we call lk_process or lk_process_while)
                 lk_save(lk,pkt)
-                prev_turn = Link("prev",pkt.hash)
-            # 'input("?")' might have taken the user a long time, 
-            # and saving a packet doesn't update our local view of the database. 
-            # To do so we have to process the new packets.
-            lk_process(lk)
-            # This process triggers registered callbacks. Those won't exists at this stage.
-        except Exception as e:
-            print(e)
+                break
+            except Exception as e: 
+                print(e)
     else:
-        # We must wait for the packet of the current player to arrive.
         print("Waiting")
 
-        # lk_watch is like lk_get_all, but in addition the callback also gets called for new packet matches during lk_process or lk_process_while.
-
-        # lk_watch requires we set a qid.
-        # With it we could remove or overwrite it later.
-        # (in our case the callback finishes by returning True, so the qid is only relevant w.r.t. logging/debugging).
-
-        q = lk_query_push(q,"","qid",b"move") # eqv: lk_query_parse(q,":qid:move")
-
-        # lk_watch checks the database and calls our function, then saves the callback for later before returning.
-
-        lk_watch(lk,q,find_and_do_next_move)
-
-        # You can add any number of callbacks per thread.
-
-        # lk_process_while is similar to lk_process but can wait for new packets until a condition is met.
-        # We have one callback, so we'll wait forever until its finished.
-        lk_process_while(lk,qid=b"move")
-
-        # The current player made a move. We continue to the next round
+    # We process new packets until our callback registered with qid 'move' returned True.
+    # lk_process_while is smart about sleeping until new packets arrive and a condition is met.
+    # a positive value means the callback has finished.
+    while not lk_process_while(lk,qid=b"move") > 0:
+        pass
+    # The current player made a move. We continue to the next round
 
 # Our game is done
 print("Fin")
-
-# NOTE: We could have skipped checking packets from the database when using lk_watch. At that point we already did so with lk_get_all.
-# To do so add a i_db:<:0 predicate. We'll discuss those later.

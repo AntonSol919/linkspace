@@ -80,7 +80,7 @@ def lk_datapoint(data:bytes) -> Pkt: ...
 def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
                  links:list[Link] | None=None,data:bytes |str| None=None,
                  create:bytes | None =None) -> Pkt: ...
-def linkmail_keypoint(key: SigningKey,
+def lk_keypoint(key: SigningKey,
                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
@@ -245,14 +245,14 @@ def lk_watch(lk:Linkspace,query:Query,
             on_err:Callable[[Pkt],Any] | None = None,
              ) -> int:
     """
+    Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid) )
     Before returning, calls on_match for every packet in the database.
-    Then registers the query under its 'qid' option.
-    During a lk_process or lk_process_while call, for every new packet matching the query, on_match will be called.
+    The absolute return value is the number of times the callback was called.
 
-    The watch is deregistered when:
-    - on_match returns False
-    - lk_stop is called with a matching qid
-    - the query is done (The recv predicate is out of bound, the i_* predicate has reached its limit)
+    The watch is finished when
+    - the cb returns 'break' (In other languages we map this to the boolean 'true')
+    - the predicate set will never match again (e.g. the 'i_*' or 'recv' predicate shall never match again )
+    - [[lk_stop]] is called with the matching id
 
     Args:
         lk:
@@ -260,6 +260,8 @@ def lk_watch(lk:Linkspace,query:Query,
         on_match:
         on_close:
         on_err:
+    Returns: int
+        Positive if callback returned 'True', negative or 0 if not.
     """
     ...
 def lk_stop(lk:Linkspace, qid:bytes,range:bool=False):
@@ -276,8 +278,64 @@ def lk_pull(lk: Linkspace, query: Query):
         query: Must have a qid set
     """
     ...
-def lk_status_poll(*args, **kwargs) -> Any: ...
-def lk_status_set(*args, **kwargs) -> Any: ...
+
+def lk_status_poll(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:bytes, objtype:bytes,
+                   callback:Callable[[Pkt],Any] | None = None,
+                   instace : bytes | None = None ) -> bool:
+    """
+    status_set and status_poll are a convention to communicate between two processes over the [#:0] group about a (group,domain,obj_type, ?instace).
+    I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
+
+    The status convention is only meant for communication between processes using the same linkspace instance.
+    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+
+    This function is an application of lk_watch. An immediate check is made of the current database.
+    For further processing callback is registered under qid, and is only executed during a lk_process* step. 
+
+    For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
+    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+
+    If no instance is set, then all lk_status_set with the same (group,domain,obj_type) will reply.
+
+    lk_status_poll(lk,qid=b"status",callback=lambda x : ls.append(x),
+               timeout=lk_eval("[s:+2s]"),
+               domain=b"exchange",
+               group=group,
+               objtype=b"process")
+    proc_watch = lk_process_while(lk,qid=b"status")
+
+    Args:
+        lk:
+        qid: name to lk_watch. Can be lk_stop or watched with lk_process_while
+        timeout: microseconds window to check for reply. e.g. lk_eval("[s:+2s]").
+        group: GroupID for the objtype
+        domain: domain for the objtype
+        objtype: a agreed upon name for the status.
+        instance: a specific instance for the objtype
+        callback: Receives the status packets made with lk_status_set. Return True to stop early.
+    
+    Returns: true if any lk_status_set has replied. 
+    """
+    ...
+
+
+def lk_status_set(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:bytes, objtype:bytes,
+                   get_current_status:Callable[[],bytes] | None = None,
+                   instace : bytes | None = None ) -> bool:
+    """
+    status_set and status_poll are a convention to communicate between two processes over the [#:0] group about a (group,domain,obj_type, ?instace).
+    I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
+
+    The status convention is only meant for communication between processes using the same linkspace instance.
+    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+
+    This function is an application of lk_watch. An immediate check is made of the current database.
+    For further processing get_current_status is registered under qid, and is only executed during a lk_process* step. 
+
+    For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
+    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+    """
+    ...
 
 
 

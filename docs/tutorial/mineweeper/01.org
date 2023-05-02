@@ -269,6 +269,18 @@ while not done:
 #+INCLUDE: "../../../examples/mineweeper/mineweeper-multiplayer.py" src python
 #+end_py
 
+#+begin_ctabs
+#+begin_info
+
+To start the mineweeper-multiplayer.py manually, we run the following in each session
+#+begin_bash
+mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
+#+end_bash
+
+#+end_info
+
+
+#+end_ctabs
 
 * Cheating
 

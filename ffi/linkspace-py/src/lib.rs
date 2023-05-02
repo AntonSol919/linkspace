@@ -393,7 +393,7 @@ pub fn lk_watch(
     on_match: Option<PyFunc>,
     on_close: Option<PyFunc>,
     on_err: Option<PyFunc>,
-) -> anyhow::Result<u32> {
+) -> anyhow::Result<i32> {
     let watch_handler = PyPktStreamHandler { on_match, on_close,on_err };
     let (file, line) = call_ctx(py);
     let span = debug_span!("lk_watch",%file,%line);
@@ -443,6 +443,7 @@ pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
 #[pyfunction]
 pub fn lk_status_set(
     lk: &Linkspace,
+    qid: &[u8],
     callback: PyFunc,
     group: &[u8],
     domain: &[u8],
@@ -457,6 +458,7 @@ pub fn lk_status_set(
         group,
         objtype,
         instance,
+        qid
     };
     tracing::info!("setup status {:?}",status_ctx);
     lk_status_set(&lk.0, status_ctx, move |_lk, domain, group, path, link| {
@@ -491,14 +493,16 @@ pub fn lk_status_poll(
         group,
         objtype,
         instance,
+        qid
     };
     let handler = PyPktStreamHandler {
         on_match: callback,
         on_close: None,
         on_err:None
     };
-    lk_status_poll(&lk.0,qid, status_ctx, timeout, handler)
+    lk_status_poll(&lk.0, status_ctx, timeout, handler)
 }
+
 
 #[pyfunction]
 pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Result<&'o PyBytes> {

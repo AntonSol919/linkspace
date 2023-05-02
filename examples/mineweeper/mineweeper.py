@@ -88,18 +88,23 @@ class MineWeeper():
         print("Player {} ({})".format(name,pid))
         return True
 
-    def reveal(self,row,col):
+    def get_revealable_cell(self,row,col) -> Cell:
+        """Get unrevealed cell at row,col. Raises exceptions if not possible"""
         cell = self.get_cell(row,col)
         if cell is None:
             raise NoSuchCell
         elif cell.revealed:
             raise AlreadyRevealed
+        return cell
+
+
+    def reveal(self,row,col):
+        cell = self.get_revealable_cell(row,col)
+        cell.revealed = True
+        (pid,_) = self.current_player()
+        if cell.mine:
+            print("Boom")
+            self.loser = pid
         else:
-           cell.revealed = True
-           (pid,_) = self.current_player()
-           if cell.mine:
-               print("Boom")
-               self.loser = pid
-           else:
-               print("Phew")
-           self.game_round += 1
+            print("Phew")
+            self.game_round += 1
