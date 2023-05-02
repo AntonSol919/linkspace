@@ -1,124 +1,144 @@
 #!/bin/env python3
-import os,getpass,functools,cmd,traceback,logging,sys
+
+from dataclasses import dataclass,field
+import json
+import os,functools,logging,sys
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-from mineweeper import MineWeeper, clear_screen
 from linkspace import *
-import re
 
 group_name = os.environ.get("LK_GROUP","[#:test]")
 group = lk_eval(group_name)
 
 lk = lk_open()
 key = lk_key(lk)
-# key = lk_keygen()
 
 common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_name)
 keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
-linkpoint = functools.partial(lk_linkpoint,domain=b"mineweeper",group=group)
 
-ls = []
-recent = lk_status_poll(lk,qid=b"status",callback=lambda x : ls.append(x),
-               timeout=lk_eval("[s:+2s]"),
-               domain=b"exchange",
-               group=group,
-               objtype=b"process")
-proc_watch = lk_process_while(lk,qid=b"status")
-if not recent and proc_watch == 0:
+recent_ok = lk_status_poll(
+    lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[s:+2s]"),
+    domain=b"exchange",
+    group=group,
+    objtype=b"process")
+
+if not recent_ok and lk_process_while(lk,qid=b"status") == 0:
     exit("No exchange process active. ")
 
-lobbies_query = lk_query_parse(common_q,"prefix:=:/lobby","path_len:=:[u8:3]","create:>:[now:-10m]",":qid:get_lobby","i_branch:=:[u32:0]")
-lk_pull(lk,lk_query_parse(lobbies_query,":follow"))
-lk_process(lk)
+@dataclass
+class Lobby:
+    # empty keypoint at /host/NAME (signed by host)
+    create_pkt: Pkt | None= None
+    # keypoint at /host/NAME  with a link to create + the game config start data
+    start_pkt : Pkt | None= None
+    # keypoints(signed by player) at /lobby/[create.hash] Data is player name
+    # (leaving is done by overwriting the keypoint without data
+    players:dict[bytes,Pkt] = field(default_factory=dict)
+    # keypoints at /lobby/[create.hash]/chat to message each other. 
+    chat:list[Pkt] = field(default_factory=list)
 
 
-class SetupLobby():
-    game_start_pkt : Pkt | None
-    host : Pkt # public key
-    lobby_query : Query
-    lobbies = dict()
-    players = set()
-    stage = "pick_game"
-    new_packets = []
-    my_name = input("Using name > ")
+get_lobbies = lk_query_parse(common_q,"prefix:=:/host","path_len:=:[u8:2]","create:>:[now:-10m]",":qid:lobbies")
+lk_pull(lk,lk_query_parse(get_lobbies,":follow"))
 
-    def refresh(self):
-        print(self.new_packets)
-        self.new_packets.clear()
-        getattr(self, self.stage)()
-
-    def pick_game(self):
-        self.lobbies = dict()
-        def insert(p):
-            lobby = self.lobbies.get((p.comp1,p.comp2),set())
-            lobby.update(p.links)
-            self.lobbies[p.comp1] = lobby
-
-        lk_get_all(lk,lobbies_query,insert)
-        opts = list(self.lobbies.items())
-        opts.append(("New Game",set()))
-        for i,lobby in enumerate(opts):
-            print(i,lobby[0],len(lobby[1]))
-        try:
-           i = input("<int> to join, empty to refresh > ");
-           if i == "":
-               print("Awaiting next")
-               return
-           i = int(i)
-           if i == len(opts)-1:
-               lobby_name = input("game name > ")
-               lobby_path = lk_eval("[//lobby/[0]/[1]]",argv=[lobby_name,key.pubkey])
-               print("Save ok")
-               self.host = lk_keypoint(path=lobby_path,links=[Link(self.my_name,key.pubkey)])
-               lk_save(lk,self.host)
-               self.lobby_query = lk_query_parse(lobbies_query,"i_branch:=:[u32:0]","path:=:[path]",pkt=self.host)
-               self.stage = "host_await_players"
-           elif i >= 0 and i < len(opts):
-               
-               print("todo")
-        except Exception as e :
-            logging.exception(e)
-            return
-
-    def player_await_host(self):
-        q = lk_query_parse(common_q,
-                           "path:=:[//lobby/[comp1]/[pubkey]/start]",
-                           "pubkey:=:[pubkey]",
-                           "create:>:[create]",
-                           "i:=:[u32:0]",
-                           ":qid:start_game",
-                           pkt=self.host)
-        go = []
-        lk_watch(lk,q,callback= lambda x:go.append(x))
-        lk_process_while(lk,qid=b"start_game")
-        if not go:
-
-            return
-        for link in go[0].links:
-            if link.ptr == key.pubkey:
-                self.game_start_pkt = go[0]
-                return 
-        print("Game started without you")
-        self.stage ="pick_game"
+host = None
+lobbies:dict[tuple[bytes,bytes],Lobby] = dict()
+def insert(p:Pkt):
+    print("found p",p)
+    lobby = lobbies.get((p.path1,p.pubkey),Lobby())
+    if not len(p.links):
+        lobby.create_pkt = p
+    else:
+        lobby.start_pkt = p
+    lobbies[(p.path1,p.pubkey)] = lobby
 
 
+lk_watch(lk,get_lobbies,insert)
+lk_process(lk);
+while host is None or host.create_pkt is None:
+    try:
+        print(lobbies)
+        opts = [(("New Game",key.pubkey),Lobby())] + [l for l in lobbies.items() if l[1].start_pkt is None]
+        for i,((name,pubkey),lobby) in enumerate(opts):
+            print(i,name,lk_encode(key.pubkey,"@/b"))
+        i = input("<int> to join, empty to refresh (w to wait) > ");
 
-    def host_await_players(self):
-        self.players = set(self.host)
-        lk_get_all(lk,self.lobby_query,lambda p: self.players.update(p.links) if self.host in p.links else None)
-        print(self.players)
-        i = input("Start or empty to wait")
+        if i == "w":
+            lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[s:+10s]"))
+            continue
         if i == "":
+            lk_process(lk)
+            continue
+        i = int(i)
+        if i == 0:
+            game_name = input("game name > ")
+            host_path = lk_eval("[//host/[0]]",argv=[game_name])
+            create = keypoint(path=host_path)
+            lk_save(lk,create)
+            host = Lobby(create_pkt = create)
+            lk_process(lk)
+        else:
+            lobby = opts[i]
+            host = lobby[1]
+
+    except Exception as e :
+        print(e)
+
+print("Using lobby",host.create_pkt.path1.decode("utf-8"), " designated admin: ",lk_encode(host.create_pkt.pubkey,"@/b"))
+
+my_name = input("Using name?")
+lobby_path = lk_eval("[//lobby/[hash]]",pkt=host.create_pkt)
+join_pkt = keypoint(path=lobby_path,data=my_name)
+lk_save(lk,join_pkt)
+
+get_lobby = lk_query_parse(
+    common_q,"prefix:=:/lobby/[hash]",":qid:lobby[hash]",
+    pkt=host.create_pkt)
+
+def lobby_pkt(p:Pkt):
+    global host
+    if p.path2 == b"chat":
+        host.chat.append(p)
+    elif p.path2 == b"":
+        latest = host.players.get(p.pubkey)
+        if latest and latest.create > p.create:
             return
-        if i.lower()[0] == 's':
-            self.game_start_pkt = lk_keypoint(path)
+        host.players[p.pubkey] = p
+    else:
+        print("unknown msg",p)
 
-setup = SetupLobby()
+lk_pull(lk,get_lobby)
+lk_watch(lk,get_lobby, on_match=lobby_pkt)
 
-setup.refresh()
-lk_watch(lk,lk_query_push(lobbies_query,"i_db","<",int(0).to_bytes(4)),lambda p: setup.new_packets.append(p))
+me_host = host.create_pkt.pubkey == key.pubkey
+prompt = "[chat msg] | /leave"
+if me_host:
+    prompt += " | /start"
 
-while True:
-    lk_process_while(lk,qid=b"get_lobby",timeout=lk_eval("[s:+2s]"))
-    lk_process(lk)
-    setup.refresh()
+while not host.start_pkt:
+    print(*[ p.data.decode("utf-8") for p in host.chat],sep="\n")
+    print(*[ p.data for p in host.players.values() if p.data],sep=" ")
+    cmd = input(prompt)
+    if cmd == "":
+        lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
+    if me_host and cmd == "/start":
+        players = [ [p.data.decode("utf-8"),b64(p.pubkey)] for p in host.players.values() if p.data]
+        try:
+            cols = int(input("cols"))
+            rows = int(input("rows"))
+            mine_rate = float(input("mine_rate"))
+            data = json.dumps({"columns":cols,"rows":rows,"mine_rate":mine_rate,"players":players})
+            start_pkt = keypoint(path=lobby_path,data=data,links=[Link("create",host.create_pkt.hash)])
+            lk_save(lk,start_pkt)
+            lk_process(lk)
+        except Exception as e:
+            print(e)
+
+    if cmd == "/leave":
+        lk_save(lk,keypoint(path=lobby_path))
+        exit("left")
+    else:
+        lk_save(lk,keypoint(path=lobby_path + lk_eval("[//chat]"),data=cmd))
+        lk_process(lk)
+
+print("Starting game", host.start_pkt, host.start_pkt.data.decode("utf-8"))

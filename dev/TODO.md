@@ -50,6 +50,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 
 # Internals
 
+- lk_pull should register a on_close to overwrite the packet signaled to the exchange.
 - Detangle field_ids abe and ruletype
 - should prob switch lmdb to libmdbx
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.

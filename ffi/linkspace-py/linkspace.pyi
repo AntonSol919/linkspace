@@ -297,12 +297,15 @@ def lk_status_poll(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:byt
 
     If no instance is set, then all lk_status_set with the same (group,domain,obj_type) will reply.
 
-    lk_status_poll(lk,qid=b"status",callback=lambda x : ls.append(x),
+    A minimal example looks like: 
+    # 
+    immediate_reply = lk_status_poll(lk,qid=b"status",callback=lambda _ : True,
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
                group=group,
-               objtype=b"process")
-    proc_watch = lk_process_while(lk,qid=b"status")
+               objtype=b"process") 
+    if not immediate_reply and lk_process_while(lk,qid=b"status") == 0:
+        print("No exchange process active")
 
     Args:
         lk:

@@ -119,7 +119,6 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let query : Query= lk_status_overwatch(status, timeout.stamp()).unwrap().into();
     if print_query { println!("{}",query); return Ok(())}
     if !write_request.is_empty(){
-
         let mut out = common.open(&write_request)?;
         let req = lk_status_request(status)?;
         common.write_multi_dest(&mut out, &req, None)?;
