@@ -19,31 +19,30 @@ build-debug:
 	ln -s "$(R)/target/debug/liblinkspace.so" "$(R)/target/python/linkspace.so" 
 	ln -s "$(R)/ffi/linkspace-py/linkspace.pyi"  "$(R)/target/python/linkspace.pyi" 
 
-docs:
+rust-docs: 
 	cargo +nightly doc -p linkspace --target-dir ./build --no-deps
 	cp -r ./build/doc/ ./docs/cargo-doc
+
+tutorials:
+	make -C ./docs/tutorial/
+
+# ensure our index.html is up to date.
+docs/guide/index.html: docs/guide/index.org
+	echo "TODO: Currently not able to make guide/index.html outside of emacs"
+	exit 1
+
+docs: docs/guide/index.html tutorials rust-docs
 
 homepage:
 	make -C ./homepage
 
-homepage-downloads:
-	rm -r ./homepage/download
-	mkdir -p ./homepage/download
-	make -C ./pkg all
-	cp ./pkg/build/*.zip ./homepage/download
-
-
 git-checkin: homepage docs
 	cargo +nightly check
 
-publish: git-checkin docs/guide/index.html
+publish: git-checkin
 	rsync -rvkP ./homepage/ ./build/homepage
 	git rev-parse HEAD > ./build/PUBLISH_HEAD
 	git checkout publish
 	rsync -rvkP ./build/homepage/ ./
 	echo 'Publish Commit $(cat ./build/PUBLISH_HEAD)'
 
-# ensure our index.html is up to date.
-docs/guide/index.html: docs/guide/index.org
-	echo "TODO: Currently not able to make guide/index.html outside of emacs"
-	exit 1

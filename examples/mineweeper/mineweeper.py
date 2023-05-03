@@ -103,8 +103,8 @@ class MineWeeper():
         cell.revealed = True
         (pid,_) = self.current_player()
         if cell.mine:
-            print("Boom")
+            print(f"({row},{col}): Boom!!!")
             self.loser = pid
         else:
-            print("Phew")
+            print(f"({row},{col}): Phew.")
             self.game_round += 1

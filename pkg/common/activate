@@ -1,3 +1,6 @@
+# A 'activate' script is available in the REPO and the Pkg.
+# This is the ZIP version and will only work with the binaries available.
+
 export LK_GROUP=[#:test]
 export LK_DIR=$PWD
 export PYTHONPATH=$PWD/python

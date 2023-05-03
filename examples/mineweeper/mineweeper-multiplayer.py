@@ -111,7 +111,6 @@ def find_and_do_next_move(player_turn_pkt):
     if list(player_turn_pkt.links) == [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
         [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
         clear_screen()
-        print("RECV ",player_turn_pkt)
         game.reveal(row, col)
         # Update our prev_ptr to the this packet. 
         prev_turn = Link("prev", player_turn_pkt.hash)
@@ -148,7 +147,7 @@ while game.print_game_state():
                 (row,col) = (int(row),int(col))
                 data=json.dumps([row,col])
                 game.get_revealable_cell(row,col)
-                if game.is_mine(row,col) and "c" in input("cheat?"):
+                if "i'm" and not "a cheater" and game.is_mine(row,col) and "c" in input("cheat?"):
                     continue
                 pkt = new_keypoint(data=data,links=[prev_turn])
                 # We save the packet. An exchange process will ensure the other players get it.

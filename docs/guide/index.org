@@ -12,16 +12,18 @@ This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
+This is a technical document describing linkspace from first principle.
+You should be familiar with the [[../../index.html#basics][basics]].
+If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
+
 * Introduction
 
 Linkspace is a packet format and processing library.
-Instead of providing or consuming streams of data, linkspace takes a different path.
+Instead of providing an API to consume streams of data, linkspace takes a different path.
 Packets of bytes are hashed, named, saved, and can reference other packets.
 
 This gives us a thin and powerful stack to build multiparty applications.
 [[../cargo-doc/linkspace/index.html][linkspace]] is the authoritative implementation.
-
-You should be familiar with the [[../../index.html#basics][basics]].
 
 Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
 This abstraction sidesteps or solves a number of difficulties inherent in organizing data.
@@ -43,15 +45,15 @@ Instead of processing ordered streams of network data, an application is a funct
 This has upsides[fn::
 The homepage contains a list of various properties. However, there is one I lack a word for.
 Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
-They're well-designed if they run under the assumption of incomplete/bad state.
-In linkspace this is an obvious requirement, and linkspace attempts to make it simple.
+They're well-designed if they run under the assumption of incomplete, out-of-order, potentially buggy state.
+In linkspace this is a requirement, and the library attempts to make it simple.
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
 ] and downsides.
 
 One issue with supernets built so far is that they are bound to their use-case.
 Linkspace is a general purpose supernet.
 A developer claims a domain name like they would a port number, and their application can run for any group of users.
-Linkspace is designed to be fast and simple.
+Linkspace is designed to be fast and has a small API.
 
 It consists of 4 concepts.
 
@@ -61,8 +63,6 @@ It consists of 4 concepts.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
 
 Common challenges are addressed by a set of [[Conventions]].
-
-The end of this document contains examples.
 
 * Setup
 :PROPERTIES:
@@ -679,7 +679,7 @@ This reduces the need to escape ':' and '/', but complicating some other express
 We can add an expression to --write arguments
 ~lk link :: --write "stdout-expr:hello world:/ [hash:str]"~
 In case of ~file~ this leaves us in the situation that second argument is the file and the tail of the expression will be evaluated
-The simplest way to ignore all escapes is to use empty evaluator ~[/:..]~. 
+One option is to use ~[/:..]~ to read ':' and '/' as is.
 ~lk link :: --write "file-expr:[/:./afolder:with/colons]:hello world:/ [hash:str]"~
 #+END_VERSE
 

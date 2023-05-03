@@ -1,5 +1,6 @@
 #!/usr/bin/env bash 
-# script to use the example dir from the repo.
+# A 'activate' script is available in the REPO and the Pkg.
+# This is the REPO version and will only work with the source available.
 REPO=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $REPO
 make build-debug

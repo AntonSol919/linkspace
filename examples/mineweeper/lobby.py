@@ -1,6 +1,7 @@
 #!/bin/env python3
 
 from dataclasses import dataclass,field
+from typing import Optional,Dict,List,Tuple # compatibility: python3.8 does not support newer type hints.
 import json
 import os,functools,logging,sys
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -28,23 +29,27 @@ if not recent_ok and lk_process_while(lk,qid=b"status") == 0:
 @dataclass
 class Lobby:
     # empty keypoint at /host/NAME (signed by host)
-    create_pkt: Pkt | None= None
+    create_pkt: Optional[Pkt] = None
     # keypoint at /host/NAME  with a link to create + the game config start data
-    start_pkt : Pkt | None= None
+    start_pkt : Optional[Pkt] = None
     # keypoints(signed by player) at /lobby/[create.hash] Data is player name
     # (leaving is done by overwriting the keypoint without data
-    players:dict[bytes,Pkt] = field(default_factory=dict)
+    players:Dict[bytes,Pkt] = field(default_factory=dict)
     # keypoints at /lobby/[create.hash]/chat to message each other. 
-    chat:list[Pkt] = field(default_factory=list)
+    chat:List[Pkt] = field(default_factory=list)
 
+print("Welcome to the mineweeper lobby. Pick a game or setup a new one.")
+print("Press enter to refresh or enter 'w' to await for change")
+
+# Because we'll be using 'input()' we dont't have asynchronous feedback.
+# In a better program we would use a thread for the user interface.
 
 get_lobbies = lk_query_parse(common_q,"prefix:=:/host","path_len:=:[u8:2]","create:>:[now:-10m]",":qid:lobbies")
 lk_pull(lk,lk_query_parse(get_lobbies,":follow"))
 
-host = None
-lobbies:dict[tuple[bytes,bytes],Lobby] = dict()
+host_lobby = None
+lobbies:Dict[Tuple[bytes,bytes],Lobby] = dict()
 def insert(p:Pkt):
-    print("found p",p)
     lobby = lobbies.get((p.path1,p.pubkey),Lobby())
     if not len(p.links):
         lobby.create_pkt = p
@@ -55,13 +60,13 @@ def insert(p:Pkt):
 
 lk_watch(lk,get_lobbies,insert)
 lk_process(lk);
-while host is None or host.create_pkt is None:
+
+while host_lobby is None or host_lobby.create_pkt is None:
     try:
-        print(lobbies)
-        opts = [(("New Game",key.pubkey),Lobby())] + [l for l in lobbies.items() if l[1].start_pkt is None]
+        opts = [((b"New Game",key.pubkey),Lobby())] + [l for l in lobbies.items() if l[1].start_pkt is None]
         for i,((name,pubkey),lobby) in enumerate(opts):
-            print(i,name,lk_encode(key.pubkey,"@/b"))
-        i = input("<int> to join, empty to refresh (w to wait) > ");
+            print(f"{i})",name.decode("utf-8"),lk_encode(key.pubkey,"@/b"))
+        i = input("<int> to join > ");
 
         if i == "w":
             lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[s:+10s]"))
@@ -71,74 +76,110 @@ while host is None or host.create_pkt is None:
             continue
         i = int(i)
         if i == 0:
-            game_name = input("game name > ")
+            game_name = ""
+            while not game_name:
+                game_name = input("Game name > ")
             host_path = lk_eval("[//host/[0]]",argv=[game_name])
             create = keypoint(path=host_path)
             lk_save(lk,create)
-            host = Lobby(create_pkt = create)
             lk_process(lk)
+            host_lobby = lobbies[(create.path1,create.pubkey)]
         else:
             lobby = opts[i]
-            host = lobby[1]
+            host_lobby = lobby[1]
 
     except Exception as e :
         print(e)
 
-print("Using lobby",host.create_pkt.path1.decode("utf-8"), " designated admin: ",lk_encode(host.create_pkt.pubkey,"@/b"))
+print("Using lobby",host_lobby.create_pkt.path1.decode("utf-8"), " designated admin: ",lk_encode(host_lobby.create_pkt.pubkey,"@/b"))
 
-my_name = input("Using name?")
-lobby_path = lk_eval("[//lobby/[hash]]",pkt=host.create_pkt)
-join_pkt = keypoint(path=lobby_path,data=my_name)
-lk_save(lk,join_pkt)
+player_name = ""
+while not player_name:
+    player_name = input("Player name > ")
 
 get_lobby = lk_query_parse(
     common_q,"prefix:=:/lobby/[hash]",":qid:lobby[hash]",
-    pkt=host.create_pkt)
+    pkt=host_lobby.create_pkt)
+# we could have used lk_query_push(common_q,"","qid",b"lobby" + host.create_pkt.hash)
 
 def lobby_pkt(p:Pkt):
-    global host
+    global host_lobby
     if p.path2 == b"chat":
-        host.chat.append(p)
+        host_lobby.chat.append(p)
     elif p.path2 == b"":
-        latest = host.players.get(p.pubkey)
+        latest = host_lobby.players.get(p.pubkey)
         if latest and latest.create > p.create:
             return
-        host.players[p.pubkey] = p
+        host_lobby.players[p.pubkey] = p
     else:
         print("unknown msg",p)
 
-lk_pull(lk,get_lobby)
-lk_watch(lk,get_lobby, on_match=lobby_pkt)
+lobby_path = lk_eval("[//lobby/[hash]]",pkt=host_lobby.create_pkt)
+join_pkt = keypoint(path=lobby_path,data=player_name)
+# Its important to understand we used the hash bytes directly.
+# There is no encoding to b64.
+# host.create_pkt.hash == join_pkt.path1 and b64(host.create_pkt.hash) == b64(join_pkt.path1)
 
-me_host = host.create_pkt.pubkey == key.pubkey
+
+lk_save(lk,join_pkt)
+lk_watch(lk,get_lobby, on_match=lobby_pkt)
+lk_process(lk) # Process ourselves
+
+lk_pull(lk,get_lobby) # request more
+
+me_host = host_lobby.create_pkt.pubkey == key.pubkey
 prompt = "[chat msg] | /leave"
 if me_host:
     prompt += " | /start"
+elif len(host_lobby.players) < 2: # we should wait for info on the existing players
+    lk_process_while(lk,qid=b"lobby"+host_lobby.create_pkt.hash)
 
-while not host.start_pkt:
-    print(*[ p.data.decode("utf-8") for p in host.chat],sep="\n")
-    print(*[ p.data for p in host.players.values() if p.data],sep=" ")
-    cmd = input(prompt)
+
+while not host_lobby.start_pkt:
+    # Print the chat log
+    print(*[ p.data.decode("utf-8") for p in host_lobby.chat],sep="\n",end="\n")
+    # Print the player names
+    print("Players:", ",".join([ p.data.decode("utf-8") for p in host_lobby.players.values() if p.data]))
+    print(prompt)
+    try:
+        cmd = input("> ")
+    except KeyboardInterrupt:
+        cmd = "/leave"
     if cmd == "":
-        lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
-    if me_host and cmd == "/start":
-        players = [ [p.data.decode("utf-8"),b64(p.pubkey)] for p in host.players.values() if p.data]
+        #lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
+        lk_process(lk)
+    elif me_host and cmd == "/start":
+        players = [ [p.data.decode("utf-8"),b64(p.pubkey)] for p in host_lobby.players.values() if p.data]
         try:
-            cols = int(input("cols"))
-            rows = int(input("rows"))
-            mine_rate = float(input("mine_rate"))
+            cols = int(input("cols (10) > ") or "10")
+            rows = int(input("rows (10) > ") or "10")
+            mine_rate = float(input("mine_rate (0.2) > ")or "0.2")
             data = json.dumps({"columns":cols,"rows":rows,"mine_rate":mine_rate,"players":players})
-            start_pkt = keypoint(path=lobby_path,data=data,links=[Link("create",host.create_pkt.hash)])
+            start_pkt = keypoint(path=host_lobby.create_pkt.path,data=data,links=[Link("create",host_lobby.create_pkt.hash)])
             lk_save(lk,start_pkt)
             lk_process(lk)
         except Exception as e:
             print(e)
 
-    if cmd == "/leave":
+    elif cmd == "/leave":
         lk_save(lk,keypoint(path=lobby_path))
-        exit("left")
+        if me_host:
+            leave_pkt = keypoint(path=host_lobby.create_pkt.path,links=[Link("create",host_lobby.create_pkt.hash)]) # no data means we closed the lobby.
+            lk_save(lk,leave_pkt)
+            print("host left ",leave_pkt)
+        lk_process(lk)
+        exit("We left.")
     else:
         lk_save(lk,keypoint(path=lobby_path + lk_eval("[//chat]"),data=cmd))
         lk_process(lk)
 
-print("Starting game", host.start_pkt, host.start_pkt.data.decode("utf-8"))
+if not len(host_lobby.start_pkt.data):
+    exit("Host left.")
+
+print("Starting game", host_lobby.start_pkt, host_lobby.start_pkt.data.decode("utf-8"))
+
+# A real program would import "mineweeper-multiplayer" and just call a function to start the game.
+# For the purpose of the tutorial, we keep the two scripts loosely coupled.
+srcpath = os.path.dirname(os.path.realpath(__file__))
+game_setup_hash = b64(host_lobby.start_pkt.hash)
+os.system(f"python \"{srcpath}/mineweeper-multiplayer.py\" {game_setup_hash}")

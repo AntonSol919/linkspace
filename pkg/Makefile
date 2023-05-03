@@ -4,8 +4,6 @@ LKB:=$(realpath $(R)/../target/)
 RTOOL:=x86_64-unknown-linux-gnu
 VERSION:=$(shell cat $(R)/../Cargo.toml | grep version | cut -d'"' -f2 )
 PKG_DIR=$(R)/build/linkspace-$(VERSION)
-# cargo doesn't take --debug so make sure you update the rules as well. 
-RTARGET:=release
 
 all: aarch64 x64
 x64: pkg-x86_64-unknown-linux-gnu
@@ -21,19 +19,19 @@ clean:
 
 common:
 	mkdir -p $(PKG_DIR)/bin
-	rsync -rvkP --exclude "*private*" $(R)/../examples $(PKG_DIR)
+	rsync -rvkP --exclude "*private*" --exclude "_*" $(R)/../examples $(PKG_DIR)
 	cp -r $(R)/../emulate $(PKG_DIR)
 	cp $(R)/../connect-test-pub1 $(PKG_DIR)
 	rsync -rvkP $(R)/common/ $(PKG_DIR)
 
 cli-%:
-	cd $(R)/.. && cross build --$(RTARGET) --target $* -p linkspace-cli -p linkspace-handshake -p linkspace-lns
-	cp $(LKB)/$*/$(RTARGET)/lk $(PKG_DIR)/bin/
-	cp $(LKB)/$*/$(RTARGET)/linkspace-handshake $(PKG_DIR)/bin/
-	cp $(LKB)/$*/$(RTARGET)/linkspace-lns $(PKG_DIR)/bin/
+	cd $(R)/.. && cross build --release --target $* -p linkspace-cli -p linkspace-handshake -p linkspace-lns
+	cp $(LKB)/$*/release/lk $(PKG_DIR)/bin/
+	cp $(LKB)/$*/release/linkspace-handshake $(PKG_DIR)/bin/
+	cp $(LKB)/$*/release/linkspace-lns $(PKG_DIR)/bin/
 
 py-%:
 	mkdir -p $(PKG_DIR)/python/
-	cd $(R)/.. && cross build --$(RTARGET) --target $* -p linkspace-py
-	cp $(LKB)/$*/$(RTARGET)/liblinkspace.so $(PKG_DIR)/python/linkspace.so
+	cd $(R)/.. && cross build --release --target $* -p linkspace-py
+	cp $(LKB)/$*/release/liblinkspace.so $(PKG_DIR)/python/linkspace.so
 	cp $(R)/../ffi/linkspace-py/linkspace.pyi $(PKG_DIR)/python/linkspace.pyi
