@@ -12,16 +12,18 @@ This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
+This is a technical document describing linkspace from first principle.
+You should be familiar with the [[../../index.html#basics][basics]].
+If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
+
 * Introduction
 
 Linkspace is a packet format and processing library.
-Instead of providing or consuming streams of data, linkspace takes a different path.
+Instead of providing an API to consume streams of data, linkspace takes a different path.
 Packets of bytes are hashed, named, saved, and can reference other packets.
 
 This gives us a thin and powerful stack to build multiparty applications.
 [[../cargo-doc/linkspace/index.html][linkspace]] is the authoritative implementation.
-
-You should be familiar with the [[../../index.html#basics][basics]].
 
 Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
 This abstraction sidesteps or solves a number of difficulties inherent in organizing data.
@@ -43,15 +45,15 @@ Instead of processing ordered streams of network data, an application is a funct
 This has upsides[fn::
 The homepage contains a list of various properties. However, there is one I lack a word for.
 Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
-They're well-designed if they run under the assumption of incomplete/bad state.
-In linkspace this is an obvious requirement, and linkspace attempts to make it simple.
+They're well-designed if they run under the assumption of incomplete, out-of-order, potentially buggy state.
+In linkspace this is a requirement, and the library attempts to make it simple.
 That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
 ] and downsides.
 
 One issue with supernets built so far is that they are bound to their use-case.
 Linkspace is a general purpose supernet.
 A developer claims a domain name like they would a port number, and their application can run for any group of users.
-Linkspace is designed to be fast and simple.
+Linkspace is designed to be fast and has a small API.
 
 It consists of 4 concepts.
 
@@ -61,8 +63,6 @@ It consists of 4 concepts.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
 
 Common challenges are addressed by a set of [[Conventions]].
-
-The end of this document contains examples.
 
 * Setup
 :PROPERTIES:
@@ -330,7 +330,7 @@ Fields are not writable because they are included in the hash.
   [attr for attr in dir(lk_linkpoint())  if not "__" in attr]
 #+END_SRC
 
-Where comp[0..7] are the path components, 
+Where path[0..7] are the path components, 
 
 #+BEGIN_VERSE
 Some [[#predicatelist][fields]] we've not seen so far are writable, but they are not relevant for most applications.
@@ -361,7 +361,55 @@ e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 
 
 ** lk_write and lk_read
+
 Serialize / Deserialize from the byte representation.
+A domain application rarely has to deal with this representation.
+
+| bytes |                     |
+|    32 | netheader (routing) |
+|    32 | hash                |
+|   var | point content       |
+
+#+BEGIN_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results output verbatim
+  datap = lk_datapoint("hello")
+  linkp = lk_linkpoint()
+  keyp = lk_keypoint(key)
+  packet_bytes = lk_write(datap) + lk_write(linkp) + lk_write(keyp)
+  print(len(packet_bytes),packet_bytes)
+
+  # read the bytes as packets
+  (p1, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+  (p2, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+  (p3, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+
+  assert(p1 == datap)
+  assert(p2 == linkp)
+  assert(p3 == keyp)
+#+end_src
+
+#+end_py
+#+begin_bash
+The CLI automatically reads and writes in packet format from the relevant pipes.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+  echo datapoint:
+  printf hello | lk data | tee /tmp/pkts | xxd 
+  echo linkpoint:
+  printf hello | lk link my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  echo keypoint:
+  printf hello | lk keypoint --password "my secret" my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  cat /tmp/pkts | lk printf [hash:str]
+#+END_SRC
+#+end_bash
+
+
+#+end_ctabs
+ 
+
+
+
 Unless you're writing an exchange process, a developer shouldn't have to deal with this level of IO.
 
 * ABE
@@ -430,11 +478,11 @@ All packet fields are arbitrary bytes, and lk_encode can print them as abtext
 
   lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", "🚀".encode()]) # encode implies utf-8
 
-  print(lk_encode(lkp.comp0),"\t",list(lkp.comp0))
-  print(lk_encode(lkp.comp1),"\t",list(lkp.comp1))
-  print(lk_encode(lkp.comp2),"\t",list(lkp.comp2))
-  print(lk_encode(lkp.comp3),"\t",list(lkp.comp3))
-  print(lk_encode(lkp.comp4),"\t",list(lkp.comp4), lkp.comp4.decode("utf-8"))
+  print(lk_encode(lkp.path0),"\t",list(lkp.path0))
+  print(lk_encode(lkp.path1),"\t",list(lkp.path1))
+  print(lk_encode(lkp.path2),"\t",list(lkp.path2))
+  print(lk_encode(lkp.path3),"\t",list(lkp.path3))
+  print(lk_encode(lkp.path4),"\t",list(lkp.path4), lkp.path4.decode("utf-8"))
   
 #+end_src
 
@@ -631,7 +679,7 @@ This reduces the need to escape ':' and '/', but complicating some other express
 We can add an expression to --write arguments
 ~lk link :: --write "stdout-expr:hello world:/ [hash:str]"~
 In case of ~file~ this leaves us in the situation that second argument is the file and the tail of the expression will be evaluated
-The simplest way to ignore all escapes is to use empty evaluator ~[/:..]~. 
+One option is to use ~[/:..]~ to read ':' and '/' as is.
 ~lk link :: --write "file-expr:[/:./afolder:with/colons]:hello world:/ [hash:str]"~
 #+END_VERSE
 

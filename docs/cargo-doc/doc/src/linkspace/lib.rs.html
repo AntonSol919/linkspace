@@ -925,6 +925,9 @@
 <a href="#925" id="925">925</a>
 <a href="#926" id="926">926</a>
 <a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1556,7 +1559,7 @@ See guide#ABE to understand its use and indepth explanation.
 
     <span class="kw">use </span>std::time::Instant;
 
-    <span class="kw">use </span>linkspace_common::prelude::QueryIDRef;
+    <span class="kw">use </span>linkspace_common::{prelude::QueryIDRef, saturating_cast, saturating_neg_cast};
     <span class="kw">use </span>tracing::{debug_span };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1608,7 +1611,7 @@ See guide#ABE to understand its use and indepth explanation.
             breaks = (cb)(<span class="kw-2">&amp;</span>p);
             <span class="kw">if </span>breaks{<span class="kw">break</span>}
         }
-        <span class="prelude-val">Ok</span>(c <span class="kw">as </span>i32 * <span class="kw">if </span>breaks { <span class="number">1 </span>} <span class="kw">else </span>{ -<span class="number">1</span>} )
+        <span class="prelude-val">Ok</span>(<span class="kw">if </span>breaks { saturating_cast(c)}<span class="kw">else </span>{saturating_neg_cast(c)})
     }
 
     <span class="doccomment">/// get the first result from the database matching the query.
@@ -1631,19 +1634,22 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="prelude-val">Ok</span>(opt_pkt.map(|v| (cb)(v)))
     }
     <span class="doccomment">/**
+    Registers the query under its &#39;qid&#39; ( .e.g. set by lk_query_parse(q,&quot;:qid:myqid) )
     Before returning, calls cb for every packet in the database.
-    Then registers the query under its &#39;qid&#39; option ( .e.g. set by lk_query_parse(q,&quot;:qid:myqid) )
-    During a [[lk_process]] or [[lk_process_while]] call,
-    for every new packet matching the query, runs the callback. 
-    
-    The watch is dropped when
-    - the cb returns &#39;break&#39; ( usually false )
-    - [[lk_stop]] is called with the matching id
-    - the predicate set will never match again ( &#39;i&#39; counters and recv )
+    The absolute return value is the number of times the callback was called.
+    A positive value means the callback finished already.
 
-    returns the number of matches in the local database.
+    A 0 or negative value means it is registered and shall be called during
+    a [[lk_process]] or [[lk_process_while]] call,
+    for every new packet matching the query.
+    
+    The watch is finished when
+    - the cb returns &#39;break&#39; (In other languages we map this to the boolean &#39;true&#39;)
+    - the predicate set will never match again (e.g. the &#39;i_*&#39; or &#39;recv&#39; predicate shall never match again )
+    - [[lk_stop]] is called with the matching id
+
     **/
-    </span><span class="kw">pub fn </span>lk_watch(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query, cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>) -&gt; LkResult&lt;u32&gt; {
+    </span><span class="kw">pub fn </span>lk_watch(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query, cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>) -&gt; LkResult&lt;i32&gt; {
         lk_watch2(lk, query, cb, <span class="macro">debug_span!</span>(<span class="string">&quot;lk_watch - (untraced)&quot;</span>))
     }
 
@@ -1655,7 +1661,7 @@ See guide#ABE to understand its use and indepth explanation.
         query: <span class="kw-2">&amp;</span>Query,
         cb: <span class="kw">impl </span>PktHandler + <span class="lifetime">&#39;static</span>,
         span: tracing::Span,
-    ) -&gt; LkResult&lt;u32&gt; {
+    ) -&gt; LkResult&lt;i32&gt; {
         <span class="prelude-val">Ok</span>(lk.<span class="number">0</span>.watch_query(<span class="kw-2">&amp;</span>query.<span class="number">0</span>, interop::Handler(cb), span)<span class="question-mark">?</span>)
     }
     <span class="doccomment">/// See [lk_watch2]

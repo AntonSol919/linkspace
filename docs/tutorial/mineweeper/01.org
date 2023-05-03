@@ -9,9 +9,7 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
 
-This is the first a series of tutorials to showcase linkspace.
-Imagine what you might build if we all hashed, saved, and linked the packets on our networks.
-Linkspace is such a [[https://antonsol919.github.io/linkspace/index.html][supernet]].
+This is the first a [[../index.html][series]] of tutorials to showcase linkspace.
 
 We'll follow Bob in his journey.
 
@@ -22,29 +20,24 @@ Or so he says.
 
 The game is MineWeeper: A Multiplayer minesweeper clone where players take turns. 
 
-To follow along, the follow knowledge/skills are assumed:
+These knowledge/skills are assumed:
 
-- a basic level of python (You know what ~val = int(input("value")~ does)
-- basic devops (a terminal doesn't scare you, worst case you'll google what ~xargs~ does)
+- a little bit of python.
+- Terminal access (You know ~cd~ and can google what ~xargs~ does if you're interested)
 - the difference between a string and bytes
-- What a RNG seed is.
+- What it means to set the seed for a random number generator.
 - What a hash and public keys is.
-- Curious enough to hack together tools to do what you want it to do (OpenGPT isn't going to solve this one)
 
-In linkspace the responsibilities for things are different to what you might be used to.
+You can think of linkspace as combining git and http.
+
+One consequence is that, in linkspace, the responsibilities for things are different to what we're used to.
 
 An application developer has drastically fewer responsibilities.
 Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application has to deal with. 
-The app developer need only think about: bytes, linking to bytes, and reading bytes by link or path name.
+The developer doesn't think about managing sockets, but only about:
+bytes, linking to bytes, and reading bytes by link or a query such as path names.
 
-This tutorial won't be about the user or group setup.
-
-Linkspace aims to be simple compared to what an equivalent stack would look like.
-If your usecase is streaming data between two points over a socket, linkspace will obviously lose that proposition.
-But once more things are added to the mix, such as having 'user' and multiple people interacting, linkspace might be the simplest solution.
-
-Note however, I do mean simple, not easy.
-Linkspace is 30 years behind in tooling to make things as easy as the web is today.
+This tutorial is about that developer, not about the user or the group. (Those don't exist yet)
 
 Before you continue, please check this consent form to not hold Bob accountable for the dumb stuff you share and do.
 
@@ -66,36 +59,34 @@ Before you continue, please check this consent form to not hold Bob accountable 
 
 * Bob's Hotseat MineWeeper
 
-Bob's game is perfect.
-However, there is one tiny, little, detail missing.
+Bob's game is perfect, but there is a teeny-tiny, little, detail missing.
 
 It only works in hotseat mode.
 That is, every player has to be at the same keyboard taking turns.
 
 Bob's a friendly guy, but he doesn't want you coming to his house.
-Instead, he'll build something real quick, such that anybody can play it with their friends over the internet.
+Instead, he'll build something, such that others can enjoy his perfect game with their friends over the internet.
 
-No biggy.
+No problemo.
 
-First, how does the game work in hotseat mode?
+But first, how does the game work in hotseat mode?
 
 It asks the user for a list of player names.
 Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
-
-#+begin_verse
-This post was made for version 0.2.0
-Download and extract the pkg zip.
-Paths and commands are relative to this directory.
-To give hotseat mineweeper a try: 
-~python ./examples/mineweeper/mineweeper-hotseat.py~
-#+end_verse
 
 #+begin_py
 #+INCLUDE: "../../../examples/mineweeper/mineweeper-hotseat.py" src python
 #+end_py
 
+
+#+begin_verse
+To give it a try: clone the repository or download and extract latest release: https://github.com/AntonSol919/linkspace/releases (Potential out of date).
+All paths and commands will be relative to this directory.
+You can try the code with ~python ./examples/mineweeper/mineweeper-hotseat.py~
+#+end_verse
+
 Bob's a little disappointed with the graphics.
-He's waiting for those VC bucks to hire professionals to port it to the next Unreal Engine with RTX graphics in VR.
+Maybe someday he'll make it a 3D VR experience.
 [[../images/bob-doubt.png]]
 
 #+begin_ctabs
@@ -111,7 +102,7 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 
 * Game on
 
-After searching high and low, our friend Bob reaches for enlightenment.
+After searching high and low for a method to share it with the world, our friend Bob reaches for enlightenment.
 
 [[../images/bob-enlightend.png]]
 
@@ -144,7 +135,7 @@ A program providing a friendly interface reading/writing the bytes that the deve
 
 #+begin_verse
 When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
-This is done by a linkspace group exchange process. A group exchange process is build just like a domain application.
+This is done by a linkspace group exchange process. A group exchange process is build like a domain application.
 But its role is to exchange all packets with its group ID to the members that require it.
 More on them another day.
 #+end_verse
@@ -152,7 +143,7 @@ More on them another day.
 Bob recognizes that his game has two distinct phases.
 
 - Finding the people to start playing it with.
-- Actually taking turns to play the game.
+- Taking turns to play the game.
 
 He'll start with 'play the game', and build the lobby system for proposing/joining/starting a game later.
 
@@ -208,31 +199,45 @@ It requires tmux to be installed (available in most package managers)
 #+end_info
 
 #+begin_setup
-You can create an instance with a simple exchange process running by starting:
+
+You can create an instance with a basic exchange process by opening a terminal and:
 
 #+begin_src bash
-./emulate/host.session.tmux.sh
+  source ./activate # Builds and updates the PATH, set LK_DIR to ./private
+  # We want to emulate a entire group with multiple instances.
+  ./emulate/host.session.tmux.sh # This creates a new instance in ./private/alice, with its own key, and starts a host process
 #+end_src
 
-
-Open a terminal and execute the following to create additional instances automatically connect.
+Open a second terminal and execute the following to create additional instances that connects to the host.
 
 #+begin_src bash
-./emulate/session.tmux.sh bob #changing this name
+  source ./activate # to set the path
+  # creates a new instance in ./private/bob , with its own key key, and automatically connect to the host alice.
+  ./emulate/session.tmux.sh bob # change this name to add multiple sessions
 #+end_src
 
-Finally, we have to create the initial packet and share them.
+The bottom panel is the exchange process, the middle panel is watching the log, the upper panel is to run applications.
+You can test if the sessions are correctly connected by running ~linkmail.py~ and writing a message.
+
+Finally, we have to create the game packet and share it.
+Eventually this will be done with a lobby we'll create. Right now we have to manually create it for our test.
 One method to do so is as follows:
 
 #+begin_src bash 
   cd private
-  cat ./*/name_key > setup.json
-  # You'll have to edit this setup.json by hand to look like the json above. 
-  lk link mineweeper:[#:test] --data file:./setup.json > setup.pkt
+  cat ./*/emulate_name_key > setup.json
+  # You'll have to edit this setup.json by hand to look like the json above.
+  lk link mineweeper:[#:test] --data file:./setup.json | tee setup.pkt | lk printf
 
   # Manually save this packet to each instance
   find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
 #+end_src
+
+You should see the middle panel print this new packet.
+
+Finally, in each session we can use the upper panel to run:
+
+
 
 #+end_setup
 #+end_ctabs
@@ -255,6 +260,18 @@ while not done:
 #+INCLUDE: "../../../examples/mineweeper/mineweeper-multiplayer.py" src python
 #+end_py
 
+#+begin_ctabs
+#+begin_info
+
+To start the mineweeper-multiplayer.py manually, we run the following in each session
+#+begin_bash
+mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
+#+end_bash
+
+#+end_info
+
+
+#+end_ctabs
 
 * Cheating
 
@@ -298,7 +315,7 @@ There are two obstacles:
 - Agreeing on a random value nobody can tamper with.
 - How to deal with the cell numbers that represent how many mines surround it.
 
-One option for a random number is relatively simple.
+One option to get a random number goes as follows:
 Every player acknowledges the turn before applying it.
 Once you have every ack packet you can combine the ack.hash bytes to get a random val nobody can tamper on their own.
 #+begin_src python
@@ -330,7 +347,7 @@ With the random seed determined after making a move, and the cell mine probabili
 
 * A dose of reality
 
-In the next installment Bob will continue his journey to building the best game ever.
+In the [[./02.html][next]] installment Bob will continue his journey to building the best game ever.
 This time by building a lobby system so it's actually playable.
 
 In the meantime, a little expectation management is in order.
@@ -341,7 +358,7 @@ Some tools and standards don't exist yet or are only partially implemented.
 
 It's a project to rebuild the internet into something better.
 That means taking some steps backwards before going forward.
-At version 0.2.0 its reached the usability of 1980's email.
+At the crrent version it has reached the usability of 1980's email.
 It works, but its not pretty nor user friendly.
 
 That being said, there are currently no breaking changes to Bob's program planned.

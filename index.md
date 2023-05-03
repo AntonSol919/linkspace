@@ -6,20 +6,22 @@ A communication protocol where the method of exchange is an extraneous concern.<
 e.g. git, bitcoin, nostr, linkspace
 </div>
 
-In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
+Linkspace combines the core ideas of HTTP and git.
+It is a supernet. A protocol where we talk _about_ data, instead of talking _at_ a server.
 
-A supernet is ideal when multiple participants want to own and administrate (part of) a digital system.
+A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
 This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
 
 Linkspace is a supernet with the following highlights:
 
-- Small and powerful API
-- Fast (Blake3, no JSON/Base64 encoding, well aligned fields)
-- Path (URL like) addressable data
+- Small API
+- Fast packets (Blake3, no JSON/Base64 encoding, well aligned fields)
+- Path (URL like) addressing
 - Group/Domain split
 
-[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction of the entire system.
-Check out the [Guide](./docs/guide/index.html) if you're interested in the technical details.
+[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction.
+Check out the [tutorials](./docs/tutorial/index.html) to see an example of building an application.
+For a technical description from first principles see the [Guide](./docs/guide/index.html).
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try and say hi.
 
@@ -32,16 +34,18 @@ For the less adventurous you can open an issue on GitHub.
 
 # Basics {#basics}
 
-In the 1960s we invented the electronic hierachical filesystem.
-Organizing files in folders. For example "/linkspace/homepage/index.html". This proved extremely powerful.
-So much so, that the (early) Web, specifically HTTP, is essentially nothing more than a way to talk to file systems around the world.
+In the 1960s we build the first electronic hierachical filesystems.
+It took a while, but eventually the idea to organize in 'files and folders' became common.
+For example "documents/linkspace/homepage/readme.md".
+
+The (early) Web, specifically HTTP, made these folders available and allowed for cross linking.
 i.e. "https://antonsol919.github.io/linkspace/index.html"
 Linkspace takes this a step further.
 
-To get an idea of what linkspace lets us do we can look at an example of a message board.
-Initially it only contains someone complaing about a coffee machine and an attached image. Someone else starts a thread about tabs vs spaces.
+To build an understanding of linkspace we'll begin with a basic message board.
+Someone complaining about a coffee machine, and some else starts a thread about tabs vs spaces.
 
-The two are merged together to create the new state of the message board.
+The entries get merged together.
 
 <div class="entrygrid small"><span></span>
 <span>/image/BrokenMachine.jpg</span>
@@ -78,33 +82,33 @@ The two are merged together to create the new state of the message board.
 </div>
 
 We'll call "image/BrokenMachine.jpg" a **path** pointing to [image data].
-One or more of these entries, a path + data, in a (sorted) hierachical set together we'll call a **tree**. We just saw what happens when we merge trees.
-The internet as we know it is built on them.
+The hierarchical (sorted) set of path + data we'll call a **tree**.
 
-There are millions of hosts (i.e. servers) that serve such a tree, receive new entries, and do some processing.
+There are millions of hosts (i.e. servers) that conceptually serve such a tree, merge new entries, and do some processing.
 
 This is more true than might be aparent. It's not just HTTP.
-For example, an SQL database is a special case of a tree. It is built on top of multiple sorted lists under table names.
-Essentially their rows are "/table_name/primary_key = value", and a SQL query can address multiple entries.
+For example, an SQL database stores its data in a tree.
+Essentially their rows are "/table_name/primary_key = value".
+The SQL query can address and relate multiple entries.
 
-The point is not to compare linkspace to HTTP or to replace SQL.
-I bring them up as an argument for the effectiveness of organizing data in a (sorted) tree.
+Trees are our best tools for organizing data. Both human and machine readable.
 
 Exchanging data can be thought of as combining **your tree** with **another tree**.
 We've dubbed words to describe specific cases such as:
 '__creating posts__', '__uploading image__', '__upvote/like a post__', '__stream a video __', etc.
-Fundamentally they can be viewed as merging trees, with a frontend application providing a pretty interface.
+Fundamentally its a frontend application providing an interface to merge trees.
 
 The majority of the internet that people interact with today follows a single host design.
-A design where you make a request to get the only 'real' copy of the tree.
-For all its simplicity, this design has downsides.
-It becomes a single point of failure, links can become invalid, everybody has to re-invent authentication, every application has to re-invent dealing with IO errors, etc. Additionally, there are profound [consequences](#reason2) for the dynamic between host and user.
+A design where you request to get the only 'real' copy of the tree.
+This is simple, but has downsides.
+It becomes a single point of failure, links become invalid, every new app requires developers and users to build and manage accounts and connections,
+IO errors become the problem for the app instead of the people connected. There are also profound [consequences](#reason2) for the dynamic between host and user.
 
-In linkspace there is no single 'real' copy, and thus no de facto administrator.
-Any number of participants can host (part of) a tree.
+In linkspace there is no 'real' copy.
+Anyone can read, write, and host (part of) a tree.
 
-That does mean there is no way to uniquely identify an entry with only a path.
-Two computers far apart can write to the same location at the same time.
+This does mean we must deal with two entries using the same path.
+Two computers far apart could write to the same location at the same time.
 No one would know until their trees get merged.
 
 In linkspace we allow more than one entry to have the same path.
@@ -146,9 +150,17 @@ Each entry is cryptograhpically hashed, i.e. there exists a unique number to ref
 
 
 An entry also carries a creation date, and can be cryptographically signed.
-These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c], but we can refer to them by [lns](#LNS) name such as [@:anton:nl].
+These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c]. We can refer to them by an [lns](#LNS) name such as [@:anton:nl].
 
-An upside of using hashes, is that we can choose to link to other data by its path (e.g. "image/BrokenMachine.jpg") or by its hash:
+Because we have a hash, we can choose how to reference data.
+
+A specific entry by its <span id="hh2">[HASH_2]</span>,
+or multiple entries through a path "/thread/Tabs or spaces/msg".
+
+On first glance, returning multiple entries is more complex than what is familiar.
+This is not the case.
+Instead it makes explicit what is implicit.
+URLs also return more than one unique results depending on when you look.
 
 <div class="entrygrid big">
 <span id="hh3">[HASH_3]</span>
@@ -204,17 +216,15 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
 
 Entries in linkspace have two fields that precede the path.
 A **domain** field and **group** field.
-Essentially each (domain, group) has its own tree.
-An application picks a domain name to use. 
-When running it specifies what data is required from the group.
-The exchange of data happens in the background.
-The application only has to deal with the tree and the new entries.
-It doesn't have to manage connections.
+Essentially each combination of (domain, group) has its own tree.
+
+An application picks a domain name.
+When running it signals what data is required from the group.
+A developer deals with reading and writing the tree.
+Not with managing connections.
 
 The group indicates the set of intended recipients.
-An application should ask the user which group to use.
-A group is made up by members that have set up a method of exchange.
-
+The user running a linkspace instance has to run a group exchange process and configure its members.
 
 <div class="entrygrid big">
 
@@ -237,23 +247,27 @@ Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainanc
 </span>
 
 </div>
-With [queries](./docs/guide/index.html#Query) we can read, filter, and request sets of packets.
-Effectively hoisting the back-end and its administration into the control of the users and simplifying the life of a front end developer.
 
-These are the basic concepts. With the most notable simplification being that: [Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists as well and referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
+We can be more specific in our references than just using a path with [queries](./docs/guide/index.html#Query).
+This is a single syntax to read, filter, and request sets of packets.
 
-If you're on a unix give it a [try](https://github.com/AntonSol919/linkspace/releases) (It compiles on Windows, but an exchange like [anyhost](./docs/guide/index.html#anyhost) needs to be ported to rust to be usable).
-For details on the exact layout of the tree and other practical stuff see the [Guide](./docs/guide/index.html).
+These are the basic concepts. With the most notable simplification being that: 
+Referencing other packets by hash is not done inside the data but [adjacent](./docs/guide/index.html#lk_linkpoint) together with a 'tag'.
+[Data entries](./docs/guide/index.html#lk_datapoint) without a path, group, domain, etc exists.
+
+If you're on a unix give it a [try](https://github.com/AntonSol919/linkspace/releases) (It runs on Windows, but there is currently no working exchange process).
+Check out the application [tutorial](./docs/tutorial) tutorial to see what applications in action.
+For the full overview of linkspace see the [Guide](./docs/guide/index.html).
+
 
 ### Q&A
 A few notes to prevent some confusion.
 
 **Q**: Is this a blockchain?  
-**A**: Only if you think git is a blockchain. There are neither 'blocks', nor a strict 'chain'. Most blockchains also have a different set of [values](#option2). Which is why I'm proposing the more general term 'supernet'.
+**A**: No more than git is. No blocks, no chains, and no money/electricity/stakes required for developers and users to use it.
 
 **Q**: How would it handle unwanted content / spam?  
-**A**: You could trust a specific signature to whitelist or blacklist and filter based on that. Effectively emulating the current state of affairs. 
-Furthermore, linkspace gives us extra tools: Proof of work on hashes, and proof of association with public keys vouching for another (i.e. friends of friends).
+**A**: Just as we do now. With the additional tools of: hashes, digital signatures, and proof of work.
 
 # Why?{#why}
 
@@ -399,7 +413,7 @@ If you represent a university you can get your name for free.
 
 Linkspace is easy to integrate with blockchains (or can be used to create new blockchains).
 You are free to build on it as you wish (MPL-2.0 license).
-However, in an effort to put food on the table and pay taxes I prefer fiat money and a 1 cent transaction save a lot of trouble w.r.t. identification if you lose the private key.
+In an effort to put food on the table and pay taxes I prefer fiat money and a 1 cent transaction save a lot of trouble w.r.t. identification if you lose the private key.
 Other top level authorities set their own price and how to pay it.
 
 ## Claim a name{#claim}
