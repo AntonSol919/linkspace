@@ -80,7 +80,7 @@ Players take turns entering which cell to reveal until someone reveals a mine or
 
 
 #+begin_verse
-To give it a try: Download and extract latest release: https://github.com/AntonSol919/linkspace/releases.
+To give it a try: clone the repository or download and extract latest release: https://github.com/AntonSol919/linkspace/releases (Potential out of date).
 All paths and commands will be relative to this directory.
 You can try the code with ~python ./examples/mineweeper/mineweeper-hotseat.py~
 #+end_verse
@@ -358,7 +358,7 @@ Some tools and standards don't exist yet or are only partially implemented.
 
 It's a project to rebuild the internet into something better.
 That means taking some steps backwards before going forward.
-At version 0.2.0 its reached the usability of 1980's email.
+At the crrent version it has reached the usability of 1980's email.
 It works, but its not pretty nor user friendly.
 
 That being said, there are currently no breaking changes to Bob's program planned.
