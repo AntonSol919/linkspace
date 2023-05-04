@@ -10,10 +10,11 @@
 - i_branch/i_db/i predicate names 
 - have lk_pull check for exchange status. 
 - Add query seperator for building multiple? ( multi hash get )
-
+- have python and `lk` use LK_DOMAIN and LK_GROUP for defaults
 
 # Pending
 
+- LNS: rename lns ':env' to ':file'
 - each instance needs a administrator key. This prevents other programs from messing with LNS names or Group membership. 
 - LNS UDP resolver
 - LNS recursive :local

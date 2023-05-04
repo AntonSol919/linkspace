@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
-cd -- "$( dirname -- "${BASH_SOURCE[0]}" )/.."
+
+source "$(dirname -- "$0")/../activate"
 cmd=${cmd:-anyhost.connect.sh}
 name=${name:-${1:-bob}}
 
-mkdir -p private/$name
-cd private/$name
+mkdir -p $name
+cd $name
 export LK_DIR=$PWD
-
-export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass --password "")
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 echo $name $(lk key --no-enckey --no-check) | tee ./emulate_name_key
 
 tmux -S tmux-socket new-session -s $name -n $name \; \

@@ -1,20 +1,21 @@
-#!/usr/bin/env bash 
-# A 'activate' script is available in the REPO and the Pkg.
-# This is the REPO version and will only work with the source available.
+#!/usr/bin/env bash
+# A 'activate' script is available in the source and binary pkg.
+# This is the source version.
 REPO=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-cd $REPO
-make build-debug
+make -C "$REPO" build-debug
 
 export PATH="$REPO/target/debug/":$PATH
 export PATH=$(find $REPO/examples -maxdepth 1 -mindepth 1 -type d | sed -z 's/\n/:/g'):$PATH
 export PATH="$REPO/emulate":$PATH
 export PYTHONPATH="$REPO/target/python/"
 
-export LK_DIR="$REPO/private"
-export LK_GROUP=[#:test]
+export LK_DIR=${LK_DIR:-"$REPO/private"}
+export LK_GROUP=${LK_GROUP:-[#:test]}
 
-export LK_PASS=$(lk --init key --no-pubkey --no-enckey --display-pass --password "" --decrypt-cost 0 )
+if [[ ! -v LK_PASS ]]; then
+    export LK_PASS=$(lk --init key --no-pubkey --no-enckey --display-pass --password "" --decrypt-cost 0 )
+fi
+
 TMP=$(lk key --no-check --no-enckey | lk e --stdin [0/?b/2mini])
 export PS1="$TMP - ${PS1:-\$}"
-echo $LK_DIR
-echo "Using insecure key for testing"
+echo "LK_DIR = $LK_DIR"
