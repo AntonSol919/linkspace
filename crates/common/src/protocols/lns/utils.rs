@@ -5,7 +5,7 @@ use super::{claim::Claim, name::{Name }, LNS};
 pub fn list_all_potential_claims_with_prefix<'o>(reader:&'o ReadTxn,name: &Name) -> impl Iterator<Item=anyhow::Result<Claim>> +'o{
     let path = name.claim_ipath();
     let now = now();
-    let mut preds = PktPredicates::from_gd(name.claim_group().expect("env names don't do claims"), LNS).create_before(now).unwrap();
+    let mut preds = PktPredicates::from_gd(name.claim_group().expect("'file' names don't do claims"), LNS).create_before(now).unwrap();
     let _ = preds.prefix(&**path);
     //preds.state.i_branch.add(TestOp::Equal, 0);
     reader.query_tree(query_mode::Order::Desc, &preds).flat_map(move |pkt| -> Option<anyhow::Result<Claim>> {

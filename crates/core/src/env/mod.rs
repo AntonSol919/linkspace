@@ -87,9 +87,9 @@ impl BTreeEnv {
         Ok(std::fs::read_to_string(self.location.join("local_auth"))?.lines().next().context("missing enckey")?.to_owned())
     }
     #[instrument(ret,skip(bytes))]
-    pub fn set_env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
+    pub fn set_files_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
         tracing::trace!(bytes=%AB(bytes));
-        let path = self.dir().join("env").join(check_path(path.as_ref())?);
+        let path = self.dir().join("files").join(check_path(path.as_ref())?);
         let r: anyhow::Result<()> = try {
             std::fs::create_dir_all(path.parent().unwrap())?;
             let mut file = if overwrite {
@@ -103,8 +103,8 @@ impl BTreeEnv {
     }
     #[instrument(ret)]
     // notfound_err simplifies context errors
-    pub fn env_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug,notfound_err:bool) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = self.dir().join("env").join(check_path(path.as_ref())?);
+    pub fn files_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug,notfound_err:bool) -> anyhow::Result<Option<Vec<u8>>> {
+        let path = self.dir().join("files").join(check_path(path.as_ref())?);
         use std::io::ErrorKind::*;
         match std::fs::read(&path){
             Ok(k) => Ok(Some(k)),

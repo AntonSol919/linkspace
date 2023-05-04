@@ -412,7 +412,7 @@ pub mod abe {
         }
 
         pub fn ctx<'o>(udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
-            _ctx(None, udata)
+            _ctx(None, udata,false)
         }
         pub const fn core_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Core)
@@ -420,11 +420,11 @@ pub mod abe {
         pub const fn empty_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Empty)
         }
-        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
-            _ctx(Some(lk), udata)
+        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata: UserData<'o>,enable_env:bool) -> LkResult<LkCtx<'o>> {
+            _ctx(Some(lk), udata,enable_env)
         }
         /// lk:None => get threadlocal Lk . Some(None) => no linkspace
-        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
+        fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata: UserData<'o>,enable_env:bool) -> LkResult<LkCtx<'o>> {
             let inp_ctx = udata
                 .argv
                 .map(|v| ArgV::try_fit(v).context("Too many inp values"))
@@ -441,7 +441,7 @@ pub mod abe {
                 .ok_or_else(|| anyhow::anyhow!("no linkspace instance was set"))
             };
             Ok(LkCtx(InlineCtx::Std((
-                opt_pkt_ctx(std_ctx_v(get, EVAL0_1), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
+                opt_pkt_ctx(std_ctx_v(get, EVAL0_1,enable_env), udata.pkt.map(|v| v as &dyn NetPkt)).scope,
                 inp_ctx,
             ))))
         }

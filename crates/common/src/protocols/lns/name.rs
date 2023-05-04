@@ -40,13 +40,13 @@ pub struct Name { spath: SPathBuf,special:Option<SpecialName>}
 #[derive(Copy,Clone,PartialEq,Eq)]
 pub enum SpecialName {
     Local,
-    Env
+    File
 }
 impl SpecialName {
     pub fn from(b:&[u8]) -> Option<Self>{
         match b {
             b"local" => Some(SpecialName::Local),
-            b"env" => Some(SpecialName::Env),
+            b"file" | b"~" => Some(SpecialName::File),
             _ => None
         }
     }
@@ -56,11 +56,11 @@ impl SpecialName {
 impl Name {
     pub fn root() -> Self { Name{spath: SPathBuf::new(), special:None}}
     pub fn local() -> Self { Name{spath: spath_buf(&[b"local"]), special:Some(SpecialName::Local)}}
-    pub(crate) fn fs_env_path(&self) -> anyhow::Result<std::path::PathBuf>{
-        ensure!(matches!(self.special , Some(SpecialName::Env)));
+    pub(crate) fn file_path(&self) -> anyhow::Result<std::path::PathBuf>{
+        ensure!(matches!(self.special , Some(SpecialName::File)));
         self.claim_ipath().collect().into_iter()
             .map(|s| match std::str::from_utf8(s)?{
-                 "key" => anyhow::bail!("env keyname can't contain the word 'key'"),
+                 "key" => anyhow::bail!("file keyname can't contain the word 'key'"),
                 c => Ok(c)
             }).chain([Ok("key")]).try_collect()
     }
@@ -68,7 +68,7 @@ impl Name {
     pub fn claim_group(&self) -> Option<GroupID> {
         match self.special{
             Some(SpecialName::Local) => Some(PRIVATE),
-            Some(SpecialName::Env) => None,
+            Some(SpecialName::File) => None,
             None => Some(PUBLIC),
         }
     }

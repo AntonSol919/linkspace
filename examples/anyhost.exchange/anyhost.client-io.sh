@@ -42,7 +42,7 @@ lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
 
 # This group exchange requires us to send all the data to the server
 lk watch --bare --mode log-asc -- "group:=:$LK_GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
-    | lk get-links \
+    | lk get-links skip \
     | lk dedup \
     | lk printf --inspect "[now:str] SENDING [hash:str]" \
     | tee --output-error=exit >( cat >&4 ) \

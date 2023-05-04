@@ -12,6 +12,15 @@ This is a todo.
 The local LNS entries are (currently) unsigned.
 This means any proc can create a new entry and break assumptions about names.
 
+# Eval access
+Most of the time ABE expressions are trusted.
+But not always, so by default some are limited or disabled. 
+
+By default expressions :
+- can't readhash from [#:0]
+- can't read ENV variables. 
+- can read files in $LK_DIR/file/..
+
 # Eval - (currently irrelevant)
 ABE's "eval" and "encode" for a function/eval 'ID' visits scopes in order and attempt to resolve into a value.
 When this fails - it continues walking.

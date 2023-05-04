@@ -45,6 +45,8 @@ pub struct LinkspaceOpts {
         help = "create dir if it does not exists"
     )]
     pub init: bool,
+    #[clap(long,help="enable [env:OS_VAR] abe scope",default_value_t)]
+    pub env: bool,
 }
 impl LinkspaceOpts {
     pub fn root(&self) -> io::Result<PathBuf> {
@@ -55,12 +57,12 @@ impl LinkspaceOpts {
     }
     pub fn fake_eval_ctx(
     ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'static> {
-        crate::eval::std_ctx_v(|| anyhow::bail!("no linkspace instance "), EVAL0_1)
+        crate::eval::std_ctx_v(|| anyhow::bail!("no linkspace instance "), EVAL0_1,false)
     }
     pub fn eval_ctx<'o>(
         &'o self,
     ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'o> {
-        crate::eval::std_ctx_v(|| self.runtime_io().context("could not open linkspace instance"), EVAL0_1)
+        crate::eval::std_ctx_v(|| self.runtime_io().context("could not open linkspace instance"), EVAL0_1,self.env)
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.root()?.join("keys"))

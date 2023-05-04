@@ -11,7 +11,7 @@ A mode defines when a claim is 'live'.
 The modes are :
 - the public roots (:com , :dev, :free etc) - authorities vote and claims have fast path based lookup.
 - a :local admin, creates keypoints to other 'roots' creating a chain of names. 
-- the :env claims are claims stored as files in the LK_DIR directory
+- the :files claims are claims stored as files in the LK_DIR/files/ directory
 
 an admin key/process creates a local lookup & reverse-lookup table such that each can quickly be resolved.
 Every part of this is not yet fully implemented.
@@ -37,7 +37,7 @@ pub mod claim;
 
 pub mod public_claim;
 pub mod local_claim;
-pub mod env_claim;
+pub mod file_claim;
 
 pub mod eval;
 pub mod utils;
@@ -67,7 +67,7 @@ pub fn auth_tag(b:&[u8]) -> Tag {
 /// Get the parent claim
 pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandler) -> anyhow::Result<Result<Claim,Claim>>{
     match name.special() {
-        Some(SpecialName::Env) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap())),
+        Some(SpecialName::File) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap())),
         Some(SpecialName::Local) => todo!(),
         None => {
             let (parent,_val) = name.spath().pop();
@@ -89,10 +89,10 @@ fn dummy_root(name:&Name) -> LiveClaim{
 /// Lookup the chain of claims that gave a name
 pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
     match name.special(){
-        Some(SpecialName::Env) => {
-            let path = name.fs_env_path()?;
+        Some(SpecialName::File) => {
+            let path = name.file_path()?;
             let claim : anyhow::Result<Claim>= try {
-                let pbytes = match lk.env().env_data(&path, false)?{
+                let pbytes = match lk.env().files_data(&path, false)?{
                     Some(p) => p,
                     None => return Ok(Err(dummy_root(name)))
                 };
@@ -165,7 +165,7 @@ pub fn setup_special_keyclaim(
     enckey: &str,
     overwrite:bool
 ) -> anyhow::Result<PubKey> {
-    let sp = name.special().context("will only setup :local or :env keys")?;
+    let sp = name.special().context("will only setup :local or :file keys")?;
     if let Ok(Some(c)) = lookup_claim(lk, &name){
         if !overwrite {anyhow::bail!("claim already set but overwrite is false")}
         else { tracing::debug!(old_claim=%c)}
@@ -177,7 +177,7 @@ pub fn setup_special_keyclaim(
             if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
             local_claim::setup_local_keyclaim(lk, claim,None)?;
         },
-        SpecialName::Env => env_claim::setup(lk,claim,overwrite)?
+        SpecialName::File => file_claim::setup(lk,claim,overwrite)?
     }
     Ok(pubkey)
 }

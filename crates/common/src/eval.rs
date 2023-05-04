@@ -1,3 +1,5 @@
+use std::{ffi::OsStr, os::unix::prelude::OsStrExt};
+
 use anyhow::Context;
 // Copyright Anton Sol
 //
@@ -22,39 +24,41 @@ impl<F> LKS for F where F: Fn() -> anyhow::Result<Linkspace>+Copy{
 pub type RTScope<GT> = (
     EScope<NetLNS<GT>>,
     EScope<PrivateLNS<GT>>,
-    (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>),
+    (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>,Option<EScope<OSEnv>>),
 );
 pub type RTCtx<GT> = EvalCtx<(EvalStd, RTScope<GT>)>;
 
-pub const fn rt_scope<'o, GT>(rt: GT) -> RTScope<GT>
+pub const fn rt_scope<'o, GT>(rt: GT,enable_env:bool) -> RTScope<GT>
 where
     GT: 'o + LKS
 {
-    let env = EScope(FileEnv(rt));
+    let files= EScope(FileEnv(rt));
     let readhash = EScope(ReadHash(rt));
     let local_lns = EScope(PrivateLNS { rt });
+    let env = if enable_env{ Some(EScope(OSEnv))} else {None};
     let lns = EScope(NetLNS {
         rt,
         timeout: std::time::Duration::from_secs(1),
     });
-    (lns, local_lns, (env, readhash))
+    (lns, local_lns, (files, readhash,env))
 }
 pub fn rt_ctx<'o, GT>(
     ctx: EvalCtx<impl Scope + 'o>,
     rt: GT,
+    enable_env:bool
 ) -> EvalCtx<(impl Scope + 'o, RTScope<GT>)>
 where
     GT: 'o + LKS
 {
-    ctx.scope(rt_scope(rt))
+    ctx.scope(rt_scope(rt,enable_env))
 }
 
-pub const fn std_ctx_v<'o, GT>(rt: GT, version: &str) -> RTCtx<GT>
+pub const fn std_ctx_v<'o, GT>(rt: GT, version: &str,enable_env:bool) -> RTCtx<GT>
 where
     GT: 'o + LKS
 {
     EvalCtx {
-        scope: (linkspace_core::eval::std_ctx_v(version).scope, rt_scope(rt)),
+        scope : (linkspace_core::eval::std_ctx_v(version).scope, rt_scope(rt,enable_env)),
     }
 }
 
@@ -66,7 +70,7 @@ impl<R: LKS> EvalScopeImpl for FileEnv<R> {
         (
             "filesystem env".into(),
             format!(
-                "read files from {:?} ",
+                "read files from {:?}/files ",
                 self.0.lk().map(|v| v.env().dir().to_owned())
             ),
         )
@@ -75,14 +79,14 @@ impl<R: LKS> EvalScopeImpl for FileEnv<R> {
         &[ScopeFunc {
             apply: |this: &Self, inp: &[&[u8]], _, _scope| {
                 let p = std::str::from_utf8(inp[0])?;
-                Ok(this.0.lk()?.env().env_data(p,true)?.unwrap()).into()
+                Ok(this.0.lk()?.env().files_data(p,true)?.unwrap()).into()
             },
             info: ScopeFuncInfo {
-                id: "conf",
+                id: "files",
                 init_eq: None,
                 argc: 1..=1,
                 to_abe: false,
-                help: "read a file from the conf directory",
+                help: "read a file from the LK_DIR/files directory",
             },
             to_abe: none,
         }]
@@ -199,6 +203,37 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 id: "readhash",
                 help: "HASH ':' expr (':' alt if not found) ",
             },
+        }]
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct OSEnv;
+
+impl EvalScopeImpl for OSEnv{
+    fn about(&self) -> (String, String) {
+        (
+            "env".into(),
+            "os environment variables".into()
+        )
+    }
+    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
+        &[ScopeFunc {
+            apply: |_this: &Self, inp: &[&[u8]], _, _scope| {
+                let st : &OsStr = OsStr::from_bytes(&inp[0]); // TODO this might be wrong
+                std::env::var_os(st)
+                    .with_context(|| format!("{st:?} env variable not set"))
+                    .map(|o| o.as_bytes().to_vec())
+                    .into()
+            },
+            info: ScopeFuncInfo {
+                id: "env",
+                init_eq: None,
+                argc: 1..=1,
+                to_abe: false,
+                help: "read the raw OS environment variables as bytes",
+            },
+            to_abe: none,
         }]
     }
 }

@@ -366,7 +366,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Collect(cmd) => collect::collect(&common, cmd)?,
         Command::Rewrite(cmd) => rewrite::rewrite(&common, cmd)?,
-        Command::GetLinks(cmd) => get_links::exec(&common,cmd)?,
+        Command::GetLinks(cmd) => get_links::exec(common,cmd)?,
         Command::WatchHash { hash, write, rest } => {
             let mut cquery = CLIQuery::default();
             cquery.mode = Some(Mode::HASH_ASC);

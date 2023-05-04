@@ -361,7 +361,7 @@ Both publicly by registering, and privately for your own convenience.
 - @:john:nl
 - @:me:local
 
-The top level names :local, :env, and :pub are special.
+The top level names :local, ,:~ (or :file) , :env, and :pub are special.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
 
 LNS is currently only partially operational.
@@ -385,7 +385,7 @@ That registration can set up a binding for the key @:bob:sales:yourcompany:com.
 
 Nothing in linkspace requires a registration.
 Everything can be done without.
-In fact, \*:env names you set up for your own use (similarly to /etc/hosts), and \*:local are meant for names you share between peers.
+In fact, \*:~ names you set up for your own use (similarly to /etc/hosts), and \*:local are meant for names you share between peers.
 Registrations allow you to pick an unambiguous name to be known publicly, and they support the project financially.
 
 ### How can I register?

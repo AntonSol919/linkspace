@@ -22,7 +22,7 @@
 - Create folder import/export example (Update cli/impex)
 - Exchange with bloom filter(+count)
 - status-pull should take an optional max_age - allows checking if any process ever set a status without setting the timeout to max.
-- lk_pull_close 
+- lk_pull_close  or lk_stop(pull.qid) by having lk_pull install on_close to overwrite existing req
 - LNS : Drop some roots, remove root names
 
 
@@ -38,8 +38,10 @@
 - :start:HASH option
 - Add predicate operation type that fails if the predicate is already constrained.
 - notation for "acceptable queries" (see adota for some ideas).
+
 - inmem store - an old version exists but we need a proper interface over key-value db
 - Compile to WASM
+- lk: get-links should have a filter for recursive
 - C API  (vtable NetPkt & CPktHandler)
 - tree branch iterator options. currently only create stamp order is supported.  
 Every segment of a tree key could be in a different order. Most important is the public key.

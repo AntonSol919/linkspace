@@ -10,6 +10,19 @@ case "${1:-UNKNOWN}" in
   log)
       lk --private watch --bare --mode log-asc --no-new | lk printf
       ;;
+  blobs-in)
+      export FILE=$2
+      export CHAN=${3:-default}
+      export IN=${4:-$FILE}
+      cat "$IN" | lk data | lk --env collect blobs:$LK_GROUP:/[env:CHAN]/[env:FILE] --write db --forward db
+      ;;
+  blobs-out)
+      export FILE=$2
+      export CHAN=${3:-default}
+      export OUT=${4:-$FILE}
+      lk --env watch "blobs:$LK_GROUP:/[env:CHAN]/[env:FILE]" --max 1 | \
+          lk --env get-links --rr --forward null --write "file-expr:[env:OUT]:[data]" pause
+      ;;
   *)
       echo "No such command $@"
       cat "${BASH_SOURCE[0]}"; exit 1 ;;
