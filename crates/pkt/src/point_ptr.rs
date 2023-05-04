@@ -97,7 +97,7 @@ impl PointThinPtr {
         match self.0.point_type {
             PointTypeFlags::DATA_POINT => BarePointFields::DataPoint(mem),
             PointTypeFlags::LINK_POINT => {
-                let (linkpoint, tail) = mem.split_at(size_of::<LinkPointHeader>());
+                let (linkpoint, tail) = unsafe{mem.split_at_unchecked(size_of::<LinkPointHeader>())};
                 let linkpoint = unsafe { &*(linkpoint.as_ptr() as *const LinkPointHeader) };
                 BarePointFields::LinkPoint {
                     lp_header: linkpoint,
@@ -105,7 +105,7 @@ impl PointThinPtr {
                 }
             }
             PointTypeFlags::KEY_POINT => {
-                let (assert, tail) = mem.split_at(size_of::<KeyPointHeader>());
+                let (assert, tail) = unsafe{mem.split_at_unchecked(size_of::<KeyPointHeader>())};
                 let assert = unsafe { &*(assert.as_ptr() as *const KeyPointHeader) };
                 BarePointFields::KeyPoint {
                     a_header: assert,
@@ -113,7 +113,7 @@ impl PointThinPtr {
                 }
             }
             PointTypeFlags::ERROR_POINT => BarePointFields::Error(mem),
-            _ => panic!("Working with invalid packets."),
+            _ => BarePointFields::Unknown(mem)
         }
     }
 
@@ -210,7 +210,7 @@ impl PointThinPtr {
     }
 
     fn content_memory(&self) -> &[u8] {
-        &self.pkt_bytes()[size_of::<PointHeader>()..]
+        unsafe{&self.pkt_bytes().get_unchecked(size_of::<PointHeader>()..)}
     }
 
     #[inline(always)]
@@ -282,11 +282,25 @@ impl Point for PointThinPtr {
     }
     #[inline(always)]
     fn keypoint_header(&self) -> Option<&KeyPointHeader> {
-        self.map_fixed(none, none, none, Some, none)
+        if false {
+            let point : *const u8 = unsafe { (self as *const PointThinPtr as *const u8).add(size_of::<PointHeader>())};
+            if self.0.point_type.contains(PointTypeFlags::SIGNATURE){ Some(unsafe{&*(point as *const KeyPointHeader)} ) }
+            else { None }
+        }else {
+            self.map_fixed(none, none, none, Some, none)
+        }
     }
     #[inline(always)]
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
-        self.map_fixed(none, none, Some, |a| Some(&a.linkpoint), none)
+        if true{
+            let mut ptr = None;
+            let point : *const u8 = unsafe { (self as *const PointThinPtr as *const u8).add(size_of::<PointHeader>())};
+            if self.0.point_type.contains(PointTypeFlags::LINK){ ptr = Some(unsafe{&*(point as *const LinkPointHeader)} ) };
+            if self.0.point_type.contains(PointTypeFlags::SIGNATURE){ ptr = Some(&unsafe{&*(point as *const KeyPointHeader)}.linkpoint ) };
+            ptr
+        } else {
+            self.map_fixed(none, none, Some, |a| Some(&a.linkpoint), none)
+        }
     }
     #[inline(always)]
     fn parts(&self) -> PointParts {
@@ -319,6 +333,7 @@ impl Point for PointThinPtr {
     fn pkt_segments(&self) -> ByteSegments {
         ByteSegments::from_array([self.pkt_bytes()])
     }
+    
 }
 
 impl Point for PointPtr {

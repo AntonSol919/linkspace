@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![allow(incomplete_features)]
 #![feature(
+    slice_split_at_unchecked,
     doc_notable_trait,
     thread_local,
     array_zip,
@@ -77,6 +78,7 @@ pub use spath_fmt::*;
 pub use stamp::*;
 
 //#[cfg(test)]
+#[doc(hidden)]
 pub mod asm_tests;
 
 mod builder;

@@ -23,7 +23,7 @@ pub struct NetPktFatPtr {
 }
 
 /// Byte repr of a [NetPkt]
-#[repr(C, align(4))]
+#[repr(C, align(8))]
 pub struct NetPktPtr {
     pub net_header: NetPktHeader,
     pub(crate) hash: LkHash,
