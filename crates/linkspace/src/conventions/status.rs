@@ -158,7 +158,7 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
     // We only care about new packets. Worst case a request was received and timeout between our init and this cb.
     q = lk_query_push(q, "i_db", "<", &*U32::ZERO)?;
     q = lk_query_push(q, "", "qid", qid)?;
-    lk_watch2(&lk, &q, cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
+    lk_watch2(&lk, &q, try_cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
         let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype,qid:&[]};
         let p = pkt.get_ipath();
         if p.len() == path.len() && p.spath() != path.as_ref() { return Ok(())}

@@ -52,6 +52,7 @@ pub mod rewrite;
 pub mod save;
 pub mod status;
 pub mod watch;
+pub mod get_links;
 
 // const is wrong but who cares.
 const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
@@ -243,21 +244,11 @@ enum Command {
         field_mut: Vec<MutFieldExpr> ,
     },
     /// Output known link.ptr packets ( this is not the same as setting :follow )
-    GetLinks {
-        #[clap(flatten)]
-        pkt_in: PktIn,
-        /// writedest of stdin packets
-        #[clap(short, long, default_value = "stdout")]
-        forward: Vec<WriteDestSpec>,
-        /// writedest of linked packets
-        #[clap(short, long, default_value = "stdout")]
-        write: Vec<WriteDestSpec>,
-    },
+    GetLinks(get_links::GetLinks),
     /// queue datapackets until a linkpoint with a matching link is received
     DataFilter {
         #[clap(short, long, default_value = "4090")]
         buffer_size: usize,
-
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(short, long, default_value = "null")]
@@ -375,37 +366,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Collect(cmd) => collect::collect(&common, cmd)?,
         Command::Rewrite(cmd) => rewrite::rewrite(&common, cmd)?,
-        Command::GetLinks { forward, write,pkt_in } => {
-            let store = common.env()?;
-            let inp = common.inp_reader(&pkt_in)?;
-            // FIXME : set proper Linked Futer Packets
-            //let netflag = if prepend_links { NetFlag::LinkedInFuturePkt}else { NetFlag::LinkedInPreviousPkt}.into();
-            let mut write = common.open(&write)?;
-            let mut forward = common.open(&forward)?;
-            let mut buffer = vec![];
-            for pkt in inp {
-                let pkt = pkt?;
-                if !pkt.get_links().is_empty() {
-                    let reader = store.get_reader()?;
-                    for Link {
-                        tag: _,
-                        ptr: pointer,
-                    } in pkt.get_links()
-                    {
-                        if let Some(pkt) = reader.read(&pointer)? {
-                            common.write_multi_dest(&mut write, &pkt.pkt, Some(&mut buffer))?;
-                        }
-                    }
-                }
-                common.write_multi_dest(&mut forward, &**pkt, Some(&mut buffer))?;
-                if !buffer.is_empty() {
-                    let mut out = std::io::stdout();
-                    out.write_all(&mut buffer)?;
-                    out.flush()?;
-                    buffer.clear();
-                }
-            }
-        }
+        Command::GetLinks(cmd) => get_links::exec(&common,cmd)?,
         Command::WatchHash { hash, write, rest } => {
             let mut cquery = CLIQuery::default();
             cquery.mode = Some(Mode::HASH_ASC);
@@ -521,5 +482,3 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
     }
     Ok(())
 }
-
-

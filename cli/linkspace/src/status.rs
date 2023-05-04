@@ -6,7 +6,7 @@
 #![allow(dead_code, unused_variables)]
 use std::ops::ControlFlow;
 
-use linkspace::misc::{ cb};
+use linkspace::misc::{ try_cb};
 use linkspace::{ lk_process_while };
 use linkspace_common::cli::{clap };
 use linkspace_common::runtime::handlers::PktStreamHandler;
@@ -132,7 +132,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let ok = Rc::new(std::cell::Cell::new(false));
     let isokc = ok.clone();
 
-    lk_status_poll(&lk,status, timeout.stamp(), cb(move |pkt,lk| -> ControlFlow<()>{
+    lk_status_poll(&lk,status, timeout.stamp(), try_cb(move |pkt,lk| -> ControlFlow<()>{
         if pkt.get_links().is_empty() || pkt.data().is_empty(){
             panic!()
         }

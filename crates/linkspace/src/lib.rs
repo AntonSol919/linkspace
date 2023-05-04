@@ -792,7 +792,7 @@ pub mod consts {
     pub use linkspace_common::core::consts::pkt_consts::*;
     pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC,TEST_GROUP};
 }
-pub use misc::cb;
+pub use misc::try_cb;
 pub mod misc {
     use std::ops::{ControlFlow, Try};
 
@@ -812,7 +812,15 @@ pub mod misc {
     }
     pub fn nop_stopped(_: Query, _: &Linkspace, _: StopReason, _: u32, _: u32) {}
 
-    pub fn cb<A, R, E>(
+    pub fn cb<A>(mut handle_pkt:A) -> Cb<impl FnMut(&dyn NetPkt,&Linkspace) -> ControlFlow<()>,fn(Query,&Linkspace,StopReason,u32,u32)>
+    where A: FnMut(&dyn NetPkt,&Linkspace) -> bool {
+        Cb{
+            stopped:nop_stopped,
+            handle_pkt : move |pkt:&dyn NetPkt,lk:&Linkspace| { if (handle_pkt)(pkt,lk) { ControlFlow::Break(())} else { ControlFlow::Continue(())}}
+        }
+    } 
+
+    pub fn try_cb<A, R, E>(
         mut handle_pkt: A,
     ) -> Cb<
         impl FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()> + 'static,

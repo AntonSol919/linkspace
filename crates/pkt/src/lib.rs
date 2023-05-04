@@ -37,6 +37,7 @@ pub use byte_fmt::*;
 use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
+use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 pub use spath::*;
 pub use spath_fmt::*;
@@ -104,6 +105,11 @@ pub struct Link {
     pub tag: Tag,
     /// Usually a [LkHash], sometimes a [PubKey] or [GroupID]
     pub ptr: Ptr,
+}
+impl Display for Link{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,"{}:{}",self.tag,self.ptr)
+    }
 }
 /// Taproot Schnorr publickey. Alias for `B64<[u8;32]>`
 pub type PubKey = B64<[u8; 32]>;

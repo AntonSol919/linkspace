@@ -29,8 +29,6 @@ impl crate::Query {
     }
 }
 
-
-
 #[doc(hidden)]
 impl From<linkspace_common::runtime::Linkspace> for crate::Linkspace {
     fn from(value: linkspace_common::runtime::Linkspace) -> Self {
