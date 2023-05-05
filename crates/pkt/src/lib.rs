@@ -10,7 +10,6 @@
     thread_local,
     array_zip,
     slice_from_ptr_range,
-    slice_ptr_get,
     ptr_metadata,
     alloc_layout_extra,
     const_slice_split_at_not_mut,
@@ -18,20 +17,9 @@
     const_try,
     const_option_ext,
     const_slice_index,
-    array_windows,
-    split_array,
-    let_chains,
-    slice_group_by,
-    try_blocks,
-    concat_bytes,
-    never_type,
     iter_advance_by,
-    vec_into_raw_parts,
     generic_const_exprs,
     write_all_vectored,
-    new_uninit,
-    get_mut_unchecked,
-    type_alias_impl_trait,
     lazy_cell
 )]
 pub use byte_fmt::*;
@@ -60,6 +48,11 @@ pub mod spath_fmt;
 pub mod spath_macro;
 pub mod utils;
 pub mod read;
+mod builder;
+mod pkt_bytes;
+mod stamp;
+
+
 
 pub use byte_segments::*;
 pub use endian_types::*;
@@ -76,17 +69,12 @@ pub use repr::*;
 pub use spath::*;
 pub use spath_fmt::*;
 pub use stamp::*;
-
-//#[cfg(test)]
-#[doc(hidden)]
-pub mod asm_tests;
-
-mod builder;
-mod pkt_bytes;
-mod stamp;
-
 pub use builder::*;
 pub use pkt_bytes::*;
+
+#[cfg(test)]
+pub mod asm_tests;
+
 
 // ==== pkt field types
 /// Blake3 hash of the packet content. Alias for `B64<[u8;32]\>`
