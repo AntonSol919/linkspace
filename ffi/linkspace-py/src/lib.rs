@@ -547,8 +547,6 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<crate::Linkspace>()?;
     m.add_class::<crate::Query>()?;
 
-    m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_datapoint, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_linkpoint, m)?)?;
@@ -590,6 +588,11 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_status_poll, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 
+    m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::blake3_hash, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::bytes2uniform, m)?)?;
+
     m.add("PRIVATE", PyBytes::new(py, &consts::PRIVATE.0))?;
     m.add("TEST_GROUP", PyBytes::new(py, &**consts::TEST_GROUP))?;
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
@@ -613,4 +616,11 @@ pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyByt
     let sp = linkspace_rs::prelude::spath_buf(&path);
     Ok(PyBytes::new(py, &sp.spath_bytes()))
 }
-
+#[pyfunction]
+pub fn blake3_hash<'p>(py: Python<'p>,bytes:&PyAny) -> anyhow::Result<&'p PyBytes>{
+    Ok(PyBytes::new(py,&*linkspace_rs::misc::blake3_hash(bytelike(bytes)?)))
+}
+#[pyfunction]
+pub fn bytes2uniform<'p>(bytes:&[u8]) -> anyhow::Result<f64> {
+    Ok(linkspace_rs::misc::bytes2uniform(&bytes)?)
+}

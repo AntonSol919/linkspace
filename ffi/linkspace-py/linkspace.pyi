@@ -75,7 +75,6 @@ class Pkt:
     def __ne__(self, other) -> bool: ...
 
 
-def b64(bytes:bytes) -> str: ...
 def lk_datapoint(data:bytes) -> Pkt: ...
 def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
                  links:list[Link] | None=None,data:bytes |str| None=None,
@@ -355,8 +354,25 @@ def lk_read(bytes:bytes,validate:bool=True,allow_private:bool=False) -> tuple[Pk
     """
     ...
 
-def path(components:list[bytes]) -> Any:
+def b64(bytes:bytes) -> str: ...
+def spath(components:list[bytes]) -> Any:
     """
     Encode a list of components in the SPath byte format (the same as Pkt.path).
     """
     ...
+
+def blake3_hash(bytes:bytes) -> bytes: ...
+
+def bytes2uniform(bytes:bytes) -> float:
+    """
+    Read bytes as a [0,1) float by reading the first 52 bits.
+    Primary use is to produces the same 'random',
+    regardless of language, and without an additional RNG dependencies,
+
+    Args:
+        bytes: (random) 32 bytes e.g. Pkt.hash or blake3_hash()
+    Returns:
+        float: uniform value ranging from [0,1)
+    """
+    ...
+

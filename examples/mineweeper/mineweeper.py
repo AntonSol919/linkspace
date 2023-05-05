@@ -1,4 +1,4 @@
-import random
+import linkspace
 import itertools
 import re
 from dataclasses import dataclass
@@ -47,10 +47,9 @@ class MineWeeper():
         return (player_id,self.players[player_id])
 
     def is_mine(self,row:int,col:int) -> bool:
-
-        random.seed(self.seed + row.to_bytes(length=4) + col.to_bytes(length=4))
-        return random.random() < self.mine_rate
-
+        rand_bytes = linkspace.blake3_hash(self.seed + row.to_bytes(length=4) + col.to_bytes(length=4))
+        random = linkspace.bytes2uniform(rand_bytes)
+        return random < self.mine_rate
 
     def get_cell(self,row,col)  -> Cell | None:
         if row >= 0 and row < self.rows and col >= 0 and col < self.cols:

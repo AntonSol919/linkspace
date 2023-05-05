@@ -6,7 +6,6 @@ players = [ input("Enter name>:") for _ in range(player_count)]
 rows = 20 # int(input("rows"))
 cols = 20 # int(input("cols"))
 mine_rate = 0.3 # int(input("mine_rate"))
-
 # A game started with the same (rows,cols,seed) will have the mines at the same location
 seed = random.randbytes(4)
 

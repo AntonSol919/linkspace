@@ -147,8 +147,8 @@ while game.print_game_state():
                 (row,col) = (int(row),int(col))
                 data=json.dumps([row,col])
                 game.get_revealable_cell(row,col)
-                if "i'm" and not "a cheater" and game.is_mine(row,col) and "c" in input("cheat?"):
-                    continue
+                #if "i'm" and not "a cheater" and game.is_mine(row,col) and "c" in input("cheat?"):
+                #    continue
                 pkt = new_keypoint(data=data,links=[prev_turn])
                 # We save the packet. An exchange process will ensure the other players get it.
                 # (This does not update our view of the database until we call lk_process or lk_process_while)

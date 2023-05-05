@@ -801,7 +801,7 @@ pub mod misc {
     pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
     pub use linkspace_common::pkt::FieldEnum;
     pub use linkspace_common::pkt::read;
-    use linkspace_common::prelude::NetPkt;
+    use linkspace_common::prelude::{NetPkt, B64 };
     pub use linkspace_common::runtime::handlers::StopReason;
 
     use crate::{Linkspace, PktHandler, Query};
@@ -860,6 +860,24 @@ pub mod misc {
         ) {
             (self.stopped)(query, lk, reason, total, new)
         }
+    }
+
+    /// Blake3 hash
+    pub fn blake3_hash(val:&[u8]) -> B64<[u8;32]>{
+        B64(*linkspace_common::core::crypto::blake3_hash(val).as_bytes())
+    }
+
+    /**
+    Read bytes as a [0,1) float by reading the first 52 bits.
+    Primary use is to produces the same 'random' value by using [NetPkt::hash] or [blake3_hash],
+    regardless of language, and without an additional RNG dependencies,
+    */
+    pub fn bytes2uniform(val:&[u8]) -> anyhow::Result<f64>{
+        let rand_u64 = u64::from_be_bytes(val[..8].try_into()?);
+        let f64_exponent_bits: u64 = 1023u64 << 52;
+        // Generate a value in the range [1, 2)
+        let value1_2 = f64::from_bits((rand_u64 >> 64-52) | f64_exponent_bits);
+        Ok(value1_2 - 1.0)
     }
 }
 

@@ -1,0 +1,1 @@
+/home/rs/Projects/linkspace/ffi/linkspace-py/linkspace.pyi

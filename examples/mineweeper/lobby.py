@@ -149,7 +149,9 @@ while not host_lobby.start_pkt:
         #lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
         lk_process(lk)
     elif me_host and cmd == "/start":
+        lk_process(lk)
         players = [ [p.data.decode("utf-8"),b64(p.pubkey)] for p in host_lobby.players.values() if p.data]
+        print(*players,sep="\n")
         try:
             cols = int(input("cols (10) > ") or "10")
             rows = int(input("rows (10) > ") or "10")
