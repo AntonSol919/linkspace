@@ -181,6 +181,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
     };
     let mut collector = match collector.c_opts.min_interval.clone() {
         None => {
+            tracing::debug!("Reading packets");
             for p in inp {
                 let pkt = match p {
                     Ok(p) => p,

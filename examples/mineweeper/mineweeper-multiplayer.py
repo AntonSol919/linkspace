@@ -108,14 +108,15 @@ prev_turn = Link("prev", game_pkt.hash)
 # If the pkt has its links equal to prev_ptr, and pubkey == current_player.pubkey => the data should contain the json for their turn.
 def find_and_do_next_move(player_turn_pkt):
     global prev_turn, game
-    if list(player_turn_pkt.links) == [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
-        [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
-        clear_screen()
-        game.reveal(row, col)
-        # Update our prev_ptr to the this packet. 
-        prev_turn = Link("prev", player_turn_pkt.hash)
-        # Returning True stops this function from being called with more matches.
-        return True
+    if list(player_turn_pkt.links) != [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
+        return
+    [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
+    clear_screen()
+    game.reveal(row, col)
+    # Update our prev_ptr to the this packet. 
+    prev_turn = Link("prev", player_turn_pkt.hash)
+    # Returning True stops this function from being called with more matches.
+    return True
 
 while game.print_game_state():
     [pid,name] = game.current_player();

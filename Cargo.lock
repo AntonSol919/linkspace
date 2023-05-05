@@ -1206,6 +1206,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mineweeper-rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "linkspace",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "miniz_oxide"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

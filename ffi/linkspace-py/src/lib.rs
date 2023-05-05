@@ -622,5 +622,6 @@ pub fn blake3_hash<'p>(py: Python<'p>,bytes:&PyAny) -> anyhow::Result<&'p PyByte
 }
 #[pyfunction]
 pub fn bytes2uniform<'p>(bytes:&[u8]) -> anyhow::Result<f64> {
-    Ok(linkspace_rs::misc::bytes2uniform(&bytes)?)
+    let b : &[u8;8] = bytes[..8].try_into()?;
+    Ok(linkspace_rs::misc::bytes2uniform(b))
 }

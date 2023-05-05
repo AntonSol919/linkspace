@@ -11,6 +11,7 @@
 - have lk_pull check for exchange status. 
 - Add query seperator for building multiple? ( multi hash get )
 - have python and `lk` use LK_DOMAIN and LK_GROUP for defaults
+- Add a static [#:lan] group for packets that should be transmitted at most once
 
 # Pending
 
@@ -25,10 +26,6 @@
 - lk_pull_close  or lk_stop(pull.qid) by having lk_pull install on_close to overwrite existing req
 - LNS : Drop some roots, remove root names
 
-
-# API updates
-
--
 
 # Should have
 
@@ -73,7 +70,9 @@ must clarify nested query open semantics.
 
 # linkspace-cli
 
+rewrite ReadSource to be a set of flags and include -d -n -N (bash read delimiters)
 detangle --pkt_in & --read_private options.
+investigate options to link to previous created packet in a `lk link ...` call
 
 
 # linkspace-py

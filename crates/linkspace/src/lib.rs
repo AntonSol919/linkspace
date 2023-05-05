@@ -322,7 +322,8 @@ pub mod abe {
     encode doesn't error, it falls back on plain abtxt.
     this variant also swallows bad options, see [lk_try_encode] to avoid doing so.
     **/
-    pub fn lk_encode(bytes: &[u8], options: &str) -> String {
+    pub fn lk_encode(bytes: impl AsRef<[u8]>, options: &str) -> String {
+        let bytes = bytes.as_ref();
         varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options,true)
             .unwrap_or_else(|_v| as_abtxt(bytes).to_string())
     }
@@ -331,7 +332,8 @@ pub mod abe {
     - no result ( use a /: to fallback to abtxt)
     - if !ignore_encoder_err on any encoder error
     **/
-    pub fn lk_try_encode(bytes: &[u8], options: &str,ignore_encoder_err:bool) -> LkResult<String> {
+    pub fn lk_try_encode(bytes: impl AsRef<[u8]>, options: &str,ignore_encoder_err:bool) -> LkResult<String> {
+        let bytes = bytes.as_ref();
         Ok(varctx::lk_try_encode(
             ctx::ctx(().into()).unwrap(),
             bytes,
@@ -459,7 +461,7 @@ pub mod abe {
     }
 }
 
-pub use query::{lk_query, lk_query_parse, lk_query_print, lk_query_push, Query};
+pub use query::{lk_query, lk_query_parse, lk_query_print, lk_query_push, Query,Q};
 pub mod query {
     /**
     A set of predicates and options used to select packets
@@ -471,36 +473,38 @@ pub mod query {
     # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
 
-    let mut query = lk_query(None);
+    let mut query = lk_query(&Q);
 
     // Add multiple predicates and options at once.
-    let query_str = "
-    group:=:[#:pub]
-    domain:=:[a:hello]
-    prefix:=:/some/path
-    :qid:default
-    ";
-    lk_query_parse(&mut query,query_str,())?;
+    let query_str = [
+      "group:=:[#:pub]",
+      "domain:=:[a:hello]",
+      "prefix:=:/some/path",
+      ":qid:default"
+    ];
+    query = lk_query_parse(query,&query_str,())?;
     // Optionally with user data such as an argv
-    lk_query_parse(&mut query,"prefix:=:/some/[0]",&[b"path" as &[u8]]);
+    query = lk_query_parse(query,&["prefix:=:/some/[0]"],&[b"path" as &[u8]])?;
 
     // conflicting predicates return an error
-    let result = lk_query_parse(&mut query, "path_len:=:\0",());
+    let result = lk_query_parse(lk_query(&query), &["path_len:=:[u8:0]"],());
     assert!( result.is_err());
 
     // You can add a single statement directly
-    lk_query_push(&mut query,"create","<", &*now())?;
+    query = lk_query_push(query,"create","<", &*now())?;
     // Predicates get merged if they overlap
-    lk_query_push(&mut query,"create","<",&lk_eval("[now:-1D]",())?)?;
+    query = lk_query_push(query,"create","<",&lk_eval("[now:-1D]",())?)?;
 
     // As shown with:
     println!("{}",lk_query_print(&query,false));
-    # Ok(())}
+    # Ok(()) }
     ```
 
     */
-    #[derive(Default, Clone)]
+    #[derive(Clone)]
     pub struct Query(pub(crate) linkspace_common::core::query::Query);
+
+    pub static Q : Query = Query(linkspace_common::core::query::Query::DEFAULT);
 
     impl std::fmt::Display for Query {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -516,9 +520,9 @@ pub mod query {
     use crate::abe::ctx::UserData;
 
     use super::*;
-    /// Create a new [Query]. Optionally copy from a template
-    pub fn lk_query(copy_from: Option<&Query>) -> Query {
-        copy_from.map(|v| v.clone()).unwrap_or_default()
+    /// Create a new [Query]. Copy from a template. [Q] is the empty query.
+    pub fn lk_query(copy_from: &Query) -> Query {
+        Query(copy_from.0.clone())
     }
     /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count.
     pub fn lk_hash_query(hash: LkHash) -> Query {
@@ -806,6 +810,7 @@ pub mod misc {
 
     use crate::{Linkspace, PktHandler, Query};
 
+    #[derive(Copy,Clone)]
     pub struct Cb<A, B> {
         pub handle_pkt: A,
         pub stopped: B,
@@ -867,18 +872,38 @@ pub mod misc {
         B64(*linkspace_common::core::crypto::blake3_hash(val).as_bytes())
     }
 
+
     /**
     Read bytes as a [0,1) float by reading the first 52 bits.
+    Panics if fewer than 8 bytes are supplied
     Primary use is to produces the same 'random' value by using [NetPkt::hash] or [blake3_hash],
     regardless of language, and without an additional RNG dependencies,
-    */
-    pub fn bytes2uniform(val:&[u8]) -> anyhow::Result<f64>{
-        let rand_u64 = u64::from_be_bytes(val[..8].try_into()?);
+     */
+    pub fn bytes2uniform(val:&[u8]) -> f64{
+        let rand_u64 = u64::from_be_bytes(val[..8].try_into().expect("bytes2uniform requires at least 8 bytes"));
         let f64_exponent_bits: u64 = 1023u64 << 52;
         // Generate a value in the range [1, 2)
         let value1_2 = f64::from_bits((rand_u64 >> 64-52) | f64_exponent_bits);
-        Ok(value1_2 - 1.0)
+        value1_2 - 1.0
     }
+
+    /* TODO: remove
+    /**
+    Read a float [0,1) into 32 bytes (big endian).
+    Its primary use is for the result can be compared to [NetPkt::hash] or [blake3_hash].
+    These emulates randomness, regardless of language and without an additional RNG dependencies.
+    i.e. if uniform2bytes(0.1) > pkt.hash { println!("This has a 0.1 chance")}
+    */
+    pub fn uniform2bytes(val:f64) -> anyhow::Result<B64<[u8;32]>>{
+        let mut result = B64([0;32]);
+        if val < 0.0 || val >= 1.0 { anyhow::bail!("function is inverse of bytes2uniform, thus undefined outside of [0,1)")}
+        let bits = (val + 1.0).to_bits();
+        let headbytes = (bits << (64-52)).to_be_bytes();
+        result.0[0..8].copy_from_slice(&headbytes);
+        result
+    }
+    */
+
 }
 
 /// Functions with a custom eval context

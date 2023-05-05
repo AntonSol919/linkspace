@@ -76,6 +76,10 @@ impl KnownOptions {
 }
 
 impl Query {
+    pub const DEFAULT : Self = Query{
+        predicates: PktPredicates::DEFAULT,
+        options: vec![],
+    };
     pub fn to_str(&self, canonical: bool) -> String {
         use std::fmt::Write;
         let mut out = String::new();

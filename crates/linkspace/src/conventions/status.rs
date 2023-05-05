@@ -77,7 +77,7 @@ pub fn lk_status_request(status:LkStatus) -> LkResult<NetPktBox>{
 pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
     let LkStatus { domain,  ..} = status;
     let path = lk_status_path(status)?;
-    let mut q = lk_query(None);
+    let mut q = lk_query(&Q);
     let create_after = now().saturating_sub(max_age);
     q = lk_query_push(q, "group", "=", &*PRIVATE)?;
     q = lk_query_push(q, "domain", "=", &*domain)?;
@@ -150,7 +150,7 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
     lk_save(&lk,&initpkt )?;
     std::mem::drop(initpkt);
 
-    let mut q = lk_query(None);
+    let mut q = lk_query(&Q);
     let prefix = lk_status_path(LkStatus { instance:None, ..status})?;
     q = lk_query_push(q, "data_size", "=", &*U16::ZERO)?;
     q = lk_query_push(q, "links_len", "=", &*U16::ZERO)?;
