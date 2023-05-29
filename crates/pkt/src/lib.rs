@@ -121,6 +121,8 @@ pub mod consts {
         MAX_NETPKT_SIZE - size_of::<NetPktHeader>() + size_of::<LkHash>();
     pub const MAX_CONTENT_SIZE: usize = MAX_POINT_SIZE - size_of::<PartialNetHeader>();
     pub const MAX_DATA_SIZE: usize = MAX_CONTENT_SIZE;
+    pub const MAX_LINKPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<LinkPointHeader>();
+    pub const MAX_KEYPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<KeyPointHeader>();
     pub const MAX_LINKS_LEN: usize = (MAX_POINT_SIZE - MAX_SPATH_SIZE) / size_of::<Link>();
     pub const MAX_SPATH_SIZE: usize = 242;
     pub const MAX_IPATH_SIZE: usize = MAX_SPATH_SIZE + 8;

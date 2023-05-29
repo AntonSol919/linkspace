@@ -5,15 +5,13 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{
     io::Write,
-    sync::{
-        mpsc::{channel, RecvTimeoutError, Sender},
-        Mutex,
-    },
+    time::Instant,
 };
 
-use crate::point::PointOpts;
+use crossbeam_channel::{Sender,bounded};
+use crate::{point::PointOpts, datapoint::Reader};
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, Reader, WriteDest, WriteDestSpec},
+    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, WriteDest, WriteDestSpec},
     core::stamp_fmt::DurationStr,
     prelude::*,
 };
@@ -85,10 +83,10 @@ pub struct Collector {
     dgs: DGP,
 }
 impl Collector {
-    pub fn collect(&mut self, common: &CommonOpts) -> anyhow::Result<()> {
+    pub fn collect(&mut self, common: &CommonOpts) -> anyhow::Result<Option<()>> {
         if !self.c_opts.allow_empty && self.links.is_empty() {
             tracing::debug!("Skip empty");
-            return Ok(());
+            return Ok(Some(()));
         };
         let links = std::mem::take(&mut self.links);
         let mut data = vec![];
@@ -100,6 +98,10 @@ impl Collector {
             &mut data,
             &mut self.reader,
         )?;
+        let pkt = match pkt {
+            Some(p) => p,
+            None => return Ok(None),
+        };
         tracing::debug!(new_pkt=?pkt,"New collect Pkt");
         common.write_multi_dest(&mut self.write, &pkt, Some(&mut self.buf))?;
         let ctx = pkt_ctx(common.eval_ctx(), &pkt);
@@ -123,14 +125,13 @@ impl Collector {
             out.flush()?;
             self.buf.clear();
         }
-        anyhow::Ok(())
+        anyhow::Ok(Some(()))
     }
     pub fn new_pkt(
         &mut self,
         pkt: NetPktBox,
         common: &CommonOpts,
-        tik: Option<&Sender<()>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         let ctx = common.eval_ctx();
         let tag = self.c_opts.collect_tag.eval(&pkt_ctx(ctx, &**pkt))?;
 
@@ -143,13 +144,7 @@ impl Collector {
         tracing::trace!(hash=%pkt.hash(),outp=self.forward.len(), "writing new pkt ");
         common.write_multi_dest(&mut self.forward, &**pkt, Some(&mut self.buf))?;
 
-        if self.current_links >= self.c_opts.max_links {
-            if let Some(tx) = tik {
-                let _ = tx.send(());
-            }
-            self.collect(common)?
-        }
-        Ok(())
+        Ok(self.current_links >= self.c_opts.max_links)
     }
 }
 
@@ -163,7 +158,6 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         .map(|v| v.eval(&eval_ctx))
         .try_collect()?;
     tracing::debug!(?initial_links, "Initial");
-    let inp = common.inp_reader(&c_opts.pkt_in)?;
     if c_opts.build.sign {
         let _ = c_opts.build.key.identity(common, false)?;
     }
@@ -173,14 +167,15 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         links: initial_links.clone(),
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
-        reader: common.open_read(c_opts.build.data.as_ref())?,
+        reader: c_opts.build.read.open_reader(false,&eval_ctx)?,
         dgs,
         buf: vec![],
         c_opts,
         current_links: 0,
     };
-    let mut collector = match collector.c_opts.min_interval.clone() {
+    match collector.c_opts.min_interval {
         None => {
+            let inp = common.inp_reader(&collector.c_opts.pkt_in)?;
             tracing::debug!("Reading packets");
             for p in inp {
                 let pkt = match p {
@@ -190,57 +185,72 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                         return Err(e)?;
                     }
                 };
-                collector.new_pkt(pkt, common, None)?;
+                if collector.new_pkt(pkt, common)?{
+                    if collector.collect(common)?.is_none(){
+                        return Ok(());
+                    }
+                }
             }
-            collector
+            if !collector.links.is_empty() {
+                collector.collect(common)?;
+            }
+            return Ok(())
         }
         Some(interval) => {
             tracing::debug!("Setup interval");
-            let c = Mutex::new(collector);
             let result: anyhow::Result<()> = std::thread::scope(|s| -> anyhow::Result<()> {
-                let cr: &Mutex<_> = &c;
-                let (tx, rx) = channel();
+                let (tx, rx) : (Sender<NetPktBox>,_)= bounded(0);
                 let first = Arc::new(std::sync::Once::new());
                 let f = first.clone();
+                let pkt_in = collector.c_opts.pkt_in.clone();
                 let _joinhandle = s.spawn(move || -> anyhow::Result<()> {
-                    loop {
-                        match rx.recv_timeout(interval.0) {
-                            Ok(()) => {
-                                tracing::debug!("Restart timeout ");
-                            }
-                            Err(RecvTimeoutError::Timeout) => {
-                                tracing::debug!("Timeout collect");
-                                if f.is_completed() {
-                                    if let Ok(mut collector) = cr.try_lock() {
-                                        collector.collect(common)?;
-                                    }
+                    let inp = common.inp_reader(&pkt_in)?;
+                    for pkt in inp {
+                        first.call_once(|| ());
+                        tracing::trace!(?pkt, "new pkt");
+                        if let Err(e) = tx.send(pkt?){
+                            tracing::info!(?e,"packet dropped");
+                            Err(e)?
+                        };
+                    }
+                    tracing::debug!("closed stdin");
+                    Ok(())
+                });
+                let mut next = Instant::now() + interval.0;
+                loop {
+                    match rx.recv_deadline(next) {
+                        Ok(pkt) => {
+                            if collector.new_pkt(pkt, common)?{
+                                if collector.collect(common)?.is_none(){
+                                    return Ok(())
+                                }else {
+                                    next = Instant::now() + interval.0;
+                                    tracing::debug!("Restart timeout ");
                                 }
                             }
-                            _ => return Ok(()),
                         }
+                        Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
+                            tracing::debug!("Timeout collect");
+                            next = Instant::now() + interval.0;
+                            if f.is_completed() {
+                                if collector.collect(common)?.is_none(){
+                                    return Ok(())
+                                }
+                            }
+                        }
+                        Err(crossbeam_channel::RecvTimeoutError::Disconnected) => {
+                            if !collector.links.is_empty() {
+                                collector.collect(common)?;
+                            }
+                            return Ok(())
+                        },
                     }
-                });
-                tracing::debug!("interval Ok");
-
-                for p in inp {
-                    first.call_once(|| ());
-                    tracing::trace!(?p, "new pkt");
-                    let mut collector = c.lock().unwrap();
-                    let pkt = p?;
-                    collector.new_pkt(pkt, common, Some(&tx))?;
                 }
-                Ok(())
             });
-            if let Err(e) = result {
+            result.map_err(|e|{
                 tracing::warn!(?e, "spawn return");
-            }
-            tracing::trace!("spawn done");
-            c.into_inner().unwrap()
+                anyhow::anyhow!("spawn err?")
+            })
         }
-    };
-    tracing::debug!(final_links=?collector.links,"Done ");
-    if !collector.links.is_empty() {
-        collector.collect(common)?;
     }
-    Ok(())
 }

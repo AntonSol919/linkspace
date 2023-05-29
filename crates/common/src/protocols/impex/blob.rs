@@ -8,10 +8,11 @@ use linkspace_core::{crypto::blake3, prelude::*};
 
 pub static LK_MMAP_FILE_SIZE : std::sync::OnceLock<u64> = OnceLock::new();
 pub fn should_mmap(file_size:u64) -> bool {
-    *LK_MMAP_FILE_SIZE.get_or_init(|| {
+    let min_mmap_size = *LK_MMAP_FILE_SIZE.get_or_init(|| {
         // This is completely made up. No testing was done.
         std::env::var("LK_MMAP_FILE_SIZE").ok().and_then(|v|v.parse().ok()).unwrap_or(1<<26)
-    }) >= file_size
+    });
+    min_mmap_size <= file_size
 }
 pub static EMPTY_DATA_PKT : LazyLock<NetPktBox> = LazyLock::new(||datapoint(b"", NetPktHeader::EMPTY).as_netbox());
 pub static EMPTY_DATA_HASH : LazyLock<LkHash> = LazyLock::new(|| EMPTY_DATA_PKT.hash());
