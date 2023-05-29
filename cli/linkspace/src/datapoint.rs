@@ -1,8 +1,9 @@
-use std::{path::PathBuf, io::{BufRead, Stdin, Read}, cell::OnceCell, fs::File};
+use std::{path::PathBuf, io::{ StdinLock, Cursor, BufReader, BufRead,Read }, fs::File};
 
 use anyhow::{ ensure };
 use linkspace::consts::MAX_DATA_SIZE;
 use linkspace_common::{cli::{clap::{*,self},  opts::CommonOpts, WriteDestSpec}, abe::TypedABE,prelude::*};
+use memmap2::Mmap;
 
 
 #[derive(Parser)]
@@ -13,7 +14,6 @@ pub struct ReadOpt{
     read_str: Option<String>,
     #[clap(long,alias="rr")]
     read_cycle: bool,
-
     #[clap(short='d', long)]
     read_delim:Option<TypedABE<Vec<u8>>>,
     #[clap(short='n',long)]
@@ -23,38 +23,62 @@ pub struct ReadOpt{
     /// Eval is done after reading upto maxsize or delim. It is always an error to produce more than MAX_DATA_SIZE bytes
     #[clap(long)]
     read_eval: bool,
-    #[clap(skip)]
-    open_file : OnceCell<File>,
-    #[clap(skip)]
-    lock_stdin: OnceCell<Stdin>
 }
 
-pub type Reader<'o> = Box<dyn FnMut(&EvalCtx<&dyn Scope>, &mut Vec<u8>) -> anyhow::Result<Option<()>> + 'o >;
-pub fn bufreader<'o>(opts:&'o ReadOpt,default_stdin:bool) -> anyhow::Result<Box<dyn BufRead+'o >>{
-    use std::io::*;
-    if let Some(o) = &opts.read_str {
-        Ok(Box::new(Cursor::new(o.as_bytes())))
-    }else if let Some(path) = &opts.read{
-        let file = opts.open_file.get_or_try_init(||std::fs::File::open(path))?;
-        let meta = file.metadata()?;
-        if linkspace_common::protocols::impex::blob::should_mmap(meta.len()) || opts.read_cycle{
-            let mmap = unsafe { memmap2::Mmap::map(file)? };
-            tracing::info!("new mmap");
-            Ok(Box::new(Cursor::new(mmap)))
-        } else {
-            tracing::info!("new mmap");
-            Ok(Box::new(BufReader::new(file)))
+pub enum ReadSource {
+    String(Cursor<String>),
+    File(BufReader<File>),
+    Mmap(Cursor<Mmap>,File),
+    Stdin(StdinLock<'static>)
+}
+impl ReadSource {
+    pub fn bufr(&mut self) ->  &mut dyn BufRead{
+        match self {
+            ReadSource::String(a) =>  a,
+            ReadSource::File(a) => a,
+            ReadSource::Mmap(a, _) => a,
+            ReadSource::Stdin(a) => a,
         }
-    } else if default_stdin {
-        ensure!(!opts.read_cycle, "cycle not supported for stdin");
-        Ok(Box::new(opts.lock_stdin.get_or_init(stdin).lock()))
-    }else {
-        Ok(Box::new(Cursor::new(&[])))
+    }
+    pub fn rewind(&mut self) -> std::io::Result<()>{
+        use std::io::Seek;
+        match self {
+            ReadSource::String(a) => a.rewind(),
+            ReadSource::File(a) => a.rewind(),
+            ReadSource::Mmap(a, _) => a.rewind(),
+            ReadSource::Stdin(_) => panic!("bug - rewind on stdin"),
+        }
     }
 }
 
-pub fn into_reader<'o>(opts:&'o ReadOpt,default_stdin:bool,ctx:&EvalCtx<impl Scope>) -> anyhow::Result<Reader<'o>> {
-    let mut inp = bufreader(&opts, default_stdin)?;
+impl ReadOpt {
+    pub fn open<'o>(&self,default_stdin:bool) -> anyhow::Result<ReadSource>{
+        use std::io::*;
+        let r = if let Some(o) = &self.read_str {
+            ReadSource::String(Cursor::new(o.clone()))
+        }else if let Some(path) = &self.read{
+            let file = std::fs::File::open(path)?;
+            let meta = file.metadata()?;
+            if linkspace_common::protocols::impex::blob::should_mmap(meta.len()) || self.read_cycle{
+                let mmap = unsafe { memmap2::Mmap::map(&file)? };
+                tracing::info!("new mmap");
+                ReadSource::Mmap(Cursor::new(mmap),file)
+            } else {
+                tracing::info!("new mmap");
+                ReadSource::File(BufReader::new(file))
+            }
+        } else if default_stdin {
+            ensure!(!self.read_cycle, "cycle not supported for stdin");
+            ReadSource::Stdin(stdin().lock())
+        }else {
+            ReadSource::String(Cursor::new("".into()))
+        };
+        Ok(r)
+    }
+}
+
+pub type Reader = Box<dyn FnMut(&EvalCtx<&dyn Scope>, &mut Vec<u8>) -> anyhow::Result<Option<()>>>;
+pub fn into_reader(opts:ReadOpt,default_stdin:bool,ctx:&EvalCtx<impl Scope>) -> anyhow::Result<Reader> {
     let max = opts.read_maxsize.unwrap_or(MAX_DATA_SIZE);
     if max > MAX_DATA_SIZE { anyhow::bail!("Can only read {MAX_DATA_SIZE} bytes per packet")}
     let delim = match &opts.read_delim {
@@ -66,14 +90,15 @@ pub fn into_reader<'o>(opts:&'o ReadOpt,default_stdin:bool,ctx:&EvalCtx<impl Sco
         None => None,
     };
     let mut call_limit = opts.read_maxreads.unwrap_or(usize::MAX);
+    let mut inp = opts.open(default_stdin)?;
     let reader : Reader = Box::new(move |ctx,buf|{
         if call_limit == 0 { return Ok(None)}
         call_limit -= 1;
         match delim {
             Some(byte) => loop {
-                let mut taker = (&mut inp).take(max as u64);
+                let mut taker = inp.bufr().take(max as u64);
                 if taker.read_until(byte,buf)? == 0 {
-                    if opts.read_cycle { inp = bufreader(&opts,default_stdin)?; continue}
+                    if opts.read_cycle { inp.rewind()?; continue}
                     return Ok(None)
                 }else {
                     if buf.last().copied() == delim { buf.pop();}
@@ -84,9 +109,9 @@ pub fn into_reader<'o>(opts:&'o ReadOpt,default_stdin:bool,ctx:&EvalCtx<impl Sco
                 }
             },
             None => loop {
-                let c = (&mut inp).take(max as u64).read_to_end(buf)?;
+                let c = inp.bufr().take(max as u64).read_to_end(buf)?;
                 if c == 0 {
-                    if opts.read_cycle { inp = bufreader(&opts,default_stdin)?; continue}
+                    if opts.read_cycle { inp.rewind()?; continue}
                     return Ok(None)
                 }
                 if opts.read_eval{
@@ -102,7 +127,7 @@ pub fn into_reader<'o>(opts:&'o ReadOpt,default_stdin:bool,ctx:&EvalCtx<impl Sco
 
 pub fn write_datapoint(write: Vec<WriteDestSpec>,common: &CommonOpts, opts: ReadOpt) -> anyhow::Result<()> {
     let mut buf =Vec::with_capacity(MAX_DATA_SIZE);
-    let mut reader = into_reader(&opts,true,&common.eval_ctx())?;
+    let mut reader = into_reader(opts,true,&common.eval_ctx())?;
     let mut write = common.open(&write)?;
     let ctx = common.eval_ctx();
     let ctx = ctx.dynr();
