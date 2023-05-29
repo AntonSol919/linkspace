@@ -6,8 +6,13 @@
 use anyhow::{self};
 use linkspace_core::{crypto::blake3, prelude::*};
 
-// This is completely made up. No testing was done.
-pub const MMAP_IF_LARGER_THEN: u64 = 1 << 26;
+pub static LK_MMAP_FILE_SIZE : std::sync::OnceLock<u64> = OnceLock::new();
+pub fn should_mmap(file_size:u64) -> bool {
+    *LK_MMAP_FILE_SIZE.get_or_init(|| {
+        // This is completely made up. No testing was done.
+        std::env::var("LK_MMAP_FILE_SIZE").ok().and_then(|v|v.parse().ok()).unwrap_or(1<<26)
+    }) >= file_size
+}
 pub static EMPTY_DATA_PKT : LazyLock<NetPktBox> = LazyLock::new(||datapoint(b"", NetPktHeader::EMPTY).as_netbox());
 pub static EMPTY_DATA_HASH : LazyLock<LkHash> = LazyLock::new(|| EMPTY_DATA_PKT.hash());
 //spath!(pub const BLOB_SP = [b"\0blob"]);
@@ -30,7 +35,7 @@ pub enum Error {
 pub use std::path::Path;
 use std::{
     io::IoSlice,
-    ops::{FromResidual, Try}, sync::LazyLock,
+    ops::{FromResidual, Try}, sync::{LazyLock, OnceLock}, 
 };
 
 pub fn datapkt_path_reader<F, R>(path: &Path, netopts: impl Into<NetOpts>, f: F) -> R
@@ -40,13 +45,12 @@ where
 {
     let file = std::fs::File::open(path)?;
     let meta = file.metadata()?;
-    match meta.len() {
-        0..=MMAP_IF_LARGER_THEN => datapkt_io_reader(file, netopts, f),
-        _ => {
-            let mmap = unsafe { memmap2::Mmap::map(&file)? };
-            let bytes = mmap.as_ref();
-            datapkt_buf_reader(bytes, netopts, f)
-        }
+    if !should_mmap(meta.len()){
+        datapkt_io_reader(file, netopts, f)
+    }else {
+        let mmap = unsafe { memmap2::Mmap::map(&file)? };
+        let bytes = mmap.as_ref();
+        datapkt_buf_reader(bytes, netopts, f)
     }
 }
 

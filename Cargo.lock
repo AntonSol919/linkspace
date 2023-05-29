@@ -1001,7 +1001,9 @@ dependencies = [
  "anyhow",
  "linkspace",
  "linkspace-common",
+ "memmap2 0.6.2",
  "serde_json",
+ "tracing",
  "tracing-subscriber",
 ]
 
@@ -1019,7 +1021,7 @@ dependencies = [
  "linkspace-argon2-identity",
  "linkspace-core",
  "linkspace-pkt",
- "memmap2",
+ "memmap2 0.5.10",
  "notify",
  "rand",
  "rand_chacha",
@@ -1183,6 +1185,15 @@ name = "memmap2"
 version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83faa42c0a078c393f6b29d5db232d8be22776a891f8f56e5284faee4a20b327"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "memmap2"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d28bba84adfe6646737845bc5ebbfa2c08424eb1c37e94a1fd2a82adb56a872"
 dependencies = [
  "libc",
 ]

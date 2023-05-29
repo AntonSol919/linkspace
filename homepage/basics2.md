@@ -97,31 +97,39 @@ Another device can append each message into a single file.
 The `lk` CLI tool provides ways to deal with linkspace packets.
 The sender can be as simple as: 
 ```bash 
+GROUP=$( echo "My local group" | lk data | lk printf [hash:str])
 cat /dev/sensor/temperature/left | \
-    lk keypoint mysensors:[#:lan]:/sensor/temprature/left --newline | \ 
-    lk collect --min-interval 10s mysensors:[#:lan]:/sensor/temprature/left/collection --chain-tag prev | \ 
-    socat - UDP-DATAGRAM:255.255.255.255:24000,broadcast 
+    lk keypoint mysensors:$GROUP:/sensor/temprature/left -d'\n' | \
+    lk collect --min-interval 10s mysensors:$GROUP:/sensor/temprature/left/collection --chain-tag prev | \
+    socat - UDP-DATAGRAM:255.255.255.255:24000,broadcast
 ```
 
-In this case we create an indisputable log, and each event becomes useful in many more ways. 
+In this case we create an indisputable log, and each event becomes useful in many more ways.
 Every other program can unambiguously reference each entry and thus its content.
 
-The linkspace library is a broader set of tools for more advanced use cases.
+The next issue is: how to make linkspace points available for more than the devices listening at the right moment?
+Before we get there, lets briefly look at what other tools are in linkspace library:
 
-- [Queries](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) are a standard to filter/select/request packets.
-- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) is a domain specific byte-templating language. 
-- [Runtime](https://antonsol919.github.io/linkspace/docs/guide/index.html#Runtime) is a database shared between multiple processes where each thread 
-can read old and new packets matching a query. 
+- [Queries](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) are a standard to define a set of packets.
+They are useful for filtering, selecting, and requesting packets.
+- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) is a domain specific byte-templating language.
+- A multi-reader single-writer database for packets.
+- [Runtime](https://antonsol919.github.io/linkspace/docs/guide/index.html#Runtime) to wrap the database such that threads can match for old and new packets using queries.
 
-On top of these tools there exists [conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions).
-Conventions are packets with a well known meaning.
-For instance, the [pull](https://antonsol919.github.io/linkspace/docs/guide/index.html#lk_pull) convention is used by
-an application to notify a group exchange process to gather a set of packets.
+To share linkspace points for other systems, we make a leap of logic into linkspace.
+Instead of a defining a protocol as a stream of data, we define protocols as a functions over (new) points in linkspace.
 
-If you're convinced, download the latest release and come say hi on the test group, or give the 
-[tutorial](https://antonsol919.github.io/linkspace/docs/tutorial/) a try.
+Useful standards are defined as [conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions).
+Packets with a well known meaning.
+For instance, the [pull](https://antonsol919.github.io/linkspace/docs/guide/index.html#lk_pull) convention is a query saved as a point,
+such that the application can notify a group exchange process to gather a set of packets.
 
-For the more skeptical: 
+[anyhost](https://antonsol919.github.io/linkspace/docs/guide/index.html#anyhost) is a minumal example that implements such a group exchange.
+
+If you want to give it a try, download the latest release and come say hi on the test group.
+Or better yet, building something new by starting at the [tutorial](https://antonsol919.github.io/linkspace/docs/tutorial/).
+
+If you still have doubts, let me preempt some of them.
 
 ## Is it worth the trouble? 
 
@@ -147,25 +155,25 @@ Beyond the general resistance to change, I can see a few reasons to be skeptical
 
 - Users have to deal with more complexity.
   True. 
-  At the moment linkspace is lacking 3 decades of tools to make the web relatively easy. 
-  But the number of configuration ends up smaller. Passwords, Groups, friends can be setup once. 
+  At the moment linkspace is lacking 3 decades of tools to make the web relatively easy.
+  But the number of configuration ends up smaller. Passwords, Groups, friends can be setup once.
   Furthermore, complexity brings you control, and you can still outsource that.
-  Giving users responsibility isn't a bad thing. 
+  Giving users responsibility isn't a bad thing.
   500 years ago, few could read, and a preacher had to do it for us.
 
 - Isn't it a good thing to administrate what others can do online?:
-  They can't. It is an artificial limit. 
+  They can't. It is an artificial limit.
   Some tech founders and authoritarian politicians love that this is the type of web that's popular.
   Unless you're heavily invested in either this paradigm is against your interest.
-  
+
 - Isn't it a good thing to administrate what I can see online?:
   Excluding spam or other unwanted data can still be provided by a third party.
 
 - Won't it devolve to the same paradigm of centralized control?:
-  Maybe, but maybe not. It is a huge leap forward if users have the option to walk away from a provider without losing their stuff. 
+  Maybe, but maybe not. It is a huge leap forward if users have the option to walk away from a provider without losing their stuff.
 
 ### Alternatives
-There are similar systems, but they never felt complete to me. Reasons include: 
+There are similar systems, but they never felt complete to me. Reasons include:
 
 - Only URLS and no hash addressing
 - Only hash addressing but no custom keys (URL/Paths)
@@ -174,3 +182,6 @@ There are similar systems, but they never felt complete to me. Reasons include:
 - No domains. In my experience, without this separation a new developer are daunted to hack something together.
 - Overly complicated. (https://en.wikipedia.org/wiki/Conway%27s_law)
 - It is a blockchain. A global sequence of signed packets with a link to previous entries, where the first users should be paid with the money of new people joining.
+- In my opinion, the wrong order of defining the system's components:
+   - The method of exchange should be external to the system / modular.
+   - Expanding the system should be defined in terms of it self. Building a request, requesting a human readable name, adding group members, should be encoded as packets (as oppose to negotiated over a stream of data).

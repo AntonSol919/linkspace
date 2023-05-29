@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![feature(
+    once_cell_try,
     iterator_try_collect,
     write_all_vectored,
     can_vector,
@@ -17,8 +18,8 @@
 use std::{
     cell::LazyCell,
     ffi::OsString,
-    io::{stdin, Write},
-    process::ExitCode,
+    io::{ Write},
+    process::ExitCode, 
 };
 
 use anyhow::{ensure };
@@ -53,6 +54,7 @@ pub mod save;
 pub mod status;
 pub mod watch;
 pub mod get_links;
+pub mod datapoint;
 
 // const is wrong but who cares.
 const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
@@ -111,6 +113,8 @@ enum Command {
     Datapoint{
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
+        #[clap(flatten)]
+        read_opts: datapoint::ReadOpt
     },
     /// points - create a new linkpoint
     #[clap(alias = "l", alias = "link")]
@@ -295,17 +299,8 @@ fn main() -> std::process::ExitCode {
 }
 fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
     match command {
-        Command::Datapoint{write} => {
-            let mut write = common.open(&write)?;
-            let inp = stdin();
-            linkspace_common::protocols::impex::chunk_reader_try_fold::<_, _, _, MAX_DATA_SIZE>(
-                inp,
-                (),
-                |(), buf| {
-                    let pkt = datapoint(&buf, ());
-                    common.write_multi_dest(&mut write, &pkt, None)
-                },
-            )?;
+        Command::Datapoint{write,read_opts} => {
+            crate::datapoint::write_datapoint(write, &common, read_opts)?;
         }
         Command::Save(opts) => {
             crate::save::save(opts, common)?;
