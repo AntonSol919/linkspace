@@ -6,14 +6,13 @@ use std::{ops::ControlFlow, cell::Cell};
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use anyhow::{ensure, Context};
+use anyhow::{ensure };
 use linkspace_pkt::{abe::TypedABE, reroute::RecvPkt, NetPkt, NetPktExt, Stamp};
 use tracing::Span;
 
 use crate::{
     env::queries::RecvPktPtr,
     predicate::{
-        pkt_predicates::StatePredicates,
         test_pkt::{compile_predicates, PktStreamTest},
         TestSet,
     },
@@ -55,6 +54,20 @@ impl<C> WatchEntry<C> {
     pub fn status(&self) -> WatchStatus{
         WatchStatus { watch_id: self.watch_id, nth_query:self.nth_query }
     }
+
+    pub fn update_tests(&mut self) -> anyhow::Result<()>{
+        let (it, recv_bounds) = compile_predicates(&self.query.predicates);
+        self.tests = it.map(|(t, _)| t).collect();
+        self.i_new = self.query.predicates.state.i_new;
+        self.i_query = self.query.predicates.state.i_query;
+        self.recv_bounds = recv_bounds;
+        ensure!(self.recv_bounds.as_eq().is_none(),"watching for 'eq' recv is nonsense");
+        ensure!(self.i_new.info(self.nth_new).val.is_some(), "watch budget empty");
+        ensure!(self.i_query.info(self.nth_query).val.is_some(), "watch budget empty");
+        tracing::info!(parent:&self.span,q=?self.query,"update");
+        Ok(())
+    }
+
     pub fn new(
         id: QueryID,
         query: Query,
@@ -62,43 +75,22 @@ impl<C> WatchEntry<C> {
         ctx: C,
         span: Span,
     ) -> anyhow::Result<Self> {
-        let (it, recv_bounds) = compile_predicates(&query.predicates);
-        let tests = it.map(|(t, _)| t).collect();
-        let StatePredicates {
-            mut i_new, i_query, ..
-        } = query.predicates.state;
-        let nth_new = 0;
-        ensure!(
-            recv_bounds.as_eq().is_none(),
-            "watching for 'eq' recv is nonsense"
-        );
-        // With this, we only need to check i_new.less_eq < i_new to determine if our watch has ended
-        if i_query.bound.high != u32::MAX {
-            let less = (i_query.bound.high + 1)
-                .checked_sub(nth_query)
-                .context("Empty i_new and i_query combo")?;
-            i_new
-                .try_add(crate::predicate::TestOp::Less, less)
-                .context("empty i_new and i_query combination")?;
-        }
-        tracing::trace!(?i_new, ?i_query, ?recv_bounds, ?nth_query, "Watch budgets");
-
-        ensure!(i_new.has_any(), "watch budget empty");
-        ensure!(i_query.info(nth_query).val.is_some(), "watch budget empty");
-        Ok(WatchEntry {
+        let mut watch = WatchEntry {
             watch_id: WATCH_ID.update(|i| i.saturating_add(1)),
             query_id: id,
-            query: Box::new(query),
-            tests,
-            recv_bounds,
-            i_new,
-            nth_new,
-            i_query,
+            tests:vec![],
+            recv_bounds:Bound::DEFAULT,
+            i_new:TestSet::DEFAULT,
+            nth_new:0,
+            i_query:TestSet::DEFAULT,
             nth_query,
             ctx,
             span,
+            query: Box::new(query),
             last_test: (false, ControlFlow::Continue(())),
-        })
+        };
+        watch.update_tests()?;
+        Ok(watch)
     }
     pub fn map<N>(self, new_ctx: N) -> (C, WatchEntry<N>) {
         let WatchEntry {
@@ -167,7 +159,7 @@ impl<C> WatchEntry<C> {
         self.nth_query += 1;
         (
             accepted_nth,
-            if self.i_new.bound.high < self.nth_new {
+            if self.nth_new > self.i_new.bound.high || self.nth_query > self.i_query.bound.high{
                 ControlFlow::Break(())
             } else {
                 ControlFlow::Continue(())

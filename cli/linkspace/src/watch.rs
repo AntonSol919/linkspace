@@ -21,9 +21,8 @@ pub struct DGPDWatchCLIOpts {
 }
 
 impl DGPDWatchCLIOpts {
-    pub fn into_query(self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+    pub fn iter_statments(self) -> anyhow::Result<Vec<TypedABE<ABList>>>{
         tracing::trace!("Collecting predicates");
-        let mut query = Query::default();
         let dgpd = self
             .dgpd
             .filter(|_| !self.bare)
@@ -31,13 +30,20 @@ impl DGPDWatchCLIOpts {
         let aliases = self.watch_opts.aliases.as_predicates();
         let exprs = self.watch_opts.exprs.into_iter();
         let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
-        for e in it.chain(exprs){
-            tracing::trace!(?e, "add expr");
-            let e = e.eval(&ctx)?;
-            query.add_stmt(e)?;
-        }
-        Ok(query)
+        Ok(it.chain(exprs).collect())
     }
+    pub fn into_query(self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+        statements2query(&self.iter_statments()?, ctx)
+    }
+}
+pub fn statements2query(it: &[TypedABE<ABList>], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+    let mut query = Query::default();
+    for e in it{
+        tracing::trace!(?e, "add expr");
+        let e = e.eval(&ctx)?;
+        query.add_stmt(e)?;
+    }
+    Ok(query)
 }
 
 

@@ -92,6 +92,7 @@ impl Collector {
         let mut data = vec![];
         let pkt = crate::point::build_with_reader(
             common,
+            fix --data thing
             &self.c_opts.build,
             &self.dgs,
             &links,

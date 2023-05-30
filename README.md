@@ -6,8 +6,7 @@
 > A communication protocol where the method of exchange is an extraneous concern.
 > e.g. git, bitcoin, nostr, linkspace
 
-Linkspace combines the core ideas of HTTP and git.
-It is a supernet. A protocol where we talk _about_ data, instead of talking _at_ a server.
+In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
 This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
@@ -19,9 +18,9 @@ This is in contrast to current technologies where users contact a single host wh
 - Path (URL like) addressing
 - Group/Domain split
 
-[Basics](https://antonsol919.github.io/linkspace/index.html#basics) gives a high level introduction.
-Check out the [tutorials](https://antonsol919.github.io/linkspace/docs/tutorial/index.html) to see an example of building an application.
-For a technical description from first principles see the [Guide](https://antonsol919.github.io/linkspace/docs/guide/index.html).
+[Basics](www.linkspace.dev/basics.html) gives a high level introduction.
+Check out the [tutorials](www.linkspace.dev/docs/tutorial/index.html) to see an example of building an application.
+For a technical description from first principles see the [Guide](www.linkspace.dev/docs/guide/index.html).
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try and say hi.
 

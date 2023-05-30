@@ -200,6 +200,11 @@ pub struct Bound<U> {
     pub low: U,
     pub high: U,
 }
+impl<U:UInt> Default for Bound<U>{
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
 impl<U: UInt> Bound<U> {
     pub const DEFAULT: Self = Bound {
         high: U::MAX,

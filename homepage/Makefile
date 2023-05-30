@@ -1,7 +1,6 @@
 .PHONY: all 
 
-basics2.html: basics2.md head tail
-	pandoc ./basics2.md | cat ./head - ./tail > $@
+pages: index.html basics.html basics.old.html why.html lns.html about.html
 
-index.html: index.md head tail
-	pandoc --toc -f markdown_strict+header_attributes+bracketed_spans+implicit_header_references+backtick_code_blocks+footnotes+fancy_lists -t html5 index.md  | cat ./head - ./tail > $@
+%.html: %.md template.html
+	pandoc -s ./$< --template ./template.html --metadata title=$@ -o $@

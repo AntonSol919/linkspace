@@ -9,7 +9,7 @@ pre{
 }
 html,body { height:100%; width:100%;padding:0px;margin:0px; }
 body {
-    background:rgb(252, 252, 252);
+    /*background:rgb(252, 252, 252);*/
     color: #1F2323;
     font-size: calc(15px + 0.390625vw);
     font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
