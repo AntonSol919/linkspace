@@ -67,6 +67,7 @@ must clarify nested query open semantics.
 - Normalize lingo around abe "seperators" and "ctr characters"
 - stack spath/ipath - max size is 250bytes. Could impl copy
 - abe - change macro '{}' into '[]'
+- Add a UnHashed<Pkt> type such that hashing can be delayed and moved to another thread.
 
 # linkspace-cli
 

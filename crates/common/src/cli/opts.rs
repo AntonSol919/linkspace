@@ -16,7 +16,7 @@ use crate::{
 use anyhow::Context;
 use clap::Parser;
 
-use super::{write_pkt2, ReadSource, Reader, WriteDest, WriteDestSpec};
+use super::{write_pkt2, WriteDest, WriteDestSpec};
 #[derive(Parser, Debug, Clone)]
 pub struct CommonOpts {
     #[clap(flatten)]
@@ -181,9 +181,6 @@ impl CommonOpts {
         lst.iter()
             .filter_map(|v| v.open(&ctx).transpose())
             .try_collect()
-    }
-    pub fn open_read(&self, r: Option<&ReadSource>) -> anyhow::Result<Reader> {
-        ReadSource::into_reader(r, self.io.inp.clone(), &self.eval_ctx())
     }
     pub fn write_dest(
         &self,

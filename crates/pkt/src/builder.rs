@@ -209,3 +209,18 @@ fn __error_blk_ref(error: &[u8], netopts: NetOpts) -> NetPktParts<'_> {
         point_parts: pkt_parts,
     }
 }
+
+/// Calculate the free space left in bytes. Negative values means it will not fit.
+#[inline]
+pub const fn calc_free_space(
+    path: &SPath,
+    links: &[Link],
+    data : &[u8],
+    signed:bool
+) -> isize {
+    let mut size = if signed { MAX_KEYPOINT_DATA_SIZE } else { MAX_LINKPOINT_DATA_SIZE} as isize;
+    size = size.saturating_sub_unsigned(links.len() * std::mem::size_of::<Link>());
+    size = size.saturating_sub_unsigned(path.spath_bytes().len() + 8);
+    size = size.saturating_sub_unsigned(data.len());
+    size
+}

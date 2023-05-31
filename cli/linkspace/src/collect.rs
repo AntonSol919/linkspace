@@ -9,9 +9,9 @@ use std::{
 };
 
 use crossbeam_channel::{Sender,bounded};
-use crate::{point::PointOpts, datapoint::Reader};
+use crate::{point::PointOpts };
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, WriteDest, WriteDestSpec},
+    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, WriteDest, WriteDestSpec, read_data::Reader},
     core::stamp_fmt::DurationStr,
     prelude::*,
 };
@@ -92,7 +92,6 @@ impl Collector {
         let mut data = vec![];
         let pkt = crate::point::build_with_reader(
             common,
-            fix --data thing
             &self.c_opts.build,
             &self.dgs,
             &links,

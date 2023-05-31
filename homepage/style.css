@@ -179,3 +179,21 @@ h3 {
         grid-template-columns: /* */;
     }
 }
+
+th {
+    border-top: 1px solid #1a1a1a;
+    padding: 0.25em 0.5em 0.25em 0.5em;
+}
+table {
+    border-collapse: collapse;
+    font-variant-numeric: lining-nums tabular-nums;
+    margin:1em;
+}
+td {
+    padding: 0.125em 0.5em 0.25em 0.5em;
+}
+tbody {
+    margin-top: 0.5em;
+    border-top: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+}

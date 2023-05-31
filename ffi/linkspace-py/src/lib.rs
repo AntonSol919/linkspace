@@ -306,7 +306,7 @@ impl Query{
 
 #[pyfunction]
 pub fn lk_query(copy_from: Option<&Query>) -> Query {
-    Query(linkspace_rs::lk_query(copy_from.map(|v| &v.0)))
+    Query(linkspace_rs::lk_query(copy_from.map(|v| &v.0).unwrap_or(&Q)))
 }
 #[pyfunction]
 pub fn lk_hash_query(hash: &PyAny) -> anyhow::Result<Query> {

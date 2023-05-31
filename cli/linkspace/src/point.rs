@@ -5,11 +5,20 @@ use anyhow::Context;
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
-    cli::{clap, clap::Parser, keys::KeyOpts, opts::CommonOpts,  WriteDest},
+    cli::{clap, clap::Parser, keys::KeyOpts, opts::CommonOpts,  WriteDest, read_data::{ReadOpt, Reader}},
     prelude::*,
 };
 
-use crate::datapoint::{Reader,ReadOpt};
+#[derive(Parser, Debug)]
+pub struct MultiOpts {
+    /// produce copies while reading data ( defaults is to read once and truncate. )
+    #[clap(short,long)]
+    multi: bool,
+    /// Add link to the previous point 
+    #[clap(long,requires("multi"))]
+    multi_link: Option<TagExpr>,
+    // #[clap(long,requires("multiple"))] multi_fixed_stamp: bool
+}
 
 #[derive(Parser, Debug)]
 pub struct PointOpts {
@@ -70,12 +79,11 @@ pub fn build_with_reader<'o>(
     dgs: &'o DGP,
     links: &'o [Link],
     data_buf: &'o mut Vec<u8>,
-    data_source: &mut Reader,
+    reader: &mut Reader,
 ) -> anyhow::Result<Option<NetPktParts<'o>>> {
     let ctx = common.eval_ctx();
-    let mut max_size = if build_opts.sign { MAX_KEYPOINT_DATA_SIZE } else { MAX_LINKPOINT_DATA_SIZE};
-    max_size = max_size.saturating_sub(links.len() * std::mem::size_of::<Link>());
-    match (data_source)(&ctx.dynr(), data_buf,max_size)?{
+    let freespace : usize = calc_free_space(&dgs.path, &links, &[], build_opts.sign).try_into()?;
+    match reader.read_next_data(&ctx.dynr(),freespace, data_buf)?{
         Some(_) => Ok(Some(build(common, build_opts, dgs, links, data_buf)?)),
         None => Ok(None),
     }
@@ -84,15 +92,34 @@ pub fn build_with_reader<'o>(
 pub fn linkpoint(
     mut common: CommonOpts,
     opts: PointOpts,
+    multi: MultiOpts,
     dest: &mut [WriteDest],
 ) -> anyhow::Result<()> {
+    common.mut_write_private().get_or_insert(true);
+    common.mut_write_private().get_or_insert(true);
     let ctx = common.eval_ctx();
     let mut reader = opts.read.open_reader(false, &ctx)?;
-    let links: Vec<_> = opts.link.iter().map(|v| v.eval(&ctx)).try_collect()?;
+    let mut links: Vec<_> = opts.link.iter().map(|v| v.eval(&ctx)).try_collect()?;
     let dgs = opts.dgs.eval(&ctx)?;
     let mut buf = vec![];
     let pkt = build_with_reader(&common, &opts, &dgs, &links, &mut buf, &mut reader)?.context("read EOF?")?;
-    common.mut_write_private().get_or_insert(true);
     common.write_multi_dest(dest, &pkt, None)?;
-    Ok(())
+    if !multi.multi{ return Ok(()) }
+    let mut ptr = pkt.hash();
+    std::mem::drop(pkt);
+
+    loop {
+        if let Some(e) = &multi.multi_link{
+            links.push(Link{tag: e.eval(&ctx)?,ptr});
+        }
+        buf.clear();
+        match build_with_reader(&common, &opts, &dgs, &links, &mut buf, &mut reader)?{
+            Some(p) => {
+                common.write_multi_dest(dest, &p, None)?;
+                ptr = p.hash();
+            },
+            None => return Ok(()),
+        };
+        if multi.multi_link.is_some() { links.pop();}
+    }
 }

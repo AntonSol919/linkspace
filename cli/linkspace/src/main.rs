@@ -30,7 +30,7 @@ use linkspace_common::{
         clap::Parser,
         keys,
         opts::{CommonOpts, LinkspaceOpts, PktIn},
-        tracing, WriteDestSpec,
+        tracing, WriteDestSpec, read_data::ReadOpt,
     },
     core::{
         mut_header::{MutFieldExpr, NetHeaderMutate},
@@ -94,7 +94,6 @@ Commands taking a WriteDestSpec can set the destination of the packets they crea
 
 lk link :: --write db --write stdout --write stderr --write file:./file
 
-
 Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
@@ -114,28 +113,43 @@ enum Command {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(flatten)]
-        read_opts: datapoint::ReadOpt
+        read_opts: ReadOpt
     },
-    /// points - create a new linkpoint
+    /** points - create a new linkpoint
+
+    Use --read-empty by default
+    */
     #[clap(alias = "l", alias = "link")]
     Linkpoint {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(flatten)]
+        multi:point::MultiOpts,
+        #[clap(flatten)]
         link: point::PointOpts,
     },
-    /// points - create a new keypoint
+    /** points - create a new keypoint
+
+    Use --read-empty by default
+    */
     #[clap(alias = "keyp")]
     Keypoint {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(flatten)]
+        multi:point::MultiOpts,
+        #[clap(flatten)]
         link: point::PointOpts,
     },
 
     #[clap(alias = "e")]
-    /// abe   - eval ABE expression
+    /** abe - eval ABE expression
+
+    The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
+    Use "[help]" for a list of functions.
+    */
     Eval {
+        /// output json ABList format 
         #[clap(long)]
         json: bool,
         abe: String,
@@ -143,7 +157,10 @@ enum Command {
         #[clap(long,default_value_t)]
         stdin: bool
     },
-    /// abe   - eval expression for each pkt from stdin
+    /** abe   - eval expression for each pkt from stdin
+
+    The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
+    */
     #[clap(alias="p",before_long_help=PKT_HELP.to_string())]
     Printf(printf::PrintFmtOpts),
     /// abe   - encode input into abe
@@ -322,14 +339,14 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                 std::io::stdout().write_all(r.as_bytes())?;
             }
         }
-        Command::Linkpoint { write, link } => {
+        Command::Linkpoint { write, link, multi } => {
             let mut write = common.open(&write)?;
-            point::linkpoint(common, link, &mut write)?;
+            point::linkpoint(common, link,multi, &mut write)?;
         }
-        Command::Keypoint { write, mut link } => {
+        Command::Keypoint { write, mut link, multi } => {
             link.sign = true;
             let mut write = common.open(&write)?;
-            point::linkpoint(common, link, &mut write)?
+            point::linkpoint(common, link, multi, &mut write)?
         }
         Command::Key(opts) => keys::keygen(&common, opts)?,
         Command::DataFilter { .. } => {

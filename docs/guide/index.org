@@ -422,26 +422,21 @@ Unless you're writing an exchange process, a developer shouldn't have to deal wi
 #+END_VERSE
 
 ABE (Ascii-Byte-Expr) is a tiny byte templating language.
-A stringly representation of delimited bytes.  
-Its primary purpose is to make it easy for developers to read and write sequences of arbitrary (0..=255) bytes in plain ascii.
+A stringly representation of delimited bytes ( of the type: ~[ ( [u8], delimiter ) ]~ ).
+Its primary purpose is to make it easy for developers to read and write sequences of bytes (0..=255) in plain ascii, including the ~null~ (0) byte.
 In addition, it supports evaluation of functions that act as shorthand for long sequences of bytes. 
 
 Linkspace has no concept of encoding.
 Fields have a fixed length or prefix their exact length.
-The ~null~ (0) byte is not special.
 
-ABE is used for things like [[Query]] or simply [[DEFAULT_FMT][printing]] to talk about these bytes.
+ABE is used for things like [[Query]], [[DEFAULT_FMT][printing]], and in most arguments for the cli.
 
 ABE is not meant to be a proramming language!
 It's primarily meant to read and write arbitrary bytes in some context and quickly beat them into a desired shape.
 Some things are limited by design.
-Prefer to use the language you're developing in.
+If there is no obvious way to do something use a general purpose language to deal with your use-case.
 
-When building an application its up to the developer to define what the bytes in the data, link and path components mean.
-And subsequently what the end user sees.
-
-If the goal is to display, you should stick with UTF-8.
-But if a value is just bytes, avoid adding an additional base64(bytes).
+When building an application you can choose where to use ABE and when to use a different encoding.
 
 ** Parsing
 

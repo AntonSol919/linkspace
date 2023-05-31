@@ -1,3 +1,4 @@
+use either::Either;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,14 +7,16 @@
 use linkspace_common::{
     cli::{
         clap,
-        clap::{Parser, ValueEnum},
+        clap::{Parser },
         keys::KeyOpts,
         opts::{CommonOpts, PktIn},
-        ReadSource, Reader, WriteDestSpec,
+        WriteDestSpec, read_data::{ReadOpt, Reader},
     },
     core::eval::Scope,
     prelude::*,
 };
+use anyhow::{Context,  ensure};
+
 
 /** rewrite link and key points with alternative fields.
 
@@ -48,24 +51,18 @@ pub struct Rewrite {
     pub sign_mode: SignMode,
     #[clap(flatten)]
     pub key: KeyOpts,
-
-    #[clap(long,default_value="abe-live:[data]")]
-    pub data: ReadSource,
-    #[clap(long, default_value_t, value_enum)]
-    pub error_mode: ErrorMode,
+    #[clap(short,long)]
+    /// If set, use --read* options - --read-eval has pkt is in scope
+    pub interpret: bool,
+    #[clap(flatten)]
+    pub data_read: ReadOpt
 }
-#[derive(ValueEnum, Default, Clone, Copy, Debug)]
-pub enum ErrorMode {
-    #[default]
-    Quit,
-}
-
 pub fn rewrite_pkt(
     h: &LinkPointHeader,
     t: &Tail,
     opts: &Rewrite,
     key: Option<&SigningKey>,
-    data_reader: &mut Reader,
+    data: Either<&[u8],&mut Reader>,
     ctx: &EvalCtx<impl Scope>,
 ) -> anyhow::Result<NetPktBox> {
     let group = opts
@@ -82,15 +79,22 @@ pub fn rewrite_pkt(
         .unwrap_or(h.domain);
     let path = opts.path.as_ref().map(|v| v.eval(ctx)).transpose()?;
     let path = path.as_deref().unwrap_or(&t.ipath);
-    let mut data = vec![];
-    let pkt_data = (data_reader)(&ctx.dynr(), &mut data)?;
+    let mut buf = vec![];
+    let data :&[u8]= match data {
+        Either::Left(d) => &d,
+        Either::Right(reader) => {
+            let freespace : usize = calc_free_space(path, t.links, &[], key.is_some()).try_into()?;
+            reader.read_next_data(&ctx.dynr(),freespace, &mut buf)?.context("No data provided")?;
+            &buf
+        },
+    };
 
     let pkt = try_point(
         group,
         domain,
         path,
         t.links,
-        &pkt_data,
+        &data,
         opts.create
             .as_ref()
             .map(|o| o.eval(ctx))
@@ -111,26 +115,30 @@ pub enum SignMode {
     Resign,
 }
 pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
+    ensure!( ropts.interpret || ropts.data_read == Default::default(),"read options are ignored if --interpret is not set");
     let Rewrite {
         write,
         forward,
         sign_mode,
         key,
-        data,
+        data_read,
         pkt_in,
+        interpret,
         ..
     } = &ropts;
     let ctx = common.eval_ctx();
     if matches!(sign_mode, SignMode::SignAll | SignMode::Resign) {
         key.identity(&common, true)?;
     }
-    let inp = common.inp_reader(pkt_in)?;
-    let data = Some(data.clone());
-    let mut reader = common.open_read(data.as_ref())?;
+    let inp = common.inp_reader(&pkt_in)?;
+    
+
+    let mut reader = data_read.open_reader(false,&ctx)?;
     let mut write = common.open(&write)?;
     let mut forward = common.open(&forward)?;
     for p in inp {
         let pkt = p?;
+        let data = if *interpret { Either::Right(&mut reader)} else { Either::Left(pkt.data())};
         match pkt.parts().fields {
             PointFields::Unknown(_) => todo!(),
             PointFields::DataPoint(_) => common.write_multi_dest(&mut write, &**pkt, None)?,
@@ -141,7 +149,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                 } else {
                     None
                 };
-                let pkt = rewrite_pkt(&s.head, &s.tail, &ropts, key, &mut reader, &pctx)?;
+                let pkt = rewrite_pkt(&s.head, &s.tail, &ropts, key, data, &pctx)?;
                 common.write_multi_dest(&mut write, &**pkt, None)?;
             }
             PointFields::KeyPoint(s) => {
@@ -157,7 +165,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                             &s.tail,
                             &ropts,
                             Some(key),
-                            &mut reader,
+                            data,
                             &pctx,
                         )?;
                         common.write_multi_dest(&mut write, &**pkt, None)?;
@@ -169,7 +177,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                             &s.tail,
                             &ropts,
                             None,
-                            &mut reader,
+                            data,
                             &pctx,
                         )?;
                         common.write_multi_dest(&mut write, &**pkt, None)?;

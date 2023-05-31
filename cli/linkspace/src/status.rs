@@ -6,16 +6,19 @@
 #![allow(dead_code, unused_variables)]
 use std::ops::ControlFlow;
 
+use anyhow::Context;
 use linkspace::misc::{ try_cb};
 use linkspace::{ lk_process_while };
+use linkspace_common::cli::read_data::ReadOpt;
 use linkspace_common::cli::{clap };
 use linkspace_common::runtime::handlers::PktStreamHandler;
 use linkspace_common::{
-    cli::{clap::Parser, opts::CommonOpts, ReadSource, WriteDestSpec},
+    cli::{clap::Parser, opts::CommonOpts,  WriteDestSpec},
     core::stamp_fmt::DurationStr,
 };
 
 use linkspace_common::prelude::*;
+
 
 #[derive(Parser, Debug)]
 pub struct StatusArgs {
@@ -43,13 +46,13 @@ pub struct SetStatus {
     #[clap(flatten)]
     args: StatusArgs,
     /// the status data.
-    #[clap(short,long,default_value = "abe:OK")]
-    data: Option<ReadSource>,
+    #[clap(flatten)]
+    readopts: ReadOpt,
     #[clap(short,long)]
     link: Vec<LinkExpr>,
 }
 pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
-    let SetStatus { args, data, link } = ss;
+    let SetStatus { args, readopts, link } = ss;
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
     use linkspace::prelude::*;
@@ -64,11 +67,13 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     let lk : Linkspace = common.runtime()?.into();
     let c= common.clone();
 
-    let mut data_reader = common.open_read(data.as_ref())?;
+    let mut reader = readopts.open_reader(false, &ctx)?;
+    let mut buf = vec![];
     lk_status_set(&lk, status, move |_,domain,group,path,link| {
-        let mut buf = vec![];
-        let data = data_reader(&c.eval_ctx().dynr(),&mut buf)?;
-        lk_linkpoint(domain, group, path, &[link], data, None)
+        buf.clear();
+        let freespace : usize = calc_free_space(path, &[link], &[], false).try_into()?;
+        reader.read_next_data(&c.eval_ctx().dynr(),freespace,&mut buf)?.context("no more data")?;
+        lk_linkpoint(domain, group, path, &[link], &buf, None)
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;
 

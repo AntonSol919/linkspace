@@ -158,7 +158,11 @@ He's not set on the details, but every game starts with at least the players kno
 In this setup everybody knows the board, but we'll touch on [[Cheating][Cheating]] later.
 #+end_verse
 
-For an initial test, Bob will assume three players agreed that the following packet is the start of a game.
+Players can play a game after they agree on those fields.
+JSON works well enough.
+After some consideration he realized a 'seed' field isn't necessary.
+The hash of the packet can fill the role.
+He ends up with a packet to start the game with that looks as follows:
 
  # #+BEGIN_SRC bash :session cli0 :exports result :results output verbatim :cache yes
  # cat ../../../examples/private/setup.pkt  | lk p
@@ -187,9 +191,6 @@ data	278
     ]
 }
 #+end_example
-
-Bob decides to encode this as JSON.
-A 'seed' field doesn't seem to be necessary, the hash of the packet can fill the role.
 
 #+begin_ctabs
 #+begin_info
@@ -225,19 +226,17 @@ One method to do so is as follows:
 
 #+begin_src bash 
   cd private
+  # Edit this setup.json by hand to look like the json above.
   cat ./*/emulate_name_key > setup.json
-  # You'll have to edit this setup.json by hand to look like the json above.
-  lk link mineweeper:[#:test] --data file:./setup.json | tee setup.pkt | lk printf
 
+  lk link mineweeper:[#:test] --read ./setup.json | tee setup.pkt | lk printf
   # Manually save this packet to each instance
   find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
 #+end_src
 
-You should see the middle panel print this new packet.
+If properly done the middle panel of each instance should show a new packet.
 
 Finally, in each session we can use the upper panel to run:
-
-
 
 #+end_setup
 #+end_ctabs
@@ -248,13 +247,12 @@ Finally, in each session we can use the upper panel to run:
 The outline is as follows:
 
 - open the linkspace instance and a signing key. 
-- read the 'game_pkt' that starts the game by its hash.
-- load the settings, including a list of [player names,pubkeys].
-
-while not done:
-- Print the state.
-- If its our turn, make a choice and save the move info.
-- Else wait for the current player to make a move.
+- Use the hash of the game packet to get the configuration.
+- Interpret the settings, including a list of [player names,pubkeys].
+- while not done:
+-- Print the state.
+-- If our turn -> make a choice and save the move info.
+-- Else -> wait for the current player to make a move.
 
 #+begin_py
 #+INCLUDE: "../../../examples/mineweeper/mineweeper-multiplayer.py" src python
