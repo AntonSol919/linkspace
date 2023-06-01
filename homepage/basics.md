@@ -1,225 +1,321 @@
 # Basics
 
-## The KeyValue/TCP/IP Internet
+## The TCP Internet
 
-The Internet and Web as we know it is is build using the following packet format:
+The apps and websites are built using the internet with the following types of packets:
 
-| Internet PACKET |
+| Internet Packet |
 |-----------------|
 | IP ADDRESS      |
+| SEQUENCE ID     |
 | PORT            |
 | DATA            |
 
-Packets are transmitted, and eventually reach a destination `IP address`.
-At the destination an application is listening for packets to be received on a `port`.
+Packets are transmitted, and eventually reach a destination `IP address`, such as your phone.
+At the destination an application is listening for packets with a specific `port` to be received.
 
-Packet don't arrive in the order they were sent. 
-This is physically unavoidable in non-trivial networks.
-By adding a sequence number, we can order them at the destination.
+Packet don't arrive in the order they were sent, the speed of light makes this impractical.
+By adding a sequence number, we can reorder them at the destination.
 
-The result is that conceptually each device is directly connected to every other device.
-Applications stream data to any other IP address.
+The result is that _conceptually_ each device has a direct connection to every other device.
+An application can send and receive streams of data to and from others.
 
 This is ideal for phone-calls or video streams.
-To create more useful and dynamic applications we add various KeyValue systems on top.
-i.e. systems where a query defines a set of keys and returns one or more value.
+To create more dynamic applications we build mappings between 'keys' and 'values'.
+Using a query we can select one or more keys and their value.
 
 For example:
 
-| System | Query                         | Value                 |
-|--------|-------------------------------|-----------------------|
-| DNS    | archive.org                   | 207.241.224.2         |
-| HTTP   | /msg/hello.html               | <h1>Hello world!</h1> |
-| SQL    | SELECT * from MSG where ID=1; | A message in a db     |
+| System | Query                         | Value               |
+|--------|-------------------------------|---------------------|
+| DNS    | archive.org                   | 207.241.224.2       |
+| HTTP   | /forum/index.html             | Hello world!        |
+| FTP    | /Projects/linkspace/readme.md | In a supernet [...] |
+| SQL    | SELECT * from MSG where ID=1; | A message in a db   |
 
-The thesis of this project is this:
+By transmitting the query and result values using these streams we build the web as we know it today.
 
-We have reached the limits of this paradigm.
+The reason for building linkspace is this:
 
-### The limit
+**We have reached the limit of this paradigm.**
 
-There are technical reasons, that I belief are best understood in comparison to [examples](https://antonsol919.github.io/linkspace/docs/tutorial/),
-and there are cultural reasons.
+To under why, let's first explain linkspace.
 
-Stream based systems connect to a central host.
-The host provides an app or website to talk to their platform.
-This acts as the 'guide' to the internet experience.
+## Linkspace
 
-In the last two decades this relationship has ingrained a set of beliefs in people.
+Linkspace is a project to re-imagine this fundamental ideas at the core of digital communication.
+
+If the TCP internet provides streams for key-value systems, so we can talk _to_ server,  
+then linkspace provides a shared key-value space, so we can talk _about_ data.
+
+A unit in linkspace is called a point. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
+
+| Linkspace Point[^4] | Notes                         | IP Packet Analogue |
+|---------------------|-------------------------------|--------------------|
+| HASH                | A unique ID                   |                    |
+| GROUP ID            | Set of recipients             | IP ADDRESS         |
+| DOMAIN              | Name chosen by App developer  | PORT NUMBER        |
+| DATA                |                               | DATA               |
+| TIMESTAMP           | Microseconds since 1970-01-01 |                    |
+| PATH                | Key with upto 8 components    |                    |
+| LINKS[]             | list of (Tag, Hash)           |                    |
+| PUBKEY & SIGNATURE  | Public key and Signature      |                    |
+    
+[^4]: Both IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
+
+The auxiliary fields are optional[^5], e.g. a point does not have to be signed.
+
+[^5]: Optional is slightly misleading. There exist 3 types: datapoint, linkpoint, and keypoint.  For a full specification checkout the guide. 
+
+### Merging Trees
+
+To understand the fields and linkspace overall, imagine a message platform build on a basic key values system similar to a file system.
+
+<div class="entrygrid small"><span></span>
+<span>/image/BrokenMachine.jpg</span>
+<span>[image data]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/BrokenMachine.jpg</span>
+</div>
+
+<div class="op">+</div>
+
+<div class="entrygrid small">
+<span></span>
+<span style="width:28ch">/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+</div>
+
+<div class="op">=</div>
+
+<div class="entrygrid small">
+
+<span></span>
+<span>/image/BrokenMachine.jpg</span>
+<span>[image data]</span>
+
+<span></span>
+<span>/thread/Coffee machine broke!/msg</span>
+<span>fix pls? image/BrokenMachine.jpg</span>
+
+<span></span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+</div>
+
+The "image/BrokenMachine.jpg" is a **path** pointing to [image data].
+The hierarchical (sorted) set of path + data we'll call a **tree**.
+
+The example has two entries merging. 
+Merging trees is a powerful abstraction.
+It is essentially how websites/apps work.
+
+Sending data can be understood as merging your tree into another tree.
+
+We've dubbed words to describe specific cases such as:
+'_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
+Fundamentally they are the frontend application providing an interface to __merge__ trees.
+
+The internet we know has a single host design.
+A design where you request to get the only 'real' copy of the tree.
+
+This is simple, but having only one real copy has downsides.
+It becomes a single point of failure, links become invalid, you cannot reuse or share your copy, and other limits we'll come back to.
+
+In linkspace there is no 'real' copy.
+Anyone can read, write, and host (part of) a tree.
+
+This does mean we must deal with two entries using the same path.
+Two computers far apart could write to the same location at the same time.
+No one would know until their trees get merged.
+
+In linkspace entries can share the same path.
+Each entry is cryptograhpically hashed, i.e. there exists a unique number to reference the entry.
+
+<div class="entrygrid small"><span id="hh0">[HASH_0]</span><span>/thread/Tabs or spaces/msg</span><span>Are we still doing this?</span></div>
+
+<div class="op">+</div>
+
+<div class="entrygrid small">
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+</div>
+
+<div class="op">+</div>
+
+<div class="entrygrid small">
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
+
+<div class="op">=</div>
+
+<div class="entrygrid small">
+<span id="hh0">[HASH_0]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Are we still doing this?</span>
+
+<span id="hh1">[HASH_1]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Why not U+3164?</span>
+
+<span id="hh2">[HASH_2]</span>
+<span>/thread/Tabs or spaces/msg</span>
+<span>Get a life</span>
+</div>
+
+An entry also carries a creation date, and can be cryptographically signed.
+These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c]. We can refer to them by a [lns](#LNS) name such as [@:anton:nl].
+
+Because we have a hash, we can choose how to reference data.
+
+We can reference a specific entry by its <span id="hh2">[HASH_2]</span>,
+or multiple entries through a path "/thread/Tabs or spaces/msg".
+
+At first glance, returning multiple entries is more complex than what is familiar.
+This is not entirely true.
+Instead, it makes explicit what is implicit.
+URLs also return more than one unique results, it just depends on when you look.
+
+<div class="entrygrid big">
+<span id="hh3">[HASH_3]</span>
+<span></span>
+<span>/image/BrokenMachine.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
+</div>
+
+<div class="op">+</div>
+
+<div class="entrygrid big">
+
+<span id="hh5">[HASH_5]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainance:com]
+</span>
+</div>
+
+<div class="op">=</div>
+
+<div class="entrygrid big">
+
+
+<span id="hh3">[HASH_3]</span>
+<span></span>
+<span>/image/BrokenMachine.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
+
+<span id="hh5">[HASH_5]</span>
+<span></span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?
+<br>
+[@:bob:maintainance:com]
+</span>
+
+</div>
+
+Entries in linkspace have two fields that precede the path.
+A **domain** field and **group** field.
+Essentially each combination of (domain, group) has its own tree.
+
+An application picks a domain name.
+When running it signals what data is required from the group.
+A developer deals with reading and writing the tree.
+Not with managing connections.
+
+The group indicates the set of intended recipients.
+The device running linkspace instance run and configure a group exchange process to exchange data with others.
+
+<div class="entrygrid big">
+
+<span id="hh3">[HASH_3]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/image/BrokenMachine.jpg<br>2015/01/02</span>
+<span>[image data]<br>[@:alice:sales:com]</span>
+
+<span id="hh4">[HASH_4]</span>
+<span>message_board<br>[#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/02</span>
+<span>fix pls? <span id="hh3">[HASH_3]</span><br>[@:alice:sales:com]</span>
+
+<span id="hh5">[HASH_5]</span>
+<span>message_board  [#:example:com]</span>
+<span>/thread/Coffee machine broke!/msg<br>2023/03/03</span>
+<span>
+Hey <span id="hh4">[HASH_4]</span>!
+Isn't this <span id="hh3">[HASH_3]</span> image from 2015?<br>[@:bob:maintainance:com]
+</span>
+
+</div>
+
+We can be more specific than just using a path with [queries](./docs/guide/index.html#Query).
+
+This is the basic idea of linkspace. Users merging trees with groups so that applications can read, write, and react to data in their domain.
+
+The most notable simplification being that referencing other packets by hash is not done directly inside the data but in the [link](./docs/guide/index.html#lk_linkpoint) field of each point.
+
+## The promise of linkspace
+
+With a basic understanding we can compare linkspace with streams of key values, and show the limit of the latter
+
+Conceptually linkspace allows users and applications to skip past the network of streams, and instead reason about a shared space.
+
+For developers,
+an application like the [example](./docs/tutorial/mineweeper/01.html) that is equivalently: scalable, always-online, extendable system would be a large undertaking difficult to justify.
+While paying to run the dozen services required to provide the users with similar features, you'll have to do it all again for a next project.
+
+The other limit is our collective perception.
+
+The host provides an app or website to talk to them.
+This interface provides the concepts with which people understand the internet.
+
+In the last two decades this relationship has ingrained a set of beliefs:
 
 - Tools/apps only work within a single ecosystem (corollary - external tools can/must have permission of the platform to work)
 - Users should submit to companies that provide illiquid value on the condition of their loyalty.
 
-Both have little to do with the reality of what is possible.
+Both are misconceptions not grounded in the reality of what is possible.
 
-With enough know-how you can process any data in any way. 
-But because it requires this know-how, people tend to accept the story told by the platforms and we are all lesser for it.
+With some know-how you can process any data in any way, but the host can choose to make it difficult.
+Because it requires this know-how, people tend to accept the story told by the platforms.
 
-In response to this, there have been laws proposed to change the relationship between user and platform.
-For instance, demanding that users can export their data.
-This is not a real solution.
+We're all worse off for it.
 
-Instead, linkspace is a project to change the idea at the core of the internet. 
+Finally, there is a long list of issues others have identified on the platforms they use, such as:
+privacy, addiction, radicalization, anti-consumer monopolies, excessive spam/advertisement, a glut of AI generated content, etc.
 
-## Linkspace
+If we limit our self to the internet as it is now these issues are daunting, and come with vague or impractical solutions.
+Viewed from a broader perspective, these issues are a consequence of [how we choose to administrate](./why.html#reason2).
 
-If IP/TCP provides streams for KeyValue systems, so we can talk _to_ server,
-then linkspace provides a shared KeyValue space, so we can talk _about_ data. 
+## Ready to try?
 
-A unit in linkspace is called a point. Each point has data, some auxiliary fields, and they are hashed. 
+The linkspace library has a stable API.
+With the CLI you can quickly script a bridge between streams and linkspace, or build a new application.
+However, there are still rough edges and some missing pieces to make the user experience easy.
 
-| IP Packet[^4] | Linkspace Point    | Notes                            |
-|---------------|--------------------|----------------------------------|
-|               | HASH               | A unique packet ID (Blake3 hash) |
-| IP ADDRESS    | GROUP ID           | Set of recipients                |
-| PORT NUMBER   | DOMAIN             | Name chosen by App developer     |
-| DATA          | DATA               |                                  |
-|               | TIMESTAMP          | microseconds since 1970 (EPOCH)  |
-|               | PATH               | Key with upto 8 components       |
-|               | LINKS[]            | list of (Tag, Hash)              |
-|               | PUBKEY & SIGNATURE | Public key and Signature         |
+If you're on a unix give it a [try](https://github.com/AntonSol919/linkspace/releases) and say hi on the test group,
+emulate a local group, or start building your own.
 
-[^4]: Both IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
+(It runs on Windows, but there is currently no working group exchange process.)
 
-The auxiliary fields are essentially optional[^5], e.g. a point does not have to be signed.
-
-[^5]: Optional is slightly misleading. There exist 3 types: datapoint, linkpoint, and keypoint. Missing fields default to a specifc value when required. For a full specification checkout the guide. 
-
-A "linkspace packet" refers to the byte format when a point is transmitted.
-
-The GroupID and Domain field are somewhat analogous to an address and port respectively. 
-The path is a custom defined key: For example /hello/world, or /sensors/temprature/left, or /webpages/index.html
-Such that applications can quickly get a point by its hash, or by their path key. 
-Links are a list of (tag, hash) tuples. They can link to other points.
- 
-The `lk` CLI tool provides ways to build simple script that deal with linkspace packets.
-There are also bindings for Rust and Python. 
-
-Using linkspace can be as simple as an IoT device broadcasting its state encoded as a linkspace packet every few moments.
-Another device can append each message into a single file.
-
-A sender might write their temperature into linkspace as follows:
-
-```bash 
-LK_PASS=""
-lk init 
-lk key 
-GROUP=\$( echo "My local group" | lk data | lk printf [hash:str] )
-cat /dev/sensor/temperature/left | \ # pretend hardware
-    lk keypoint myhome:$GROUP:/sensor/temperature/left -d'\n' | \ # signed packets at a made up domain,group,path
-    lk collect --min-interval 10s mysensors:$GROUP:/sensor/temperature/left/bundle --chain-tag prev --sign | \ # link points together
-    lk save
-```
-
-The result is an indisputable log.
-All current and future programs can unambiguously reference any entry.
-
-The next issue is: how to make linkspace points available for more than the devices listening at the right moment?
-Before we get there, lets briefly look at what other tools are in linkspace library:
-
-- [Queries](https://antonsol919.github.io/linkspace/docs/guide/index.html#Query) are a standard to define a set of packets.
-They are useful for filtering, selecting, and requesting packets.
-- [ABE](https://antonsol919.github.io/linkspace/docs/guide/index.html#ABE) is a domain specific byte-templating language.
-- A multi-reader single-writer database for packets.
-- [Runtime](https://antonsol919.github.io/linkspace/docs/guide/index.html#Runtime) to wrap the database such that threads can match for old and new packets using queries.
-
-To share linkspace points for other systems, we make a leap of logic into linkspace.
-That is, instead of defining a protocol implemented using a stream of data, we define protocols as a functions over (new) points in linkspace.
-
-Useful standards are defined as [conventions](https://antonsol919.github.io/linkspace/docs/guide/index.html#Conventions).
-They can read/write packets with the correct fields set to have a specific meaning.
-For instance, the [pull](https://antonsol919.github.io/linkspace/docs/guide/index.html#lk_pull) convention creates a point at a specific location with a query in its data field. This is noticed by a group exchange process which will gather matching points from the group.
-
-[anyhost](https://antonsol919.github.io/linkspace/docs/guide/index.html#anyhost) is a basic example that implements such a group exchange 
-over TCP in a client-server architecture. 
-
-Note that you can change or add exchange processes at will. 
-The linkspace on top of which we build applications is independent of how the data is send between devices.
-Adding redundant methods, and receiving a message twice does not effect the state.
-
-Exchange is an implementation detail. It depends on your use-case: 'who can share what and where?'[^6].
-
-[^6]: A convention for group membership w.r.t. public keys such that only accepted members can access a group is in the works. 
-
-For our IoT device we can go a step simpler. Instead of `lk save` we can directly use `socat - UDP-DATAGRAM:255.255.255.255:6070,broadcast` and have 
-a storage device on our LAN safe all the packets.
-
-After a group exchange is configured, we can chagne our base model from processing streams into functions over state.
-Some complicated and impractical things become less complex overall.
-
-Controlling the thermostat could be done by watching for a administrator key signing a control point.
-
-```bash
-ADMIN=$(cat admin)
-lk pull myhome:$GROUP:/control/temperature -- pubkey:=:$ADMIN
-lk watch myhome:$GROUP:/control/temperature -- pubkey:=:$ADMIN | \
-    lk filter --live --bare -- create:>:[/or:[create]:[epoch]] | \ 
-    lk printf [data] > /dev/sensor/control/temperature
-```
-
-We get authentication and traceability in just a few lines of code.
-The real magic starts when the data breaks outside of the uses we first imagined.
-
-People or companies can gather, process, and expand on the points in linkspace.
-Any analysis can unambiguously reference the original event without using an ad-hoc database and referencing scheme.
-Making it anonymous[^7] can be achieved by doing a `lk rewrite` with a new key referencing the old data.
-[^7]: Making it anonymous equally well as we do today. It is notoriously hard to truely make data anonymous.
-
-Linkspace is a work in progress. There are pieces missing and still in development.
-If you want to give it a try, download the latest release and come say hi on the test group.
-Or better yet, building something new by starting at the [tutorial](https://antonsol919.github.io/linkspace/docs/tutorial/).
-
-## Is it worth the trouble?
-
-On the plus side are the two issues mentioned previously.
-
-Users are no longer locked as iliquid value conditioned on loyalty to a platform,
-Tools can work on any packets, anywhere, anytime without the platform breaking them for the purpose of exclusivity.
-
-Furthermore, things are made less complex in the long run.
-The full stack required for a user experience is an order of magnitude thinner than it is now. (e.g. [mineweeper](https://antonsol919.github.io/linkspace/docs/tutorial/mineweeper/01.html))
-
-Beyond the general resistance to change, I can see a few reasons to be skeptical.
-
-### Reasons why it might be too much trouble.
-
-- Too much overhead for an usecase.
-  If all you want to do is stream one movie from a single host, and forget it then linkspace might be too much overhead.
-  Few projects stay that simple. Most projects grow in scope to identify users, save their comments, add them to groups, scale beyond a single server. 
-  Once a full stack is build, linkspace can be a thin alternative.
-  Furthermore, it is designed to be fast/low energy, such that you can stream a video on a potato phone. 
-  `dd bs=10G count=1 if=/dev/zero | lk data > /dev/null` 
-
-- Isn't it a good thing that hosts administrate what others can do online?:
-  A dumb illusion that will not survive this century. 
-
-- Isn't it a good thing that hosts administrate what I can see online?:
-  If you want to exclude spam or other unwanted data, this service can still be provided by a third party like it is today.
-
-- People have to deal with more complexity.
-  Semi-true.
-  The nature of communication over distance is autonomous and asynchronous, so the complexity compared to stream-based centralized hosts isn't accidental.
-  Linkspace is also lacking 3 decades of tools that make the web relatively easy for users.
-  Furthermore, the number of configuration ends up smaller: Passwords, Groups, friends can be setup once and used by every application.
-  Finally, giving people responsibility isn't a bad thing.
-  Teaching people how to read, write, and do maths also gave them more responsibility.
-  It seems to me teaching people to fundamentally control a digital space is a logical next step,
-  and to deny them this autonomy a recipe for disaster. 
-
-- Won't it devolve to the same paradigm of centralized systems?:
-  Maybe, maybe not. If a users can walk away from a host platform without losing their history, the host has to give a better deal than they do now.
-
-
-### Alternatives
-There are similar systems, but they never felt complete to me. Reasons include:
-
-- Only URLS and no hash addressing.
-- Only hash addressing but no custom keys (URL/Paths).
-- Too slow for most data (unaligned, JSON/B64 encoding steps). A system should be able to stream video, not just set up a different protocol to do so.
-- No Group. Consequently there is no or little granularity in what you share.
-- No domains. Consequently the barrier to quickly hack something together is high when you're unsure if you're stepping on someones toes.
-- [Conway's law](https://en.wikipedia.org/wiki/Conway%27s_law).
-- Its not a full supernet, but just a blockchain. (A singular log of packets with links to its previous entry that hold accounting data)
-- The wrong order of defining the system's components. 
-   - A fixed method of exchanging data, instead of a external/modular system. 
-   - An ever growing set of stream protocols to negotiate a state.
+For a technical document regarding the API and CLI see the [Guide](./docs/guide/index.html).
+If you want to support the project consider registering a [public name](./lns.html).

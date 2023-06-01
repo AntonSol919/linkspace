@@ -1,9 +1,11 @@
 # LNS{#LNS}
 
-LNS is built on top of linkspace.  
-It uses the lns domain to be exact.  
+LNS is a convention to for naming things in linkspace.
+It writes points in the lns domain to be exact.  
 
-Groups and public keys are 32 bytes. Unreadable for humans.
+Things like groups and public keys are 32 bytes. They look like [b:HrwlM8KNA25F2nkjLzU6exrKdXcI3TCH5ZseeSyIMrI].
+This is unreadable for humans.
+
 LNS enables us to assign them names.
 Both publicly by registering, and privately for your own convenience.  
 
@@ -26,7 +28,7 @@ You can take a look on how it integrates with linkspace in the [guide](./docs/gu
 LNS is currently only partially operational.
 
 Registrations for public names are open though.
-Read this page to find out how.
+Read this page to find out how to claim yours.
 
 ### What does a registration do?
 
@@ -38,31 +40,35 @@ That means if you register under @:yourcompany:com you can set up:
 1) a key to manage registrations for names ending with *:yourcompany:com
 
 I.e. The key with the authority for yourcompany:com can create bindings for sales:yourcompany:com.
-That registration can set up a binding for the key @:bob:sales:yourcompany:com.
+That registration can set up a binding, such as for the key @:bob:sales:yourcompany:com.
 
 ### Do I require a registration?
 
+No.
 Nothing in linkspace requires a registration.
 Everything can be done without.
 In fact, \*:~ names you set up for your own use (similarly to /etc/hosts), and \*:local are meant for names you share between peers.
 Registrations allow you to pick an unambiguous name to be known publicly, and they support the project financially.
 
-### How can I register?
+### Does it require money?
 
-The following top level authorities have been assigned, and you can request a name ending in:
+No, not necessarily.
 
-- :free. First come, first served. Free of charge.
-- :dev if you have contributed to the code.
-- :com for 10 euro per year.
-- :nl for 10 euro per year.
+Names ending with:
+
+- :free - First come, first served. Free of charge.
+- :dev - if you get a pull request accepted.
+- :com - 10 euro per year.
+- :nl - 10 euro per year.
+
+### How do i register?
 
 To do so, see [claim a name](#claim).
 
-### Can I become a top level authority?
+### Can I register a top level authority like ':org' or ':sex' etc?
 
 Yes. I am looking for people and organizations to do so.
 Contact me at <antonsol919+registar@gmail.com> for more information.
-If you represent a university you can get your name for free.
 
 ### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
 
