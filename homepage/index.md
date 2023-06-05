@@ -1,8 +1,10 @@
 <div class="definition">
 Supernet  [ˈsü-pərˌnet]<br>
-A self-referential multi-participant data organization protocol whose primary
+- A self-referential multi-participant data organization protocol whose primary
 addressing method uses hashes instead of endpoint identifiers.
-A communication protocol where the method of exchange is an extraneous concern.<br>
+- A communication protocol where the method of exchange is an extraneous concern.<br>
+- A model of data that trenscends the internet using cryptography.
+
 e.g. git, bitcoin, nostr, linkspace
 </div>
 
