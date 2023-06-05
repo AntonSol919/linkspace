@@ -91,6 +91,7 @@ impl Linkspace {
     /** return when next to process.
      Ok(None) means immediatly, Ok(Some(stamp)) means at stamp a watch can be dropped, Err means no current watches
     **/
+    #[instrument(skip(self),ret)]
     fn next_work(&self) -> Result<Option<Stamp>, ()> {
         if self.exec.is_running.get() {
             tracing::warn!("has_work called during work");

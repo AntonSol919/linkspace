@@ -508,6 +508,7 @@ impl<U: UInt> TestSet<U> {
     #[inline]
     /// Warning - This is only valid if TestSet.has_any;
     pub fn info(&self, val: U) -> SetValueInfo<U> {
+        debug_assert!(self.has_any());
         let cmp = self.bound.bound_cmp(val);
         match cmp {
             std::cmp::Ordering::Less => SetValueInfo {

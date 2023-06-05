@@ -8,7 +8,7 @@ use std::{ops::ControlFlow, cell::Cell};
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use anyhow::{ensure };
 use linkspace_pkt::{abe::TypedABE, reroute::RecvPkt, NetPkt, NetPktExt, Stamp};
-use tracing::Span;
+use tracing::{Span, instrument};
 
 use crate::{
     env::queries::RecvPktPtr,
@@ -61,10 +61,11 @@ impl<C> WatchEntry<C> {
         self.i_new = self.query.predicates.state.i_new;
         self.i_query = self.query.predicates.state.i_query;
         self.recv_bounds = recv_bounds;
-        ensure!(self.recv_bounds.as_eq().is_none(),"watching for 'eq' recv is nonsense");
-        ensure!(self.i_new.info(self.nth_new).val.is_some(), "watch budget empty");
-        ensure!(self.i_query.info(self.nth_query).val.is_some(), "watch budget empty");
-        tracing::info!(parent:&self.span,q=?self.query,"update");
+        let has_pending = self.i_new.has_any() && self.i_new.info(self.nth_new).val.is_some();
+        ensure!(has_pending, "i_new watch budget empty");
+        let has_qnew = self.i_query.has_any() && self.i_query.info(self.nth_query).val.is_some();
+        ensure!(has_qnew, "i watch budget empty");
+        tracing::info!(parent:&self.span,q=?self.query,"update watch");
         Ok(())
     }
 
@@ -248,8 +249,10 @@ impl<C> Matcher<C> {
             .for_each(on_drop);
     }
     /// clears out of bound watches and determine when the next gc should be run ( none means empty, Some(MAX) means no oob set)
+    #[instrument(skip(self))]
     pub fn gc(&mut self, logptr: Stamp) -> Option<Stamp> {
         let mut min: u64 = u64::MAX;
+        let old_len = self.watch_entries.len();
         self.watch_entries.retain(|e| {
             if e.recv_bounds.high > logptr.get() {
                 min = e.recv_bounds.high.min(min);
@@ -258,6 +261,7 @@ impl<C> Matcher<C> {
                 false
             }
         });
+        tracing::trace!(old_len,len=self.watch_entries.len());
         if self.watch_entries.is_empty() {
             None
         } else {

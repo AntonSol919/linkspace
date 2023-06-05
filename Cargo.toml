@@ -20,12 +20,12 @@ exclude = ["cli/tree","cli/impex","crates/bloomhash","crates/adota"]
 
 [workspace.dependencies]
 
-anyhow = "=1.0.70"
+anyhow = "=1.0.71"
 arrayvec = "=0.7.2  "
 serde = "=1.0.160"
 hex = "=0.4.3"
 base64 ="=0.21.0"
-tracing = "=0.1.38"
+tracing = "=0.1.37"
 tracing-subscriber = "=0.3.17"
 thiserror =  "=1.0.40"
 rand = "=0.8.5"

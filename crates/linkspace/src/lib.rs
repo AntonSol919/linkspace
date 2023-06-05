@@ -36,7 +36,7 @@ pub mod prelude {
         core::env::queries::RecvPktPtr,
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
-            IPathBuf, IPathC, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
+            IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
         },
@@ -179,6 +179,7 @@ pub mod point {
     }
 
     pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<NetPktBox> {
+        // TODO - we can't do NetPktParts because of alignment. Maybe add UnallignedNetPktParts?
         let pkt = super::misc::read::parse_netpkt(buf, validate)?
             .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
         anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
@@ -706,6 +707,28 @@ pub mod runtime {
         let reader = lk.0.get_reader();
         let opt_pkt = reader.query(mode, &query.0.predicates, &mut i)?.next();
         Ok(opt_pkt.map(|v| (cb)(v)))
+    }
+    pub fn lk_get_hash<A>(lk:&Linkspace,hash: LkHash,
+                       cb: &mut dyn FnMut(RecvPktPtr) -> A,
+    ) -> anyhow::Result<Option<A>> {
+        let reader = lk.0.get_reader();
+        let opt = reader.read(&hash)?;
+        Ok(opt.map(|v|(cb)(v)))
+    }
+    pub fn lk_get_links(lk:&Linkspace,list: &[Link],out: &mut dyn FnMut(Option<RecvPktPtr>,&LkHash) -> bool) -> anyhow::Result<i32> {
+        if list.is_empty() { return Ok(0);}
+        let reader = lk.0.get_reader();
+        let mut count = 0; 
+        let mut i = 0i32;
+        for p in list.iter(){
+            i = i.saturating_sub(1);
+            let pkt= reader.read(&p.ptr)?;
+            if pkt.is_some(){ count += 1;}
+            if (out)(pkt,&p.ptr){
+                return Ok( i)
+            }
+        }
+        Ok(count)
     }
     /**
     Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid) )

@@ -53,7 +53,7 @@ pub struct PrintABE{
     /// print the query
     #[clap(short,long,alias="print",short)]
     pub print_expr: bool,
-    /// print in ascii-byte-text format (ABE without '{..}' expressions)
+    /// print in ascii-byte-text format (ABE without '[..]' expressions)
     #[clap(long,alias="text",conflicts_with="print_expr")]
     pub print_text: bool,
 }
