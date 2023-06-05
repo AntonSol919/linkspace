@@ -8,11 +8,9 @@
     slice_split_at_unchecked,
     doc_notable_trait,
     thread_local,
-    array_zip,
     slice_from_ptr_range,
     ptr_metadata,
     alloc_layout_extra,
-    const_slice_split_at_not_mut,
     const_option,
     const_try,
     const_option_ext,
@@ -23,6 +21,7 @@
     lazy_cell
 )]
 pub use byte_fmt::*;
+use byte_fmt::abe::FitSliceErr;
 use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
@@ -34,6 +33,7 @@ use utils::as_bytes;
 
 pub mod byte_segments;
 pub mod eval;
+pub mod consts;
 pub mod exprs;
 pub mod field_ids;
 pub mod ipath;
@@ -54,6 +54,7 @@ mod stamp;
 
 
 
+pub use consts::*;
 pub use byte_segments::*;
 pub use endian_types::*;
 pub use eval::*;
@@ -96,6 +97,18 @@ pub struct Link {
     /// Usually a [LkHash], sometimes a [PubKey] or [GroupID]
     pub ptr: Ptr,
 }
+impl From<(Tag,Ptr)> for Link {
+    fn from((tag,ptr): (Tag,Ptr)) -> Self {
+        Link{tag,ptr}
+    }
+}
+impl TryFrom<(&str,Ptr)> for Link {
+    type Error = FitSliceErr;
+
+    fn try_from((tag,ptr): (&str,Ptr)) -> Result<Self, Self::Error> {
+        Ok(Link{tag: Tag::try_fit_byte_slice(tag.as_bytes())?,ptr})
+    }
+}
 impl Display for Link{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,"{}:{}",self.tag,self.ptr)
@@ -108,28 +121,7 @@ pub type Signature = B64<[u8; 64]>;
 /// A Big endian u64 of microseconds since EPOCH
 pub type Stamp = U64;
 
-// === size/len constraints. By Convention '_size' is n bytes . '_len' is number of elements
-pub mod consts {
-    use super::*;
-    use std::mem::size_of;
 
-    pub const MIN_POINT_SIZE: usize = size_of::<LkHash>() + size_of::<PointHeader>();
-    pub const MIN_LINKPOINT_SIZE: usize = MIN_POINT_SIZE + size_of::<LinkPointHeader>();
-    pub const MIN_NETPKT_SIZE: usize = size_of::<NetPktHeader>() + MIN_POINT_SIZE;
-    pub const MAX_NETPKT_SIZE: usize = u16::MAX as usize - 256;
-    pub const MAX_POINT_SIZE: usize =
-        MAX_NETPKT_SIZE - size_of::<NetPktHeader>() + size_of::<LkHash>();
-    pub const MAX_CONTENT_SIZE: usize = MAX_POINT_SIZE - size_of::<PartialNetHeader>();
-    pub const MAX_DATA_SIZE: usize = MAX_CONTENT_SIZE;
-    pub const MAX_LINKPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<LinkPointHeader>();
-    pub const MAX_KEYPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<KeyPointHeader>();
-    pub const MAX_LINKS_LEN: usize = (MAX_POINT_SIZE - MAX_SPATH_SIZE) / size_of::<Link>();
-    pub const MAX_SPATH_SIZE: usize = 242;
-    pub const MAX_IPATH_SIZE: usize = MAX_SPATH_SIZE + 8;
-    pub const MAX_SPATH_COMPONENT_SIZE: usize = 200;
-    pub const MAX_PATH_LEN: usize = 8;
-}
-pub use consts::*;
 
 /** General trait for accessing point field.
 
@@ -372,21 +364,6 @@ pub enum Error {
     #[error("The pointheader has its reserved bit set {0}")]
     HeaderReservedSet(u8),
 }
-
-/*
-pub fn xor<const N:usize>(mut a: [u8;N],b:&[u8;N]) -> [u8;N]{
-a.iter_mut().zip(b.iter()).for_each(|(a,b)| *a ^= b);
-a
-}
-
-
-pub fn nbytes(nf: &impl NetFields) -> usize {
-nf.pkt_header().pkt_size() + size_of::<PktHash>() + size_of::<RoutingHeader>()
-}
-pub fn nwords(nf: &impl NetFields) -> usize {
-    (nbytes(nf) + 3) / 4
-}
-*/
 
 pub trait SigningExt {
     fn pubkey(&self) -> PubKey;

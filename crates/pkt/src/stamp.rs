@@ -3,12 +3,12 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant,  UNIX_EPOCH};
 
 /// current time as big endian u64 microseconds since epoch
 #[cfg(not(target_arch = "wasm32"))]
 pub fn now() -> Stamp {
-    from_systime(SystemTime::now())
+    from_systime(std::time::SystemTime::now())
 }
 pub fn from_systime(time: std::time::SystemTime) -> Stamp {
     let v = time

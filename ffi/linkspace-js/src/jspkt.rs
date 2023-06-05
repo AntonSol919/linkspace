@@ -1,0 +1,192 @@
+// Copyright Anton Sol
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+
+
+
+
+use std::cell::{LazyCell };
+
+use crate::*;
+use linkspace_pkt::{Tag, LkHash, NetPkt, pkt_fmt, Point, PointExt, NetPktBox };
+use wasm_bindgen::prelude::*;
+use web_sys::TextDecoder;
+
+use crate::bytelike;
+// Ideally this is an ArrayBuffer and we give out readonly views
+#[derive(Clone)]
+#[wasm_bindgen]
+pub struct Pkt(pub(crate) NetPktBox);
+impl Pkt {
+    pub fn from_dyn(p: &dyn NetPkt) -> Self {
+        Pkt(p.as_netbox())
+    }
+}
+/*
+impl<'o> From<RecvPktPtr<'o>> for Pkt {
+    fn from(p: RecvPktPtr) -> Self {
+        let p = ReroutePkt::new(p.map(|v| v.as_netarc()));
+        Pkt(p)
+    }
+}
+*/
+
+
+#[wasm_bindgen]
+impl Pkt {
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> String {
+        pkt_fmt(&self.0.thin_netpkt() as &dyn NetPkt)
+    }
+    /*
+    pub fn __getitem__(&self, field: &str) -> anyhow::Result<Box<[u8]>> {
+        let field = FieldEnum::from_str(field)?;
+        let mut v = smallvec::SmallVec::<[u8; 32]>::new();
+        field.bytes(self.0.netpktptr(), &mut v)?;
+        Ok( &v))
+    }
+    pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
+        use linkspace::misc::TreeEntry;
+        let self_key = TreeEntry::from_pkt(0.into(), &self.0).ok_or(self.0.hash_ref());
+        let other_key = TreeEntry::from_pkt(0.into(), &other.0).ok_or(other.0.hash_ref());
+        match op {
+            CompareOp::Lt => self_key < other_key,
+            CompareOp::Le => self_key <= other_key,
+            CompareOp::Eq => self.0.hash() == other.0.hash(),
+            CompareOp::Ne => self.0.hash() != other.0.hash(),
+            CompareOp::Gt => self_key > other_key,
+            CompareOp::Ge => self_key >= other_key,
+        }
+    }
+    pub fn __hash__(&self) -> isize {
+        let bytes = &self.0.hash().0[8..std::mem::size_of::<isize>()];
+        isize::from_ne_bytes(bytes.try_into().unwrap())
+    }
+    */
+    #[wasm_bindgen(getter)]
+    pub fn pkt_type(&self) -> u8 {
+        self.0.point_header().point_type.bits()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn hash(&self) -> Box<[u8]> {
+        self.0.hash_ref().0.into()
+    }
+
+    #[wasm_bindgen(getter)]
+    /// data
+    pub fn data(&self) -> Box<[u8]> {
+        self.0.data().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn domain(&self) -> Option<Box<[u8]>> {
+        self.0.as_point().domain().map(|d| d.0.into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn create(&self) -> Option<Box<[u8]>> {
+        self.0.create_stamp().map(|b|b.0.into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn group(&self) -> Option<Box<[u8]>> {
+        self.0.group().map(|g| g.0.into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn path(&self) -> Option<Box<[u8]>> {
+        self.0.path().map(|p| p.spath_bytes().into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn ipath(&self) -> Option<Box<[u8]>> {
+        self.0.ipath().map(|p| p.ipath_bytes().into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn recv(&self) -> Option<Box<[u8]>> {
+        self.0.recv().map(|p| p.0.into())
+    }
+    #[wasm_bindgen(getter)] pub fn path0(&self) -> Box<[u8]> {self.0.get_ipath().path0().into()}
+    #[wasm_bindgen(getter)] pub fn path1(&self) -> Box<[u8]> {self.0.get_ipath().path1().into()}
+    #[wasm_bindgen(getter)] pub fn path2(&self) -> Box<[u8]> {self.0.get_ipath().path2().into()}
+    #[wasm_bindgen(getter)] pub fn path3(&self) -> Box<[u8]> {self.0.get_ipath().path3().into()}
+    #[wasm_bindgen(getter)] pub fn path4(&self) -> Box<[u8]> {self.0.get_ipath().path4().into()}
+    #[wasm_bindgen(getter)] pub fn path5(&self) -> Box<[u8]> {self.0.get_ipath().path5().into()}
+    #[wasm_bindgen(getter)] pub fn path6(&self) -> Box<[u8]> {self.0.get_ipath().path6().into()}
+    #[wasm_bindgen(getter)] pub fn path7(&self) -> Box<[u8]> {self.0.get_ipath().path7().into()}
+    pub fn path_list(&self) -> Option<js_sys::Array> {
+        self.0.ipath().map(|p| {
+            p.comps_bytes()[0..*p.path_len() as usize]
+                .into_iter()
+                .map(|s| -> js_sys::Uint8Array { (*s).into()})
+                .collect()
+        })
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn pubkey(&self) -> Option<Box<[u8]>> {
+        self.0.pubkey().map(|b|  b.0.into())
+    }
+    #[wasm_bindgen(getter)]
+    pub fn signature(&self) -> Option<Box<[u8]>> {
+        self.0.signature().map(|b|  b.0.into())
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn point_size(&self) -> u16{
+        self.0.point_header_ref().point_size.get()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn path_len(&self) -> Option<u8> {
+        self.0.path_len().map(|b| *b)
+    }
+}
+
+/// Link for a linkpoint
+#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[wasm_bindgen]
+#[repr(transparent)]
+pub struct Link(pub(crate)linkspace_pkt::Link);
+
+#[thread_local]
+pub static DEC : LazyCell<TextDecoder> = LazyCell::new(|| TextDecoder::new().unwrap());
+#[wasm_bindgen]
+impl Link {
+    #[wasm_bindgen(js_name = toJSON)]
+    pub fn as_json(&self) -> Result<JsValue,JsValue>{
+        // we have to debug output the abe string representation
+        let string = format!("{{\"tag\":{:?},\"ptr\":\"{}\"}}",self.0.tag.0,self.0.ptr);
+        js_sys::JSON::parse(&string)
+    }
+    #[wasm_bindgen(js_name = toAbeJSON)]
+    pub fn as_abe_json(&self) -> Result<JsValue,JsValue>{
+        // we have to debug output the abe string representation
+        let string = format!("{{\"abe_tag\":{:?},\"ptr\":\"{}\"}}",self.0.tag.to_string(),self.0.ptr);
+        js_sys::JSON::parse(&string)
+    }
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> Result<String,JsValue>{
+        let mut tag = self.0.tag.0;
+        let st = DEC.decode_with_u8_array(&mut tag)?;
+        Ok(format!("{{\"tag\":\"{}\",\"ptr\":\"{}\"}}",st,self.0.ptr))
+    }
+    #[wasm_bindgen(getter)]
+    pub fn ptr(&self) -> Box<[u8]> {
+        self.0.ptr.0.into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn tag(&self) -> Box<[u8]>{
+        self.0.tag.0.into()
+    }
+    #[wasm_bindgen(constructor)]
+    pub fn new(tag: &JsValue, ptr: &JsValue) -> Result<Link> {
+        let r : anyhow::Result<Link> = try{
+            let tag = bytelike(tag)?;
+            let ptr = bytelike(ptr)?;
+            Link(linkspace_pkt::Link{
+                tag: Tag::try_fit_byte_slice(&tag)?,
+                ptr: LkHash::try_fit_bytes_or_b64(&ptr)?,
+            })
+        };
+        r.map_err(JsErr)
+    }
+    
+}

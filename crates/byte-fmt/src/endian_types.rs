@@ -36,6 +36,7 @@ macro_rules! endian_number{
 		    impl $name {
             #[inline(always)] pub const fn new(val: $native) -> $name{ $name(val.$to_bytes())}
             #[inline(always)] pub const fn get(self) -> $native{ $native::$from_bytes(self.0)}
+            #[inline(always)] pub fn set(&mut self,val:$native){ self.0 = val.$to_bytes()}
             pub const MAX : $name = $name::new($native::MAX);
             pub const ZERO : $name = $name::new(0);
             #[must_use]

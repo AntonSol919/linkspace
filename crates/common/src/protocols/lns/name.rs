@@ -64,7 +64,7 @@ impl Name {
                 c => Ok(c)
             }).chain([Ok("key")]).try_collect()
     }
-    pub fn claim_ipath(&self) -> IPathBuf { CLAIM_PREFIX.join(&self.spath).ipath()}
+    pub fn claim_ipath(&self) -> IPathBuf { CLAIM_PREFIX.ipath().join(&self.spath).ipath()}
     pub fn claim_group(&self) -> Option<GroupID> {
         match self.special{
             Some(SpecialName::Local) => Some(PRIVATE),

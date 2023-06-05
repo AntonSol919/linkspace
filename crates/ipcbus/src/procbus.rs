@@ -69,7 +69,7 @@ impl ProcBus {
         self.init_udp_port(get_port(self.bus_id))
     }
     pub fn init_udp_port(self: &mut Arc<Self>, port: u16) {
-        let mut this = Arc::get_mut(self).expect("You must init_udp before cloning a env");
+        let this = Arc::get_mut(self).expect("You must init_udp before cloning a env");
         assert!(this.ipc.is_none());
         let pid = std::process::id();
         this.ipc = Some((pid, UdpIPC::new(port)));

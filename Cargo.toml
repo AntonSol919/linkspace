@@ -10,6 +10,7 @@ repository = "https://github.com/AntonSol919/linkspace"
 
 
 [workspace]
+resolver = "2"
 members = [
     "crates/*",
     "cli/*",

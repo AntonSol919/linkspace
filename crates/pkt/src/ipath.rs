@@ -397,3 +397,5 @@ fn spath_idx() {
     i.check_components().unwrap();
     //    let arrr = [0,1,2,3,4,5,6,7].map(|v|i.comp(v));
 }
+
+

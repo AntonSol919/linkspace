@@ -8,7 +8,6 @@
     array_windows,
     slice_flatten,
     int_roundings,
-    const_ptr_read,
     generic_const_exprs,
     bigint_helper_methods,
     const_bigint_helper_methods,

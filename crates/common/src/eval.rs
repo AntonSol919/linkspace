@@ -127,7 +127,6 @@ impl<R:LKS> ReadHash<R> {
         let id = inp.get(4).copied().unwrap_or(b"pkt");
         let args = inp.get(5..).unwrap_or(&[]);
         let r = pkt_scope(&*pkt).lookup_apply(id, args, true, scope);
-        drop(pkt);
         drop(reader);
         match r.into_opt() {
             Some(o) => o,
@@ -151,7 +150,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                     let pkt = reader.read(&hash)?.with_context(||format!("could not find pkt {}",hash))?;
                     let (id, args) = inp[1..].split_first().unwrap_or((&{b"pkt" as &[u8]},&[]));
                     let r = pkt_scope(&*pkt).lookup_apply(id, args, true,scope);
-                    drop(pkt); drop(reader);
+                    drop(reader);
                     r
                 },
                 info: ScopeFuncInfo {

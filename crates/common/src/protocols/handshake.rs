@@ -10,8 +10,8 @@ use crate::{prelude::*, protocols::unicast_group};
 use anyhow::{ensure };
 pub const HANDSHAKE_D: Domain = ab(b"\xFFhandshake");
 
-pub const ID_SENTINAL_SPATH : IPathC<17>= ipath1(b"sentinal");
-pub const ANONYMOUSE_SPATH : IPathC<18>= ipath1(b"anonymous");
+pub const ID_SENTINAL_SPATH : IPathC<17>= ipath1::<8>(b"sentinal");
+pub const ANONYMOUSE_SPATH : IPathC<18>= ipath1::<9>(b"anonymous");
 
 const MAX_DIFF_SECONDS: usize = 15;
 pub fn valid_stamp_range(stamp: Stamp, max_diff_sec: Option<usize>) -> anyhow::Result<()> {

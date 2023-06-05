@@ -136,6 +136,7 @@ impl<const N: usize> ConstSPath<N> {
         }
         SPathBytes { spath_bytes: bytes }
     }
+    
 
     pub const fn as_static(&'static self) -> &'static SPath {
         SPath::from_unchecked(&self.spath_bytes)
@@ -530,6 +531,7 @@ fn try_pop() {
     common.spath_bytes[2] = 251;
     assert_eq!(common.check_components(), Err(PathError::ComponentSize));
 }
+
 
 #[macro_export]
 macro_rules! len_prefix_concat {

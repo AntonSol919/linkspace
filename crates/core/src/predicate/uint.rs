@@ -201,11 +201,11 @@ impl UInt for B64<[u8; 32]> {
 
     #[inline(always)]
     fn bit_and(self, other: Self) -> Self {
-        B64(self.0.zip(other.0).map(|(a, b)| a & b))
+        B64(std::array::from_fn(|i| self.0[i] & other.0[i]))
     }
     #[inline(always)]
     fn bit_or(self, other: Self) -> Self {
-        B64(self.0.zip(other.0).map(|(a, b)| a | b))
+        B64(std::array::from_fn(|i| self.0[i] | other.0[i]))
     }
     #[inline(always)]
     fn not(self) -> Self {
@@ -274,11 +274,11 @@ impl UInt for AB<[u8; 16]> {
   
     #[inline(always)]
     fn bit_and(self, other: Self) -> Self {
-        AB(self.0.zip(other.0).map(|(a, b)| a & b))
+        AB(std::array::from_fn(|i| self.0[i] & other.0[i]))
     }
     #[inline(always)]
     fn bit_or(self, other: Self) -> Self {
-        AB(self.0.zip(other.0).map(|(a, b)| a | b))
+        AB(std::array::from_fn(|i| self.0[i] | other.0[i]))
     }
     #[inline(always)]
     fn not(self) -> Self {

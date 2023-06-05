@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 /**
-LNS is a little complex because it supports 3 modes.
+LNS is quite a bit complex because it supports 3 modes.
 A mode defines when a claim is 'live'.
 
 The modes are :
@@ -24,7 +24,7 @@ use abe::eval::{clist, ApplyResult};
 use anyhow::{Context };
 use byte_fmt::ab;
 use linkspace_argon2_identity::pubkey;
-use linkspace_pkt::{spath, Domain, Tag, PubKey, GroupID, Ptr, Stamp, Link };
+use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, Ptr, Stamp, Link, ipath1, IPathC };
 use tracing::instrument;
 
 use crate::runtime::Linkspace;
@@ -44,7 +44,7 @@ pub mod utils;
 pub mod admin;
 
 pub const LNS: Domain = ab(b"lns");
-spath!(pub const CLAIM_PREFIX = [b"claims"]);
+pub const CLAIM_PREFIX : IPathC<15> = ipath1::<6>(b"claims");
 /// tag expected for local claims pointing to a (live) lns:[#:pub] claim
 pub const PUB_CLAIM_TAG : Tag = ab(b"pub-claim");
 pub const PUBKEY_TAG : Tag = ab(b"pubkey@");
@@ -54,9 +54,9 @@ pub const ENCKEY_TAG : Tag = ab(b"enckey");
 /// A linkpoint at lns:[#:0]:by-tag/../PTR will contain by-claim:CLAIM_HASH
 pub const BY_CLAIM_TAG : Tag = ab(b"by-claim");
 
-pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1(b"by-tag");
-spath!(pub const BY_GROUP_TAG = [b"by-tag",&GROUP_TAG.0]);
-spath!(pub const BY_PUBKEY_TAG= [b"by-tag",&PUBKEY_TAG.0]);
+pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1::<6>(b"by-tag");
+pub static BY_GROUP_TAG : [&[u8];2] = [b"by-tag",&GROUP_TAG.0];
+pub static BY_PUBKEY_TAG : [&[u8];2] = [b"by-tag",&PUBKEY_TAG.0];
 
 
 pub fn auth_tag(b:&[u8]) -> Tag {

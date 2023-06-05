@@ -13,15 +13,15 @@ pub fn parse_netpkt(
     }
     let partial_header = unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const PartialNetHeader) };
     partial_header.point_header.check()?;
-    let len = partial_header.point_header.net_pkt_size();
-    if len > bytes.len() { return Ok(Err(len))}
+    let pktsize = partial_header.point_header.net_pkt_size();
+    if pktsize > bytes.len() { return Ok(Err(pktsize))}
 
     let mut pkt : NetPktBox = unsafe { partial_header.alloc() };
     {
         let s: &mut [u8] = unsafe {
-            std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, len)
+            std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, pktsize)
         };
-        s.copy_from_slice(&bytes[..len]);
+        s.copy_from_slice(&bytes[..pktsize]);
     };
     
     if validate {
@@ -31,3 +31,4 @@ pub fn parse_netpkt(
     };
     Ok(Ok(pkt))
 }
+

@@ -1,0 +1,30 @@
+[package]
+name = "linkspace-js"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+
+[lib]
+name = "linkspace"
+crate-type = ["cdylib"]
+[build]
+target = "wasm32-unknown-unknown"
+
+[features]
+default = ["console_error_panic_hook", "wee_alloc"]
+
+[dependencies]
+wasm-bindgen = "0.2.86"
+linkspace-pkt = { path = "../../crates/pkt"}
+web-sys ={ version = "0.3.63",features=["console","TextDecoder"]}
+js-sys = "0.3.63"
+anyhow.workspace = true
+
+console_error_panic_hook = { version = "0.1.1", optional = true }
+
+wee_alloc = { version = "0.4.2", optional = true }

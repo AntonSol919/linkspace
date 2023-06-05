@@ -37,7 +37,7 @@ A reply is accepted if it was made now-timeout.
 This might change
 **/
 use crate::{*, runtime::{lk_get_all, lk_watch2}};
-pub const STATUS_PATH: IPathC<16> = ipath1(concat_bytes!([255], b"status"));
+pub const STATUS_PATH: IPathC<16> = ipath1::<7>(concat_bytes!([255], b"status"));
 
 #[derive(Copy, Clone)]
 #[repr(C)]
