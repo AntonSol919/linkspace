@@ -19,6 +19,13 @@ use std::{borrow::Borrow, ops::Deref};
 pub struct SPathBytes<X: ?Sized> {
     spath_bytes: X,
 }
+impl<X> SPathBytes<X> where Self: AsRef<SPath>{
+    pub fn try_from_inner(spath_bytes: X) -> Result<Self,PathError> {
+        let sp = SPathBytes { spath_bytes };
+        sp.as_ref().check_components()?;
+        Ok(sp)
+    }
+}
 
 use thiserror::Error;
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
@@ -184,7 +191,7 @@ impl<X: AsRef<[u8]>> SPathBytes<X> {
 }
 
 pub fn spath_buf(components: &[&[u8]]) -> SPathBuf {
-    SPathBuf::from(components)
+    SPathBuf::from_iter(components)
 }
 
 impl SPathBuf {
@@ -193,6 +200,7 @@ impl SPathBuf {
             spath_bytes: vec![],
         }
     }
+    
     pub const fn from_vec_unchecked(bytes: Vec<u8>) -> SPathBuf {
         SPathBuf { spath_bytes: bytes }
     }
@@ -216,7 +224,7 @@ impl SPathBuf {
         SPathBytes::new().extend_from_iter(iter)
     }
     #[track_caller]
-    pub fn from(iter: impl IntoIterator<Item = impl AsRef<[u8]>>) -> SPathBuf {
+    pub fn from_iter(iter: impl IntoIterator<Item = impl AsRef<[u8]>>) -> SPathBuf {
         SPathBuf::try_from_iter(iter).unwrap()
     }
 
@@ -609,9 +617,9 @@ fn concat() {
 }
 #[test]
 fn pop_slice() {
-    let mut v = SPathBuf::from(&[b"hello", b"world"]);
-    let x = SPathBuf::from(&[b"hello"]);
-    assert_eq!(v.drop_prefix(&*x), &*SPathBuf::from(&[b"world"]));
+    let mut v = SPathBuf::from_iter(&[b"hello", b"world"]);
+    let x = SPathBuf::from_iter(&[b"hello"]);
+    assert_eq!(v.drop_prefix(&*x), &*SPathBuf::from_iter(&[b"world"]));
     v.truncate_last();
     assert_eq!(v, x)
 }
@@ -624,13 +632,13 @@ fn check() {
     assert_eq!(it.next().unwrap().unwrap(), b"hello" as &[u8]);
     assert_eq!(it.next().unwrap().unwrap(), b"world" as &[u8]);
     assert!(it.next().is_none());
-    let v = SPathBuf::from(&[b"a", b"b", b"c"]);
+    let v = SPathBuf::from_iter(&[b"a", b"b", b"c"]);
     assert_eq!(v.check_components().unwrap(), 3);
 }
 
 #[test]
 fn track() {
-    let v = SPathBuf::from(&[b"a", b"b", b"c"]);
+    let v = SPathBuf::from_iter(&[b"a", b"b", b"c"]);
     let mut track = v.track();
     assert_eq!(&track.upto().spath_bytes, &[] as &[u8]);
     track = track.next().unwrap();

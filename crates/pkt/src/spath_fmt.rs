@@ -281,8 +281,8 @@ impl<'de> Deserialize<'de> for IPathBuf {
 fn generate_valid() -> Vec<SPathBuf> {
     vec![
         SPathBuf::new(),
-        SPathBuf::from(&[b"hello", b"world"]),
-        SPathBuf::from(&[b"hello" as &[u8], &[255; MAX_SPATH_COMPONENT_SIZE]]),
+        SPathBuf::from_iter(&[b"hello", b"world"]),
+        SPathBuf::from_iter(&[b"hello" as &[u8], &[255; MAX_SPATH_COMPONENT_SIZE]]),
     ]
 }
 #[cfg(test)]
@@ -300,7 +300,7 @@ fn test_encode() {
     #[track_caller]
     fn eq(st: &str, r: &[&[u8]]) {
         let x = spath_str(st).unwrap();
-        let b = SPathBuf::from(r);
+        let b = SPathBuf::from_iter(r);
         assert_eq!(x, b)
     }
     assert!(spath_str("noopen").is_err());

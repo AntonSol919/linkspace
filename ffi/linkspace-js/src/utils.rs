@@ -2,14 +2,20 @@ use wasm_bindgen::prelude::*;
 use anyhow::Context;
 use js_sys::{Array, JsString, JSON};
 #[wasm_bindgen]
-pub struct JsErr(pub (crate) anyhow::Error);
-pub fn err<E:Into<anyhow::Error>>(error:E) -> JsErr{JsErr(error.into())}
+pub struct JsErr(Variant);
+enum Variant{
+    Anyhow(anyhow::Error),
+    JsVal(JsValue)
+}
+
+pub fn err<E:Into<anyhow::Error>>(error:E) -> JsErr{JsErr(Variant::Anyhow(error.into()))}
+pub fn js_err(error:JsValue) -> JsErr{JsErr(Variant::JsVal(error))}
 impl<E> From<E> for JsErr
 where
     E: Into<anyhow::Error>,
 {
     fn from(error: E) -> Self {
-        JsErr(error.into())
+        err(error)
     }
 }
 
@@ -17,7 +23,10 @@ where
 impl JsErr {
     #[wasm_bindgen(js_name = toJSON)]
     pub fn to_json(&self) -> JsValue{
-        self.0.chain().map(|e| JsValue::from(format!("{:?}",e))).collect::<Array>().into()
+        match &self.0{
+            Variant::Anyhow(e) => e.chain().map(|e| JsValue::from(format!("{:?}",e))).collect::<Array>().into(),
+            Variant::JsVal(v) => v.into()
+        }
     }
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> JsString {

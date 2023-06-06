@@ -10,12 +10,14 @@
 
 use std::cell::{LazyCell };
 
-use crate::*;
+use crate::{*, consts::PUBLIC_GROUP_PKT};
 use linkspace_pkt::{Tag, LkHash, NetPkt, pkt_fmt, Point, PointExt,  NetPktExt, NetPktArc };
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
 
 use crate::bytelike;
+
+
 // Ideally this is an ArrayBuffer and we give out readonly views
 #[derive(Clone)]
 #[wasm_bindgen]
@@ -42,12 +44,6 @@ impl Pkt {
         pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)
     }
     /*
-    pub fn __getitem__(&self, field: &str) -> anyhow::Result<Box<[u8]>> {
-        let field = FieldEnum::from_str(field)?;
-        let mut v = smallvec::SmallVec::<[u8; 32]>::new();
-        field.bytes(self.0.netpktptr(), &mut v)?;
-        Ok( &v))
-    }
     pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
         use linkspace::misc::TreeEntry;
         let self_key = TreeEntry::from_pkt(0.into(), &self.0).ok_or(self.0.hash_ref());
@@ -60,10 +56,6 @@ impl Pkt {
             CompareOp::Gt => self_key > other_key,
             CompareOp::Ge => self_key >= other_key,
         }
-    }
-    pub fn __hash__(&self) -> isize {
-        let bytes = &self.0.hash().0[8..std::mem::size_of::<isize>()];
-        isize::from_ne_bytes(bytes.try_into().unwrap())
     }
     */
     #[wasm_bindgen(getter)]
@@ -142,26 +134,38 @@ impl Pkt {
         self.0.size()
     }
     #[wasm_bindgen(getter)]
-    pub fn links(&self) -> Option<Links> {
-        if self.0.links().is_some(){
-            return Some(Links {idx : 0 , pkt: self.clone()})
-        }
-        None
+    pub fn links(&self) -> Links {
+        Links {idx : 0 , pkt: self.clone()}
+    }
+    pub fn links_array(&self) -> js_sys::Array{
+        self.0.get_links().iter().copied().map(Link).map(|v| -> JsValue{v.into()} ).collect()
+    }
+    pub fn links_bytes(&self) -> Option<js_sys::Uint8Array>{
+        self.0.tail().map(|t| t.links_as_bytes().into())
     }
 }
 
+
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct Links{
     idx: usize,
     pkt: Pkt
 }
+
+#[wasm_bindgen]
+pub struct LinkRes {
+    pub done: bool,
+    pub value:Option<Link>
+}
 #[wasm_bindgen]
 impl Links{
-    #[wasm_bindgen(js_name = "next")]
-    pub fn next(&mut self) -> Option<Link>{
-        let link = self.pkt.0.links()?.get(self.idx).copied().map(Link);
+    pub fn default()-> Links { Links{ idx:0, pkt:PUBLIC_GROUP_PKT.clone()}}
+    #[wasm_bindgen]
+    pub fn next(&mut self) -> LinkRes{
+        let val = self.pkt.0.get_links().get(self.idx).copied().map(Link);
         self.idx +=1;
-        link
+        LinkRes { done: val.is_none(), value: val }
     }
 }
 
@@ -211,7 +215,6 @@ impl Link {
                 ptr: LkHash::try_fit_bytes_or_b64(&ptr)?,
             })
         };
-        r.map_err(JsErr)
+        r.map_err(err)
     }
-    
 }

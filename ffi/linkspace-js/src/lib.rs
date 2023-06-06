@@ -1,63 +1,94 @@
-#![feature(try_blocks,thread_local,lazy_cell,ptr_from_ref)]
+#![feature(try_blocks,thread_local,lazy_cell,ptr_from_ref,iterator_try_collect)]
 #![allow(dead_code,unused_variables)]
 pub mod jspkt;
 pub mod utils;
 pub mod consts;
 
-use std::cell::LazyCell;
-
+use anyhow::Context;
 use js_sys::{Uint8Array };
 use jspkt::Pkt;
 use linkspace_pkt::{MIN_NETPKT_SIZE, PartialNetHeader ,*};
-use utils::{JsErr,*};
+use utils::{*};
 use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+#[wasm_bindgen(inline_js = "
+    export function set_iter(obj) {
+            obj[Symbol.iterator] = function () {
+debugger
+return this
+};
+        };
+")]
+extern "C" {
+    fn set_iter(obj: &js_sys::Object);
+}
 #[wasm_bindgen(start)]
 fn main() -> std::result::Result<(), JsValue> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
+    set_iter(&js_sys::Object::get_prototype_of(&jspkt::Links::default().into()));
+
     Ok(())
 }
 
+#[wasm_bindgen(inline_js = "export function identity(a) { return a }")] 
+#[wasm_bindgen]
+extern "C"{
+    pub type Fields;
+    #[wasm_bindgen(structural, method,getter)]
+    pub fn group(this: &Fields) -> JsValue; 
+    #[wasm_bindgen(structural, method,getter)]
+    pub fn domain(this: &Fields) -> JsValue; 
+    #[wasm_bindgen(structural, method,getter)]
+    pub fn path(this: &Fields) -> JsValue; 
+    #[wasm_bindgen(structural, method,getter)]
+    pub fn links(this: &Fields) -> JsValue; 
+    #[wasm_bindgen(structural, method,getter)]
+    pub fn stamp(this: &Fields) -> JsValue; 
 
-#[thread_local]
-static GROUP_PROP: LazyCell<JsValue> = LazyCell::new(|| "group".into());
-#[thread_local]
-static DOMAIN_PROP: LazyCell<JsValue> = LazyCell::new(|| "domain".into());
-#[thread_local]
-static PATH_PROP: LazyCell<JsValue> = LazyCell::new(|| "path".into());
+    pub fn identity(val:JsValue) -> Option<jspkt::Link>;
 
-fn common_args(obj:&JsValue) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Stamp)> {
-    return Ok((PUBLIC,AB::default(),IPathBuf::new(),vec![],now()))
-        /*
-    let path = match path {
-        None => IPathBuf::new(),
-        Some(p) => {
-            if let Ok(p) = p.downcast::<Uint8Array>(){
-                SPathBuf::try_from(p.to_vec())?.try_ipath()?
-            }else {
-                let path = p
-                    .iter()?
-                    .map(|i| i.and_then(bytelike))
-                    .try_collect::<Vec<_>>()?;
-                IPathBuf::try_from_iter(path)?
-            }
-        }
+}
+fn common_args(obj:&Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Stamp)> {
+
+    let group = opt_bytelike(&obj.group())?
+        .map(|group| GroupID::try_fit_bytes_or_b64(&group))
+        .transpose()?
+        .unwrap_or(PUBLIC);
+    let domain = opt_bytelike(&obj.domain())?
+        .map(|domain| Domain::try_fit_byte_slice(&domain))
+        .transpose()?
+        .unwrap_or(AB::default()); 
+    let path =  obj.path();
+    let path = if path.is_falsy() {
+        IPathBuf::new()
+    }else if let Some(st) = path.dyn_ref::<Uint8Array>(){
+        SPathBuf::try_from_inner(st.to_vec()).map_err(err)?.ipath()
+    }else {
+        let it = js_sys::try_iter(&path).map_err(js_err)?.context("unknown format - expected path bytes or array")?;
+        let path = it.map(|i: Result<JsValue,JsValue>| -> Result<Vec<u8>,JsErr> {
+            let b = i.map_err(js_err)?;
+            bytelike(&b).map_err(err)
+        }).try_collect::<Vec<_>>()?;
+        IPathBuf::try_from_iter(path)?
     };
-    let links = links
-        .unwrap_or_default()
-        .into_iter()
-        .map(|l| Link {
-            tag: AB(l.tag),
-            ptr: B64(l.ptr),
-        })
-        .collect();
-    let create_stamp = create_stamp.map(|p| Stamp::try_from(p)).transpose()?;
-    Ok((group, domain, path, links, create_stamp))
-        */
+    let links = obj.links();
+    let links = if links.is_falsy(){ vec![]} else {
+        static ERR : &str = "unknown format - expected [Link] iterator";
+        let it = js_sys::try_iter(&links).map_err(js_err)?.context(ERR)?;
+        it.map(|link: Result<JsValue,JsValue>| -> Result<Link,JsErr> {
+            let link : jspkt::Link = identity(link.map_err(js_err)?).context(ERR)?;
+            Ok(link.0)
+        }).try_collect::<Vec<_>>()?
+    };
+    let stamp = obj.stamp();
+    let stamp = if stamp.is_falsy(){ now()} else {
+        Stamp::try_from(&*stamp.dyn_ref::<Uint8Array>().context("expected Uint8Array for stamp")?.to_vec())?
+    };
+    return Ok((group,domain,path,links,stamp))
 }
 
 #[wasm_bindgen]
@@ -103,7 +134,7 @@ pub fn lk_datapoint(data: &JsValue) -> Result<Pkt> {
     ))
 }
 #[wasm_bindgen]
-pub fn lk_linkpoint( data:&JsValue,fields : &JsValue) -> Result<Pkt> {
+pub fn lk_linkpoint( data:&JsValue,fields : &Fields) -> Result<Pkt> {
 
     let data = bytelike(data)?;
     let (domain,group,path,links,create) = common_args(fields)?;
@@ -111,7 +142,7 @@ pub fn lk_linkpoint( data:&JsValue,fields : &JsValue) -> Result<Pkt> {
     Ok(jspkt::Pkt::from_dyn(&pkt))
 }
 #[wasm_bindgen]
-pub fn lk_keypoint(key: &SigningKey,data:&JsValue,fields: &JsValue) -> Result<Pkt> {
+pub fn lk_keypoint(key: &SigningKey,data:&JsValue,fields: &Fields) -> Result<Pkt> {
 
     let data = bytelike(data)?;
     let (domain,group,path,links,create) = common_args(fields)?;
