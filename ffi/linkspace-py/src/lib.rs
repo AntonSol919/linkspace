@@ -161,12 +161,12 @@ pub fn lk_keygen() -> SigningKey {
     SigningKey(linkspace_rs::key::lk_keygen())
 }
 #[pyfunction]
-pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
-    linkspace_rs::key::lk_enckey(&key.0, password)
+pub fn lk_key_encrypt(key: &SigningKey, password: &[u8]) -> String {
+    linkspace_rs::key::lk_key_encrypt(&key.0, password)
 }
 #[pyfunction]
-pub fn lk_keyopen(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<SigningKey> {
-    Ok(SigningKey(linkspace_rs::key::lk_keyopen(id, password)?))
+pub fn lk_key_decrypt(_py: Python, id: &str, password: &[u8]) -> anyhow::Result<SigningKey> {
+    Ok(SigningKey(linkspace_rs::key::lk_key_decrypt(id, password)?))
 }
 
 #[pyfunction]
@@ -555,8 +555,8 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_write, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_keygen, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_enckey, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_keyopen, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_key_encrypt, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_key_decrypt, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_eval, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_eval2str, m)?)?;

@@ -588,7 +588,7 @@ pub mod key {
     use super::LkResult;
     use linkspace_common::identity;
 
-    pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
+    pub fn lk_key_encrypt(key: &SigningKey, password: &[u8]) -> String {
         identity::encrypt(
             key,
             password,
@@ -599,7 +599,7 @@ pub mod key {
             },
         )
     }
-    pub fn lk_keyopen(key: &str, password: &[u8]) -> LkResult<SigningKey> {
+    pub fn lk_key_decrypt(key: &str, password: &[u8]) -> LkResult<SigningKey> {
         Ok(linkspace_common::identity::decrypt(key, password)?)
     }
     pub fn lk_keygen() -> SigningKey {
@@ -996,7 +996,7 @@ pub mod varctx {
                 if create {
                     use super::key::*;
                     let key = lk_keygen();
-                    let enckey = super::key::lk_enckey(&key, &password);
+                    let enckey = super::key::lk_key_encrypt(&key, &password);
                     lns::setup_special_keyclaim(&linkspace.0, name, &enckey, false)?;
                     Ok(key)
                 } else {

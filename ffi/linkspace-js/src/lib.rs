@@ -4,6 +4,8 @@ pub mod jspkt;
 pub mod utils;
 pub mod consts;
 
+use std::cell::LazyCell;
+
 use js_sys::{Uint8Array };
 use jspkt::Pkt;
 use linkspace_pkt::{MIN_NETPKT_SIZE, PartialNetHeader ,*};
@@ -21,18 +23,16 @@ fn main() -> std::result::Result<(), JsValue> {
 }
 
 
+#[thread_local]
+static GROUP_PROP: LazyCell<JsValue> = LazyCell::new(|| "group".into());
+#[thread_local]
+static DOMAIN_PROP: LazyCell<JsValue> = LazyCell::new(|| "domain".into());
+#[thread_local]
+static PATH_PROP: LazyCell<JsValue> = LazyCell::new(|| "path".into());
 
-fn common_args(obj:&JsValue) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Option<Stamp>)> {
-    todo!()
+fn common_args(obj:&JsValue) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Stamp)> {
+    return Ok((PUBLIC,AB::default(),IPathBuf::new(),vec![],now()))
         /*
-    let group = group
-        .map(|group| GroupID::try_fit_bytes_or_b64(group))
-        .transpose()?
-        .unwrap_or(linkspace_pkt::PUBLIC);
-    let domain = domain
-        .map(|domain| Domain::try_fit_byte_slice(domain))
-        .transpose()?
-        .unwrap_or(AB::default());
     let path = match path {
         None => IPathBuf::new(),
         Some(p) => {
@@ -77,7 +77,7 @@ pub fn lk_keygen() -> SigningKey {
 }
 use linkspace_argon2_identity as identity;
 #[wasm_bindgen]
-pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
+pub fn lk_key_encrypt(key: &SigningKey, password: &[u8]) -> String {
     identity::encrypt(
         &key.0,
         password,
@@ -89,7 +89,7 @@ pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
     )
 }
 #[wasm_bindgen]
-pub fn lk_keyopen(id: &str, password: &[u8]) -> Result<SigningKey> {
+pub fn lk_key_decrypt(id: &str, password: &[u8]) -> Result<SigningKey> {
     Ok(SigningKey(identity::decrypt(id,password).map_err(err)?))
 }
 #[wasm_bindgen]
@@ -97,26 +97,26 @@ pub struct Linkspace(usize);
 
 #[wasm_bindgen]
 pub fn lk_datapoint(data: &JsValue) -> Result<Pkt> {
-    let bytes = bytelike(data)?;
+    let data = bytelike(data)?;
     Ok(jspkt::Pkt::from_dyn(
-        &linkspace_pkt::try_datapoint_ref(&bytes,NetOpts::Default)?,
+        &linkspace_pkt::try_datapoint_ref(&data,NetOpts::Default)?,
     ))
 }
 #[wasm_bindgen]
-pub fn lk_linkpoint( fields : &JsValue) -> Result<Pkt> {
-    let (domain,group,path,links,data,create) = common_args(fields)?;
-    todo!()/*
-    let pkt = linkspace_rs::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
+pub fn lk_linkpoint( data:&JsValue,fields : &JsValue) -> Result<Pkt> {
+
+    let data = bytelike(data)?;
+    let (domain,group,path,links,create) = common_args(fields)?;
+    let pkt = linkspace_pkt::try_linkpoint_ref(domain, group, &*path, &*links, &data, create,NetOpts::Default).map_err(err)?;
     Ok(jspkt::Pkt::from_dyn(&pkt))
-        */
 }
 #[wasm_bindgen]
-pub fn lk_keypoint(fields: &JsValue) -> Result<Pkt> {
-    todo!()/*
-    let pkt =
-        linkspace_rs::point::lk_keypoint_ref(domain, group, &*path, &*links, data, create, &key.0)?;
+pub fn lk_keypoint(key: &SigningKey,data:&JsValue,fields: &JsValue) -> Result<Pkt> {
+
+    let data = bytelike(data)?;
+    let (domain,group,path,links,create) = common_args(fields)?;
+    let pkt = linkspace_pkt::try_keypoint_ref(domain, group, &*path, &*links, &data, create,&key.0,NetOpts::Default).map_err(err)?;
     Ok(jspkt::Pkt::from_dyn(&pkt))
-        */
 }
 
 fn pptr(p: Option<&Pkt>) -> Option<&dyn NetPkt> {
