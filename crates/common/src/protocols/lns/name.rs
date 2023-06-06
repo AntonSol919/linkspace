@@ -76,14 +76,14 @@ impl Name {
         let rcomps = path.collect();
         if rcomps.is_empty(){ return Err(NameError::MinLen)}
         if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        let special = SpecialName::from(*rcomps.first().unwrap());
+        let special = SpecialName::from(rcomps.first().unwrap());
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
         Ok(Name { spath: path.into_spathbuf() ,special})
     }
     pub fn from(comps: &[&[u8]]) -> Result<Name,NameError>{
         if comps.is_empty(){ return Err(NameError::MinLen)}
         if comps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        let special = SpecialName::from(*comps.last().unwrap());
+        let special = SpecialName::from(comps.last().unwrap());
         let it = comps.iter().rev();
         let path = SPathBuf::try_from_iter(it)?;
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
@@ -116,7 +116,7 @@ impl ToABE for Name {
         let mut it = arr.iter().rev();
         let first = it.next().unwrap();
         out(ABE::Expr(ast::Expr::Bytes(first.to_vec())));
-        while let Some(comp) = it.next(){
+        for comp in it{
             abe!( : (**comp) ).for_each(&mut *out)
         }
     }

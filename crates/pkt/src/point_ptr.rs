@@ -210,7 +210,7 @@ impl PointThinPtr {
     }
 
     fn content_memory(&self) -> &[u8] {
-        unsafe{&self.pkt_bytes().get_unchecked(size_of::<PointHeader>()..)}
+        unsafe{self.pkt_bytes().get_unchecked(size_of::<PointHeader>()..)}
     }
 
     #[inline(always)]

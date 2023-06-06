@@ -38,7 +38,7 @@ pub fn write_pkt2(
         Some(e) => {
             let v = e
                 .eval(&pkt_ctx(ctx.reref(), &pkt))
-                .map_err(|e| std::io::Error::other(e))?;
+                .map_err(std::io::Error::other)?;
             out.write_all(&v)?;
         }
     }
@@ -135,7 +135,7 @@ impl WriteDestSpec {
                         .write(true)
                         .append(true)
                         .create(true)
-                        .open(&path_str)?,
+                        .open(path_str)?,
                 );
                 Out::Fd(fd)
             }

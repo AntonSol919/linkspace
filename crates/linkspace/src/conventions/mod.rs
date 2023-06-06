@@ -44,7 +44,7 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     let id = query.0.qid().transpose()?.context("missing :qid option")?;
     let data = query.0.to_string();
     tracing::trace!(data);
-    let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
+    let pull_path = ipath_buf(&[b"pull", &*group, &*domain, id]);
     let pkt = lk_linkpoint(
         data.as_bytes(),
         EXCHANGE_DOMAIN,

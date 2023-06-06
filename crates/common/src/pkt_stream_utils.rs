@@ -31,7 +31,7 @@ impl Buffer {
                 }
             }
             Some(links) => {
-                self.latest_links = links.into_iter().map(|r| r.ptr).collect();
+                self.latest_links = links.iter().map(|r| r.ptr).collect();
                 //self.forward_buf.drain(..).filter(|v| self.latest_links.remove(&v.hash())).chain(pkt).collect()
                 let (mut unlocked, dropped): (Vec<_>, Vec<_>) = self
                     .forward_buf

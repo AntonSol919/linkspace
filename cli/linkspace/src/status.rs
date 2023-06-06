@@ -73,7 +73,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
         buf.clear();
         let freespace : usize = calc_free_space(path, &[link], &[], false).try_into()?;
         reader.read_next_data(&c.eval_ctx().dynr(),freespace,&mut buf)?.context("no more data")?;
-        lk_linkpoint(domain, group, path, &[link], &buf, None)
+        lk_linkpoint(&buf,domain, group, path, &[link], None)
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;
 

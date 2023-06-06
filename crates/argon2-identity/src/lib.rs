@@ -20,11 +20,11 @@ mod params {
     pub fn decode_string(encoded: &str) -> Option<Decoded> {
         use base64::prelude::*;
         let items = encoded.strip_prefix("$argon2d$v=19$")?;
-        let mut items_it = items.split("$");
+        let mut items_it = items.split('$');
         let options = items_it.next()?;
         let salt = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
         let hash = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
-        let mut opt_it = options.split(",").filter_map(|st| st.split_once("="))
+        let mut opt_it = options.split(',').filter_map(|st| st.split_once('='))
             .zip(["m","t","p"])
             .filter(|((kind,_val),expect)| (kind == expect))
             .filter_map(|((_,val),_)| val.parse::<u32>().ok());

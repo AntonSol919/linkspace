@@ -88,7 +88,7 @@ fn common_args(obj:&Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Sta
     let stamp = if stamp.is_falsy(){ now()} else {
         Stamp::try_from(&*stamp.dyn_ref::<Uint8Array>().context("expected Uint8Array for stamp")?.to_vec())?
     };
-    return Ok((group,domain,path,links,stamp))
+    Ok((group,domain,path,links,stamp))
 }
 
 #[wasm_bindgen]
@@ -138,7 +138,7 @@ pub fn lk_linkpoint( data:&JsValue,fields : &Fields) -> Result<Pkt> {
 
     let data = bytelike(data)?;
     let (domain,group,path,links,create) = common_args(fields)?;
-    let pkt = linkspace_pkt::try_linkpoint_ref(domain, group, &*path, &*links, &data, create,NetOpts::Default).map_err(err)?;
+    let pkt = linkspace_pkt::try_linkpoint_ref(domain, group, &path, &links, &data, create,NetOpts::Default).map_err(err)?;
     Ok(jspkt::Pkt::from_dyn(&pkt))
 }
 #[wasm_bindgen]
@@ -146,7 +146,7 @@ pub fn lk_keypoint(key: &SigningKey,data:&JsValue,fields: &Fields) -> Result<Pkt
 
     let data = bytelike(data)?;
     let (domain,group,path,links,create) = common_args(fields)?;
-    let pkt = linkspace_pkt::try_keypoint_ref(domain, group, &*path, &*links, &data, create,&key.0,NetOpts::Default).map_err(err)?;
+    let pkt = linkspace_pkt::try_keypoint_ref(domain, group, &path, &links, &data, create,&key.0,NetOpts::Default).map_err(err)?;
     Ok(jspkt::Pkt::from_dyn(&pkt))
 }
 

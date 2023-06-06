@@ -253,7 +253,7 @@ impl PktPredicates {
                     FieldEnum::PktHashF => {
                         self.hash.try_add(op, LkHash::try_from(val)?.into())?;
                         if op == TestOp::Equal {
-                            self.state.i_query.try_add(TestOp::Equal, 0u32.into())?;
+                            self.state.i_query.try_add(TestOp::Equal, 0u32)?;
                         }
                     },
                     FieldEnum::DomainF => self

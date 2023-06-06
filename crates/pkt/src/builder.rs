@@ -104,7 +104,7 @@ fn linkp<'t>(
     let tail = Tail { links, data, ipath };
     let ipath_size = ipath.ipath_bytes().len();
     let offset_ipathu =
-        size_of::<PointHeader>() + size_of::<LinkPointHeader>() + (links.len() * size_of::<Link>());
+        size_of::<PointHeader>() + size_of::<LinkPointHeader>() + std::mem::size_of_val(links);
     let offset_ipath = U16::new(offset_ipathu as u16);
     let offset_data = U16::new((offset_ipathu + ipath_size) as u16);
     let pkt_header = PointHeader::new(

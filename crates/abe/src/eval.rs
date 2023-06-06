@@ -100,8 +100,8 @@ pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I, d
         .map(|b| (b.as_ref().to_vec(), Some(delimiter)))
         .collect();
     match lst.last_mut(){
-        Some(v) => {v.1 = None; return ABList{lst}},
-        None => return ABList::default(),
+        Some(v) => {v.1 = None; ABList{lst}},
+        None => ABList::default(),
     }
 }
 
@@ -234,7 +234,7 @@ impl<'o> TryFrom<&'o [ABE]> for ABList{
 
     fn try_from(abe :&'o [ABE]) -> Result<Self, Self::Error> {
         if let Some(expr) = abe.iter().find(|v| matches!(v, ABE::Expr(Expr::Lst(_)))){ return Err(expr)}
-        let abl = abe.into_iter().map(|v| match v {
+        let abl = abe.iter().map(|v| match v {
             ABE::Ctr(c) => ABItem::Ctr(*c),
             ABE::Expr(Expr::Bytes(b)) => ABItem::Bytes(b.clone()),
             ABE::Expr(Expr::Lst(_))=>unreachable!()
@@ -279,7 +279,7 @@ impl<V> ApplyResult<V> {
         }
     }
     pub fn arg_err<X: AsRef<[u8]>>(args: impl IntoIterator<Item = X>, expect: &str) -> Self {
-        ApplyResult::Err(anyhow!("expect {expect} but got {:?}", clist(args)).into())
+        ApplyResult::Err(anyhow!("expect {expect} but got {:?}", clist(args)))
     }
     pub fn or_else(self, map: impl FnOnce() -> ApplyResult<V>) -> Self {
         if matches!(self, AR::NoValue) {
@@ -1098,7 +1098,7 @@ impl EvalScopeImpl for BytesFE {
                 .transpose()?
                 .unwrap_or(16usize);
             if len > bytes.len() {
-                if check_len { return Err( anyhow!("less than length {len} ( use '~[lr]cut or [lr]fixed")).into() }
+                if check_len { return Err( anyhow!("less than length {len} ( use '~[lr]cut or [lr]fixed")) }
                 return Ok(bytes.to_vec());
             };
             Ok(if left {
@@ -1215,7 +1215,7 @@ impl EvalScopeImpl for LogicOps {
                     match i[1] {
                         b"=" => {
                             if blen != size {
-                                return Err(anyhow!("expected {size} bytes got {blen}").into());
+                                return Err(anyhow!("expected {size} bytes got {blen}"));
                             } else {
                             }
                         }

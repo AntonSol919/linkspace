@@ -42,8 +42,8 @@ pub fn checkout_now(
             }
         }
     }
-    std::fs::create_dir_all(&root.parent().unwrap())?;
-    let sp = dgp.path.clone();
+    std::fs::create_dir_all(root.parent().unwrap())?;
+    let sp = dgp.path;
     for pkt in reader.query_tree(query_mode::Order::Desc, &watch) {
         let p = match resolve_path(&root, &sp, pkt.get_spath(), &[])? {
             Some(p) => p,

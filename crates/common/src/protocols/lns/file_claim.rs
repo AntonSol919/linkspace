@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 pub(crate) fn setup(lk:&Linkspace,claim: Claim,overwrite:bool) -> anyhow::Result<()>{
     let path = claim.name.file_path()?;
-    lk.env().set_files_data(&path,claim.pkt.as_netpkt_bytes(),overwrite)?;
+    lk.env().set_files_data(path,claim.pkt.as_netpkt_bytes(),overwrite)?;
     if let Some(g) = claim.group() {
         lk.env().set_files_data(format!("by-group/{g}"), claim.name.to_string().as_bytes(), true)?;
     }

@@ -85,7 +85,7 @@ impl<F> NotifyClose<F> {
 
 impl<F: PktStreamHandler> PktStreamHandler for NotifyClose<F> {
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
-        self.inner.handle_pkt(pkt, &lk)
+        self.inner.handle_pkt(pkt, lk)
     }
 
     fn stopped(&mut self, _watch: BareWatch, _rx: &Linkspace, _reason: StopReason) {

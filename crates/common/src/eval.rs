@@ -219,7 +219,7 @@ impl EvalScopeImpl for OSEnv{
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[ScopeFunc {
             apply: |_this: &Self, inp: &[&[u8]], _, _scope| {
-                let st : &OsStr = OsStr::from_bytes(&inp[0]); // TODO this might be wrong
+                let st : &OsStr = OsStr::from_bytes(inp[0]); // TODO this might be wrong
                 std::env::var_os(st)
                     .with_context(|| format!("{st:?} env variable not set"))
                     .map(|o| o.as_bytes().to_vec())

@@ -62,7 +62,7 @@ impl<R: LKS> NetLNS<R> {
     // TODO - this and get by_tag needs to probe the lns resolver instead of doing it themselves.
     fn get_claim(&self, name: Name) -> anyhow::Result<Claim>{
         match self.private().get_claim(name.clone())?{
-            Some(c) => return Ok(c),
+            Some(c) => Ok(c),
             None => {
                 let mut issue :Result<(),Issue>= Ok(());
                 match super::lookup_live_chain(&self.rt.lk()?, &name, &mut |i| {issue = Err(i);Ok(())})?{
@@ -74,7 +74,7 @@ impl<R: LKS> NetLNS<R> {
     }
     fn get_by_tag(&self, tag: Tag,ptr:Ptr) -> anyhow::Result<Option<Name>>{
         match self.private().get_by_tag(tag, ptr)?{
-            Some(v) => return Ok(Some(v)),
+            Some(v) => Ok(Some(v)),
             None => Ok(None)
         }
     }

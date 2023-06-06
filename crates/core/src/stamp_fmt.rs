@@ -274,11 +274,11 @@ impl StampEF {
                     result = Some(st.into_bytes());
                     break;
                 }
-                e => return Err(anyhow!("unknown args '{}'", clist(e)).into()),
+                e => return Err(anyhow!("unknown args '{}'", clist(e))),
             };
         }
         if !args.is_empty() {
-            return Err(anyhow!("bad trailing args '{}'", clist(args)).into());
+            return Err(anyhow!("bad trailing args '{}'", clist(args)));
         }
         Ok(result.unwrap_or_else(|| stamp.0.to_vec()))
     }

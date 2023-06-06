@@ -70,7 +70,7 @@ impl Linkspace {
         self.exec.process_txn.borrow().clone()
     }
     pub fn get_writer(&self) -> WriteTxn2 {
-        if self.exec.written.get() == false {
+        if !self.exec.written.get() {
             tracing::trace!("Set Written true")
         }
         self.exec.written.set(true);
@@ -131,7 +131,7 @@ impl Linkspace {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 if let Some(w) = lk.0.register(watch_entry) {
-                    drop_watch(w, &self, StopReason::Replaced)
+                    drop_watch(w, self, StopReason::Replaced)
                 }
             }
             Err(_) => self
@@ -146,11 +146,11 @@ impl Linkspace {
             match cmd {
                 Pending::NewWatch { watch_entry } => {
                     if let Some(w) = lk.0.register(watch_entry) {
-                        drop_watch(w, &self, StopReason::Replaced)
+                        drop_watch(w, self, StopReason::Replaced)
                     }
                 }
                 Pending::Close { id, range } => {
-                    lk.0.deregister(&id, range, |w| drop_watch(w, &self, StopReason::Closed));
+                    lk.0.deregister(&id, range, |w| drop_watch(w, self, StopReason::Closed));
                 }
                 Pending::PostWatch { cb, span } => lk.1.push((cb, span)),
             }
@@ -354,7 +354,7 @@ impl Linkspace {
         std::mem::drop((txn, lock));
         if self.exec.written.get() {
             tracing::trace!("Written true");
-            return self.process();
+            self.process()
         } else {
             upto
         }
@@ -401,7 +401,7 @@ impl Linkspace {
                 Ok(self.watch(
                     id,
                     mode,
-                    Cow::Borrowed(&query),
+                    Cow::Borrowed(query),
                     onmatch,
                     start,
                     span,
@@ -410,7 +410,7 @@ impl Linkspace {
             None => Ok(self.watch(
                 id,
                 mode,
-                Cow::Borrowed(&query),
+                Cow::Borrowed(query),
                 onmatch,
                 start,
                 span,
@@ -483,7 +483,7 @@ impl Linkspace {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.0.deregister(id.as_ref(), false, |w| {
-                    drop_watch(w, &self, StopReason::Closed)
+                    drop_watch(w, self, StopReason::Closed)
                 });
             }
             Err(_) => self.exec.pending.borrow_mut().push(Pending::Close {
@@ -496,7 +496,7 @@ impl Linkspace {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.0.deregister(prefix.as_ref(), true, |w| {
-                    drop_watch(w, &self, StopReason::Closed)
+                    drop_watch(w, self, StopReason::Closed)
                 });
             }
             Err(_) => self.exec.pending.borrow_mut().push(Pending::Close {

@@ -83,12 +83,12 @@ impl Claim {
         let path = name.claim_ipath();
         let data = ClaimData::new(until, misc).to_vec();
         let group =name.claim_group().unwrap_or(PRIVATE);
-        let pkt = linkpoint(group, LNS, &path, &links, &data, Stamp::ZERO, ()).as_netbox(); 
+        let pkt = linkpoint(group, LNS, &path, links, &data, Stamp::ZERO, ()).as_netbox(); 
         ensure!(*pkt.get_create_stamp() < until);
         Self::from(pkt)
     }
     pub fn read(reader: &ReadTxn,ptr: &LkHash) -> anyhow::Result<Option<Self>>{
-        Ok(reader.read(&ptr)?.map(|p| Claim::from(p)).transpose()?)
+        reader.read(ptr)?.map(Claim::from).transpose()
     }
     
     pub fn enckey(&self) -> anyhow::Result<Option<Either<&str,LkHash>>>{
@@ -143,7 +143,7 @@ pub fn vote(claim: &Claim,key: &SigningKey)-> anyhow::Result<NetPktBox>{
 pub struct ClaimData(Vec<ABList>);
 impl ClaimData {
     pub fn new(until:Stamp,mut values:Vec<ABList>) -> Self {
-        values.splice(0..0, [clist(&[b"until" as &[u8],&until.0])]);
+        values.splice(0..0, [clist([b"until" as &[u8],&until.0])]);
         ClaimData(values)
     }
     pub fn get_value(&self,b:&[u8]) -> Option<anyhow::Result<&[u8]>>{

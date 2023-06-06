@@ -23,7 +23,7 @@ pub fn root_claim() -> LiveClaim{
 }
 
 pub fn lns_root_claims() -> impl Iterator<Item=NetPktBox>{
-    crate::pkt_reader::NetPktDecoder::new(linkspace_core::LNS_ROOTS).into_iter().map(|v| v.unwrap().as_netbox())
+    crate::pkt_reader::NetPktDecoder::new(linkspace_core::LNS_ROOTS).map(|v| v.unwrap().as_netbox())
 }
 
 pub type IssueHandler<'o> = &'o mut dyn FnMut(Issue) -> anyhow::Result<()>;

@@ -109,7 +109,7 @@ fn main() -> anyhow::Result<()> {
             let signing = key.identity(&common, true)?;
             let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
             ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
-            let pkt = lns::claim::vote(&claim, &signing)?;
+            let pkt = lns::claim::vote(&claim, signing)?;
             common.write_multi_dest(&mut write, &pkt, None)?;
         }
         Cmd::Get{name, write, write_signatures,chain } => {
@@ -156,7 +156,7 @@ fn main() -> anyhow::Result<()> {
                     let encpubkey : PubKey= identity::pubkey(&k)?.into();
                     if let Some(pk) = pubkey { ensure!(pk == encpubkey,"pubkey and enckey don't match. pick one")}
                     pubkey = Some(encpubkey);
-                    misc.push(clist(&[b"enckey",k.as_bytes()]));
+                    misc.push(clist([b"enckey",k.as_bytes()]));
                 },
                 None => {},
             }

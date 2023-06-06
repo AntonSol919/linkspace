@@ -95,7 +95,7 @@ where
     let mut links = vec![];
     super::chunk_reader_try_fold::<_, _, _, MAX_DATA_SIZE>(reader, (), |(), buf| {
         hasher.update(buf);
-        let pkt = datapoint(&buf, ());
+        let pkt = datapoint(buf, ());
         links.push(Link {
             tag: ab(b"bytes"),
             ptr: pkt.hash(),
@@ -111,7 +111,7 @@ where
     let blob_hash = hasher.finalize();
     let mut spath = BLOB_SP.to_owned().try_ipath().unwrap();
     spath
-        .extend_from_iter(&[blob_hash.as_bytes() as &[u8], b"part"])
+        .extend_from_iter([blob_hash.as_bytes() as &[u8], b"part"])
         .unwrap();
     let mut links: &mut [Link] = &mut links;
     while links.len() > MAX_LINKS_LEN {
@@ -134,7 +134,7 @@ where
             ptr: part_hash,
         };
     }
-    let bloblist = linkpoint(group, domain, &spath, &links, &[], Stamp::ZERO, ());
+    let bloblist = linkpoint(group, domain, &spath, links, &[], Stamp::ZERO, ());
     let hash = bloblist.hash();
     for_each(bloblist)?;
     O::from_output(hash)
@@ -153,7 +153,7 @@ pub fn checkout_from(
     let mut data_ptrs = vec![];
     open(
         &mut data_ptrs,
-        &reader,
+        reader,
         pkt.as_point().get_links(),
         &mut incomplete,
     )?;

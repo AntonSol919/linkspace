@@ -108,9 +108,9 @@ impl PredicateAliases {
         let log = index.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
 
         let watch = qid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
-            .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)).into());
+            .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)));
 
-        let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}).into());
+        let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}));
 
         let follow = follow.then(|| abev!(: (KnownOptions::Follow.to_string())));
 

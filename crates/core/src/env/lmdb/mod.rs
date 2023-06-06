@@ -53,13 +53,13 @@ impl BTreeEnv {
             if new {
             let mut bytes = LNS_ROOTS;
             let roots:Vec<_> = std::iter::from_fn(||{
-                if bytes.len() == 0 { return None;}
+                if bytes.is_empty() { return None;}
                 let pkt = crate::pkt::read::parse_netpkt(bytes, false).unwrap().unwrap();
                 let pkt = pkt.as_netbox();
                 bytes = &bytes[pkt.net_pkt_size()..];
                 Some(pkt)
             }).collect();
-            let mut it = roots.iter().map(|p| &*p as &dyn NetPkt);
+            let mut it = roots.iter().map(|p| p as &dyn NetPkt);
             let (i,_) = writer.write_many_state(&mut it, None).unwrap();
                 assert_eq!(i,464);
             }

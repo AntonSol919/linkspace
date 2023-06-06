@@ -138,12 +138,10 @@ pub struct DGPDExpr {
 impl DGPDExpr {
     pub fn predicate_exprs(self) -> anyhow::Result<impl Iterator<Item = Vec<ABE>>> {
         let mut prefix_rule = None;
-        if self.subsegment_limit != MAX_PATH_LEN as u8{
-            if !self.dgp.path.is_empty() && !self.dgp.path.0.iter().any(|v| v.is_fslash()) {
-                anyhow::bail!("can't use subrange expr with an evaluated spath ( dont know its length ).
-Must add ':**' and manually set -- path_len ...")
-            }
-        }
+        if self.subsegment_limit != MAX_PATH_LEN as u8 && !self.dgp.path.is_empty() && !self.dgp.path.0.iter().any(|v| v.is_fslash()) {
+                        anyhow::bail!("can't use subrange expr with an evaluated spath ( dont know its length ).
+        Must add ':**' and manually set -- path_len ...")
+                    }
 
 
         if self.subsegment_limit < MAX_PATH_LEN as u8 {

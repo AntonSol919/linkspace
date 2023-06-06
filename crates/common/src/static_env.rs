@@ -58,7 +58,7 @@ pub fn find_linkspace(root: Option<&Path>) -> io::Result<PathBuf> {
 
 pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspace> {
     let path = find_linkspace(root)?;
-    Ok(LINKSPACE.with(|rt| {
+    LINKSPACE.with(|rt| {
         rt.get_or_try_init(|| {
             // ensure the IPC thread is propery enabled.
             if ENV.get().is_none() != IPC_THREAD.get().is_none() {
@@ -72,5 +72,5 @@ pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspac
             Ok(rt)
         })
         .map(|r| r.clone())
-    })?)
+    })
 }

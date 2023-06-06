@@ -107,7 +107,7 @@ impl Pkt {
     pub fn path_list(&self) -> Option<js_sys::Array> {
         self.0.ipath().map(|p| {
             p.comps_bytes()[0..*p.path_len() as usize]
-                .into_iter()
+                .iter()
                 .map(|s| -> js_sys::Uint8Array { (*s).into()})
                 .collect()
         })
@@ -128,7 +128,7 @@ impl Pkt {
     }
     #[wasm_bindgen(getter)]
     pub fn path_len(&self) -> Option<u8> {
-        self.0.path_len().map(|b| *b)
+        self.0.path_len().copied()
     }
     pub fn size(&self) -> usize {
         self.0.size()

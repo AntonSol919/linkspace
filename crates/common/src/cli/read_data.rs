@@ -186,7 +186,7 @@ impl Reader {
         }
         if self.delim.is_some() && self.delim == buf.last().copied() { buf.pop(); }
         if self.eval {
-            *buf = eval(ctx, &parse_abe_b(&buf)?)?.concat();
+            *buf = eval(ctx, &parse_abe_b(buf)?)?.concat();
         }
         self.check_size(buf, freespace)?;
         

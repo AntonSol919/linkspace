@@ -84,11 +84,11 @@ pub mod point {
     ```
 
     **/
-    pub fn lk_datapoint<'o>(data: &'o [u8]) -> LkResult<NetPktBox> {
+    pub fn lk_datapoint(data: &[u8]) -> LkResult<NetPktBox> {
         lk_datapoint_ref(data).map(|v| v.as_netbox())
     }
-    pub fn lk_datapoint_ref<'o>(data: &'o [u8]) -> LkResult<NetPktParts<'o>> {
-        Ok(pkt::try_datapoint_ref(data, pkt::NetOpts::Default)?.into())
+    pub fn lk_datapoint_ref(data: &[u8]) -> LkResult<NetPktParts<'_>> {
+        Ok(pkt::try_datapoint_ref(data, pkt::NetOpts::Default)?)
     }
     /**
 
@@ -343,12 +343,12 @@ pub mod abe {
     **/
     pub fn lk_try_encode(bytes: impl AsRef<[u8]>, options: &str,ignore_encoder_err:bool) -> LkResult<String> {
         let bytes = bytes.as_ref();
-        Ok(varctx::lk_try_encode(
+        varctx::lk_try_encode(
             ctx::ctx(().into()).unwrap(),
             bytes,
             options,
             ignore_encoder_err
-        )?)
+        )
     }
     /// Custom context for use in [varctx]
     pub mod ctx {
@@ -422,7 +422,7 @@ pub mod abe {
             }
         }
 
-        pub fn ctx<'o>(udata: UserData<'o>) -> LkResult<LkCtx<'o>> {
+        pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
             _ctx(None, udata,false)
         }
         pub const fn core_ctx() -> LkCtx<'static> {
@@ -767,7 +767,7 @@ pub mod runtime {
         cb: impl PktHandler + 'static,
         span: tracing::Span,
     ) -> LkResult<i32> {
-        Ok(lk.0.watch_query(&query.0, interop::Handler(cb), span)?)
+        lk.0.watch_query(&query.0, interop::Handler(cb), span)
     }
     /// See [lk_watch2]
     pub fn vspan(name: &str) -> tracing::Span {
@@ -804,7 +804,7 @@ pub mod runtime {
     }
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
         for el in lk.0.dbg_watches().0.entries() {
-            cb(&el.query_id, Query::from_impl(&*el.query))
+            cb(&el.query_id, Query::from_impl(&el.query))
         }
     }
     #[derive(Debug)]
@@ -914,7 +914,7 @@ pub mod misc {
         let rand_u64 = u64::from_be_bytes(val[..8].try_into().expect("bytes2uniform requires at least 8 bytes"));
         let f64_exponent_bits: u64 = 1023u64 << 52;
         // Generate a value in the range [1, 2)
-        let value1_2 = f64::from_bits((rand_u64 >> 64-52) | f64_exponent_bits);
+        let value1_2 = f64::from_bits((rand_u64 >> (64-52)) | f64_exponent_bits);
         value1_2 - 1.0
     }
 

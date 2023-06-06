@@ -94,10 +94,10 @@ pub fn print_game_state(mw:&MineWeeper) -> bool{
 pub fn print_grid(mw:&MineWeeper){
     print!("[##]");
     (0..mw.cols).for_each(|c| print!(" [{c:>2}]"));
-    println!("");
+    println!();
     for (r,row) in mw.grid.iter().enumerate(){
         print!("[{r:>2}]");
         row.iter().for_each(|cell| print!(" {cell:>2}"));
-        println!("")
+        println!()
     }
 }

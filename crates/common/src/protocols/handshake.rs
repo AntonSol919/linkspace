@@ -38,13 +38,13 @@ pub fn phase0_client_init(id: &SigningKey) -> Phase0 {
     let now = now();
     Phase0(
         keypoint(
-            id.pubkey().into(),
+            id.pubkey(),
             HANDSHAKE_D,
             &ID_SENTINAL_SPATH,
             &[],
             &[],
             now,
-            &id,
+            id,
             ()
         )
         .as_netbox(),
@@ -67,7 +67,7 @@ pub fn phase1_server_signs(
         None => anyhow::bail!("not signed"),
     };
     valid_stamp_range(*theirs.get_create_stamp(), max_diff_sec)?;
-    let our_group = unicast_group(their_key, id.pubkey().into());
+    let our_group = unicast_group(their_key, id.pubkey());
     ensure!(our_group != PRIVATE,"Connecting to yourself (using the same key) is currently not supported");
     let links = [Link::new("auth", *theirs.hash())];
     Ok(Phase1(
@@ -78,7 +78,7 @@ pub fn phase1_server_signs(
             &links,
             &[],
             now(),
-            &id,
+            id,
             (),
         )
         .as_netbox(),
@@ -92,7 +92,7 @@ pub fn phase2_client_signs(
 ) -> anyhow::Result<(Phase2, PubKey)> {
     tracing::trace!("Build Phase2");
     ensure!(
-        my_phase0.0.pubkey() == Some(&id.pubkey().into()),
+        my_phase0.0.pubkey() == Some(&id.pubkey()),
         "identity mismatch"
     );
     let mine_hash = my_phase0.0.hash();
@@ -116,7 +116,7 @@ pub fn phase2_client_signs(
         theirs.domain() == Some(&HANDSHAKE_D),
         "not in the session domain"
     );
-    let our_group = unicast_group(id.pubkey().into(), their_key);
+    let our_group = unicast_group(id.pubkey(), their_key);
     ensure!(
         theirs.group() == Some(&our_group),
         "not in the right group "
@@ -133,7 +133,7 @@ pub fn phase2_client_signs(
         &[Link::new("signed", *theirs.hash())],
         &[],
         now,
-        &id,
+        id,
         ()
     )
     .as_netbox();
@@ -146,7 +146,7 @@ pub fn phase3_server_verify(
     id: &SigningKey,
 ) -> anyhow::Result<PubKey> {
     ensure!(
-        my_phase1.0.pubkey() == Some(&id.pubkey().into()),
+        my_phase1.0.pubkey() == Some(&id.pubkey()),
         "your identity mismatch"
     );
     let theirs = theirs.0.as_netbox();
@@ -158,7 +158,7 @@ pub fn phase3_server_verify(
         }
         None => anyhow::bail!("hello pkt not signed"),
     };
-    let our_group = unicast_group(id.pubkey().into(), their_key);
+    let our_group = unicast_group(id.pubkey(), their_key);
     ensure!(
         theirs.get_links().iter().any(|r| r.ptr == mine_hash),
         "did not validate my hash {}",

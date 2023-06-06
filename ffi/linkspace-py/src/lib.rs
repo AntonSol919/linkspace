@@ -466,7 +466,7 @@ pub fn lk_status_set(
             let val = callback.call0(py)?;
             let bytes = bytelike(val.as_ref(py))?;
 
-            let pkt = linkspace_rs::lk_linkpoint(domain, group, path, &[link], bytes, None);
+            let pkt = linkspace_rs::lk_linkpoint(bytes, domain, group, path, &[link], None);
             tracing::info!("Status result {:?}",pkt);
             pkt
         })

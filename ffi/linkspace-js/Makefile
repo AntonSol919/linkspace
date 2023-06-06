@@ -1,6 +1,8 @@
 .PHONY: build setup_env
 
-build: # setup_env
+build: CARGO_PROFILE_RELEASE_OPT_LEVEL="z" 
+build: 
+	@echo $(CARGO_PROFILE_RELEASE_OPT_LEVEL)
 	wasm-pack build --target web
 
 watch:

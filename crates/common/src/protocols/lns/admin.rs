@@ -110,9 +110,9 @@ fn read_claims<'o>(reader: &'o ReadTxn,pkt: &'o impl NetPkt,valid_at:Stamp) -> i
         .map(|(rt,p)| (rt,Claim::read(reader,&p)))
 }
 
-pub fn list_ptr_lookups<'o>(reader: &'o ReadTxn, tag: AB<[u8; 16]>,ptr:Option<Ptr>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'o {
+pub fn list_ptr_lookups(reader: &ReadTxn, tag: AB<[u8; 16]>,ptr:Option<Ptr>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'_ {
     let path = BY_TAG_P.into_spathbuf().push(tag);
-    let path = if let Some(p) = ptr { path.push(&*p)} else { path}; 
+    let path = if let Some(p) = ptr { path.push(*p)} else { path}; 
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).create_before(now()).unwrap();
     preds.prefix(path).unwrap();
     preds.path_len.add(TestOp::Equal,3);

@@ -157,7 +157,7 @@ impl Query {
     pub fn hash_eq(h: linkspace_pkt::LkHash) -> Self {
         let mut predicates = PktPredicates::default();
         predicates.hash.add(TestOp::Equal, h.into());
-        predicates.state.i_query.add(TestOp::Equal,0u32.into());
+        predicates.state.i_query.add(TestOp::Equal,0u32);
         let mut q= Query {
             predicates,
             options: Default::default()

@@ -62,7 +62,7 @@ impl<'a> Tail<'a> {
         unsafe {
             from_raw_parts(
                 self.links.as_ptr() as *const u8,
-                self.links.len() * size_of::<Link>(),
+                std::mem::size_of_val(self.links),
             )
         }
     }

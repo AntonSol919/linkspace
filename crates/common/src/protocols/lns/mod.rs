@@ -125,7 +125,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
 pub fn lookup_enckey(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<(PubKey,String)>>{
     let claim = lookup_claim(lk, name)?;
     match claim{
-        None => return Ok(None),
+        None => Ok(None),
         Some(c) => match c.enckey()?{
             Some(k) => resolve_enckey(&lk.get_reader(), k).map(Some),
             None => Ok(None)
@@ -171,7 +171,7 @@ pub fn setup_special_keyclaim(
         else { tracing::debug!(old_claim=%c)}
     }
     let pubkey = pubkey(enckey)?.into();
-    let claim = Claim::new(name, Stamp::MAX, &[Link{tag: PUBKEY_TAG,ptr:pubkey}], vec![clist(&["enckey",enckey])])?;
+    let claim = Claim::new(name, Stamp::MAX, &[Link{tag: PUBKEY_TAG,ptr:pubkey}], vec![clist(["enckey",enckey])])?;
     match sp {
         SpecialName::Local => {
             if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}

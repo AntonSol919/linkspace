@@ -86,11 +86,11 @@ fn main() -> anyhow::Result<()> {
         })
     });
     match mode {
-        Handshake::Phase0 => writer(&phase0_client_init(&id).0)?,
+        Handshake::Phase0 => writer(&phase0_client_init(id).0)?,
         Handshake::Phase1 => writer(
             &phase1_server_signs(
                 &Phase0(inp.next().context("Expected phase0")??),
-                &id,
+                id,
                 max_diff_secs,
             )?
             .0,
@@ -99,7 +99,7 @@ fn main() -> anyhow::Result<()> {
             let (phase2, _server_key) = phase2_client_signs(
                 &Phase0(inp.next().context("Missing phase0")??),
                 &Phase1(inp.next().context("Missing phase1")??),
-                &id,
+                id,
                 max_diff_secs,
             )?;
             writer(&phase2.0)?
@@ -109,14 +109,14 @@ fn main() -> anyhow::Result<()> {
                 &Phase0(inp.next().context("Missing phase0")??),
                 &Phase1(inp.next().context("Missing phase1")??),
                 &Phase2(inp.next().context("Missing phase2")??),
-                &id,
+                id,
             )?;
         }
         Handshake::Connect => {
-            let phase0 = phase0_client_init(&id);
+            let phase0 = phase0_client_init(id);
             writer(&phase0.0)?;
             let phase1 = Phase1(inp.next().context("Missing phase1")??);
-            let (phase2, _key) = phase2_client_signs(&phase0, &phase1, &id, max_diff_secs)?;
+            let (phase2, _key) = phase2_client_signs(&phase0, &phase1, id, max_diff_secs)?;
             writer(&phase2.0)?;
         }
         Handshake::Serve => {
@@ -126,10 +126,10 @@ fn main() -> anyhow::Result<()> {
                     .context("Missing phase0")?
                     .context("Reading phase0")?,
             );
-            let phase1 = phase1_server_signs(&phase0, &id, max_diff_secs)?;
+            let phase1 = phase1_server_signs(&phase0, id, max_diff_secs)?;
             writer(&phase1.0)?;
             let phase2 = Phase2(inp.next().context("Missing phase2")??);
-            let _key = phase3_server_verify(&phase0, &phase1, &phase2, &id)?;
+            let _key = phase3_server_verify(&phase0, &phase1, &phase2, id)?;
         }
     }
     Ok(())

@@ -389,7 +389,7 @@ fn test_inset() {
                 if !mask.has_any() {
                     continue;
                 };
-                let iter_find = (val..=u8::MAX).filter(|v| mask.test(v)).next();
+                let iter_find = (val..=u8::MAX).find(|v| mask.test(v));
                 assert_eq!(mask.in_set(val), iter_find)
             }
         }

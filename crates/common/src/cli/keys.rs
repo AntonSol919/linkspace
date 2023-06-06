@@ -37,7 +37,7 @@ impl KeyOpts {
             None => return Ok(None),
             Some(k) => k,
         };
-        if enckey.starts_with("$"){
+        if enckey.starts_with('$'){
             let pubkey = crate::identity::pubkey(enckey)?.into();
             return Ok(Some((pubkey,enckey.to_string())))
         };
@@ -158,7 +158,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         no_check = true;
         encrypt(
             &key,
-            &password,
+            password,
             cost
         )
     };
@@ -186,7 +186,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         let keystr = enckey.context("new_pass but no --enckey found")?;
         let old_password = key.password_bytes_prompt(common, true,"old password: ")?;
         let skey = decrypt(&keystr, &old_password)?;
-        key.password = new_pass_str.clone();
+        key.password = new_pass_str;
         let new_password =key.password_bytes_prompt(common, true,"new password: ")?;
         key.password = Some(abtxt::as_abtxt(&new_password).to_string());
         key.utf8_password = false;
@@ -214,7 +214,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         let pubkey = if no_lk {
             B64(pubkey(&enckey)?)
         } else {
-            lns::setup_special_keyclaim(&rt, name, &enckey,true)?
+            lns::setup_special_keyclaim(rt, name, &enckey,true)?
         };
         print(enckey,pubkey);
         return Ok(());
@@ -239,7 +239,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
             let pubkey = if no_lk {
                 B64(pubkey(&enckey)?)
             }else{
-                lns::setup_special_keyclaim(&rt, name, &enckey,false)?
+                lns::setup_special_keyclaim(rt, name, &enckey,false)?
             };
             print(enckey,pubkey)
         }

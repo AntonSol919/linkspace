@@ -7,9 +7,9 @@
 use linkspace_common::core::query::Query as QueryImpl;
 use crate::Query;
 #[doc(hidden)]
-impl Into<QueryImpl> for crate::Query {
-    fn into(self) -> QueryImpl {
-        self.0
+impl From<crate::Query> for QueryImpl {
+    fn from(val: crate::Query) -> Self {
+        val.0
     }
 }
 #[doc(hidden)]
@@ -36,9 +36,9 @@ impl From<linkspace_common::runtime::Linkspace> for crate::Linkspace {
     }
 }
 #[doc(hidden)]
-impl Into<linkspace_common::runtime::Linkspace> for crate::Linkspace {
-    fn into(self) -> linkspace_common::runtime::Linkspace {
-        self.0
+impl From<crate::Linkspace> for linkspace_common::runtime::Linkspace {
+    fn from(val: crate::Linkspace) -> Self {
+        val.0
     }
 }
 impl crate::Linkspace{
