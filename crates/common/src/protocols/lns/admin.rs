@@ -7,7 +7,7 @@
 /// The lns:[#:0] lookup entries.
 
 use crate::{prelude::*, protocols::lns::{GROUP_TAG, LNS, BY_TAG_P, PUBKEY_TAG}};
-use linkspace_core::prelude::query_mode::Order;
+use linkspace_core::prelude::{query_mode::Order, RecvPktPtr};
 use tracing::instrument;
 
 use super::claim::Claim;

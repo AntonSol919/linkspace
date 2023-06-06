@@ -33,7 +33,7 @@ pub mod prelude {
     pub use super::*;
     pub use linkspace_common::{
         byte_fmt::{endian_types, AB, B64},
-        core::env::queries::RecvPktPtr,
+        core::env::RecvPktPtr,
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,

@@ -1,3 +1,5 @@
+use linkspace_core::prelude::lmdb::BTreeEnv;
+
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public

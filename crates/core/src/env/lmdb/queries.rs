@@ -10,17 +10,17 @@ use super::db::MutHashCursor;
 use super::db::MutPktCursor;
 use super::db::MutTreeCursor;
 use super::db::PktLogCursor;
-use super::db::Refreshable;
+use super::misc::IterDirection;
+use super::misc::Refreshable;
 use super::db::WriteTxn;
-use super::tree_key::*;
-use super::write_result::WriteResult;
-use super::write_trait::SWrite;
-use crate::env::db::assert_align;
-use crate::env::db::IterDirection;
+use super::misc::assert_align;
+use crate::env::RecvPktPtr;
+use crate::env::tree_key::*;
+use crate::env::write_result::WriteResult;
+use crate::env::write_trait::SWrite;
 use crate::partial_hash::PartialHash;
 use crate::stamp_range::StampRange;
 use either::Either;
-use linkspace_pkt::reroute::RecvPkt;
 use linkspace_pkt::*;
 
 pub fn as_recv_ptr((llp, bytes): (u64, &[u8])) -> RecvPktPtr {
@@ -30,8 +30,6 @@ pub fn as_recv_ptr((llp, bytes): (u64, &[u8])) -> RecvPktPtr {
     }
 }
 
-/// A [NetPktPtr] and a recv stamp
-pub type RecvPktPtr<'o> = RecvPkt<&'o NetPktPtr>;
 
 fn as_netpkt(bytes: &[u8]) -> &NetPktPtr {
     unsafe { NetPktPtr::from_bytes_unchecked(bytes) }
@@ -70,44 +68,11 @@ pub struct IReadTxn<C = super::db::ReadTxn> {
     pub(crate) btree_txn: C,
 }
 
-impl<C: super::db::Cursors> IReadTxn<C> {
+impl<C: super::misc::Cursors> IReadTxn<C> {
     pub(crate) fn new(btree_txn: C) -> Self {
         tracing::trace!("Open txn");
         IReadTxn { btree_txn }
     }
-    /*
-    pub fn validate(&self) -> anyhow::Result<DBStats>{
-        todo!()
-        let mut stats = DBStats::default();
-        {
-
-            let mut hashes = HashSet::new();
-            let mut logptr = 0;
-            let mut list = vec![];
-            for pkt in self.pkts_after(Stamp::ZERO){
-                assert!(logptr < pkt.recv.get());
-                logptr = pkt.recv.get();
-                list.push(logptr);
-                hashes.insert(*pkt.hash());
-            }
-            tracing::info!(list=?list,"pktlist");
-            for (hash,_) in self.partial_hashes(PartialHash::min()){
-                assert!(hashes.contains(hash));
-            }
-            let mut it = list.into_iter().rev();
-            for (pkt,idx) in self.history().zip(&mut it){
-                assert_eq!(idx,pkt.recv.get());
-                if !hashes.remove(pkt.hash()){
-                    panic!()
-                }
-            }
-            assert!(it.next().is_none());
-            stats.pkts = hashes.len();
-        }
-        tracing::info!(stats=?stats,"Validate ok");
-        Ok(stats)
-    }
-     */
 
     /// read a pkt and use the local net header
     pub fn read_ptr(&self, hash: &LkHash) -> Result<Option<Stamp>> {

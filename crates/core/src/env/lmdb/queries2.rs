@@ -29,17 +29,18 @@ use crate::{
         exprs::RuleType,
         test_pkt::{compile_predicates, PktStreamTest},
     },
-    prelude::{
-        treekey::{spd, TreeKeysIter},
-        IReadTxn, RecvPktPtr, TreeEntryRef,
-    },
+    prelude::{TreeEntryRef}
 };
 
-use super::query_mode::{Mode, Order, Table};
-use super::tree_key::treekey_checked;
+use crate::env::query_mode::{Mode, Order, Table};
+use crate::env::tree_key::treekey_checked;
+
+use crate::env::RecvPktPtr;
+use super::queries::IReadTxn;
+use super::tree_iter::TreeKeysIter;
 
 
-impl<C: super::db::Cursors> IReadTxn<C> {
+impl<C: super::misc::Cursors> IReadTxn<C> {
     pub fn scope_iter<'o>(
         &'o self,
         rules: &PktPredicates,
@@ -48,7 +49,7 @@ impl<C: super::db::Cursors> IReadTxn<C> {
         let req = rules.compile_tree_keys(order.is_asc()).unwrap();
         let lower_bound = req.lower_bound().unwrap();
         let iter_dup = self.btree_txn.tree_cursor().iter_dup(order.is_asc());
-        let at = iter_dup.set_range(&lower_bound).map(spd)?;
+        let at = iter_dup.set_range(&lower_bound).map(super::tree_iter::spd)?;
         let mut it = TreeKeysIter {
             req,
             iter_dup,

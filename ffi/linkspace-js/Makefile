@@ -1,6 +1,6 @@
 .PHONY: build setup_env
 
-build: setup_env
+build: # setup_env
 	wasm-pack build --target web
 
 setup_env:

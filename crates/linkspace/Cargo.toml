@@ -15,9 +15,13 @@ description = "linkspace - a general purpose supernet"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+default = ["full", "lmdb"]
+lmdb=["linkspace-common/lmdb"]
+full = ["linkspace-common/full"]
+
 
 [dependencies]
 anyhow.workspace=true
 backtrace = "0.3.67"
-linkspace-common = { path = "../common", version = "0.2.0"}
+linkspace-common = { path = "../common", version = "0.2.0", default-features = false}
 tracing.workspace = true

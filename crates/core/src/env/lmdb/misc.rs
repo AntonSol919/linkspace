@@ -1,23 +1,5 @@
-// Copyright Anton Sol
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/*
-TODO: Write txn should open its cursor once and keep them around.
-*/
+use super::db::{PktLogCursor, TreeCursor, HashCursor};
 
-/*
-#[cfg(all(feature = "inmem",not(feature = "lmdb'")))]
-pub mod inmem;
-#[cfg(all(feature = "inmem",not(feature = "lmdb'")))]
-pub use self::inmem::*;
-*/
-
-#[cfg(feature = "lmdb")]
-pub mod lmdb;
-#[cfg(feature = "lmdb")]
-pub use self::lmdb::*;
 
 pub trait Cursors {
     fn pkt_cursor(&self) -> PktLogCursor;

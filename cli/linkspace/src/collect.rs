@@ -115,7 +115,8 @@ impl Collector {
         for l in self.c_opts.build.link.iter() {
             self.links.push(l.eval(&ctx)?);
         }
-        std::mem::drop(pkt);
+        #[allow(dropping_copy_types)]
+        let _ = std::mem::drop(pkt);
 
         self.current_links = 0;
         if !self.buf.is_empty() {

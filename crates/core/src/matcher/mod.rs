@@ -11,7 +11,7 @@ use linkspace_pkt::{abe::TypedABE, reroute::RecvPkt, NetPkt, NetPktExt, Stamp};
 use tracing::{Span, instrument};
 
 use crate::{
-    env::queries::RecvPktPtr,
+    env::RecvPktPtr,
     predicate::{
         test_pkt::{compile_predicates, PktStreamTest},
         TestSet,

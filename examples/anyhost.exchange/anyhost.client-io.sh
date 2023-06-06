@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # parent should set out to fd4. otherwise add a exec 4>&1 1>&2
 set -euo pipefail
 function fin (){
@@ -20,7 +20,7 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-lk set-status exchange $LK_GROUP process anyhost-client --read-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" &
+lk set-status exchange $LK_GROUP process anyhost-client --read-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --read-repeat &
 
 export LK_NO_CHECK=true
 
@@ -40,7 +40,7 @@ lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
     | lk p  ">>>>new request [hash:str]\n[data]\n<<<<" &
 
 
-# This group exchange requires us to send all the data to the server
+# The exchange logic is to have every piece of data created locally send to a server
 lk watch --bare --mode log-asc -- "group:=:$LK_GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
     | lk get-links skip \
     | lk dedup \

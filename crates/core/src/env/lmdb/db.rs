@@ -17,11 +17,11 @@ use std::{fmt::Debug, io::Write, marker::PhantomData, mem::size_of, path::Path, 
 
 use crate::{env::write_result::WriteResult, prelude::TreeValueBytes};
 
-use super::{assert_align, IterDirection};
-
 #[derive(Clone)]
 pub struct RawBTreeEnv(Arc<LMDBEnv>);
 pub use lmdb::Error;
+
+use super::misc::{ Refreshable, assert_align, IterDirection, Cursors};
 
 pub type WriteTxn<'o> = LMDBTxn<lmdb::RwTransaction<'o>>;
 pub type MutHashCursor<'o> = UniqCursor<'o, [u8; 32], RwCursor<'o>>;
@@ -241,7 +241,7 @@ impl<'e> WriteTxn<'e> {
         Ok(())
     }
 }
-impl<'o, TXN: 'o + lmdb::Transaction> super::Cursors for LMDBTxn<TXN> {
+impl<'o, TXN: 'o + lmdb::Transaction> Cursors for LMDBTxn<TXN> {
     fn pkt_cursor(&self) -> PktLogCursor {
         UniqCursor::new_pkt(
             self.txn
@@ -270,7 +270,7 @@ impl<'o, TXN: 'o + lmdb::Transaction> super::Cursors for LMDBTxn<TXN> {
         )
     }
 }
-impl super::Refreshable for ReadTxn {
+impl Refreshable for ReadTxn {
     fn refresh(&mut self) {
         tracing::trace!("Refresh");
         self.txn = Some(self.txn.take().unwrap().reset().renew().unwrap());

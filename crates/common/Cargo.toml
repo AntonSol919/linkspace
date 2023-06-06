@@ -17,7 +17,6 @@ repository.workspace = true
 [features]
 default = ["full", "lmdb"]
 lmdb=["linkspace-core/lmdb"]
-inmem=["linkspace-core/inmem"]
 fs=["memmap2", "notify"]
 cli=["clap", "clap/env", "clap/derive", "rpassword"]
 full=["fs", "cli"]

@@ -106,7 +106,8 @@ pub fn linkpoint(
     common.write_multi_dest(dest, &pkt, None)?;
     if !multi.multi{ return Ok(()) }
     let mut ptr = pkt.hash();
-    std::mem::drop(pkt);
+    #[allow(dropping_copy_types)]
+    let _ = std::mem::drop(pkt);
 
     loop {
         if let Some(e) = &multi.multi_link{
