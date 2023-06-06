@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![allow(incomplete_features)]
 #![feature(
+    try_blocks,
     slice_split_at_unchecked,
     doc_notable_trait,
     thread_local,

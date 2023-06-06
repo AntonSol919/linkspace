@@ -6,6 +6,7 @@
 use super::*;
 static_assertions::assert_eq_size!([u8; MIN_NETPKT_SIZE], PartialNetHeader);
 /// Utility struct used for decoding from stream
+// Essentially the same as NetPktPtr but explicitly not complete.
 #[derive(Copy, Clone, Debug)]
 #[repr(C)]
 pub struct PartialNetHeader {
@@ -24,7 +25,7 @@ impl PartialNetHeader {
     }
     /// # Safety
     ///
-    /// This must be a reference to a buffer of at least self.pkt_header.net_pkt_size len with the correct hash
+    /// The caller is responsible for checking the headers validity and filling the allocated buffer.
     pub unsafe fn alloc(self) -> NetPktBox {
         let (layout, metadata) = crate::netpktbox_layout(&self.point_header);
         let ptr: *mut u8 = std::alloc::alloc(layout);

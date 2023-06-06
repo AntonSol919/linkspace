@@ -64,6 +64,12 @@ class Pkt:
     ubits3: bytes
     stamp: bytes
 
+
+    
+    def size(self) -> int: 
+        """the size of the entire net packet as it would be using lk_write"""
+        ...
+
     def path_list(self) -> list[bytes]: ...
     def __eq__(self, other) -> bool: ...
     def __ge__(self, other) -> bool: ...
@@ -346,7 +352,7 @@ def lk_write(pkt:Pkt) -> bytes:
     ...
 def lk_read(bytes:bytes,validate:bool=True,allow_private:bool=False) -> tuple[Pkt,bytes]:
     """
-    Read bytes as a packet. In python this will copy the bytes.
+    Read bytes as a packet. 
     Args:
         bytes:
         validate:

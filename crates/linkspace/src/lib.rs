@@ -178,14 +178,22 @@ pub mod point {
         )?)
     }
 
-    pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<NetPktBox> {
-        // TODO - we can't do NetPktParts because of alignment. Maybe add UnallignedNetPktParts?
+    
+    // TODO - we can't do NetPktParts because of alignment. Maybe add UnallignedNetPktParts?
+    pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<(NetPktBox,&[u8])> {
         let pkt = super::misc::read::parse_netpkt(buf, validate)?
             .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
         anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
-        Ok(pkt.as_netbox())
+        let size = pkt.size();
+        Ok((pkt,&buf[size..]))
     }
-
+    pub fn lk_read_arc(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<(NetPktArc,&[u8])> {
+        let pkt = super::misc::read::parse_netarc(buf, validate)?
+            .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
+        anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
+        let size = pkt.size();
+        Ok((pkt,&buf[size..]))
+    }
     pub fn lk_write(p: &dyn NetPkt, out: &mut dyn io::Write) -> io::Result<()> {
         let mut segments = p.byte_segments().io_slices();
         out.write_all_vectored(&mut segments)

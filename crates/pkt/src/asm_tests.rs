@@ -8,7 +8,7 @@ use crate::*;
 #[test]
 fn build() {
     let pkt = datapoint(&[], ()).as_netbox();
-    let ok = pkt.check::<true>();
+    let ok = pkt.check(true);
     assert!(ok.is_ok(), "{:?}", ok);
     let pkt = linkpoint(
         B64([0; 32]),
@@ -20,7 +20,7 @@ fn build() {
         (),
     )
     .as_netbox();
-    let ok = pkt.check::<true>();
+    let ok = pkt.check(true);
     assert!(ok.is_ok(), "{:?}", ok);
 }
 
@@ -56,7 +56,7 @@ fn sanity() {
     assert_eq!(linkpoint.data(), b"datatest");
     let bytes = linkpoint.as_netbox();
     assert_eq!(bytes.get_ipath(), &*spath);
-    bytes.check::<true>().unwrap();
+    bytes.check(true).unwrap();
     assert_eq!(bytes.data(), b"datatest");
 
     let parts = bytes.as_netparts();
@@ -90,7 +90,7 @@ fn sanity() {
     validate_signature(&pubkey.as_slice().try_into().unwrap(), &signature, &hash).expect("HASH OK");
 
     let bytes = keypoint.as_netbox();
-    bytes.check::<true>().expect("check ok");
+    bytes.check(true).expect("check ok");
     let parts = bytes.as_netparts();
     assert_eq!(parts.hash(), keypoint.hash());
 }

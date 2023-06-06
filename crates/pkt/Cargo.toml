@@ -25,7 +25,7 @@ auto_impl.workspace=true
 bytes.workspace=true
 bitflags.workspace=true
 
-triomphe = "0.1.8"
+triomphe = { version = "0.1.8", path ="../../libs/triomphe"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.80"

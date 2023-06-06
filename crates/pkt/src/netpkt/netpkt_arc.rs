@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::{NetPkt, NetPktPtr};
+use crate::{NetPkt, NetPktPtr, PartialNetHeader, Error};
 use std::{
     borrow::Borrow, fmt::Debug, mem::size_of, ops::Deref, ptr::NonNull, sync::atomic::AtomicUsize,
 };
@@ -91,6 +91,17 @@ impl NetPktArc {
         let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size);
         let arc: Arc<HeaderSlice<NetPktPtr, [u8]>> = unsafe { std::mem::transmute(inner) };
         NetPktArc(arc)
+    }
+    pub unsafe fn from_header_and_copy(partial: PartialNetHeader,check_crypt:bool, copy_from:impl FnOnce(&mut [u8])) -> Result<Self,Error>{
+        let h = crate::NetPktPtr {
+            net_header: partial.net_header,
+            hash: partial.hash,
+            point: crate::PointThinPtr(partial.point_header),
+        };
+        let inner_len = h.point.point_header().content_size();
+        let pkt= NetPktArc(triomphe::Arc::from_header_and_fn(h,inner_len,copy_from));
+        pkt.check(check_crypt)?;
+        Ok(pkt)
     }
 }
 impl Deref for NetPktArc {

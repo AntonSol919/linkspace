@@ -80,13 +80,7 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
                 .read_exact(&mut s[std::mem::size_of::<PartialNetHeader>()..]);
             try_opt!(r);
         };
-
-        let check = if self.validate {
-            pkt.check::<true>()
-        } else {
-            pkt.check::<false>()
-        };
-        try_opt!(check);
+        try_opt!(pkt.check(self.validate));
         if !self.allow_private && pkt.group() == Some(&PRIVATE) {
             return Some(Err(Error::PrivateGroup));
         }

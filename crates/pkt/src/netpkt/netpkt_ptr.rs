@@ -69,7 +69,7 @@ impl NetPktPtr {
         );
         assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
         let netpkt = &*{ b.as_ptr() as *const Self };
-        debug_assert!(netpkt.check::<true>().is_ok());
+        debug_assert!(netpkt.check(true).is_ok());
         netpkt
     }
     pub fn reroute(&self, route: NetPktHeader) -> ReroutePkt<&Self> {
@@ -79,9 +79,9 @@ impl NetPktPtr {
         }
     }
 
-    pub fn check<const CHECK_HASH: bool>(&self) -> Result<&[u8], Error> {
+    pub fn check(&self, check_crypto:bool) -> Result<&[u8], Error> {
         let _ = self.point.internal_consitent_length()?;
-        if CHECK_HASH {
+        if check_crypto {
             self.point.check_signature()?;
             if self.hash() != self.point.compute_hash() {
                 return Err(Error::HashMismatch);
@@ -124,8 +124,17 @@ impl NetPktFatPtr {
 }
 
 impl NetPkt for NetPktPtr {
-    #[inline(always)]
+    fn as_netarc(&self) -> NetPktArc {
+        let header = NetPktPtr {
+            net_header: self.net_header,
+            hash: self.hash,
+            point: PointThinPtr(self.point.0)
+        };
+        let bytes = self.as_netpkt_bytes();
+        NetPktArc(Arc::from_header_and_slice(header, &bytes[std::mem::size_of::<PartialNetHeader>()..]))
+    }
 
+    #[inline(always)]
     fn net_header_mut(&mut self) -> Option<&mut NetPktHeader> {
         Some(&mut self.net_header)
     }

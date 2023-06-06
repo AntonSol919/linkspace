@@ -281,7 +281,7 @@ pub fn insert<B: NetPkt + ?Sized>(
             if true {
                 //dbg
                 let pkt = unsafe { NetPktFatPtr::from_bytes_unchecked(dest) };
-                pkt.check::<true>().unwrap();
+                pkt.check(true).unwrap();
             }
         })?;
         if let Some((key, val)) =

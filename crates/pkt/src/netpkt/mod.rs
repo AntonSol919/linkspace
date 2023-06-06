@@ -71,7 +71,7 @@ pub trait NetPkt: Debug {
             Box::from_raw(ptr)
         };
         if cfg!(debug_assertions) {
-            b.thin_netpkt().check::<false>().unwrap();
+            b.thin_netpkt().check(true).unwrap();
         }
         b
     }

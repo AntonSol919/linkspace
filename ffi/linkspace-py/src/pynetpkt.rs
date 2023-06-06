@@ -18,6 +18,12 @@ use crate::bytelike;
 #[derive(Clone)]
 pub struct Pkt(pub(crate) ReroutePkt<RecvPkt<NetPktArc>>);
 impl Pkt {
+    pub fn from_arc(p: NetPktArc) -> Self {
+        Pkt(ReroutePkt::new(RecvPkt {
+            recv: p.recv().unwrap_or_else(now),
+            pkt: p
+        }))
+    }
     pub fn from_dyn(p: &dyn NetPkt) -> Self {
         Pkt(ReroutePkt::new(RecvPkt {
             recv: p.recv().unwrap_or_else(now),
@@ -145,6 +151,7 @@ impl Pkt {
     fn point_size<'p>(&self, py: Python<'p>) -> &'p PyBytes {
         PyBytes::new(py, &self.0.point_header_ref().point_size.0)
     }
+    
     #[getter]
     /// number of components in the path
     fn path_len<'p>(&self) -> Option<u8> {
@@ -218,6 +225,10 @@ impl Pkt {
             pkt: self.0.pkt.pkt.clone(),
             idx: 0,
         })
+    }
+
+    fn size(&self) -> usize{
+        self.0.size()
     }
 }
 

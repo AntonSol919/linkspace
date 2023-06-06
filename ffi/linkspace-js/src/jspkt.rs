@@ -11,7 +11,7 @@
 use std::cell::{LazyCell };
 
 use crate::*;
-use linkspace_pkt::{Tag, LkHash, NetPkt, pkt_fmt, Point, PointExt, NetPktBox };
+use linkspace_pkt::{Tag, LkHash, NetPkt, pkt_fmt, Point, PointExt,  NetPktExt, NetPktArc };
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
 
@@ -19,10 +19,10 @@ use crate::bytelike;
 // Ideally this is an ArrayBuffer and we give out readonly views
 #[derive(Clone)]
 #[wasm_bindgen]
-pub struct Pkt(pub(crate) NetPktBox);
+pub struct Pkt(pub(crate) NetPktArc);
 impl Pkt {
     pub fn from_dyn(p: &dyn NetPkt) -> Self {
-        Pkt(p.as_netbox())
+        Pkt(p.as_netarc())
     }
 }
 /*
@@ -39,7 +39,7 @@ impl<'o> From<RecvPktPtr<'o>> for Pkt {
 impl Pkt {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
-        pkt_fmt(&self.0.thin_netpkt() as &dyn NetPkt)
+        pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)
     }
     /*
     pub fn __getitem__(&self, field: &str) -> anyhow::Result<Box<[u8]>> {
@@ -137,6 +137,31 @@ impl Pkt {
     #[wasm_bindgen(getter)]
     pub fn path_len(&self) -> Option<u8> {
         self.0.path_len().map(|b| *b)
+    }
+    pub fn size(&self) -> usize {
+        self.0.size()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn links(&self) -> Option<Links> {
+        if self.0.links().is_some(){
+            return Some(Links {idx : 0 , pkt: self.clone()})
+        }
+        None
+    }
+}
+
+#[wasm_bindgen]
+pub struct Links{
+    idx: usize,
+    pkt: Pkt
+}
+#[wasm_bindgen]
+impl Links{
+    #[wasm_bindgen(js_name = "next")]
+    pub fn next(&mut self) -> Option<Link>{
+        let link = self.pkt.0.links()?.get(self.idx).copied().map(Link);
+        self.idx +=1;
+        link
     }
 }
 

@@ -1,11 +1,12 @@
 #![feature(try_blocks,thread_local,lazy_cell,ptr_from_ref)]
 pub mod jspkt;
 pub mod utils;
+pub mod consts;
 use std::cell::Cell;
 
-use js_sys::Uint8Array;
+use js_sys::{Uint8Array };
 use jspkt::Pkt;
-use linkspace_pkt::{PUBLIC, MIN_NETPKT_SIZE, PartialNetHeader, NetPktBox };
+use linkspace_pkt::{MIN_NETPKT_SIZE, PartialNetHeader };
 use utils::{JsErr,*};
 use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
@@ -21,23 +22,8 @@ fn main() -> std::result::Result<(), JsValue> {
     Ok(())
 }
 
-#[wasm_bindgen]
-pub fn test_input(obj:&JsValue) ->Result<Vec<u8>>{
-    web_sys::console::log_1(&obj);
-    bytelike(obj).map_err(JsErr)
-}
-#[wasm_bindgen]
-pub fn test_round(obj:&JsValue) ->Result<String>{
-    let obj = bytelike(obj).map_err(JsErr)?;
-    let st = String::from_utf8(obj).map_err(err)?;
-    Ok(st)
-}
 
 
-#[wasm_bindgen(js_name = "PUBLIC")]
-pub fn public_hash() -> Box<[u8]>{
-    PUBLIC.0.into()
-}
 
 
 #[thread_local]
@@ -48,10 +34,20 @@ pub fn b64(bytes:&[u8], mini:Option<bool>) -> String{
     let b = linkspace_pkt::B64(bytes);
     if mini.unwrap_or(false){b.b64_mini()} else{b.to_string()}
 }
-#[wasm_bindgen]
-pub fn lk_read(bytes: &Uint8Array,validate: Option<bool>) ->Result<Pkt,JsValue>{
-    use linkspace_pkt::NetPktFatPtr;
-    let bufsize = bytes.length() as usize;
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const ITEXT_STYLE: &'static str = r#"
+/**
+* @param {Uint8Array} bytes
+* @param {boolean | undefined} validate
+* @returns {[Pkt,Uint8Array]}
+*/
+export function lk_read(bytes: Uint8Array, validate?: boolean): [Pkt,Uint8Array];
+"#;
+#[wasm_bindgen(skip_typescript)]
+pub fn lk_read(bytes: &Uint8Array,validate: Option<bool>) ->Result<js_sys::Array,JsValue>{
+    let bufsize = bytes.length() as usize ;
     if bufsize < MIN_NETPKT_SIZE {
         return Err(MIN_NETPKT_SIZE.into());
     }
@@ -62,18 +58,18 @@ pub fn lk_read(bytes: &Uint8Array,validate: Option<bool>) ->Result<Pkt,JsValue>{
 
     let pktsize = partial.point_header.net_pkt_size();
     if pktsize > bufsize { return Err(pktsize.into());};
+    let pktsize = pktsize as u32;
 
-    let mut pkt : NetPktBox = unsafe { partial.alloc() };
-    {
-        let s: &mut [u8] = unsafe {
-            std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, pktsize)
-        };
-        unsafe {bytes.slice(0,pktsize as u32).raw_copy_to_ptr(s.as_mut_ptr())}
-    };
-    if validate.unwrap_or(true) {
-        pkt.check::<true>().map_err(err)?
-    } else {
-        pkt.check::<false>().map_err(err)?
-    };
-    Ok(Pkt(pkt))
+    let pkt = unsafe{
+        linkspace_pkt::NetPktArc::from_header_and_copy(
+            partial,
+            validate.unwrap_or(true),
+            |dest|{
+                bytes.slice(std::mem::size_of::<PartialNetHeader>() as u32,pktsize).raw_copy_to_ptr(dest.as_mut_ptr())
+            }
+        )};
+    let pkt = pkt.map_err(err)?;
+    
+    Ok(js_sys::Array::of2(&Pkt(pkt).into(),&bytes.slice(pktsize,bufsize as u32)))
 }
+

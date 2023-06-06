@@ -1,0 +1,3 @@
+[submodule "libs/triomphe"]
+	path = libs/triomphe
+	url = https://github.com/AntonSol919/triomphe
