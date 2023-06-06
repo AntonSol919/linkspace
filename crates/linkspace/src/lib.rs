@@ -116,21 +116,21 @@ pub mod point {
     ```
     **/
     pub fn lk_linkpoint(
+        data: &[u8],
         domain: Domain,
         group: GroupID,
         path: &IPath,
         links: &[Link],
-        data: &[u8],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktBox> {
-        lk_linkpoint_ref(domain, group, path, links, data, create_stamp).map(|v| v.as_netbox())
+        lk_linkpoint_ref(data,domain, group, path, links, create_stamp).map(|v| v.as_netbox())
     }
     pub fn lk_linkpoint_ref<'o>(
+        data: &'o [u8],
         domain: Domain,
         group: GroupID,
         path: &'o IPath,
         links: &'o [Link],
-        data: &'o [u8],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktParts<'o>> {
         Ok(pkt::try_linkpoint_ref(
@@ -145,25 +145,25 @@ pub mod point {
     }
     /// create a keypoint and wrap it as a [NetPktBox]. i.e. a signed [lk_linkpoint]
     pub fn lk_keypoint(
+        signkey: &SigningKey,
+        data: &[u8],
         domain: Domain,
         group: GroupID,
         path: &IPath,
         links: &[Link],
-        data: &[u8],
         create_stamp: Option<Stamp>,
-        signkey: &SigningKey,
     ) -> LkResult<NetPktBox> {
-        lk_keypoint_ref(domain, group, path, links, data, create_stamp, signkey)
+        lk_keypoint_ref(signkey,data,domain, group, path, links, create_stamp)
             .map(|v| v.as_netbox())
     }
     pub fn lk_keypoint_ref<'o>(
+        signkey: &SigningKey,
+        data: &'o [u8],
         domain: Domain,
         group: GroupID,
         path: &'o IPath,
         links: &'o [Link],
-        data: &'o [u8],
         create_stamp: Option<Stamp>,
-        signkey: &SigningKey,
     ) -> LkResult<NetPktParts<'o>> {
         let create_stamp = create_stamp.unwrap_or_else(now);
         Ok(pkt::try_keypoint_ref(

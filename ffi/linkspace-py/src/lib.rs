@@ -187,32 +187,32 @@ pub fn lk_datapoint(data: &PyAny) -> anyhow::Result<Pkt> {
 }
 #[pyfunction]
 pub fn lk_linkpoint(
+    data: Option<&PyAny>,
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
     path: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
-    data: Option<&PyAny>,
     create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
-    let pkt = linkspace_rs::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
+    let pkt = linkspace_rs::point::lk_linkpoint_ref(data,domain, group, &*path, &*links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
 pub fn lk_keypoint(
     key: &SigningKey,
+    data: Option<&PyAny>,
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
     path: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
-    data: Option<&PyAny>,
     create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
     let pkt =
-        linkspace_rs::point::lk_keypoint_ref(domain, group, &*path, &*links, data, create, &key.0)?;
+        linkspace_rs::point::lk_keypoint_ref(&key.0,data,domain, group, &*path, &*links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 

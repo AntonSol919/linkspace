@@ -1097,7 +1097,7 @@ dependencies = [
  "anyhow",
  "console_error_panic_hook",
  "js-sys",
- "linkspace",
+ "linkspace-argon2-identity",
  "linkspace-pkt",
  "wasm-bindgen",
  "web-sys",

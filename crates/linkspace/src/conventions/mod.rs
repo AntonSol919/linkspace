@@ -46,11 +46,11 @@ pub fn lk_pull_req(query: &Query ) -> LkResult<NetPktBox> {
     tracing::trace!(data);
     let pull_path = ipath_buf(&[b"pull", &*group, &*domain, &id]);
     let pkt = lk_linkpoint(
+        data.as_bytes(),
         EXCHANGE_DOMAIN,
         PRIVATE,
         &pull_path,
         &[],
-        data.as_bytes(),
         None,
     )?;
     Ok(pkt.as_netbox())

@@ -82,12 +82,14 @@ class Pkt:
 
 
 def lk_datapoint(data:bytes) -> Pkt: ...
-def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
-                 links:list[Link] | None=None,data:bytes |str| None=None,
+def lk_linkpoint(data:bytes |str| None=None,
+                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
+                 links:list[Link] | None=None,
                  create:bytes | None =None) -> Pkt: ...
 def lk_keypoint(key: SigningKey,
+                data:bytes|str | None=None,
                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
-                links:list[Link] | None=None,data:bytes|str | None=None,
+                links:list[Link] | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
 def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None ) -> bytes:

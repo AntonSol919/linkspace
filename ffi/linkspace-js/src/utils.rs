@@ -31,3 +31,8 @@ pub fn bytelike(obj:&JsValue) -> anyhow::Result<Vec<u8>>{
     let bytes  = obj.dyn_ref::<js_sys::Uint8Array>().context("expected String or Uint8Array")?;
     Ok(bytes.to_vec()) // todo use copy_into 
 }
+pub fn bytelike_into(obj:&JsValue) -> anyhow::Result<Vec<u8>>{
+    if let Some(st) = obj.as_string(){ return Ok(st.into_bytes())};
+    let bytes  = obj.dyn_ref::<js_sys::Uint8Array>().context("expected String or Uint8Array")?;
+    Ok(bytes.to_vec()) // todo use copy_into 
+}

@@ -73,38 +73,38 @@ impl SigningKey{
 
 #[wasm_bindgen]
 pub fn lk_keygen() -> SigningKey {
-    todo!()//SigningKey(linkspace_pkt::key::lk_keygen())
+    SigningKey(linkspace_pkt::SigningKey::generate())
 }
+use linkspace_argon2_identity as identity;
 #[wasm_bindgen]
 pub fn lk_enckey(key: &SigningKey, password: &[u8]) -> String {
-    todo!()//linkspace_pkt::lk_enckey(&key.0, password)
+    identity::encrypt(
+        &key.0,
+        password,
+        if password.is_empty() {
+            Some(identity::INSECURE_COST)
+        } else {
+            None
+        },
+    )
 }
 #[wasm_bindgen]
 pub fn lk_keyopen(id: &str, password: &[u8]) -> Result<SigningKey> {
-    todo!()//Ok(SigningKey(linkspace_rs::key::lk_keyopen(id, password)?))
+    Ok(SigningKey(identity::decrypt(id,password).map_err(err)?))
 }
 #[wasm_bindgen]
 pub struct Linkspace(usize);
 
 #[wasm_bindgen]
-pub fn lk_key(
-    lk: &Linkspace,
-    password: &[u8],
-    name: Option<String>,
-    create: Option<bool>,
-) -> Result<SigningKey> {
-    todo!()//linkspace_rs::lk_key(&lk.0, password, name, create.unwrap_or(false)).map(SigningKey)
-}
-
-#[wasm_bindgen]
 pub fn lk_datapoint(data: &JsValue) -> Result<Pkt> {
-    todo!()/*
+    let bytes = bytelike(data)?;
     Ok(jspkt::Pkt::from_dyn(
-        &linkspace_pkt::point::lk_datapoint_ref(bytelike(data)?)?,
-    ))*/
+        &linkspace_pkt::try_datapoint_ref(&bytes,NetOpts::Default)?,
+    ))
 }
 #[wasm_bindgen]
 pub fn lk_linkpoint( fields : &JsValue) -> Result<Pkt> {
+    let (domain,group,path,links,data,create) = common_args(fields)?;
     todo!()/*
     let pkt = linkspace_rs::point::lk_linkpoint_ref(domain, group, &*path, &*links, data, create)?;
     Ok(jspkt::Pkt::from_dyn(&pkt))

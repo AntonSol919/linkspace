@@ -70,7 +70,7 @@ pub fn lk_status_path(status: LkStatus) -> LkResult<IPathBuf> {
 
 /// A query that returns both requests and updates
 pub fn lk_status_request(status:LkStatus) -> LkResult<NetPktBox>{
-    lk_linkpoint(status.domain, PRIVATE, &lk_status_path(status)?, &[],&[], None)
+    lk_linkpoint(&[],status.domain, PRIVATE, &lk_status_path(status)?,&[], None)
 }
 
 /// A query that returns both requests and updates
