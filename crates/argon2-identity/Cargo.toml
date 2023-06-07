@@ -17,4 +17,5 @@ linkspace-cryptography = { path = "../cryptography", version="0.2.0"}
 thiserror.workspace = true
 base64.workspace=true
 
-rust-argon2 = "1.0.0"
+rust-argon2 = {version = "1.0.0",default-features=false}
+argon2_crypto = {version="0.5.0",default-features=false,package="argon2"}

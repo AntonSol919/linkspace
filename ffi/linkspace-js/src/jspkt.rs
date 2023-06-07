@@ -3,15 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-
-
-
-
-use std::cell::{LazyCell };
-
-use crate::{*, consts::PUBLIC_GROUP_PKT};
-use linkspace_pkt::{Tag, LkHash, NetPkt, pkt_fmt, Point, PointExt,  NetPktExt, NetPktArc };
+use crate::{*};
+use linkspace_pkt::{Tag, LkHash, NetPkt, Point, PointExt,  NetPktExt, NetPktArc };
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
 
@@ -26,22 +19,22 @@ impl Pkt {
     pub fn from_dyn(p: &dyn NetPkt) -> Self {
         Pkt(p.as_netarc())
     }
-}
-/*
-impl<'o> From<RecvPktPtr<'o>> for Pkt {
-    fn from(p: RecvPktPtr) -> Self {
-        let p = ReroutePkt::new(p.map(|v| v.as_netarc()));
-        Pkt(p)
+    pub fn empty() -> Self {
+        Pkt(unsafe {try_datapoint_ref(b"", NetOpts::Default).unwrap_unchecked()}.as_netarc())
     }
 }
-*/
 
 
 #[wasm_bindgen]
 impl Pkt {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
-        pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)
+        #[cfg(feature = "abe")]
+        {linkspace_pkt::pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
+
+        #[cfg(not(feature = "abe"))]
+        {linkspace_pkt::repr::static_pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
+        //{format!("<not compiled>")}
     }
     /*
     pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
@@ -146,6 +139,7 @@ impl Pkt {
 }
 
 
+
 #[wasm_bindgen]
 #[derive(Clone)]
 pub struct Links{
@@ -160,7 +154,7 @@ pub struct LinkRes {
 }
 #[wasm_bindgen]
 impl Links{
-    pub fn default()-> Links { Links{ idx:0, pkt:PUBLIC_GROUP_PKT.clone()}}
+    pub fn default()-> Links { Links{ idx:0, pkt:Pkt::empty()}}
     #[wasm_bindgen]
     pub fn next(&mut self) -> LinkRes{
         let val = self.pkt.0.get_links().get(self.idx).copied().map(Link);
@@ -169,19 +163,27 @@ impl Links{
     }
 }
 
+
 /// Link for a linkpoint
 #[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd,Hash)]
 #[wasm_bindgen]
 #[repr(transparent)]
 pub struct Link(pub(crate)linkspace_pkt::Link);
 
-#[thread_local]
-pub static DEC : LazyCell<TextDecoder> = LazyCell::new(|| TextDecoder::new().unwrap());
 #[wasm_bindgen]
 impl Link {
+
+    #[wasm_bindgen(constructor)]
+    pub fn new(tag: &JsValue, ptr: &JsValue) -> Result<Link,JsValue> {
+        let tag = bytelike(tag)?;
+        let ptr = bytelike(ptr)?;
+        Ok(Link(linkspace_pkt::Link{
+            tag: Tag::try_fit_byte_slice(&tag).ok().ok_or("invalid tag")?,
+            ptr: LkHash::try_fit_bytes_or_b64(&ptr).ok().ok_or("invalid hash")?,
+        }))
+    }
     #[wasm_bindgen(js_name = toJSON)]
     pub fn as_json(&self) -> Result<JsValue,JsValue>{
-        // we have to debug output the abe string representation
         let string = format!("{{\"tag\":{:?},\"ptr\":\"{}\"}}",self.0.tag.0,self.0.ptr);
         js_sys::JSON::parse(&string)
     }
@@ -194,8 +196,8 @@ impl Link {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> Result<String,JsValue>{
         let mut tag = self.0.tag.0;
-        let st = DEC.decode_with_u8_array(&mut tag)?;
-        Ok(format!("{{\"tag\":\"{}\",\"ptr\":\"{}\"}}",st,self.0.ptr))
+        let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
+        Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))
     }
     #[wasm_bindgen(getter)]
     pub fn ptr(&self) -> Box<[u8]> {
@@ -205,16 +207,5 @@ impl Link {
     pub fn tag(&self) -> Box<[u8]>{
         self.0.tag.0.into()
     }
-    #[wasm_bindgen(constructor)]
-    pub fn new(tag: &JsValue, ptr: &JsValue) -> Result<Link> {
-        let r : anyhow::Result<Link> = try{
-            let tag = bytelike(tag)?;
-            let ptr = bytelike(ptr)?;
-            Link(linkspace_pkt::Link{
-                tag: Tag::try_fit_byte_slice(&tag)?,
-                ptr: LkHash::try_fit_bytes_or_b64(&ptr)?,
-            })
-        };
-        r.map_err(err)
-    }
 }
+

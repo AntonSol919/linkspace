@@ -7,8 +7,6 @@ homepage = "https://antonsol919.github.io/linkspace/index.html"
 documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 
-
-
 [workspace]
 resolver = "2"
 members = [
@@ -17,7 +15,13 @@ members = [
     "ffi/*",
     "examples/mineweeper-rs"
 ]
-exclude = ["cli/tree","cli/impex","crates/bloomhash","crates/adota"]
+exclude = [
+   #     "ffi/linkspace-js", # wasm-pack target config is poorly supported - so its done as an individual crate.
+        "cli/tree",
+        "cli/impex",
+        "crates/bloomhash",
+        "crates/adota"
+]
 
 [workspace.dependencies]
 
@@ -48,6 +52,8 @@ opt-level = 2
 
 
 [profile.release]
-overflow-checks = true
 lto = true
+
+[profile.release.package.linkspace-js]
 codegen-units = 1
+opt-level="z"

@@ -30,24 +30,22 @@ impl<X> SPathBytes<X> where Self: AsRef<SPath>{
 use thiserror::Error;
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
 pub enum PathError {
-    #[error("Path only allows upto {MAX_PATH_LEN} components")]
+    #[error("path only allows upto {MAX_PATH_LEN} components")]
     MaxLen,
-    #[error("Exceeded maximum component size ({MAX_SPATH_COMPONENT_SIZE} bytes)")]
+    #[error("exceeded maximum component size ({MAX_SPATH_COMPONENT_SIZE} bytes)")]
     ComponentSize,
-    #[error("Component cant be of size 0")]
+    #[error("component cant be of size 0")]
     ZeroComponent,
-    #[error("Mismatch length for last component")]
+    #[error("mismatch length for last component")]
     TailLength,
-    #[error("Exceeds Max SPath size ({MAX_SPATH_SIZE})")]
+    #[error("exceeds max path size ({MAX_SPATH_SIZE})")]
     CapacityError,
 
-    #[error("TODO")]
-    IdxError,
-    #[error("Missing Index. Expected at least 8 bytes (or none)")]
+    #[error("bad path index")]
     MissingIdx,
-    #[error("The offset of the non components is wrong")]
+    #[error("empty component offset")]
     EmptyComponentIdx,
-    #[error("The offset does  not agree with the spath")]
+    #[error("path index is wrong")]
     BadOffset,
 }
 

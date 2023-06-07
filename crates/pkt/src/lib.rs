@@ -332,37 +332,35 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
-    #[error("SPath segments are incorrectly set in the header")]
-    SPathSegmentMismatch,
-    #[error("An unknown pkt type {0} was encountered")]
+    #[error("an unknown pkt type {0} was encountered")]
     UnknownPktType(u8),
-    #[error("The packet length does not agree with tail lengths")]
+    #[error("the packet length does not agree with tail lengths")]
     TailLength,
-    #[error("Invalid SPath")]
+    #[error("invalid path")]
     SPath(#[from] crate::spath::PathError),
-    #[error("Signed Invalid Pkt type")]
+    #[error("signed invalid pkt type")]
     SignedInvalidPkt,
-    #[error("Assert and inner LinkPoint do not agree on length")]
+    #[error("the signed and unsigned header do not agree on length")]
     KeyPointLength,
-    #[error("Hash does not match pkt")]
+    #[error("hash does not match pkt")]
     HashMismatch,
-    #[error("Assert holds invalid signature")]
+    #[error("invalid signature")]
     InvalidSignature,
-    #[error("The memory for this packet has trailing data")]
+    #[error("packet has trailing data")]
     InvalidPktDataLength,
-    #[error("Content len exceeds max")] // TODO ambigues use
+    #[error("content len exceeds max")] // TODO ambigues use
     ContentLen,
-    #[error("Too little data to repr a pkt")]
+    #[error("missing header data")]
     MissingHeader,
-    #[error("Reserved bits not null")]
+    #[error("reserved bits not null")]
     ReservedBitsSet,
-    #[error("Links have a size of 48 bytes. The offset must be wrong")]
+    #[error("bad link size")]
     IndivisableLinkbytes,
-    #[error("Data offset should be between spi_offset and pkt_size")]
+    #[error("data offset should be between spi_offset and pkt_size")]
     DataOffsetIncompatible,
-    #[error("ISPOffset should be after the header")]
+    #[error("offset should be after header")]
     ISPOffsetIncompatible,
-    #[error("The pointheader has its reserved bit set {0}")]
+    #[error("pointheader has reserved bit set {0}")]
     HeaderReservedSet(u8),
 }
 

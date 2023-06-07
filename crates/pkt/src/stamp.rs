@@ -69,7 +69,7 @@ pub fn checked_stamp_sub(stamp: Stamp, dur: Duration) -> Option<Stamp> {
     let sub = dur.as_micros().min(u64::MAX as u128) as u64;
     stamp.get().checked_sub(sub).map(Stamp::new)
 }
-#[cfg(all(target_arch = "wasm32"))]
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 use crate::Stamp;
@@ -77,12 +77,12 @@ use crate::Stamp;
 export function date_now() {
   return Date.now();
 }"#)]
-#[cfg(all(target_arch = "wasm32"))]
+#[cfg(target_arch = "wasm32")]
 extern "C" {
     fn date_now() -> f64;
 }
 
-#[cfg(all(target_arch = "wasm32"))]
+#[cfg(target_arch = "wasm32")]
 pub fn now() -> Stamp {
     Stamp::new((date_now() * 1000.0) as u64)
 }

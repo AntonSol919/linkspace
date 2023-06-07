@@ -190,7 +190,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         let new_password =key.password_bytes_prompt(common, true,"new password: ")?;
         key.password = Some(abtxt::as_abtxt(&new_password).to_string());
         key.utf8_password = false;
-        enckey = Some(encrypt(&skey, &new_password, cost));
+        enckey = Some(encrypt(&skey, &new_password, cost))
     }
 
     let rt = &common.runtime()?;

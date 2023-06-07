@@ -153,6 +153,17 @@ where
             abe::abe!({ mode : st : (self.as_ref().len().to_string()) }).for_each(out)
         }
     }
+    fn to_abe_str(&self) -> String {
+        let (max_padded, bytes) = self.x_prefix_cut();
+        let mode = if max_padded { MAX_STR } else { "a" };
+        let st = abe::abtxt::as_abtxt(bytes);
+        let st : &str= st.borrow();
+        if self.as_ref().len() == 16 {
+            format!("[{mode}:{st}]")
+        } else {
+            format!("[{mode}:{st}:{}]",self.as_ref().len())
+        }
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -377,6 +388,10 @@ where
     fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
         abe::abe!( { "b" : (self.b64()) } ).for_each(out)
     }
+
+    fn to_abe_str(&self) -> String {
+        format!("[b:{}]",self)
+    }
 }
 
 impl<N> B64<N> {
@@ -429,6 +444,9 @@ where
     pub fn b64_mini(&self) -> String {
         mini_b64(self.as_ref())
     }
+    pub fn b64_into(&self, output_buf:&mut String){
+        BASE64_URL_SAFE_NO_PAD.encode_string(self.as_ref(), output_buf)
+    }
 }
 
 
@@ -479,9 +497,7 @@ impl<const N: usize> B64<[u8; N]> {
         }
         let mut this: [u8; N] = [0; N];
         let r = BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(s,&mut this)?;
-        if r != N {
-            panic!()
-        };
+        debug_assert!(r == N);
         Ok(B64(this))
     }
 }
@@ -504,7 +520,9 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&base64(self.as_ref()))
+        let mut out = [0;43];
+        let _ = BASE64_URL_SAFE_NO_PAD.encode_slice(self.as_ref(), &mut out);
+        f.write_str(unsafe { std::str::from_utf8_unchecked(&out)})
     }
 }
 impl<N> std::fmt::Debug for B64<N>
@@ -512,7 +530,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&base64(self.as_ref()))
+        Display::fmt(self, f)
     }
 }
 /// Implements [AAAAAA/b64] and [\0\0\xff/2b64]

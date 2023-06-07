@@ -14,7 +14,7 @@ mod params {
         pub time_cost: u32,
         pub parallelism: u32,
         pub salt: Vec<u8>,
-        pub hash: Vec<u8>,
+        pub hash: [u8;32],
     }
     /// Attempts to decode the encoded string slice.
     pub fn decode_string(encoded: &str) -> Option<Decoded> {
@@ -23,7 +23,7 @@ mod params {
         let mut items_it = items.split('$');
         let options = items_it.next()?;
         let salt = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
-        let hash = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?;
+        let hash = BASE64_STANDARD_NO_PAD.decode(items_it.next()?).ok()?.try_into().ok()?;
         let mut opt_it = options.split(',').filter_map(|st| st.split_once('='))
             .zip(["m","t","p"])
             .filter(|((kind,_val),expect)| (kind == expect))
@@ -62,7 +62,10 @@ pub enum KeyError {
     WrongPassword,
 }
 
-pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> String {
+pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> String{
+    _encrypt(key, password, cost).expect("bug - key encryption errror?")
+}
+fn _encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> Option<String>{
     use base64::prelude::*;
     let (mem_cost, time_cost) = cost.unwrap_or(DEFAULT_COST);
     let config = Config {
@@ -71,11 +74,11 @@ pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> S
         time_cost,
         ..Config::default()
     };
-    let encoded = argon2::hash_encoded(password, &key.pubkey_bytes(), &config).unwrap();
+    let encoded = argon2::hash_encoded(password, &key.pubkey_bytes(), &config).ok()?;
     // This is some dirty work to decode the internal argon representation so we can xor our secret
-    let (conf,digest) = encoded.rsplit_once('$').unwrap();
-    let digest = BASE64_STANDARD_NO_PAD.decode(digest).unwrap();
-
+    let (conf,digest) = encoded.rsplit_once('$')?;
+    let digest = BASE64_STANDARD_NO_PAD.decode(digest).ok()?;
+    
     let xored = digest
         .into_iter()
         .zip(key.0.to_bytes().iter())
@@ -85,9 +88,9 @@ pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> S
     let encrypted_secret = BASE64_STANDARD_NO_PAD.encode(xored);
     let result = String::from_iter([conf, "$", &*encrypted_secret]);
     if cfg!(debug_assertions) {
-        decrypt(&result, password).unwrap();
+        decrypt(&result, password).expect("encrypt/decrypt bug!");
     }
-    result
+    Some(result)
 }
 pub fn pubkey(identity: &str) -> Result<PublicKey, KeyError> {
     let argon_param = params::decode_string(identity).ok_or(KeyError::BadData)?;
@@ -117,15 +120,10 @@ pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
         hash_length: 32,
     };
 
-    let mut digest =
-        argon2::hash_raw(password, &argon_param.salt, &config).map_err(|_| KeyError::BadData)?;
-
-    digest
-        .iter_mut()
-        .zip(argon_param.hash)
-        .for_each(|(a, b)| *a ^= b);
-    let secret =
-        SigningKey::try_from(digest.try_into().unwrap()).map_err(|_| KeyError::WrongPassword)?;
+    let digest = argon2::hash_raw(password, &argon_param.salt, &config).map_err(|_| KeyError::BadData)?;
+    let digest : [u8;32] = digest.try_into().map_err(|_| KeyError::BadData)?;
+    let secret = std::array::from_fn(|i| digest[i] & argon_param.hash[i]);
+    let secret = SigningKey::try_from(secret).map_err(|_| KeyError::WrongPassword)?;
 
     let pubkey = secret.pubkey_bytes();
     if pubkey.as_ref() != argon_param.salt {

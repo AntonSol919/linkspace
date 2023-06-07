@@ -1,32 +1,38 @@
 [package]
 name = "linkspace-js"
-
-version.workspace = true
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
-homepage.workspace = true
-documentation.workspace = true
-repository.workspace = true
+version = "0.2.0"
+edition = "2021"
+authors = ["Anton Sol <AntonSol919@gmail.com>"]
+license = "MPL-2.0"
+homepage = "https://antonsol919.github.io/linkspace/index.html"
+documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
+repository = "https://github.com/AntonSol919/linkspace"
 
 [lib]
 name = "linkspace"
 crate-type = ["cdylib"]
+
 [build]
 target = "wasm32-unknown-unknown"
 
 [features]
-default = ["console_error_panic_hook", "wee_alloc"]
+default = ["console_error_panic_hook","wee_alloc"]
+abe = []
 
 [dependencies]
 wasm-bindgen = "0.2.86"
-linkspace-pkt = { path = "../../crates/pkt"}
-
-linkspace-argon2-identity = { path = "../../crates/argon2-identity"}
+linkspace-pkt = { path = "../../../linkspace/crates/pkt" , default-features = false}
+linkspace-argon2-identity = { path = "../../../linkspace/crates/argon2-identity"}
 web-sys ={ version = "0.3.63",features=["console","TextDecoder"]}
 js-sys = "0.3.63"
-anyhow.workspace = true
-
 console_error_panic_hook = { version = "0.1.1", optional = true }
 
 wee_alloc = { version = "0.4.2", optional = true }
+base64 = { version="*", default-features = false}
+blake3 = "*"
+
+#[profile.release]
+#lto = true
+#codegen-units = 1
+#panic = "abort"
+#opt-level="z"

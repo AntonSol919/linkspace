@@ -16,6 +16,7 @@ pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     let recv = EScope(RecvStamp { pkt });
     (pkt_env, pkt_def, (link_select, recv))
 }
+
 pub fn pkt_ctx<'o>(ctx: EvalCtx<impl Scope + 'o>, pkt: &'o dyn NetPkt) -> EvalCtx<impl Scope + 'o> {
     ctx.scope(pkt_scope(pkt))
 }

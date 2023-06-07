@@ -82,14 +82,12 @@ class Pkt:
 
 
 def lk_datapoint(data:bytes) -> Pkt: ...
-def lk_linkpoint(data:bytes |str| None=None,
-                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
-                 links:list[Link] | None=None,
+def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
+                 links:list[Link] | None=None,data:bytes |str| None=None,
                  create:bytes | None =None) -> Pkt: ...
 def lk_keypoint(key: SigningKey,
-                data:bytes|str | None=None,
                 group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
-                links:list[Link] | None=None,
+                links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
 def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None ) -> bytes:
@@ -152,7 +150,7 @@ def lk_info(lk:Linkspace) -> LkInfo:
 
 def lk_key(lk:Linkspace,password:bytes|None=None,name:str|None=None,create:bool=False) -> SigningKey:
     """
-    Combine lk_keygen , lk_key_encrypt, and generate or open a SigningKey named through LNS
+    Combine lk_keygen , lk_enckey, and generate or open a SigningKey named through LNS
 
     Args:
         lk: Linkspace
@@ -163,8 +161,8 @@ def lk_key(lk:Linkspace,password:bytes|None=None,name:str|None=None,create:bool=
     ...
 
 def lk_keygen() -> SigningKey: ...
-def lk_key_decrypt(enckey:str,password:bytes) -> SigningKey: ...
-def lk_key_encrypt(key:SigningKey, password:bytes) -> str: ...
+def lk_keyopen(enckey:str,password:bytes) -> SigningKey: ...
+def lk_enckey(key:SigningKey, password:bytes) -> str: ...
 def lk_list_watches(*args, **kwargs) -> Any: ...
 def lk_open(dir:str|None = None,create:bool=False) -> Linkspace:
     """
@@ -354,7 +352,7 @@ def lk_write(pkt:Pkt) -> bytes:
     ...
 def lk_read(bytes:bytes,validate:bool=True,allow_private:bool=False) -> tuple[Pkt,bytes]:
     """
-    Read bytes as a packet. 
+    Read bytes as a packet.
     Args:
         bytes:
         validate:
