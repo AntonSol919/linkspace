@@ -103,7 +103,7 @@ impl Claim {
     
     pub fn from(pkt: impl NetPkt)-> anyhow::Result<Self>{
         ensure!(pkt.is_linkpoint(),"claim is always a linkpoint");
-        let spath = pkt.get_spath();
+        let spath = pkt.get_path();
         ensure!(spath.starts_with(&CLAIM_PREFIX));
         ensure!(*pkt.get_domain() == LNS);
         let mut it = spath.iter();

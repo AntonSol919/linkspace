@@ -39,6 +39,7 @@ pub mod prelude {
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
+            Error as PktError
         },
     };
 }
@@ -179,7 +180,6 @@ pub mod point {
     }
 
     
-    // TODO - we can't do NetPktParts because of alignment. Maybe add UnallignedNetPktParts?
     pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<(NetPktBox,&[u8])> {
         let pkt = super::misc::read::parse_netpkt(buf, validate)?
             .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;

@@ -35,7 +35,7 @@ pub fn static_pkt_fmt(pkt: &dyn NetPkt) -> String {
         e => e.to_abe_str()
     };
     let domain = pkt.get_domain().to_string();
-    let path = pkt.get_spath().to_string();
+    let path = pkt.get_path().to_string();
     let pubkey = pkt.get_pubkey().to_abe_str();
     let create = pkt.get_create_stamp().get();
 

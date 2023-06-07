@@ -122,7 +122,7 @@ pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
 
     let digest = argon2::hash_raw(password, &argon_param.salt, &config).map_err(|_| KeyError::BadData)?;
     let digest : [u8;32] = digest.try_into().map_err(|_| KeyError::BadData)?;
-    let secret = std::array::from_fn(|i| digest[i] & argon_param.hash[i]);
+    let secret = std::array::from_fn(|i| digest[i] ^ argon_param.hash[i]);
     let secret = SigningKey::try_from(secret).map_err(|_| KeyError::WrongPassword)?;
 
     let pubkey = secret.pubkey_bytes();

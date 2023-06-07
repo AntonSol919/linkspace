@@ -285,7 +285,7 @@ field_val!([
 
 field_ptr!([
     (IPathF, IPath, |pkt: &'o T| pkt.as_point().get_ipath()),
-    (PathF, SPath, |pkt: &'o T| pkt.as_point().get_spath()),
+    (PathF, SPath, |pkt: &'o T| pkt.as_point().get_path()),
     (PathComp0F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_ipath()

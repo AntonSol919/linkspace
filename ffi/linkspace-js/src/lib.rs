@@ -4,7 +4,7 @@ pub mod jspkt;
 pub mod utils;
 pub mod consts;
 
-use js_sys::Uint8Array;
+use js_sys::{Uint8Array, Object};
 use linkspace_pkt::{MIN_NETPKT_SIZE, PartialNetHeader ,*};
 use utils::{*};
 use wasm_bindgen::prelude::*;
@@ -14,14 +14,7 @@ use crate::jspkt::Pkt;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen(inline_js = "
-    export function set_iter(obj) {
-            obj[Symbol.iterator] = function () { return this };
-        };
-")]
-extern "C" {
-    fn set_iter(obj: &js_sys::Object);
-}
+
 #[wasm_bindgen(start)]
 fn main() -> std::result::Result<(), JsValue> {
     #[cfg(feature = "console_error_panic_hook")]
@@ -71,9 +64,26 @@ pub fn lk_key_decrypt(id: &str, password: &[u8]) -> Result<SigningKey> {
     Ok(SigningKey(identity::decrypt(id,password)?))
 }
 
-#[wasm_bindgen(inline_js = "export function identity(a) { return a }")] 
+#[wasm_bindgen(inline_js = "
+export function identity(a) { return a }
+export function set_iter(obj) {
+     obj[Symbol.iterator] = function () { return this };
+};
+export function pkt_obj(pkt){
+     return {
+group:pkt.group,
+domain:pkt.domain,
+path: pkt.path,
+links:pkt.links,
+create:pkt.create
+};
+};
+")]
 #[wasm_bindgen]
 extern "C"{
+    fn set_iter(obj: &js_sys::Object);
+    pub fn pkt_obj(obj:Pkt) -> Object;
+
     pub type Fields;
     #[wasm_bindgen(structural, method,getter)]
     pub fn group(this: &Fields) -> JsValue; 
@@ -84,9 +94,10 @@ extern "C"{
     #[wasm_bindgen(structural, method,getter)]
     pub fn links(this: &Fields) -> JsValue; 
     #[wasm_bindgen(structural, method,getter)]
-    pub fn stamp(this: &Fields) -> JsValue; 
+    pub fn create(this: &Fields) -> JsValue; 
 
     pub fn identity(val:JsValue) -> Option<jspkt::Link>;
+
 
 }
 fn common_args(obj:&Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Stamp)> {
@@ -116,14 +127,14 @@ fn common_args(obj:&Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Sta
         let it = js_sys::try_iter(&links)?.ok_or(ERR)?;
         it.map(|link| -> Result<_> {Ok(identity(link?).ok_or(ERR)?.0)}).try_collect::<Vec<_>>()?
     };
-    let stamp = obj.stamp();
-    let stamp = if stamp.is_falsy(){
+    let create_stamp = obj.create();
+    let create_stamp = if create_stamp.is_falsy(){
         now()
     } else {
         static ERR : &str = "expected stamp [u8;8] or falsy";
-        Stamp::try_from(&*stamp.dyn_ref::<Uint8Array>().ok_or(ERR)?.to_vec()).ok().ok_or(ERR)?
+        Stamp::try_from(&*create_stamp.dyn_ref::<Uint8Array>().ok_or(ERR)?.to_vec()).ok().ok_or(ERR)?
     };
-    Ok((group,domain,path,links,stamp))
+    Ok((group,domain,path,links,create_stamp))
 }
 
 #[wasm_bindgen]

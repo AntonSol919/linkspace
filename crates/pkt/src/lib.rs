@@ -253,7 +253,7 @@ where
         self.ipath().unwrap_or(IPath::EMPTY)
     }
 
-    fn get_spath(&self) -> &SPath {
+    fn get_path(&self) -> &SPath {
         self.path().unwrap_or_else(|| SPath::empty())
     }
 

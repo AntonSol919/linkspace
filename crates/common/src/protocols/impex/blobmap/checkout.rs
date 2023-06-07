@@ -45,10 +45,10 @@ pub fn checkout_now(
     std::fs::create_dir_all(root.parent().unwrap())?;
     let sp = dgp.path;
     for pkt in reader.query_tree(query_mode::Order::Desc, &watch) {
-        let p = match resolve_path(&root, &sp, pkt.get_spath(), &[])? {
+        let p = match resolve_path(&root, &sp, pkt.get_path(), &[])? {
             Some(p) => p,
             None => {
-                tracing::warn!("Ignoring {}", pkt.get_spath());
+                tracing::warn!("Ignoring {}", pkt.get_path());
                 continue;
             }
         };

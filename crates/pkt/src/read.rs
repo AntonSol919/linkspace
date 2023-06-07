@@ -27,7 +27,6 @@ pub fn parse_netpkt(
     Ok(Ok(pkt))
 }
 
-
 pub fn parse_netarc(bytes:&[u8], validate:bool) -> Result<Result<NetPktArc,usize>,crate::Error>{
     if bytes.len() < MIN_NETPKT_SIZE {
         return Ok(Err(MIN_NETPKT_SIZE));
@@ -40,6 +39,10 @@ pub fn parse_netarc(bytes:&[u8], validate:bool) -> Result<Result<NetPktArc,usize
     let pkt = unsafe{NetPktArc::from_header_and_copy(partial,validate, |dest|dest.copy_from_slice(pkt_inner) )?};
     Ok(Ok(pkt))
 }
+
+//This is probably the best way to expose reading.
+//However, we need access to &[Link] and .ipath to have a unaligned and aligned version
+//pub fn parse_netparts(bytes:&[u8], validate:bool) -> Result<Result<NetPktParts,usize>,crate::Error>{
 
 
 #[test]

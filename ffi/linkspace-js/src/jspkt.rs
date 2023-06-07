@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::{*};
+use js_sys::{Object };
 use linkspace_pkt::{Tag, LkHash, NetPkt, Point, PointExt,  NetPktExt, NetPktArc };
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
@@ -35,6 +36,11 @@ impl Pkt {
         #[cfg(not(feature = "abe"))]
         {linkspace_pkt::repr::static_pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
         //{format!("<not compiled>")}
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn obj(&self) -> Object {
+        crate::pkt_obj(self.clone())
     }
     /*
     pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
