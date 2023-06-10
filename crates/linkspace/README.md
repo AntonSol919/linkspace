@@ -4,7 +4,7 @@
 > A self-referential multi-participant data organization protocol whose primary
 > addressing method uses hashes instead of endpoint identifiers.
 > A communication protocol where the method of exchange is an extraneous concern.
-> e.g. git, bitcoin, nostr, linkspace
+> e.g. git, bitcoin, linkspace
 
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
@@ -20,7 +20,7 @@ This is in contrast to current technologies where users contact a single host wh
 
 [Basics](www.linkspace.dev/basics.html) gives a high level introduction.
 Check out the [tutorials](www.linkspace.dev/docs/tutorial/index.html) to see an example of building an application.
-For a technical description from first principles see the [Guide](www.linkspace.dev/docs/guide/index.html).
+For a technical document regarding the API and CLI see the [Guide](www.linkspace.dev/docs/guide/index.html).
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try and say hi.
 

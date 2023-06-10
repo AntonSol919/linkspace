@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::ensure;
+use tracing::instrument;
 use crate::{
     abe::TypedABE,
     cli::{
@@ -22,12 +23,12 @@ pub struct ReadOpt {
     #[clap(short, long)]
     pub read: Option<PathBuf>,
     /// default when stdin is not used for packets
-    #[clap(long,conflicts_with_all(["read","read_str","read_empty"]))]
-    pub read_stdin: bool,
+    #[clap(long,conflicts_with_all(["read","read_str","read_empty","read_repeat"]))]
+    pub read_stdin: Option<bool>,
     #[clap(long, conflicts_with_all(["read","read_stdin","read_empty"]))]
     pub read_str: Option<String>,
     #[clap(long,conflicts_with_all(["read","read_str","read_stdin"]))]
-    pub read_empty:bool,
+    pub read_empty: Option<bool>,
     #[clap(long, alias = "rr")]
     pub read_repeat: bool,
     #[clap(short = 'D', long)]
@@ -53,6 +54,7 @@ pub enum EMode{
     Trim
 }
 
+#[derive(Debug)]
 pub enum ReadSource {
     String(Cursor<String>),
     File(BufReader<File>),
@@ -89,7 +91,7 @@ impl ReadSource {
 impl ReadOpt {
     pub fn open<'o>(&self, default_stdin: bool) -> anyhow::Result<Option<ReadSource>> {
         use std::io::*;
-        if self.read_empty{return Ok(None)};
+        if self.read_empty == Some(true){return Ok(None)};
         let r = if let Some(o) = &self.read_str {
             ReadSource::String(Cursor::new(o.clone()))
         } else if let Some(path) = &self.read {
@@ -103,11 +105,10 @@ impl ReadOpt {
                 tracing::info!("new file");
                 ReadSource::File(BufReader::new(file))
             }
-        } else if self.read_stdin && default_stdin {
+        } else {
+            if self.read_stdin == Some(false) || !default_stdin { return Ok(None)}
             ensure!(!self.read_repeat, "repeat not supported for stdin");
             ReadSource::Stdin(stdin().lock())
-        } else {
-            return Ok(None);
         };
         Ok(Some(r))
     }
@@ -150,6 +151,7 @@ pub struct Reader {
 }
 impl Reader {
     /// pull one data block from the source, returns Some to continue, None to stop.
+    #[instrument(skip(self,ctx))]
     pub fn read_next_data(
         &mut self,
         ctx: &EvalCtx<&dyn Scope>,
@@ -159,6 +161,7 @@ impl Reader {
         if self.call_limit == 0 {
             return Ok(None);
         }
+
         if let Some(mut b) = self.next.take(){
             if self.on_overflow == EMode::Carry {
                 self.read_next_data(ctx, freespace, buf)?;
@@ -171,25 +174,30 @@ impl Reader {
             return Ok(Some(()));
         }
         let take = self.take_max.unwrap_or(freespace) as u64;
-        
+
         self.call_limit -= 1;
-        let inp = match &mut self.input {
+
+        tracing::debug!("next data (input={:?})",self.input);
+        let inp = match &mut self.input{
             Some(i) => i,
             None => return Ok(Some(())),
         };
-        
 
         if inp.read(take,self.delim,buf)? == 0{
             if !self.cycle{ return Ok(None)}
             inp.rewind()?;
-            if inp.read(take,self.delim,buf)? == 0{ self.input = None; return Ok(None);}
+            if inp.read(take,self.delim,buf)? == 0{
+                self.input = None;
+                self.call_limit =0;// make sure we None on next call as well
+                return Ok(None);
+            }
         }
+
         if self.delim.is_some() && self.delim == buf.last().copied() { buf.pop(); }
         if self.eval {
             *buf = eval(ctx, &parse_abe_b(buf)?)?.concat();
         }
         self.check_size(buf, freespace)?;
-        
         Ok(Some(()))
     }
     fn check_size(&mut self, buf:&mut Vec<u8>,freespace:usize) -> anyhow::Result<()>{

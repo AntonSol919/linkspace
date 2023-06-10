@@ -446,7 +446,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Route { field_mut , pkt_in} => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
             common.enable_private_group();
-            common.io.inp.skip_hash = ();
+            common.io.inp.skip_hash = true;
             let inp = common.inp_reader(&pkt_in)?;
             let mut out = WriteDestSpec::stdout().open(&common.eval_ctx())?.unwrap();
             for p in inp {
