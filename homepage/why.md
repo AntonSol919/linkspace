@@ -89,16 +89,24 @@ Maybe, maybe not. If a users can walk away from a host platform without losing t
 
 ## Why not <alternative>?
 
+Because they create a different model for its users and none have felt right. 
+
+I have doubts that solutions such as a 'global ledger', or 'faster email' will be enough to be the leap forward.
+
+Linkspace attempts to provide a model where: for any group and any application, there exists a space to address data.
+
+To that end Linkspace is selective in what it does and doesn't do, and consequently how a stack is defined for the user.
+
+A none=exhaustive list of limitations i've found:
+
 - It has either hash addresses or custom url addresses, not both.
 - Too slow. We should stream video as is, not hand it over to different protocol.
 - No Groups. Consequently there is no or little granularity in what you share.
 - No domains. Everything becomes one app.
-- Its distracted with building universal concensus (blockchains), instead of focusing on the utility without a consensus.
-- The wrong order of defining the system's components.
-  - A blessed/fixed method of exchanging data, instead of a external/modular system.
-  - An ever growing set of stream protocols to negotiate a state.
-  - HTTP servers extended and cooreced to act fededrated, instead of HTML coerced to be a UI for a federated network protocol.
+- Its distracted with facilitating digital signatures and concensus, instead of focusing on the utility without a consensus.
+- A blessed/fixed method of exchanging data, instead of a external/modular system to be filled in per use case.
+- An ever growing set of (stream) protocols to negotiate a state. (In part a consequence of the previous point)
+- A stagnating set of protocols. Improvements are hard to roll out. 
 
-Take your pick. That does not alternative are worse. 
-These are goals and properties that I value.
-More than one supernet can co-exist, and have different strong points.
+That does not mean I think alternative are useless. 
+Different models have different strong points, more than one supernet can co-exist.

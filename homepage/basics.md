@@ -2,7 +2,9 @@
 
 ## The TCP Internet
 
-The apps and websites are built using the internet with the following types of packets:
+The TCP internet attempts to provide a model where: for any two points running any application, there exists a connection to transmit data.
+
+It does this by using the following types of packets:
 
 | Internet Packet |
 |-----------------|
@@ -43,7 +45,7 @@ To under why, let's first explain linkspace.
 
 ## Linkspace
 
-Linkspace is a project to re-imagine this fundamental ideas at the core of digital communication.
+Linkspace attempts to provide a model where: for any group running any application, there exists a space to address data.
 
 If the TCP internet provides streams for key-value systems, so we can talk _to_ server,  
 then linkspace provides a shared key-value space, so we can talk _about_ data.
@@ -61,7 +63,7 @@ A unit in linkspace is called a point. Each point has data, some auxiliary field
 | LINKS[]             | list of (Tag, Hash)           |                    |
 | PUBKEY & SIGNATURE  | Public key and Signature      |                    |
     
-[^4]: Both IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
+[^4]: Both IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers. The key word being 'attempt' to provide a model. 
 
 The auxiliary fields are optional[^5], e.g. a point does not have to be signed.
 
