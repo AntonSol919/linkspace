@@ -135,7 +135,7 @@ where
     fn net_header(&self) -> NetPktHeader {
         *self.net_header_ref()
     }
-    fn size(&self) -> usize {
+    fn size(&self) -> u16 {
         self.as_point().point_header_ref().net_pkt_size()
     }
     fn as_netparts(&self) -> NetPktParts

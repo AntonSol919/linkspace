@@ -156,10 +156,11 @@ pub fn lk_keypoint(key: &SigningKey,data:&JsValue,fields: &Fields) -> Result<Pkt
 }
 
 #[wasm_bindgen]
-pub fn lk_write( pkt: &Pkt) -> Uint8Array {
+pub fn lk_write( pkt: &Pkt,allow_private:Option<bool>) -> Result<Uint8Array,JsErr> {
+    if allow_private != Some(true) {pkt.0.check_private()?;}
     let arr = Uint8Array::new_with_length(pkt.size() as u32);
     arr.copy_from(pkt.0.as_netpkt_bytes());
-    arr
+    Ok(arr)
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -172,7 +173,24 @@ const ITEXT_STYLE: &'static str = r#"
 export function lk_read(bytes: Uint8Array, validate?: boolean): [Pkt,Uint8Array];
 "#;
 #[wasm_bindgen(skip_typescript)]
-pub fn lk_read(bytes: &Uint8Array,validate: Option<bool>) ->Result<js_sys::Array,JsErr>{
+pub fn lk_read(bytes: &Uint8Array,allow_private: Option<bool>) ->Result<js_sys::Array,JsErr>{
+    _read(bytes,allow_private.unwrap_or(false),false)
+}
+#[wasm_bindgen(typescript_custom_section)]
+const ITEXT_STYLE: &'static str = r#"
+/**
+* @param {Uint8Array} bytes
+* @param {boolean | undefined} validate
+* @returns {[Pkt,Uint8Array]}
+*/
+export function lk_read(bytes: Uint8Array, validate?: boolean): [Pkt,Uint8Array];
+"#;
+#[wasm_bindgen(skip_typescript)]
+pub fn lk_read_unchecked(bytes: &Uint8Array,allow_private: Option<bool>) ->Result<js_sys::Array,JsErr>{
+    _read(bytes,allow_private.unwrap_or(false),true)
+}
+
+pub fn _read(bytes: &Uint8Array,allow_private: bool, skip_hash:bool) ->Result<js_sys::Array,JsErr>{
     let bufsize = bytes.length() as usize ;
     if bufsize < MIN_NETPKT_SIZE {
         return Err(JsValue::from(MIN_NETPKT_SIZE).into());
@@ -182,20 +200,20 @@ pub fn lk_read(bytes: &Uint8Array,validate: Option<bool>) ->Result<js_sys::Array
     unsafe { bytes.slice(0,MIN_NETPKT_SIZE as u32 ).raw_copy_to_ptr( ptr::from_mut(&mut partial) as *mut u8)};
     partial.point_header.check()?;
 
-    let pktsize = partial.point_header.net_pkt_size();
+    let pktsize = partial.point_header.net_pkt_size() as usize ;
     if pktsize > bufsize { return Err(JsValue::from(pktsize).into());};
     let pktsize = pktsize as u32;
 
     let pkt = unsafe{
         linkspace_pkt::NetPktArc::from_header_and_copy(
             partial,
-            validate.unwrap_or(true),
+            skip_hash,
             |dest|{
                 bytes.slice(std::mem::size_of::<PartialNetHeader>() as u32,pktsize).raw_copy_to_ptr(dest.as_mut_ptr())
             }
         )};
     let pkt = pkt?;
-    
+    if !allow_private{ pkt.check_private()?};
     Ok(js_sys::Array::of2(&Pkt(pkt).into(),&bytes.slice(pktsize,bufsize as u32)))
 }
 

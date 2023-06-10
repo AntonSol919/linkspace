@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![allow(incomplete_features)]
 #![feature(
+    io_error_other,
     try_blocks,
     slice_split_at_unchecked,
     doc_notable_trait,
@@ -267,8 +268,13 @@ where
     fn compute_hash(&self) -> LkHash {
         linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
-    fn net_pkt_size(&self) -> usize {
+    fn net_pkt_size(&self) -> u16 {
         self.point_header_ref().net_pkt_size()
+    }
+
+    fn check_private(&self) -> Result<(),crate::Error>{
+        if self.group().copied() == Some(PRIVATE) { Err(crate::Error::PrivateGroup)}
+        else {Ok(())}
     }
 }
 
@@ -350,7 +356,7 @@ pub enum Error {
     InvalidPktDataLength,
     #[error("content len exceeds max")] // TODO ambigues use
     ContentLen,
-    #[error("missing header data")]
+    #[error("missing bytes {MIN_NETPKT_SIZE} required to read pkt size")]
     MissingHeader,
     #[error("reserved bits not null")]
     ReservedBitsSet,
@@ -362,7 +368,27 @@ pub enum Error {
     ISPOffsetIncompatible,
     #[error("pointheader has reserved bit set {0}")]
     HeaderReservedSet(u8),
+    #[error("missing bytes - pkt is {netpkt_size} long")]
+    MissingBytes{netpkt_size:u16},
+    #[error("the [#:0] group can't be used in this context")]
+    PrivateGroup
 }
+impl Error {
+    pub fn requires_more(self) -> Option<usize>{
+        match self {
+            Error::MissingHeader => Some(MIN_NETPKT_SIZE),
+            Error::MissingBytes{netpkt_size} => Some(netpkt_size as usize),
+            _ => None
+        }
+    }
+    pub fn io(self) -> std::io::Error { std::io::Error::other(self)}
+}
+impl Into<std::io::Error> for Error {
+    fn into(self) -> std::io::Error {
+        self.io()
+    }
+}
+
 
 pub trait SigningExt {
     fn pubkey(&self) -> PubKey;
@@ -372,3 +398,4 @@ impl SigningExt for SigningKey {
         self.pubkey_bytes().into()
     }
 }
+

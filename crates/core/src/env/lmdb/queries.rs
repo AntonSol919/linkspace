@@ -239,14 +239,13 @@ pub fn insert<B: NetPkt + ?Sized>(
     }
     let result = hash.try_put_unique(&pkt.hash(), idx.get())?;
     if result.is_new() {
-        log.insert(idx.get(), pkt.size(), |dest| {
+        log.insert(idx.get(), pkt.size() as usize , |dest| {
             assert_align(dest);
             let segments = pkt.byte_segments();
             unsafe { segments.write_segments_unchecked(dest.as_mut_ptr()) };
-            if true {
-                //dbg
+            if cfg!(debug_assertions){
                 let pkt = unsafe { NetPktFatPtr::from_bytes_unchecked(dest) };
-                pkt.check(true).unwrap();
+                pkt.check(false).unwrap();
             }
         })?;
         if let Some((key, val)) =

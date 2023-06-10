@@ -22,9 +22,9 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-export LK_NO_CHECK=true
+export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
-LK_NO_CHECK=false lk save --new db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
         --old file:>( lk printf "$PID Ignored [hash:str] (old)" >&2 ) \
    | lk printf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \

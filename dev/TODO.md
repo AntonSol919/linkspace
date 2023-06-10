@@ -12,6 +12,7 @@
 - Add query seperator for building multiple? ( multi hash get )
 - have python and `lk` use LK_DOMAIN and LK_GROUP for defaults
 - Add a static [#:lan] group for packets that should be transmitted at most once
+- lk_scan_manual( table, order, start, cb :&dyn NetPkt -> ) where NetPkt stubs to do lookup off values when requested.
 
 # Pending
 
@@ -69,6 +70,7 @@ must clarify nested query open semantics.
 - stack spath/ipath - max size is 250bytes. Could impl copy
 - abe - change macro '{}' into '[]'
 - Add a UnHashed<Pkt> type such that hashing can be delayed and moved to another thread.
+
 
 # linkspace-cli
 

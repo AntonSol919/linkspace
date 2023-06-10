@@ -14,8 +14,6 @@ pub enum Error {
     Pkt(#[from] linkspace_core::pkt::Error),
     #[error("Io Error")]
     IO(#[from] IoError),
-    #[error("private null group not allowed in this context")]
-    PrivateGroup,
 }
 
 #[derive(Debug)]
@@ -23,7 +21,7 @@ pub struct NetPktDecoder<T> {
     pub allow_private: bool,
     pub reader: T,
     pub hop: bool,
-    pub validate: bool,
+    pub skip_hash: bool,
 }
 impl<T> NetPktDecoder<T> {
     pub fn new(reader: T) -> Self {
@@ -31,7 +29,7 @@ impl<T> NetPktDecoder<T> {
             allow_private: false,
             reader,
             hop: true,
-            validate: true,
+            skip_hash: false,
         }
     }
 }
@@ -72,7 +70,7 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
         let mut pkt = unsafe { partial_header.alloc() };
         {
             let s: &mut [u8] = unsafe {
-                std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, len)
+                std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, len as usize)
             };
             tracing::trace!("Read rest");
             let r = self
@@ -80,9 +78,11 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
                 .read_exact(&mut s[std::mem::size_of::<PartialNetHeader>()..]);
             try_opt!(r);
         };
-        try_opt!(pkt.check(self.validate));
-        if !self.allow_private && pkt.group() == Some(&PRIVATE) {
-            return Some(Err(Error::PrivateGroup));
+        try_opt!(pkt.check(self.skip_hash));
+        if !self.allow_private{
+            if let Err(e) = pkt.check_private(){
+                return Some(Err(Error::Pkt(e)));
+            }
         }
         if self.hop {
             let head = &mut pkt._net_header;

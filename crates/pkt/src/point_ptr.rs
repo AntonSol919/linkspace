@@ -39,7 +39,7 @@ impl PointThinPtr {
         unsafe {
             &*(std::ptr::from_raw_parts(
                 self as *const PointThinPtr as *const (),
-                self.0.content_size(),
+                self.0.content_size() as usize ,
             ))
         }
     }
@@ -66,7 +66,7 @@ impl PointPtr {
     pub unsafe fn from_bytes_unchecked(b: &[u8]) -> &PointPtr {
         PointThinPtr::from_bytes_unchecked(b).as_sized()
     }
-    pub fn internal_consitent_length(&self) -> Result<usize, Error> {
+    pub fn internal_consitent_length(&self) -> Result<u16, Error> {
         self.thin_point().internal_consitent_length()
     }
     #[inline(always)]
@@ -74,7 +74,7 @@ impl PointPtr {
         unsafe {
             core::slice::from_raw_parts(
                 self as *const Self as *const u8,
-                self.pkt_header.point_size(),
+                self.pkt_header.point_size() as usize ,
             )
         }
     }
@@ -119,7 +119,7 @@ impl PointThinPtr {
 
     /// Check the header length fields and return the point size. This is the length without the hash.
     #[inline(always)]
-    pub fn internal_consitent_length(&self) -> Result<usize, Error> {
+    pub fn internal_consitent_length(&self) -> Result<u16, Error> {
         self.point_header().check()?;
         let point_size = self.point_header().point_size();
         match self.fixed() {
@@ -127,7 +127,7 @@ impl PointThinPtr {
             BarePointFields::LinkPoint { lp_header, tail: _ } => {
                 let isp_offset = lp_header.info.offset_ipath.get();
                 let data_offset = lp_header.info.offset_data.get();
-                if data_offset as usize > point_size {
+                if data_offset > point_size {
                     return Err(Error::DataOffsetIncompatible);
                 }
                 if isp_offset > data_offset {
@@ -147,7 +147,7 @@ impl PointThinPtr {
                 a_header: assert,
                 tail: _,
             } => {
-                let inner_linkpoint_size = self.point_header().content_size()
+                let inner_linkpoint_size = self.point_header().content_size() as usize
                     - size_of::<KeyPointPadding>()
                     - size_of::<PubKey>()
                     - size_of::<Signature>();
@@ -160,7 +160,7 @@ impl PointThinPtr {
                 let inner_lp_bytes = &self.pkt_bytes()[LINKPOINT_IN_KEYPOINT_OFFSET..];
                 let linkpoint = unsafe { PointThinPtr::from_bytes_unchecked(inner_lp_bytes) };
                 let lp_size = linkpoint.internal_consitent_length()?;
-                if inner_linkpoint_size != lp_size + size_of::<LkHash>() {
+                if inner_linkpoint_size != lp_size as usize + size_of::<LkHash>()  {
                     return Err(Error::KeyPointLength);
                 }
             }
@@ -183,7 +183,7 @@ impl PointThinPtr {
             let inner_linkpoint: &PointPtr = unsafe {
                 &*std::ptr::from_raw_parts(
                     inner_ptr as *const (),
-                    assert.inner_point.content_size(),
+                    assert.inner_point.content_size() as usize ,
                 )
             };
             let hash = inner_linkpoint.compute_hash();
@@ -204,7 +204,7 @@ impl PointThinPtr {
         unsafe {
             core::slice::from_raw_parts(
                 self as *const Self as *const u8,
-                self.point_header().point_size(),
+                self.point_header().point_size() as usize ,
             )
         }
     }
@@ -256,7 +256,7 @@ impl PointThinPtr {
             ptr.add(start) as *const Link..ptr.add(is_offset) as *const Link,
         );
         let isp_bytes = core::slice::from_ptr_range(ptr.add(is_offset)..ptr.add(data_offset));
-        let data = core::slice::from_ptr_range(ptr.add(data_offset)..ptr.add(size));
+        let data = core::slice::from_ptr_range(ptr.add(data_offset)..ptr.add(size as usize));
         let spath_idx = IPath::from_unchecked(isp_bytes);
         debug_assert!(spath_idx.check_components().is_ok(), "{spath_idx:?}");
         Tail {

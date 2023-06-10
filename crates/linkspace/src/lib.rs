@@ -180,21 +180,32 @@ pub mod point {
     }
 
     
-    pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<(NetPktBox,&[u8])> {
-        let pkt = super::misc::read::parse_netpkt(buf, validate)?
-            .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
-        anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
-        let size = pkt.size();
+    pub fn lk_read(buf: &[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError> {
+        let pkt = super::misc::read::parse_netpkt(buf,false )?;
+        if !allow_private{pkt.check_private()?};
+        let size = pkt.size() as usize;
         Ok((pkt,&buf[size..]))
     }
-    pub fn lk_read_arc(buf: &[u8], validate: bool, allow_private: bool) -> LkResult<(NetPktArc,&[u8])> {
-        let pkt = super::misc::read::parse_netarc(buf, validate)?
-            .map_err(|i| anyhow::anyhow!("pkt size is (at least) {i}"))?;
-        anyhow::ensure!(allow_private || pkt.group() != Some(&PRIVATE), "prevent reading private group");
-        let size = pkt.size();
+    pub fn lk_read_unchecked(buf:&[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError>{
+        let pkt = super::misc::read::parse_netpkt(buf,true)?;
+        if !allow_private{pkt.check_private()?};
+        let size = pkt.size() as usize;
         Ok((pkt,&buf[size..]))
     }
-    pub fn lk_write(p: &dyn NetPkt, out: &mut dyn io::Write) -> io::Result<()> {
+    pub fn lk_read_arc_unchecked(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
+        let pkt = super::misc::read::parse_netarc(buf, false)?;
+        if !allow_private{pkt.check_private()?};
+        let size = pkt.size() as usize;
+        Ok((pkt,&buf[size..]))
+    }
+    pub fn lk_read_arc(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
+        let pkt = super::misc::read::parse_netarc(buf, true)?;
+        if !allow_private{pkt.check_private()?};
+        let size = pkt.size() as usize;
+        Ok((pkt,&buf[size..]))
+    }
+    pub fn lk_write(p: &dyn NetPkt, allow_private:bool,out: &mut dyn io::Write) -> io::Result<()> {
+        if !allow_private{p.check_private().map_err(io::Error::other)?}
         let mut segments = p.byte_segments().io_slices();
         out.write_all_vectored(&mut segments)
     }
@@ -677,6 +688,7 @@ pub mod runtime {
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
         linkspace_common::core::env::write_trait::save_pkts(&mut lk.0.get_writer(), pkts).map(|(i,_)|i)
     }
+    
     /// Run callback for every match for the query in the database.
     /// Break early if the callback returns true. 
     /// If break => number of matches
@@ -696,6 +708,7 @@ pub mod runtime {
         }
         Ok(if breaks { saturating_cast(c)}else {saturating_neg_cast(c)})
     }
+
 
     /// get the first result from the database matching the query.
     pub fn lk_get(lk: &Linkspace, query: &Query) -> LkResult<Option<NetPktBox>> {
@@ -723,21 +736,7 @@ pub mod runtime {
         let opt = reader.read(&hash)?;
         Ok(opt.map(|v|(cb)(v)))
     }
-    pub fn lk_get_links(lk:&Linkspace,list: &[Link],out: &mut dyn FnMut(Option<RecvPktPtr>,&LkHash) -> bool) -> anyhow::Result<i32> {
-        if list.is_empty() { return Ok(0);}
-        let reader = lk.0.get_reader();
-        let mut count = 0; 
-        let mut i = 0i32;
-        for p in list.iter(){
-            i = i.saturating_sub(1);
-            let pkt= reader.read(&p.ptr)?;
-            if pkt.is_some(){ count += 1;}
-            if (out)(pkt,&p.ptr){
-                return Ok( i)
-            }
-        }
-        Ok(count)
-    }
+
     /**
     Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid) )
     Before returning, calls cb for every packet in the database.

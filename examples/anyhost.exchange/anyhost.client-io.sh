@@ -22,10 +22,10 @@ lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
 lk set-status exchange $LK_GROUP process anyhost-client --read-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --read-repeat &
 
-export LK_NO_CHECK=true
+export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
-LK_NO_CHECK=false lk save --new db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
     | lk printf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \

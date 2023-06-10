@@ -83,7 +83,7 @@ impl PointHeader {
         if self.reserved != 0 {
             return Err(Error::HeaderReservedSet(self.reserved));
         }
-        let len = self.content_size();
+        let len = self.content_size() as usize;
         if len > MAX_CONTENT_SIZE {
             return Err(Error::ContentLen);
         }
@@ -104,15 +104,15 @@ impl PointHeader {
         as_bytes(self)
     }
     /// Size of a point (type,length,content). This is without the hash.
-    pub const fn point_size(&self) -> usize {
-        self.point_size.get() as usize
+    pub const fn point_size(&self) -> u16{
+        self.point_size.get() 
     }
     /// size of a point's content. If it is a datapoint, this is the size of the data.
-    pub const fn content_size(&self) -> usize {
-        self.point_size() - size_of::<PointHeader>()
+    pub const fn content_size(&self) -> u16{
+        self.point_size().saturating_sub(size_of::<PointHeader>() as u16)
     }
     /// Size of a netpkt. The pointsize plus pointhash and netpktheader
-    pub const fn net_pkt_size(&self) -> usize {
-        self.point_size() + size_of::<LkHash>() + size_of::<NetPktHeader>()
+    pub const fn net_pkt_size(&self) -> u16{
+        self.point_size() + size_of::<LkHash>() as u16 + size_of::<NetPktHeader>() as u16
     }
 }

@@ -2,7 +2,7 @@ use std::{sync::{Arc, OnceLock}, path::{Path,PathBuf},fmt::Debug, io::{Write, se
 
 use anyhow::Context;
 pub use ipcbus::ProcBus;
-use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, PointExt};
+use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktExt };
 use tracing::instrument;
 use crate::{env::write_trait::save_pkt, LNS_ROOTS};
 
@@ -54,9 +54,9 @@ impl BTreeEnv {
             let mut bytes = LNS_ROOTS;
             let roots:Vec<_> = std::iter::from_fn(||{
                 if bytes.is_empty() { return None;}
-                let pkt = crate::pkt::read::parse_netpkt(bytes, false).unwrap().unwrap();
+                let pkt = crate::pkt::read::parse_netpkt(bytes, true).unwrap();
                 let pkt = pkt.as_netbox();
-                bytes = &bytes[pkt.net_pkt_size()..];
+                bytes = &bytes[pkt.size() as usize..];
                 Some(pkt)
             }).collect();
             let mut it = roots.iter().map(|p| p as &dyn NetPkt);

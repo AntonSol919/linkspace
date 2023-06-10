@@ -124,10 +124,10 @@ pub struct InOpts {
     pub(crate) hop: Option<bool>,
     #[clap(
         long,
-        env = "LK_NO_CHECK",
+        env = "LK_SKIP_HASH",
         help = "skip validating hashes and signatures"
     )]
-    pub no_check: bool,
+    pub skip_hash: bool,
 }
 impl InOpts {
     pub fn pkt_reader<P: std::io::Read>(self, reader: P) -> NetPktDecoder<P> {
@@ -135,7 +135,7 @@ impl InOpts {
             allow_private: self.private_read.unwrap_or(false),
             reader,
             hop: self.hop.unwrap_or(true),
-            validate: !self.no_check,
+            skip_hash: self.skip_hash,
         }
     }
 }
@@ -169,13 +169,10 @@ impl CommonOpts {
             self.io.inp.private_read
         }
     }
-    pub fn check_private(&self, pkt: impl NetPkt) -> Option<impl NetPkt> {
+    pub fn check_private<S:NetPkt>(&self, pkt:S ) -> Result<S,linkspace_pkt::Error> {
         let write_private = self.write_private().unwrap_or(false);
-        if !write_private && pkt.as_point().group() == Some(&PRIVATE) {
-            tracing::warn!(pkt=%pkt_fmt(&pkt),"Skip writing private (null) group");
-            return None;
-        }
-        Some(pkt)
+        if !write_private { pkt.check_private()?}
+        Ok(pkt)
     }
     pub fn open(&self, lst: &[WriteDestSpec]) -> std::io::Result<Vec<WriteDest>> {
         let ctx = self.eval_ctx();
@@ -189,10 +186,7 @@ impl CommonOpts {
         pkt: &dyn NetPkt,
         buffer: &mut Option<&mut dyn std::io::Write>,
     ) -> std::io::Result<()> {
-        let pkt = match self.check_private(pkt) {
-            Some(p) => p,
-            None => return Ok(()),
-        };
+        let pkt = self.check_private(pkt).map_err(linkspace_pkt::Error::io)?;
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
                 return save_pkt(&mut self.linkspace.env_io()?.get_writer()?, pkt).map(|_| ())
@@ -228,10 +222,10 @@ impl CommonOpts {
     }
     pub fn stdout_writer(&self) -> impl PktStreamHandler {
         let allow_private = self.write_private().unwrap_or(false);
-        tracing::trace!(allow_private);
         let mut out = std::io::stdout();
         let ctx = self.clone();
         move |p: &dyn NetPkt, _rx: &Linkspace| -> std::io::Result<()> {
+            if!allow_private{p.check_private().map_err(|e|e.io())?}
             write_pkt2(&None, p, &ctx.eval_ctx(), &mut out)
         }
     }
@@ -248,7 +242,7 @@ impl CommonOpts {
             allow_private: self.read_private().unwrap_or(false),
             reader: inp,
             hop: self.io.inp.hop.unwrap_or_default(),
-            validate: !self.io.inp.no_check,
+            skip_hash: self.io.inp.skip_hash,
         })
     }
 }

@@ -96,7 +96,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
                     Some(p) => p,
                     None => return Ok(Err(dummy_root(name)))
                 };
-                let pkt = linkspace_pkt::read::parse_netpkt(&pbytes, false)?.map_err(|_| anyhow::anyhow!("not a valid packet"))?;
+                let pkt = linkspace_pkt::read::parse_netpkt(&pbytes, false)?;
                 Claim::from(pkt)?
             };
             Ok(Ok(LiveClaim{

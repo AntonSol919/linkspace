@@ -129,7 +129,7 @@ impl Pkt {
     pub fn path_len(&self) -> Option<u8> {
         self.0.path_len().copied()
     }
-    pub fn size(&self) -> usize {
+    pub fn size(&self) -> u16 {
         self.0.size()
     }
     #[wasm_bindgen(getter)]

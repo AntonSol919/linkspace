@@ -227,7 +227,7 @@ impl Pkt {
         })
     }
 
-    fn size(&self) -> usize{
+    fn size(&self) -> u16{
         self.0.size()
     }
 }

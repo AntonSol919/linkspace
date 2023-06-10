@@ -221,16 +221,18 @@ fn pptr(p: Option<&Pkt>) -> Option<&dyn NetPkt> {
 }
 
 #[pyfunction]
-pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt) -> anyhow::Result<&'a PyBytes> {
+#[pyo3(signature =(pkt,allow_private=false))]
+pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt, allow_private:bool) -> PyResult<&'a PyBytes> {
     // TODO remove this copy
-    let mut v = vec![];
-    linkspace_rs::point::lk_write(&pkt.0, &mut v)?;
-    Ok(PyBytes::new(py, &v))
+    PyBytes::new_with(py, pkt.0.size() as usize, |dest|{
+        Ok(linkspace_rs::point::lk_write(&pkt.0,allow_private,&mut std::io::Cursor::new(dest))?)
+    })
 }
+
 #[pyfunction]
-#[pyo3(signature =(buf, validate=true,allow_private=false))]
-pub fn lk_read(buf: &[u8], validate: bool, allow_private: bool) -> anyhow::Result<(Pkt, &[u8])> {
-    let (pkt,rest) = linkspace_rs::point::lk_read_arc(buf, validate, allow_private)?;
+#[pyo3(signature =(buf,allow_private=false))]
+pub fn lk_read(buf: &[u8], allow_private: bool) -> std::io::Result<(Pkt, &[u8])> {
+    let (pkt,rest) = linkspace_rs::point::lk_read_arc(buf, allow_private).map_err(std::io::Error::other)?;
     Ok((Pkt::from_arc(pkt),rest))
 }
 

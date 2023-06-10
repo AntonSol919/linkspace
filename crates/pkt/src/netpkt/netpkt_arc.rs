@@ -53,7 +53,7 @@ impl NetPktArcPtr {
         let ptr: *const NetPktPtr = { self.netpktptr() as *const NetPktPtr };
         let inner_arc: *const () =
             unsafe { (ptr as *const u8).sub(size_of::<AtomicUsize>()) as *const () };
-        let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size);
+        let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size as usize );
         let i: NonNull<ArcInner> = NonNull::new(inner as *mut ArcInner).unwrap();
         let arc: &NetPktArc = unsafe { std::mem::transmute(&i) };
         f(arc)
@@ -88,19 +88,19 @@ impl NetPktArc {
         let size = unsafe { (*ptr).as_point().point_header_ref().content_size() };
         let inner_arc: *const () =
             unsafe { (ptr as *const u8).sub(size_of::<AtomicUsize>()) as *const () };
-        let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size);
+        let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size as usize);
         let arc: Arc<HeaderSlice<NetPktPtr, [u8]>> = unsafe { std::mem::transmute(inner) };
         NetPktArc(arc)
     }
-    pub unsafe fn from_header_and_copy(partial: PartialNetHeader,check_crypt:bool, copy_from:impl FnOnce(&mut [u8])) -> Result<Self,Error>{
+    pub unsafe fn from_header_and_copy(partial: PartialNetHeader,skip_hash:bool, copy_from:impl FnOnce(&mut [u8])) -> Result<Self,Error>{
         let h = crate::NetPktPtr {
             net_header: partial.net_header,
             hash: partial.hash,
             point: crate::PointThinPtr(partial.point_header),
         };
-        let inner_len = h.point.point_header().content_size();
-        let pkt= NetPktArc(triomphe::Arc::from_header_and_fn(h,inner_len,copy_from));
-        pkt.check(check_crypt)?;
+        let inner_len = h.point.point_header().content_size() ;
+        let pkt= NetPktArc(triomphe::Arc::from_header_and_fn(h,inner_len as usize,copy_from));
+        pkt.check(skip_hash)?;
         Ok(pkt)
     }
 }

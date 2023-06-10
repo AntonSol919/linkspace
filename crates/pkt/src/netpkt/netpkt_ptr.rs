@@ -79,9 +79,9 @@ impl NetPktPtr {
         }
     }
 
-    pub fn check(&self, check_crypto:bool) -> Result<&[u8], Error> {
+    pub fn check(&self, skip_hash:bool) -> Result<&[u8], Error> {
         let _ = self.point.internal_consitent_length()?;
-        if check_crypto {
+        if skip_hash{
             self.point.check_signature()?;
             if self.hash() != self.point.compute_hash() {
                 return Err(Error::HashMismatch);
@@ -90,7 +90,7 @@ impl NetPktPtr {
         Ok(self.as_netpkt_bytes())
     }
     pub fn as_netpkt_bytes(&self) -> &[u8] {
-        unsafe { from_raw_parts(self as *const Self as *const u8, self.size()) }
+        unsafe { from_raw_parts(self as *const Self as *const u8, self.size() as usize ) }
     }
 }
 
@@ -208,7 +208,7 @@ pub fn netpktbox_layout(
     <NetPktFatPtr as std::ptr::Pointee>::Metadata,
 ) {
     use std::alloc::Layout;
-    let clen = pkt_header.content_size();
+    let clen = pkt_header.content_size() as usize;
     (
         Layout::new::<PartialNetHeader>()
             .extend(Layout::new::<u8>().repeat(clen).unwrap().0)
