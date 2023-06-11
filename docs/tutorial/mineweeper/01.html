@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-06-11 Sun 09:21 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MineWeeper</title>
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script type="text/javascript" src="./org-highlight.js"></script>
+<link rel="icon" type="image/x-icon" href="../../../images/logo2.png">
+<link rel="stylesheet" type="text/css" href="./style.css"/>
+<link rel="stylesheet" type="text/css" href="./blog.css"/>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">MineWeeper</h1>
+<p class="subtitle" role="doc-subtitle">A Linkspace Application Tutorial</p>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org2c29c03">Bob's Hotseat MineWeeper</a></li>
+<li><a href="#org7bfd99f">Game on</a></li>
+<li><a href="#orga04db78">Multiplayer</a></li>
+<li><a href="#org5295842">Cheating</a>
+<ul>
+<li>
+<ul>
+<li><a href="#orgb01105e">Who cares?</a></li>
+<li><a href="#org052a652">Emulate host/client</a></li>
+<li><a href="#org2d8ec12">Rng-esus died for your sins</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org249d031">A dose of reality</a></li>
+</ul>
+</div>
+</nav>
+<script type="text/javascript">
+    // Setup clickable tabs
+document.addEventListener('DOMContentLoaded', ()=>
+    document.querySelectorAll(".ctabs").forEach((outer,i)=>
+        [... outer.children].forEach((el,j) => {
+        el.insertAdjacentHTML(
+            "beforebegin",
+            `<input name="tabs${i}" tabindex="${i}" type="radio" id="tab${i}x${j}" ${j == 0 ? "checked" : ""}>
+                 <label for="tab${i}x${j}">${el.className}</label>`
+        );
+    el.setAttribute("tabindex",i);
+        } )
+    )
+    );
+
+    // Setup highlight js 
+
+document.addEventListener('DOMContentLoaded', (event) => {
+        document.querySelectorAll('pre.src').forEach((el) => {
+            let lang = el.classList[1].slice(4)
+            el.classList.add("language-" + lang)
+            hljs.highlightElement(el);
+        });
+});
+
+</script>
+
+<p>
+This is the first a <a href="../index.html">series</a> of tutorials to showcase linkspace.
+</p>
+
+<p>
+We'll follow Bob in his journey.
+</p>
+
+
+<figure id="orgbef5992">
+<img src="../images/bob-hi.png" alt="bob-hi.png">
+
+</figure>
+
+<p>
+He build the greatest and must impressive game ever.  
+Or so he says.
+</p>
+
+<p>
+The game is MineWeeper: A Multiplayer minesweeper clone where players take turns. 
+</p>
+
+<p>
+These knowledge/skills are assumed:
+</p>
+
+<ul class="org-ul">
+<li>a little bit of python.</li>
+<li>Terminal access (You know <code>cd</code> and can google what <code>xargs</code> does if you're interested)</li>
+<li>the difference between a string and bytes</li>
+<li>What it means to set the seed for a random number generator.</li>
+<li>What a hash and public keys is.</li>
+<li>You've read the <a href="http://www.linkspace.dev/basics.html">basics</a>.</li>
+</ul>
+
+<p>
+In linkspace, the responsibilities for things are different to what we're used to.
+</p>
+
+<p>
+An application developer has drastically fewer responsibilities.
+Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application has to deal with. 
+The developer doesn't think about managing sockets, but only about:
+bytes, linking to bytes, and reading bytes by link or a query such as path names.
+</p>
+
+<p>
+This tutorial is about that developer, not about the user or the group.
+</p>
+
+<p>
+Before you continue, please check this consent form to not hold Bob accountable for the dumb stuff you share and do.
+</p>
+
+<div> 
+<input type="checkbox" id="consent" name="consent">
+<fieldset id="consent-form">
+    <legend>Consent form</legend>
+    <label for="consent">Click to Consent [ ] </label>
+</fieldset>
+<div id="consent-ok">
+<img src="../images/bob-cheer.png" alt="bob-cheer.png">
+<p>With that piece of vital and productive administration out of the way, let's check out what Bob has build</p>
+</div>
+</div>
+
+
+<div id="outline-container-org2c29c03" class="outline-2">
+<h2 id="org2c29c03">Bob's Hotseat MineWeeper</h2>
+<div class="outline-text-2" id="text-org2c29c03">
+<p>
+Bob's game is perfect, but there is a teeny-tiny, little, detail missing.
+</p>
+
+<p>
+It only works in hotseat mode.
+Every player has to be at the same keyboard taking turns.
+</p>
+
+<p>
+Bob's a friendly guy, but he doesn't want you coming to his house.
+Instead, he'll build something, such that others can enjoy his perfect game with their friends over the internet.
+</p>
+
+<p>
+No problemo.
+</p>
+
+<p>
+But first, how does the game work in hotseat mode?
+</p>
+
+<p>
+It asks the user for a list of player names.
+Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
+</p>
+
+<div class="py" id="orge9db30f">
+<div class="org-src-container">
+<pre class="src src-python">from mineweeper import MineWeeper, clear_screen, NoSuchCell,AlreadyRevealed
+import re,random
+
+player_count = int(input("Number of players?:"))
+players = [ input("Enter name&gt;:") for _ in range(player_count)]
+rows = 20 # int(input("rows"))
+cols = 20 # int(input("cols"))
+mine_rate = 0.3 # int(input("mine_rate"))
+# A game started with the same (rows,cols,seed) will have the mines at the same location
+seed = random.randbytes(4)
+
+game = MineWeeper(players,rows,cols,mine_rate,seed=seed)
+
+input("Coordinates are row/vertical, col/horizontal. [Enter to start]")
+while game.print_game_state():
+    try:
+        [row,col] = re.split('[;|, :]',input("Reveal:"))
+        clear_screen()
+        game.reveal(int(row),int(col))
+    except Exception as e:
+        print(e)
+</pre>
+</div>
+
+</div>
+
+
+<p class="verse">
+To give it a try: clone the repository or download and extract latest release: <a href="https://github.com/AntonSol919/linkspace/releases">https://github.com/AntonSol919/linkspace/releases</a> (Potential out of date).<br>
+All paths and commands will be relative to this directory.<br>
+You can try the code with <code>python ./examples/mineweeper/mineweeper-hotseat.py</code><br>
+</p>
+
+<p>
+Bob's a little disappointed with the graphics.
+Maybe someday he'll make it a 3D VR experience.
+<img src="../images/bob-doubt.png" alt="bob-doubt.png">
+</p>
+
+<div class="ctabs" id="org0db1982">
+<div class="info" id="orgc722abf">
+<p>
+Contrary to Bob, we don't care much for the details of MineWeeper.
+In case you're interested checkout the tab or open the code in ./app/mineweeper-py/mineweeper.py
+</p>
+
+</div>
+
+<div class="py" id="org84498c1">
+<div class="org-src-container">
+<pre class="src src-python">import linkspace
+import itertools
+import re
+from dataclasses import dataclass
+
+class NoSuchCell(Exception): pass
+class AlreadyRevealed(Exception): pass
+
+def clear_screen():
+    print("\n"*100)
+
+@dataclass
+class Cell:
+    mine: bool = False
+    revealed: bool = False 
+    neighbour_mines:int = 0
+    def __str__(self):
+        return (not self.revealed and ".") or (self.mine and "X") or str(self.neighbour_mines)
+
+
+class MineWeeper():
+    players: list[str]
+    rows:int
+    cols:int
+    mine_rate:float
+    seed: bytes
+    grid:list[list[Cell]] =[]
+    loser = None
+    game_round = 0
+
+    def __init__(self, players: list[str], rows: int, cols: int, mine_rate: float, seed: bytes) -&gt; object:
+        self.players = players
+        self.rows = rows;
+        self.cols = cols
+        self.mine_rate = mine_rate
+        self.seed = seed
+        self.grid =  [ [Cell(self.is_mine(i,j)) for j in range(self.cols)]  for i in range(self.rows)]
+        for r,row in enumerate(self.grid):
+            for c,cell in enumerate(row):
+                for (dr,dc) in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+                    neighbour = self.get_cell(r+dr,c+dc)
+                    if neighbour:
+                        cell.neighbour_mines += neighbour.mine
+
+    def current_player(self) -&gt; tuple[int,str]:
+        player_id = self.game_round % len(self.players)
+        return (player_id,self.players[player_id])
+
+    def is_mine(self,row:int,col:int) -&gt; bool:
+        rand_bytes = linkspace.blake3_hash(self.seed + row.to_bytes(length=4) + col.to_bytes(length=4))
+        random = linkspace.bytes2uniform(rand_bytes)
+        return random &lt; self.mine_rate
+
+    def get_cell(self,row,col)  -&gt; Cell | None:
+        if row &gt;= 0 and row &lt; self.rows and col &gt;= 0 and col &lt; self.cols:
+            return self.grid[row][col]
+        return None
+
+    def print_grid(self):
+        coord_fmt = "[{:&gt;2}]"
+        print(*["[##]"] + [coord_fmt.format(c) for c in range(self.cols)])
+        for r,row in enumerate(self.grid):
+            print(*[coord_fmt.format(r)] + [ " {:&gt;2} ".format(str(cell)) for cell in row])
+
+    def count_revealable(self) -&gt; int:
+        """number of cells left to reveal"""
+        return sum([
+            not cell.revealed and not cell.mine
+            for row in self.grid for cell in row
+        ])
+
+
+    def print_game_state(self) -&gt; bool:
+        """Print board and current state. returns False if game is finished"""
+        print(self.print_grid())
+        print("Round ",self.game_round)
+        if self.loser is not None:
+            print("Game Finished!")
+            print("The loser is {} ({})".format(self.players[self.loser],self.loser))
+            return False
+        if self.count_revealable() == 0:
+           print("Everybody survived!")
+           print("for now ...")
+           return False
+        print(self.count_revealable(),"options to not lose")
+        (pid,name) = self.current_player()
+        print("Player {} ({})".format(name,pid))
+        return True
+
+    def get_revealable_cell(self,row,col) -&gt; Cell:
+        """Get unrevealed cell at row,col. Raises exceptions if not possible"""
+        cell = self.get_cell(row,col)
+        if cell is None:
+            raise NoSuchCell
+        elif cell.revealed:
+            raise AlreadyRevealed
+        return cell
+
+
+    def reveal(self,row,col):
+        cell = self.get_revealable_cell(row,col)
+        cell.revealed = True
+        (pid,_) = self.current_player()
+        if cell.mine:
+            print(f"({row},{col}): Boom!!!")
+            self.loser = pid
+        else:
+            print(f"({row},{col}): Phew.")
+            self.game_round += 1
+</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7bfd99f" class="outline-2">
+<h2 id="org7bfd99f">Game on</h2>
+<div class="outline-text-2" id="text-org7bfd99f">
+<p>
+After searching high and low for a method to share it with the world, our friend Bob reaches for enlightenment.
+</p>
+
+
+<figure id="org03630c5">
+<img src="../images/bob-enlightend.png" alt="bob-enlightend.png">
+
+</figure>
+
+
+<p>
+He finds linkspace.
+</p>
+
+<p>
+A thoroughly untested protocol with very few users.
+But he figures it's the best solution to make MineWeeper a true multiplayer game.
+</p>
+
+<p>
+With linkspace:
+</p>
+<ul class="org-ul">
+<li>his (user administrative) workload drops dramatically.</li>
+<li>the game will stay playable without him spending a penny. Forever.</li>
+<li>user network/account/group problems can be solved once (hopefully by someone else).</li>
+</ul>
+
+<p>
+Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
+</p>
+
+<p>
+Developing linkspace system boils down to:
+</p>
+
+<ul class="org-ul">
+<li>Gather some bytes you want sent around in a packet.</li>
+<li>Optionally: set a path, add links to other packets, sign it.</li>
+<li>Save that packet.</li>
+<li>Build a query; a list of predicates for a packet (e.g. pubkey, hash, path).</li>
+<li>Get or watch for those results.</li>
+</ul>
+
+
+<p>
+For Bob, the linkspace library is an abstraction such that all the players share a common space where he can read from, and write into.
+</p>
+
+<p>
+In the linkspace world, Bob's game is a domain application.
+A program providing a friendly interface reading/writing the bytes that the developer wants to be shared around.
+</p>
+
+<p class="verse">
+When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.<br>
+This is done by a linkspace group exchange process. A group exchange process is build like a domain application.<br>
+But its role is to exchange all packets with its group ID to the members that require it.<br>
+More on them another day.<br>
+</p>
+
+<p>
+Bob recognizes that his game has two distinct phases.
+</p>
+
+<ul class="org-ul">
+<li>Finding the people to start playing it with.</li>
+<li>Taking turns to play the game.</li>
+</ul>
+
+<p>
+He'll start with 'play the game', and build the lobby system for proposing/joining/starting a game later.
+</p>
+
+<p>
+He's not set on the details, but every game starts with at least the players knowing:
+</p>
+
+<ul class="org-ul">
+<li>a list of (player names, pubkey).</li>
+<li>number of rows &amp; columns.</li>
+<li>mine_rate.</li>
+<li>RNG seed.</li>
+</ul>
+
+<p class="verse">
+In this setup everybody knows the board, but we'll touch on <a href="#org5295842">Cheating</a> later.<br>
+</p>
+
+<p>
+Players can play a game after they agree on those fields.
+JSON works well enough.
+After some consideration he realized a 'seed' field isn't necessary.
+The hash of the packet can fill the role.
+He ends up with a packet to start the game with that looks as follows:
+</p>
+
+<pre class="example" id="org95a2c20">
+type	LinkPoint
+hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
+group	[#:test]
+domain	mineweeper
+path	
+pubkey	[@:none]
+create	1682062494375521
+links	0
+
+data	278
+{
+    "rows":20,
+    "columns": 20,
+    "mine_rate":0.3,
+    "players":[
+        ["alice", "iyfplTMDFj3Jw8XwdfwvXs9ZVgwwYZNsQ3E7cS55kLQ"],
+        ["bob", "qfurOQ2oTD1Xc9dQf_gX2MXbsbALdXQ_XemF0aTlj6U"],
+        ["charlie", "2SYK3NlS8k4ELKWR6CmqIQAiPrMosr5LioK7456jnDY"]
+    ]
+}
+</pre>
+
+<div class="ctabs" id="org8b90beb">
+<div class="info" id="org3b4b849">
+<p>
+Bob isn't infallible, so in building this he needs to test it locally.
+The ./emulate folder contains two script to create and connect two instances locally.
+It requires tmux to be installed (available in most package managers)
+</p>
+
+</div>
+
+<div class="setup" id="orgc85644a">
+<p>
+
+</p>
+
+<p>
+You can create an instance with a basic exchange process by opening a terminal and:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">source ./activate # Builds and updates the PATH, set LK_DIR to ./private
+# We want to emulate a entire group with multiple instances.
+./emulate/host.session.tmux.sh # This creates a new instance in ./private/alice, with its own key, and starts a host process
+</pre>
+</div>
+
+<p>
+Open a second terminal and execute the following to create additional instances that connects to the host.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">source ./activate # to set the path
+# creates a new instance in ./private/bob , with its own key key, and automatically connect to the host alice.
+./emulate/session.tmux.sh bob # change this name to add multiple sessions
+</pre>
+</div>
+
+<p>
+The bottom panel is the exchange process, the middle panel is watching the log, the upper panel is to run applications.
+You can test if the sessions are correctly connected by running <code>linkmail.py</code> and writing a message.
+</p>
+
+<p>
+Finally, we have to create the game packet and share it.
+Eventually this will be done with a lobby we'll create. Right now we have to manually create it for our test.
+One method to do so is as follows:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">cd private
+# Edit this setup.json by hand to look like the json above.
+cat ./*/emulate_name_key &gt; setup.json
+
+lk link mineweeper:[#:test] --read ./setup.json | tee setup.pkt | lk printf
+# Manually save this packet to each instance
+find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
+</pre>
+</div>
+
+<p>
+If properly done the middle panel of each instance should show a new packet.
+</p>
+
+<p>
+Finally, in each session we can use the upper panel to run:
+</p>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orga04db78" class="outline-2">
+<h2 id="orga04db78">Multiplayer</h2>
+<div class="outline-text-2" id="text-orga04db78">
+<p>
+The outline is as follows:
+</p>
+
+<ul class="org-ul">
+<li>open the linkspace instance and a signing key.</li>
+<li>Use the hash of the game packet to get the configuration.</li>
+<li>Interpret the settings, including a list of [player names,pubkeys].</li>
+<li>while not done:</li>
+</ul>
+<p>
+&#x2013; Print the state.
+&#x2013; If our turn -&gt; make a choice and save the move info.
+&#x2013; Else -&gt; wait for the current player to make a move.
+</p>
+
+<p>
+But how do we determine whose turn it is?
+There is no host to orchestrate, and packets can arrive for each players in a different order. Somebody might cheat :O?
+In linkspace ordering some packets is actually trivial.
+Adding a link to another packet is proof that one was created before the other.
+</p>
+
+<div class="py" id="org92d0ef8">
+<div class="org-src-container">
+<pre class="src src-python">#!/bin/env python3
+
+import sys, json,re,functools
+
+from mineweeper import MineWeeper, clear_screen
+from linkspace import *
+
+# The players agreed on the game setup and players.
+# This was saved in a packet.
+# This script is launched with that Pkt.hash in base64.
+
+game_hash = sys.argv[1]
+
+# Open the linkspace instance and our key. (Set with LK_DIR and LK_KEYNAME)
+
+lk = lk_open() 
+signing_key = lk_key(lk)
+
+# Get the game setup packet.
+game_pkt = lk_get(lk, lk_hash_query(game_hash)) or exit("No such game start")
+
+"""
+We have decided the data will be json encoded and look like:
+{
+    "rows":20,
+    "columns": 20,
+    "mine_rate":0.3,
+    "players":[
+        ["alice", "iyfplTMDFj3Jw8XwdfwvXs9ZVgwwYZNsQ3E7cS55kLQ"],
+        ["bob", "qfurOQ2oTD1Xc9dQf_gX2MXbsbALdXQ_XemF0aTlj6U"],
+        ["charlie", "2SYK3NlS8k4ELKWR6CmqIQAiPrMosr5LioK7456jnDY"]
+    ]
+}
+"""
+
+game_conf = json.loads(game_pkt.data.decode("utf-8"))
+
+# We print some game info.
+print("Starting game")
+# lk_encode takes bytes and tries various ways to print them in readable abe format.
+print("group  :", lk_encode(game_pkt.group,"#/@/b"))
+print(game_conf)
+
+# The players are a subset of the members in a group.
+# They must signal what data they want from the group.
+# We make it unambiguous which packets are part of this game by reading/writing to a unique path.
+game_path = spath([b"game", game_pkt.hash])
+# Internally, paths are length separated bytes. Most arguments accept a string like /game/[b:AAAAA....] .
+# In our case we can skip this b64 encoding step.
+
+# Every query has at least the following in common.
+common_q = lk_query_parse(
+    lk_query(),
+    "domain:=:mineweeper",
+    "group:=:[group]",
+    "path:=:[0]",
+    pkt=game_pkt, argv=[game_path]) #provides the [group] and [0] values
+
+# To inspect a query use print(lk_query_print(common_q, True))
+
+# We signal the group to send us packets by saving the query in a packet to a specific location.
+# Instead of doing so manually, we use lk_pull.
+# pulling requires the query to have a qid so we can remove it later.
+pull_q = lk_query_push(common_q,"","qid", b"game"+game_pkt.hash)
+lk_pull(lk, pull_q)
+
+# If everything is going to plan:
+# An exchange process reads the request, and ensure all players eventually receive packets from others that matches the query.
+# i.e. whenever we save a packet with the path 'game_path', the other players who ran lk_pull receive that packet.
+
+# A packet is one of three types. (Or to be exact, a packet is a [netheader,hash,point] and there are three types of points)
+# A datapoint, linkpoint, or keypoint.
+# A datapoint holds: data.
+# A linkpoint holds: data, a path name, and links (tag,hash) to other packets.
+# A keypoint is a linkpoint with a cryptographic signature.
+# For our case we'll only use keypoints.
+
+# Its common to wrap the *point functions when arguments wont change.
+new_keypoint = functools.partial(lk_keypoint, key=signing_key, domain=b"mineweeper", group=game_pkt.group, path=game_path)
+
+player_count = len(game_conf['players'])
+for i, e in enumerate(game_conf['players']):
+    print(i, e)
+
+players = list([e[0] for e in game_conf['players']])
+
+
+# The pkt hash is used as a seed to generate the mine map.
+game = MineWeeper(    players=players,
+    rows=game_conf['rows'],
+    cols=game_conf['columns'],
+    mine_rate=game_conf['mine_rate'],
+    seed=game_pkt.hash)
+input("Coordinates are row/vertical, col/horizontal.")
+
+# Players take turns until someone reveals a bomb.
+# Its up to us as a developer to choose how to encode that.
+# We decide to encode a turn in a keypoint, signed by the player, with the data a json encoded [x,y] for the chosen cell.
+# The Pkt.pubkey indicates who made the move.
+# We could add a {turn:int} field to the json.
+# Instead, we chose to be more strict:
+# every turn will link to the previous turn.
+# This makes it obvious what happened if someone adds multiple moves for some reason.
+# The first turn will link back to the game_pkt
+prev_turn = Link("prev", game_pkt.hash)
+
+# Packets that match (a subset of) our query are processed as follows:
+# If the pkt has its links equal to prev_ptr, and pubkey == current_player.pubkey =&gt; the data should contain the json for their turn.
+def find_and_do_next_move(player_turn_pkt):
+    global prev_turn, game
+    if list(player_turn_pkt.links) != [prev_turn]: # We skip the check for current_player.pubkey, it shall be handled through the query.
+        return
+    [row, col] = json.loads(player_turn_pkt.data.decode("utf-8"))
+    clear_screen()
+    game.reveal(row, col)
+    # Update our prev_ptr to the this packet. 
+    prev_turn = Link("prev", player_turn_pkt.hash)
+    # Returning True stops this function from being called with more matches.
+    return True
+
+while game.print_game_state():
+    [pid,name] = game.current_player();
+    [_name,player_b64_key] = game_conf['players'][pid]
+
+    # We narrow our query to packets signed by the current player.
+    # We have their pubkey in a base64 string.
+    # lk_query_push and lk_query_parse can both update the query. The later handles strings formats instead of bytes.
+    q = lk_query_parse(common_q,"pubkey:=:"+player_b64_key)
+
+    # (We don't have to lk_pull. This query is a subset of what we're already pulling).
+
+    q = lk_query_push(q,"","qid",b"move") # eqv: lk_query_parse(q,":qid:move").
+
+    # To start check the database for a match.
+    # lk_watch first checks the database. If the callback returned True it returns a positive number.
+    # Otherwise 0 or negative to indicate the callback was registered and is waiting for new packets.
+    if lk_watch(lk,q,find_and_do_next_move)&gt; 0:
+        # next turn
+        # (As a side effect of our design, a user can close and re-open the game and continue were they left off)
+        continue
+
+    # If its our turn, do a move.
+    if player_b64_key == b64(signing_key.pubkey):
+        while True:
+            print("Your turn")
+            try:
+                [row,col] = re.split('[;|, :]',input("Reveal:"))
+                (row,col) = (int(row),int(col))
+                data=json.dumps([row,col])
+                game.get_revealable_cell(row,col)
+                #if "i'm" and not "a cheater" and game.is_mine(row,col) and "c" in input("cheat?"):
+                #    continue
+                pkt = new_keypoint(data=data,links=[prev_turn])
+                # We save the packet. An exchange process will ensure the other players get it.
+                # (This does not update our view of the database until we call lk_process or lk_process_while)
+                lk_save(lk,pkt)
+                break
+            except Exception as e: 
+                print(e)
+    else:
+        print("Waiting")
+
+    # We process new packets until our callback registered with qid 'move' returned True.
+    # lk_process_while is smart about sleeping until new packets arrive and a condition is met.
+    # a positive value means the callback has finished.
+    while not lk_process_while(lk,qid=b"move") &gt; 0:
+        pass
+    # The current player made a move. We continue to the next round
+
+# Our game is done
+print("Fin")
+</pre>
+</div>
+
+</div>
+
+<div class="ctabs" id="orgd9c82c3">
+<div class="info" id="org25aa0e6">
+<p>
+
+</p>
+
+<p>
+To start the mineweeper-multiplayer.py manually, we run the following in each session
+</p>
+<div class="bash" id="org0d7f3cc">
+<p>
+mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
+</p>
+
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5295842" class="outline-2">
+<h2 id="org5295842">Cheating</h2>
+<div class="outline-text-2" id="text-org5295842">
+<p>
+There are three ways to deal with cheating.
+</p>
+
+<p>
+Four if you count Bobs disapproval as an option.
+</p>
+
+
+<figure id="org4d4b7b1">
+<img src="../images/bob-angry.png" alt="bob-angry.png">
+
+</figure>
+
+<p>
+Keep in mind what is normal today.
+</p>
+
+<p>
+Opening a game on your phone or browser usually means it connects to a single host.
+This host receives your moves, it checks their local hidden state, and return you a result.
+In one sense this is better, only the host can cheat.
+On the other hand, only the host can cheat and nobody would know about it.
+</p>
+</div>
+
+<div id="outline-container-orgb01105e" class="outline-4">
+<h4 id="orgb01105e">Who cares?</h4>
+<div class="outline-text-4" id="text-orgb01105e">
+<p>
+The option you should take by default.
+Most games <span class="underline">can</span> be cheated, so the upside of making it more difficult has its limits.
+</p>
+
+<p>
+Scrabble or Chess can use helper tools you can't detect.
+Shooter games have aimbots and 'see-through-walls' cheats.
+</p>
+
+<p>
+Most players are not cheaters, even if they could.
+Trusting your peers save a lot of hassle.
+For a game like MineWeeper that is usually enough.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org052a652" class="outline-4">
+<h4 id="org052a652">Emulate host/client</h4>
+<div class="outline-text-4" id="text-org052a652">
+<p>
+One option is to emulate a host/client setup.
+The first player could act as host and watch for turns and reply with the result.
+</p>
+
+<p>
+A slight tweak already makes this more fair than what is normal today.
+The host could have their game_pkt contain a link to a datapacket with the game field, without actually making it available.
+Once the game is done, the host can release the packet and players could check if the host was honest.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2d8ec12" class="outline-4">
+<h4 id="org2d8ec12">Rng-esus died for your sins</h4>
+<div class="outline-text-4" id="text-org2d8ec12">
+<p>
+There are a number of ways to define a set of rules that make MineWeeper random without anyone knowing the full mine map.
+</p>
+
+<p>
+There are two obstacles:
+</p>
+<ul class="org-ul">
+<li>Agreeing on a random value nobody can tamper with.</li>
+<li>How to deal with the cell numbers that represent how many mines surround it.</li>
+</ul>
+
+<p>
+One option to get a random number goes as follows:
+Every player acknowledges the turn before applying it.
+Once you have every ack packet you can combine the ack.hash bytes to get a random val nobody can tamper on their own.
+</p>
+<div class="org-src-container">
+<pre class="src src-python">ack_link = Link("ack",player_turn_pkt.hash)
+# Its best to enforce a value for the 'create' stamp so there is less ambigiouty on what the 'correct' packet must look like
+ack_pkt = lk_keypoint( create=player_turn_pkt.create, link = [ack_link])~
+acked = dict()
+def collect_acks(ack_pkt):
+    if list(ack_pkt.link) == [ack_link] and ack_pkt.create == ack_pkt.create:
+        acked.insert(pkt.pubkey,pkt.hash)
+        if len(acked) == players:
+            return False
+
+lk_watch(lk,lk_query_parse(q,":qid:acks"),collect_acks)
+lk_process_while(qid="acks")
+seed = itertools.reduce(lambda xored, hash: xored ^ hash, acked.values())
+
+</pre>
+</div>
+
+<p>
+That leaves us with the more difficult issue:
+</p>
+
+<p>
+Showing the number of mines surrounding a cell, without letting cheaters peek into which ones are non-mines.
+</p>
+
+<p>
+One solution is to postpone determining which cell has the mine.
+We add a 'solver'.
+Just like a non-cheater, the solver calculates the probabilities of hidden fields based on the revealed cells.
+Revealing a cell is then done with the seed we built earlier and the probability is adjusted for what the current state of the board is.
+</p>
+
+<p>
+Cheating is now impossible.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org249d031" class="outline-2">
+<h2 id="org249d031">A dose of reality</h2>
+<div class="outline-text-2" id="text-org249d031">
+<p>
+In the <a href="./02.html">next</a> installment Bob will continue his journey to building the best game ever.
+This time by building a lobby system so it's actually playable.
+</p>
+
+<p>
+In the meantime, a little expectation management is in order.
+</p>
+
+<p>
+Various components and systems required for linkspace are still in their early days.
+It Works On My Machine<sup>tm</sup>.
+Some tools and standards don't exist yet or are only partially implemented.
+</p>
+
+<p>
+It's a project to rebuild the internet into something better.
+That means taking some steps backwards before going forward.
+At the crrent version it has reached the usability of 1980's email.
+It works, but its not pretty nor user friendly.
+</p>
+
+<p>
+That being said, there are currently no breaking changes to Bob's program planned.
+And every improvement to other systems improves the experience of using a linkspace application.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2023-06-11 Sun 09:21</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

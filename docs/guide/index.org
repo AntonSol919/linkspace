@@ -1,0 +1,1408 @@
+#+TITLE: The Linkspace Guide
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+#+INCLUDE: "../utils.js" export html 
+
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
+
+#+BEGIN_VERSE
+This document is kept up to date on a best effort basis.
+Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
+#+END_VERSE
+
+This is a technical document describing linkspace from first principle.
+You should be familiar with the [[../../basics.html][basics]].
+If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
+
+* Introduction
+
+Linkspace is a packet format and processing library.
+Instead of providing an API to consume streams of data, linkspace takes a different path.
+Packets of bytes are hashed, named, saved, and can reference other packets.
+
+This gives us a thin and powerful stack to build multiparty applications.
+[[../cargo-doc/linkspace/index.html][linkspace]] is the authoritative implementation.
+
+Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
+This abstraction sidesteps or solves a number of difficulties inherent in organizing data.
+If entries include hashes to other entries I consider it a supernet[fn::
+Blockchains are a subset of supernets.
+They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain.].
+
+#+BEGIN_VERSE
+Supernet  [ˈsü-pərˌnet]
+
+A self-referential multi-participant data organization protocol whose primary
+addressing method uses hashes instead of endpoint identifiers.
+A communication protocol where the method of exchange is an extraneous concern.
+e.g. git, bitcoin, nostr, linkspace
+#+END_VERSE
+
+The supernet paradigm is a trade-off.
+Instead of processing ordered streams of network data, an application is a function over the partial view of interlinked state.
+This has upsides[fn::
+The homepage contains a list of various properties. However, there is one I lack a word for.
+Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
+They're well-designed if they run under the assumption of incomplete, out-of-order, potentially buggy state.
+In linkspace this is a requirement, and the library attempts to make it simple.
+That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
+] and downsides.
+
+One issue with supernets built so far is that they are bound to their use-case.
+Linkspace is a general purpose supernet.
+A developer claims a domain name like they would a port number, and their application can run for any group of users.
+Linkspace is designed to be fast and has a small API.
+
+It consists of 4 concepts.
+
+- [[Point]] - Bytes that are named and reference other points by hash. Together with its hash and netheader form a packet.
+- [[ABE]] - (Byte) templating for convenience.
+- [[Query]] - A list of predicates and options for selecting packets.
+- [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
+
+Common challenges are addressed by a set of [[Conventions]].
+
+* Setup
+:PROPERTIES:
+:CUSTOM_ID: setup
+:END:
+
+
+This guide uses Python and (Bash) CLI snippets.
+
+** Binary
+
+The [[https://antonsol919.github.io/linkspace/index.html#download][zip]] contains the CLI and python library and the examples used in this document.
+
+** Package manager
+
+~cargo +nightly install linkspace-cli~
+
+~pip install linkspace~
+
+** Build from source
+
+*** User
+
+ ~make install-lk install-python~
+
+*** Development
+
+ ~source ./activate~ builds and sets PATH and PYTHONPATH env variables.
+
+* API overview
+:PROPERTIES:
+:CUSTOM_ID: api
+:END:
+
+The linkspace API is a small set of functions that is mostly stable.
+It is available as a Rust crate ~linkspace~ and binding for other languages follow the same API.
+
+It consists of the following functions:
+
+- [[Point]] creation
+  - [[#lk_datapoint][lk_datapoint]]
+  - [[#lk_linkpoint][lk_linkpoint]]
+  - [[lk_keypoint]]
+
+- [[ABE]] - ascii byte expressions - a language for manipulating and templating bytes
+  - [[lk_eval]]
+  - [[lk_encode]]
+
+- [[Query]] - Addressing and filtering of packets with predicates and options
+  - [[lk_query]]
+  - [[lk_query_parse]]
+  - [[lk_query_push]]
+  - [[lk_query_print]]
+
+- [[Linkspace]] - A runtime to save and query for old and new packets.
+  - [[lk_open]]
+  - [[lk_save]]
+  - [[lk_get]]
+  - [[lk_get_all]]
+  - [[lk_watch]]
+  - [[lk_process]]
+  - [[lk_process_while]]
+
+- [[Conventions]] - Functions following a convention build on top of the core functions.
+  - [[lk_status_set]]
+  - [[lk_status_poll]]
+  - [[lk_pull]]
+  - [[lk_key]]
+
+
+* Point
+:PROPERTIES:
+:CUSTOM_ID: Point
+:END:
+
+#+BEGIN_VERSE
+[[../cargo-doc/linkspace/point/index.html][Rust docs]]
+#+END_VERSE
+
+Points are the basic units in linkspace.
+They carry data, link to other points, and might contain information about the who, what, when, and how.
+There are 3 kinds of points. datapoints, linkpoints, and keypoints.
+A point has a maximum size of 2^{16}-512 bytes.
+
+Building a point is always combined with generating a hash and prepending a netheader.
+Together the [netheader, hash, point] form a packet.
+Functions usually deal with packet.
+
+** lk_datapoint
+:PROPERTIES:
+:CUSTOM_ID: lk_datapoint
+:END:
+
+#+begin_ctabs
+#+begin_sh
+
+#+BEGIN_SRC bash :session cli2 :exports both :results output verbatim
+echo -n "Hello, Sol" | lk data | lk printf "[hash:str]\n[data]"
+#+END_SRC
+
+#+end_sh
+
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+from linkspace import *
+datap = lk_datapoint(b"Hello, Sol")
+lk_eval2str("[hash:str]\\n[data]", datap)
+#+END_SRC
+
+#+end_py
+
+#+end_ctabs
+
+** lk_linkpoint
+:PROPERTIES:
+:CUSTOM_ID: lk_linkpoint
+:END:
+
+
+A linkpoint creates relations between packets by their hash and its location.
+
+It consists of these fields:
+
+| Field_{size}      |                                                    |
+|-------------------+----------------------------------------------------|
+| Group_{32}        | the intended recipients.                           |
+| Domain_{16}       | the intended application.                          |
+| Path_{var<240}    | Sequence of bytes. e.g. '/dir1/dir2/thing'         |
+| Stamp_{8}         | Big endian UNIX timestamp in microseconds.         |
+| Links_{48*n}      | A variable length list of (Tag_{16}, Pointer_{32}) |
+| -Link[0]_{48}     |                                                    |
+| -Link[1]_{48}     |                                                    |
+| -Link[2]_{48}     |                                                    |
+| -Link[...]_{48}   |                                                    |
+| Data_{var<2^{16}} |                                                    |
+
+A packets' location refers to its (Domain, Group, Path) triple.
+All values, including the Path, contain arbitrary bytes.
+
+The max space is shared between the links and data so beware that too much data and links won't fit into a single packet
+[fn::To overcome this, create a new linkpoint, either as a collecting or with a special tag that points to a next linkpoint] .
+
+#+BEGIN_VERSE
+Packet hashes, GroupID's, and public keys are 32 bytes.
+They are usually encoded in URL-safe no-padding base64, e.g. ~RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF~.
+These hashes quickly make things unreadable.
+The ~[...]~ syntax ([[ABE]]) allows us to name and manipulate bytes.
+This following example shows that ~[#:pub]~ resolves to the bytes ~RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF~ in both the Group and the second link
+Furthermore, If no group was provided it defaults to ~[#:pub]~
+#+END_VERSE
+
+Datapoints do not have a 'create' field, so they get the same hash given the same data.
+If we had forced a specific 'create' stamp for both the python and bash example it would have produced the same hash for both.
+Instead, 'create' defaults to the current time ( microseconds since epoch ), and thus the hash is different.
+
+#+begin_ctabs
+#+begin_sh
+
+The command ~lk link~ builds a linkpoint packets and output's it to stdout by default.
+Whenever a cli commands deal with (domain, group, path) tuples, they are set from the first argument: ~DOMAIN:GROUP:PATH~.
+Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
+
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk link "a_domain:[#:pub]:/dir1/dir2/thing" -- \
+            first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
+            another_tag:[#:pub] \
+  | lk printf
+  
+#+END_SRC
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello | lk link my_domain --read-stdin | lk printf
+#+END_SRC
+
+#+END_sh
+
+
+#+begin_py
+
+The API deals with arbitrary bytes, not encoded strings.
+In python, we have 4 common ways to get bytes.
+
+- ~"some string".encode()"~
+- the ~b"byte notation"~
+- fields like ~apkt.group~, ~apkt.hash~ ~apkt.domain~ etc
+- evaluate an ABE string with [[lk_eval]].
+
+#+begin_src python :session lkpy :exports both :results value verbatim 
+  ptr1 = lk_eval("[b:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0]")
+  link1 = Link(tag=b"first tag 1",ptr=ptr1)
+
+  ptr2 = lk_eval("[#:pub]")
+  link2 = Link(b"another tag",ptr2)
+
+  assert(link1.ptr == link2.ptr)
+
+  datap = lk_datapoint(b"Hello example");
+  link3 = Link(b"a datapacket",datap.hash)
+
+  linkp = lk_linkpoint(
+      domain=b"example-domain",
+      group=lk_eval("[#:pub]"),
+      data=b"Hello, World!",
+      links=[link1,link2,link3]
+  )
+  str(linkp)
+#+END_SRC
+
+#+END_py
+
+#+END_ctabs
+
+
+
+** lk_keypoint 
+:PROPERTIES:
+:CUSTOM_ID: lk_keypoint
+:END:
+
+A key point is a linkpoint with an additional publickey and signature.
+
+There are functions to generate, encrypt, and decrypt a linkspace key.
+Leaving you to deal with the saving.
+Alternatively there is the [[lk_key]] function that does it all for you.
+With the added benefit that you can address your own public key as ~[@:me:local]~.
+
+#+begin_ctabs
+#+begin_sh
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  export LK_DIR=/tmp/linkspace
+  lk --init key --decrypt-cost 0 --password "my secret" # remove the --decrypt-cost. it speeds up building this doc
+#+END_SRC
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
+lk keypoint "example::" --password "my secret" | lk printf
+#+END_SRC
+
+#+BEGIN_VERSE
+The CLI also accepts ~lk link --sign~ instead of ~lk keypoint~
+#+END_VERSE
+
+
+#+END_sh
+#+begin_py
+#+begin_src python :session lkpy :exports both :results value verbatim
+  lk = lk_open("/tmp/linkspace",create=True)
+  key = lk_key(lk,b"my secret");
+  example_keypoint = lk_keypoint(key=key,domain=b"example")
+  str(example_keypoint)
+#+END_SRC
+
+#+END_py
+#+END_ctabs
+
+** Fields
+
+In python you can access these fields directly as bytes.
+Fields are not writable because they are included in the hash.
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  [attr for attr in dir(lk_linkpoint())  if not "__" in attr]
+#+END_SRC
+
+Where path[0..7] are the path components, 
+
+#+BEGIN_VERSE
+Some [[#predicatelist][fields]] we've not seen so far are writable, but they are not relevant for most applications.
+#+END_VERSE
+
+
+** Notes
+
+Groups signals the intended set of recipients.
+Domains signal the activity, and practically the application used to present an interface to the user.
+
+The groups bytes are simply chosen and membership is enforced by its members.
+They exist because we say they exist.
+It's up to the user (or some to be build management tool) to pick a method of data exchange.
+Group bytes can be chosen to have a special meaning, such as public key or a pointer to a list of publickeys that act as group administrators.
+
+The following do have a meaning.
+The [0;32] null group ( ~[#:0]~ ), i.e. the local only group, is never transmitted to other devices and is never accepted from outside sources.
+Everything in the ~[#:pub]~ group[fn:: the hash of ~lk_datapoint(b"Hello, Sol")~] is meant for everybody. e.g. the public.
+
+By convention the group created by pubkey1 XOR pubkey2 forms a group with those keys as its only two members.
+
+#+BEGIN_VERSE
+The ~[#:...]~ is part of the [[LNS]].
+A public registry for assigning names and naming rights.
+e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
+#+END_VERSE
+
+
+** lk_write and lk_read
+
+Serialize / Deserialize from the byte representation.
+A domain application rarely has to deal with this representation.
+
+| bytes |                     |
+|    32 | netheader (routing) |
+|    32 | hash                |
+|   var | point content       |
+
+#+BEGIN_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results output verbatim
+  datap = lk_datapoint("hello")
+  linkp = lk_linkpoint()
+  keyp = lk_keypoint(key)
+  packet_bytes = lk_write(datap) + lk_write(linkp) + lk_write(keyp)
+  print(len(packet_bytes),packet_bytes)
+
+  # read the bytes as packets
+  (p1, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+  (p2, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+  (p3, packet_bytes)= lk_read(packet_bytes,validate=True,allow_private=False)
+
+  assert(p1 == datap)
+  assert(p2 == linkp)
+  assert(p3 == keyp)
+#+end_src
+
+#+end_py
+#+begin_bash
+The CLI automatically reads and writes in packet format from the relevant pipes.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+  echo datapoint:
+  printf hello | lk data | tee /tmp/pkts | xxd 
+  echo linkpoint:
+  printf hello | lk link my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  echo keypoint:
+  printf hello | lk keypoint --password "my secret" my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  cat /tmp/pkts | lk printf [hash:str]
+#+END_SRC
+#+end_bash
+
+
+#+end_ctabs
+ 
+
+
+
+Unless you're writing an exchange process, a developer shouldn't have to deal with this level of IO.
+
+* ABE
+:PROPERTIES:
+:CUSTOM_ID: ABE
+:END:
+
+#+BEGIN_VERSE
+[[../cargo-doc/linkspace/abe/index.html][Rust docs]]
+#+END_VERSE
+
+ABE (Ascii-Byte-Expr) is a tiny byte templating language.
+A stringly representation of delimited bytes ( of the type: ~[ ( [u8], delimiter ) ]~ ).
+Its primary purpose is to make it easy for developers to read and write sequences of bytes (0..=255) in plain ascii, including the ~null~ (0) byte.
+In addition, it supports evaluation of functions that act as shorthand for long sequences of bytes. 
+
+Linkspace has no concept of encoding.
+Fields have a fixed length or prefix their exact length.
+
+ABE is used for things like [[Query]], [[DEFAULT_FMT][printing]], and in most arguments for the cli.
+
+ABE is not meant to be a proramming language!
+It's primarily meant to read and write arbitrary bytes in some context and quickly beat them into a desired shape.
+Some things are limited by design.
+If there is no obvious way to do something use a general purpose language to deal with your use-case.
+
+When building an application you can choose where to use ABE and when to use a different encoding.
+
+** Parsing
+
+- Most printable ascii letters are as is.
+- Newline and Tab are external delimiters. Separating two blocks.
+- ~:~ and ~/~ are internal delimiters. Separating two byte expressions.
+- ~[~ and ~]~ wrap an expression
+- ~:~, ~/~, ~\~, ~[~, ~]~  can be escaped with a ~\~. (Use ~'\n'~ and ~'\t'~ for newline and tab )
+- ~\x00~ up-to ~\xFF~ for bytes.
+- ~\0~ equals  ~\x00~,  ~\f~ equals ~\xFF~
+
+We can encode binary into valid abtxt as follows:
+#+BEGIN_VERSE
+We'll get back to [[#lk_encode][encode]] later. 
+#+END_VERSE
+
+#+BEGIN_ctabs
+#+begin_bash
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+printf "hello" | lk encode -i
+printf "world/" | lk encode -i
+printf "nl \n tab \t" | lk encode -i
+printf "open [ close ]" | lk encode -i
+printf "emoji 🚀" | lk encode -i
+#+END_SRC
+#+end_bash
+
+#+begin_py
+All packet fields are arbitrary bytes, and lk_encode can print them as abtext
+
+#+begin_src python :session lkpy :exports both :results output verbatim
+  multiline = """newline
+  tab	""".encode()
+
+  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", "🚀".encode()]) # encode implies utf-8
+
+  print(lk_encode(lkp.path0),"\t",list(lkp.path0))
+  print(lk_encode(lkp.path1),"\t",list(lkp.path1))
+  print(lk_encode(lkp.path2),"\t",list(lkp.path2))
+  print(lk_encode(lkp.path3),"\t",list(lkp.path3))
+  print(lk_encode(lkp.path4),"\t",list(lkp.path4), lkp.path4.decode("utf-8"))
+  
+#+end_src
+
+#+end_py
+#+end_ctabs
+ 
+
+** lk_eval
+
+ABE is evaluated by substituting an expressions ( ~[..]~ ) with its result.
+For example in ~[u8:97]~, the function 'u8' parses "97" and prints it.
+The byte 99 equals the character 'c'.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
+lk eval "ab[u8:99]" | xxd
+#+END_SRC
+
+The result of an ABE is a list of (bytes, ?delimiter). 
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+lk eval --json "h[u8:101]ll[u8:111] / world:etc" 
+#+END_SRC
+
+
+Note that bytes are joined after evaluating. In the example this results in the component ~('hello ', /)~.
+The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
+In the top level of the template given to ~lk eval~ they are printed as is.
+
+In other words: ~eval "hello/:[u8:99]\n"~ == ~hello/:c\n~ ,
+but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
+
+#+Begin_VERSE
+The rest of this chapter goes further in depth.
+Knowing ABE is not a requirement. Depending on the context there are other ways.
+E.g. In python you can stick to using bytes objects, where possible the cli accepts a base64 string, etc. 
+Its a language of convenience. 
+With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters the reader can choose to
+skip to the next chapter [[Query]] and return here for reference.
+#+end_VERSE
+
+
+*** Sub-expressions
+
+A list of functions/evaluators be found by evaluating
+[[Help][[[help]]][\[help\]]].
+
+**** Functions
+
+- ~[fn]~
+- ~[fn:arg0]~
+- ~[fn:arg0:arg1]~
+
+The arguments are bytes. They take upto 8 arguments.
+The resulting bytes are concatenated with their surrounding.
+The empty function ~'[:...]'~ resolves to its first argument.
+
+- ~hello [:world]~ == ~hello world~
+
+Arguments are evaluated before application.
+~[fn0:[fn1]]~ will call fn1 and use its result as the first argument to fn0.
+
+You can carry results with ~/~.
+It uses the result as the first argument to the next function.
+
+- ~[:97/u8]~ == ~[u8:97]~ == ~a~
+- ~[:97/u8/?u]~ == ~[?u:[u8:97]]~ == ~97~
+  
+You can think of ABE functions as a translation of conventional function calling.
+
+| ~[name:arg1:arg2]~              | ~name(arg1,arg2)~                  |
+| ~[name:[other_name:argA]:arg2]~ | ~name( other_name(argA) , arg2 )~  |
+| ~[other_name:argA/name:arg2]~   | ~name ( other_name(argA) , arg2 )~ |
+
+
+#+BEGIN_VERSE
+Functions are aware if they are first or not.
+The vast majority of functions do not care.
+#+END_VERSE
+
+#+BEGIN_VERSE
+~[[:u8]:97]~ is explicitly not allowed. Variable function identifiers are conceptually interesting but practically begging for bugs.
+#+END_VERSE
+
+**** Evaluators
+The second type of operation is calling an evaluator.
+Whereas functions are called after their arguments are evaluated.
+Evaluators are called without evaluation ~[..]~ expressions.
+
+- ~[/re]~
+- ~[/re:arg0:arg1]~
+- ~[/re:[fn:arg0]:arg1]~
+
+The ~/re~ evaluator operates on ~:[fn:arg0]:arg1~ without it being evaluatedd.[fn:: similar to some definition of 'macros']
+
+The most common use-case for evaluators is extending the scope.
+
+*** Scope & context
+
+Functions and evaluators are defined in a scope.
+The standard scope contains functions to manipulate bytes.
+Some scopes require a context.
+
+You can see all active scopes with the help function.
+
+**** Argv
+
+A straightforward scope is the argument vector.
+
+#+BEGIN_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  inp = "Rm9ycmVzdA" # the base 64 encoding of the word "Forrest"
+  lk_eval("[0] [1/b], [0]!",argv=["Run",inp])
+#+end_src
+
+#+end_py
+#+end_ctabs
+
+
+
+**** Packet scope
+
+By providing a packet, the packet scope is added.
+This adds operations to evaluate packet fields such as ~hash~, ~group~, ~path~ etc.
+These are bytes that you can use as arguments.
+
+e.g ~[hash/?b]~ encodes the hash in base 64.
+
+For convenience all packet fields accept 'str' and 'abe' as a first argument to print them in a default format.
+| ~[hash:str]~      | ~[hash/?b]~      |
+| ~[group:str]~     | ~[group/?b]~     |
+| ~[create:str]~    | ~[create/?u]~    |
+| ~[links_len:str]~ | ~[links_len/?u]~ |
+| ...               |                  |
+
+The ~[/links:...]~ evaluator iterates over every link in a packet.
+It evaluates the inner scope for each link with setting the ~tag~ and ~ptr~ function.
+
+#+BEGIN_ctabs
+#+begin_sh
+~printf~ is ~eval~ that reads packets from stdin and puts them in scope.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+  lk link "::" -- tag1:[#:0] tag2:[#:pub] | \
+      lk printf "HASH:[hash/?b]\n[/links:TAG = [tag:str] PTR = [ptr:str] \n]"
+#+END_SRC
+
+#+end_sh
+
+#+begin_py
+#+begin_src python :session lkpy :exports both :results value verbatim
+  lp = lk_linkpoint(links=[Link("hello",PUBLIC),Link("world",PRIVATE)])
+  lk_eval2str("hash:[hash:str]\\n[/links:[tag:str] [ptr:str]\\n]",pkt=lp)
+#+END_SRC
+
+
+#+end_py
+#+end_ctabs
+
+**** Linkspace
+
+Having a linkspace instance in the scope gives you access to functions like:
+
+- ~#~ and ~@~ ( see [[LNS]] ) for named groups, keys, and other data
+- ~readhash~
+
+When using [[lk_open]] , the instance is automatically setup as scope.
+
+~readhash~ is considered bad practice, fine to hack something together, but it doesn't give you much room to process errors or async.
+But you can do some wizardry combining it with ~[/links]~.
+
+*** Usage notes
+
+ABE expressions evaluate into a list of [ (bytes,?sep) ].
+Sometimes each element has a different meaning, e.g. [ ( domain , : ) , (group , _) ] in the CLI arguments.
+You can process this list with ~lk_split_abe~. 
+
+But in the majority of cases we don't care about the list and only want a single result.
+~lk_eval~ does just that. It interprets the separators as plain characters.
+
+Finally, consider what you would expect to happen when an evaluator takes a ABE expression as its final argument:
+
+- ~[/links:abc[:hello]/world]~
+- ~[/readhash:[#:pub]:the pkt:[pkt]]~
+- ~[/:hello/world]~
+- ~lk link :: --write 'file:./afolder:with/colons'~
+
+The choice was made that if the final argument is an abe expression that will be evaluated, it doesn't need wrapping ~[]~.
+Instead, it interprets the entire tail as is.
+This reduces the need to escape ':' and '/', but complicating some other expressions.
+
+#+BEGIN_VERSE
+We can add an expression to --write arguments
+~lk link :: --write "stdout-expr:hello world:/ [hash:str]"~
+In case of ~file~ this leaves us in the situation that second argument is the file and the tail of the expression will be evaluated
+One option is to use ~[/:..]~ to read ':' and '/' as is.
+~lk link :: --write "file-expr:[/:./afolder:with/colons]:hello world:/ [hash:str]"~
+#+END_VERSE
+
+
+*** Help
+:PROPERTIES:
+:CUSTOM_ID: abe-help
+:END:
+
+A full list of active scopes can be viewed with the ~help~ function.
+#+BEGIN_ctabs
+#+begin_misc
+#+BEGIN_VERSE
+The following naming conventions are used:
+
+- ending with '?' is a predicate to check a property.
+- starting with '?' is a basic reverse operation. [u8:97/?u] == 97. Its similar but less powerful then [[lk_encode]] and lacking '[]' brackets.
+- b_RADIX_ ( b2, b8, b16 ) 'b' defaults to base64 radix
+- u_SIZE_  ( u8, .., u128 ) parse decimal into big endian bytes. ?u interpret as big endian print to decimal
+#+END_VERSE
+#+end_misc
+
+#+begin_py
+#+name:abe-help-py
+#+custom_id:abe-help-pyid
+#+begin_src python :session lkpy :exports both :results value verbatim
+lk_eval2str("[help]",pkt=lk_linkpoint(),argv=["hello"]) # the help won't show up if no scope is set. 
+#+END_SRC
+#+end_py
+#+end_ctabs
+
+** lk_encode
+:PROPERTIES:
+:CUSTOM_ID: lk_encode
+:END:
+
+Translate bytes into abe such that ~lk_eval(lk_encode(X)) == X~
+
+#+begin_verse
+We can get meta. lk_encode is available as the evaluator ~[/?:bytes:options]~
+#+end_verse
+
+#+begin_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results output verbatim
+  data = bytes([0,0,0,255])
+  abe = lk_encode(data)
+  assert data == lk_eval(abe)
+  print("ab  text:", abe)
+  abe = lk_encode(data,"u8/u32/b") # Try to encode as expression
+  print("abe text:", abe)
+#+END_SRC
+
+#+end_py
+#+end_ctabs
+
+*** DEFAULT_FMT
+This is how packets are printed by default using ~lk printf~ or pythons ~str(pkt)~.
+
+#+begin_ctabs
+#+begin_py
+#+begin_src python :session lkpy :exports both :results output verbatim
+  import linkspace
+  print(linkspace.DEFAULT_PKT)
+#+END_SRC
+#+end_py
+#+end_ctabs
+
+
+** lk_split_abe
+:PROPERTIES:
+:CUSTOM_ID: lk_split_abe
+:END:
+
+
+
+** LNS
+:PROPERTIES:
+:CUSTOM_ID: ABELNS
+:END:
+
+LNS is a system for publicly naming keys and groups, and adding auxiliary data to them.
+It allows you to register as ~@:Alice:nl~, ~#:sales:company:com~, etc.
+
+LNS is easy to use from an abe expression.
+Both to lookup and do a reverse lookup.
+
+See [[../../lns.html][lns]] for info.
+
+#+BEGIN_VERSE
+You can create local bindings, allowing you to reference ~[@:my_identity:local]~ or ~[#:friends:local]~
+By default [[lk_key]] sets up the ~[@:me:local]~ identity.
+#+END_VERSE
+
+#+begin_ctabs
+#+begin_sh
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+  lk eval "[#:pub]" | lk encode "@/#/b"
+#+END_SRC
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+  lk eval "[@:me:local]" | lk encode "@/#/b"
+#+END_SRC
+
+#+end_sh
+
+#+begin_py
+#+begin_src python :session lkpy :exports both :results output verbatim
+  group = example_keypoint.group
+  print("The bare bytes:", group)
+  
+  # encode as b64
+  b64 = lk_encode(group,"b")
+  print("b64 encoded   :", b64)
+
+  # Try to express as a [#:..], on failure try as [@:..], fallback to [b:...]
+  try_name = lk_encode(group,"#/@/b")
+  print("Or through lns:", try_name)
+
+  print("Pkt's pubkey  :",example_keypoint.pubkey)
+  try_keyname = lk_encode(example_keypoint.pubkey,"#/@/b")
+  print("Similarly lns :", try_keyname)
+
+
+#+END_SRC
+
+#+end_py
+#+end_ctabs
+
+
+* Query
+:PROPERTIES:
+:CUSTOM_ID: Query
+:END:
+
+
+#+BEGIN_VERSE
+[[../cargo-doc/linkspace/query/index.html][Rust docs]]
+#+END_VERSE
+
+A query is a list of predicates and options used to define a set of packets.
+They're used in various ways, most notably you can use them to read ([[lk_get]], [[lk_get_all]]), await ([[lk_watch]]) and request ([[lk_pull]]) packets.
+
+** lk_query
+:PROPERTIES:
+:CUSTOM_ID: lk_query
+:END:
+
+Queries are newline separated.
+Predicates are an [[ABE]] 3-tuple ~field ':' test-operation ':' value~ and constrain the set of accepted packets.
+Options are context dependent and start with ':'
+
+A query might look like this:
+
+#+BEGIN_EXAMPLE
+group:=:[#:pub]
+domain:=:example
+path:=:/hello/world
+pubkey:=:[@:me:local]
+create:>:[now:-1D]
+#+END_EXAMPLE
+
+A predicate can be set multiple times. In the example above we could add ~create:<:[now:+2D]~ to constrain it further.
+Queries are designed such that you can concatenate their strings and get their union.
+If the result is the empty set an error is returned.
+
+There are 4 basic test operations and a couple of aliases.
+
+| Basic Op |                                   |
+|----------+-----------------------------------|
+| >        | greater eq                        |
+| <        | less eq                           |
+| 0        | all '0' in value are '0' in field |
+| 1        | all '1' in value are '1' in field |
+
+The following are shorthand and resolve to one or more of the basic tests.
+
+| Derived Ops |                          |
+|-------------+--------------------------|
+| =           | >(val-1) and <(val+1)    |
+| >=          | >(val-1)                 |
+| <=          | <(val+1)                 |
+| *=          | Last n-bytes must eq val |
+| =*          | First n-bytes must eq val |
+
+
+
+#+begin_ctabs
+#+begin_sh
+
+The CLI has options that can act as a guide in creating queries by using ~lk print-query --help~.
+
+#+BEGIN_VERSE 
+Many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:path:(?depth)~
+If no depth is set the path_len is constraint by default.
+Except for ~watch-tree~ which sets the depth to unconstrained by default
+#+END_VERSE 
+
+Here we look for the domain 'my' , the group [#:pub], with path starting at /hello and with one additional path component.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
+lk print-query "my:[#:pub]:/hello:*" --signed
+#+END_SRC
+
+#+end_sh
+
+#+begin_py
+#+begin_src python :session lkpy :exports both :results value verbatim
+  template = lk_query_parse(lk_query(),"group:=:[#:pub]")
+  a_copy = lk_query(template)
+  lk_query_print(a_copy)
+#+end_src
+
+#+end_py
+#+end_ctabs
+
+** lk_query_parse
+:PROPERTIES:
+:CUSTOM_ID: lk_query_parse
+:END:
+
+Add multiple constraints to a query.
+You can add multi line strings or per line.
+Each line is evaluated as an abe expression.
+You can set a pkt or argv context.
+
+Returns an error if the resulting set is empty.
+The full list of predicates and their byte size can be found [[#predicatelist][here]].
+
+#+begin_ctabs
+#+begin_py
+#+begin_src python :session lkpy :exports both :results value verbatim
+  q = lk_query()
+
+  stmt = """
+  group:=:[#:pub]
+  domain:=:example
+  """
+
+  q = lk_query_parse(q,stmt,
+                 "path_len:<:[u8:4]",
+                 "data_size:<:[0]",argv=[int(10).to_bytes(2)]) 
+  lk_query_print(q,True)
+#+END_SRC
+
+
+#+end_py
+#+end_ctabs
+
+** lk_query_push
+:PROPERTIES:
+:CUSTOM_ID: lk_query_push
+:END:
+
+Similar to lk_query_parse, but only adds a single statement and the last field expects the bytes.
+
+#+begin_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  q = lk_query()
+  q = lk_query_push(q,"data_size","<",bytes([0,4])) # less than 4
+  q = lk_query_push(q,"data_size","<",lk_eval("[u16:20]"))  # less than 20
+  q = lk_query_push(q,"data_size","<",int(3).to_bytes(2))  # less than 3
+  lk_query_print(q)
+#+END_SRC
+
+ Adding a contradictions returns an error.
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  try:
+    r = lk_query_push(q,"data_size",">",bytes([0,100])) # greater than 100 and smaller than 3 can not both be true
+  except Exception as e :
+    r = ("That's not possible",e)
+  r
+
+#+END_SRC
+
+#+end_py
+#+end_ctabs
+
+
+** lk_query_print
+:PROPERTIES:
+:CUSTOM_ID: lk_query_print
+:END:
+
+Print a query as text.
+The query will have merged overlapping predicates
+The boolean argument sets whether to create abe expressions or stick to a representation without expressions.
+
+#+begin_ctabs
+#+begin_py
+
+#+begin_src python :session lkpy :exports both :results value verbatim
+  lk_query_print(q,True)
+#+END_SRC
+
+#+end_py
+#+end_ctabs
+
+
+#+BEGIN_VERSE
+The ~b2~ function read a binary representation.
+The types are: datapoint=[b2:0000_0001], linkpoint [b2:0000_0011], keypoint [b2:0000_0111].
+Setting 'group', 'domain', 'path', 'links', or 'create' predicates automatically exclude the datapoint type.
+Setting pubkey or signature excludes link and data points.
+#+END_VERSE
+
+** More on predicates
+
+#+Begin_VERSE
+~group~ requires 32 bytes but will try to parse base64.
+~domain~ requires 16 bytes but will prepend '\0' if too few bytes are given
+~path~ and ~prefix~ only take the = op. Their value is the spath bytes ~path:=:[//hello/world]~, but they'll accept ~/hello/world~ as well
+#+end_VERSE
+
+Besides the fields in a point, predicates also apply to the hash and variable net header fields.
+These fields are useful when writing an exchange processes.
+
+The netheader fields can be mutated and are to be used by the group exchange for exchanging routing information.
+It is 32 bytes consisting of the following field: 
+
+|              |                               |
+| Field_{size} |                               |
+|--------------+-------------------------------|
+| Prefix_{3}   | magic bytes 'LK1'             |
+| NetFlags_{1} | See source code               |
+| hop_{2}      | number of hops since creation |
+| stamp_{8}    |                               |
+| ubits0_{4}   |                               |
+| ubits1_{4}   |                               |
+| ubits2_{4}   |                               |
+| ubits3_{4}   |                               |
+
+
+*** Predicates & options
+:PROPERTIES:
+:CUSTOM_ID: predicatelist
+:END:
+
+The full list of options and predicates:
+
+#+begin_ctabs
+#+begin_rs
+
+Current set of [[../cargo-doc/linkspace/query/enum.PredicateType.html][predicates]] and 
+[[../cargo-doc/linkspace/query/enum.KnownOptions.html][options]].
+
+Predicates must be known, unknown options are added but ignored.
+An exchange process will for instance add a ':boomfilter' only it understands.
+#+end_rs
+
+#+begin_sh
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
+ lk print-query --help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+hash         - the point hash e.g. \[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]
+group        - group id e.g. \[#:pub\]
+domain       - domain - if fewer than 16 bytes, prepadded with   e.g. \[a:example\]
+prefix       - path prefix - only accepts '=' op e.g. /hello/world
+path         - exact path - only accepts '=' op e.g. /hello/world
+pubkey       - public key used to sign point e.g. \[@:me:local\]
+create       - the create stamp e.g. \[now:-1H\]
+path_len     - the total number of path components - max 8 e.g. \[u8:0\]
+links_len    - the number of links in a packet e.g. \[u16:0\]
+data_size    - the byte size of the data field e.g. \[u16:0\]
+recv         - the recv time of a packet e.g. \[now:+1D\]
+i_branch     - total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise e.g. \[u32:0\]
+i_db         - total packets read from local instance e.g. \[u32:0\]
+i_new        - total newly received packets e.g. \[u32:0\]
+i            - total matched packets e.g. \[u32:0\]
+hop          - (mutable) number of hops e.g. \[u16:5\]
+stamp        - (mutable) variable stamp e.g. \[now\]
+ubits0       - (mutable) user defined bits e.g. \[u32:0\]
+ubits1       - (mutable) user defined bits e.g. \[u32:0\]
+ubits2       - (mutable) user defined bits e.g. \[u32:0\]
+ubits3       - (mutable) user defined bits e.g. \[u32:0\]
+type         - the field type bits - implied by other predicates e.g. \[b2:00000001\]
+netflags     - (mutable) netflags e.g. \[b2:00000000\]
+point_size   - exact point size - (netpkt_size - 32b header - 32b hash) e.g. \[u16:4\]
+
+The following options are available
+
+	:mode
+	:qid
+	:follow
+	:notify-close
+
+
+query - print full query from common aliases
+
+Usage: lk print-query [OPTIONS] [DGPD] [-- <EXPRS>...]
+
+Arguments:
+  [DGPD]      
+  [EXPRS]...  
+
+Options:
+  -p, --print-expr               print the query
+      --print-text               print in ascii-byte-text format (ABE without '{..}' expressions)
+      --mode <MODE>              [default: tree-desc]
+      --private                  enable io of linkpoints in [#:0] [env: LK_PRIVATE=]
+  -b, --bare                     
+      --index                    only match locally indexed pkts           | i_new:=:{u32:0}
+      --new                      only match new unindexed pkts             | i_db:=:{u32:0}
+      --max <MAX>                match upto max packets.                   | i:<:{u32:max}
+      --max-branch <MAX_BRANCH>  match upto max per (dm,grp,path,key) pkts | i:<:{u32:max_branch}
+      --max-index <MAX_INDEX>    match upto max from local index           | i_db:<:{u32:max_index}
+      --max-new <MAX_NEW>        match upto max unindexed pkts             | i_new:<:{u32:max_new}
+      --signed                   match only signed pkts                    | pubkey:>:{@:none}
+      --unsigned                 match only unsigned pkts                  | pubkey:=:{@:none}
+      --watch                    Add :qid option (generates qid)
+      --qid <QID>                set :qid option (implies --watch)
+      --follow                   Add :follow option
+      --ttl <TTL>                add recv:<:{now:+..}
+  -h, --help                     Print help
+#+end_example
+
+#+end_sh
+#+end_ctabs
+
+
+* Linkspace
+:PROPERTIES:
+:CUSTOM_ID: linkspace
+:END:
+#+BEGIN_VERSE
+[[../cargo-doc/linkspace/linkspace/index.html][Rust docs]]
+#+END_VERSE
+
+The linkspace runtime opens a multi-reader, single-writer database.
+One or more processes connect to it.
+
+An application can save to the database ([[lk_save]]).
+Using queries an application can get the set of matching packets ([[lk_get]], [[lk_get_all]]).
+The application can registering a query and callback ([[lk_watch]]).
+You can update the read transaction of your thread manually ([[lk_process]]),
+or by listening for new packets and waiting for some condition ([[lk_process_while]]).
+The callbacks of the watched queries are triggered whenever this update process sees a matching packet.
+
+** lk_open
+:PROPERTIES:
+:CUSTOM_ID: lk_open
+:END:
+
+** lk_save
+:PROPERTIES:
+:CUSTOM_ID: lk_save
+:END:
+
+** lk_get
+:PROPERTIES:
+:CUSTOM_ID: lk_get
+:END:
+** lk_get_all
+:PROPERTIES:
+:CUSTOM_ID: lk_get_all
+:END:
+
+
+** lk_watch
+:PROPERTIES:
+:CUSTOM_ID: lk_watch
+:END:
+
+
+** lk_process
+:PROPERTIES:
+:CUSTOM_ID: lk_process
+:END:
+
+** lk_process_while
+:PROPERTIES:
+:CUSTOM_ID: lk_process_while
+:END:
+
+
+** lk_close_watch
+:PROPERTIES:
+:CUSTOM_ID: lk_close_watch
+:END:
+
+
+* Conventions
+:PROPERTIES:
+:CUSTOM_ID: Conventions
+:END:
+#+BEGIN_VERSE
+[[../cargo-doc/linkspace/conventions/index.html][Rust docs]]
+#+END_VERSE
+
+Conventions are functions built on top of the other linkspace functions.
+They provide interop for processes by encoding data into linkspace packets.
+
+Generally they require the caller to also run [[lk_process]] or [[lk_process_while]]
+
+One general conventions is that domains and paths starting with \xff are for meta stuff, such as status queries and packet exchange.
+
+** lk_status_set
+:PROPERTIES:
+:CUSTOM_ID: lk_status_set
+:END:
+Status queries allow us to communicate if a process exists that is handling a specific type and a specific instance.
+
+The function signature is (~domain~, ~group~, ~obj_type~, ~instance~).
+
+- A request is a packet in the form DOMAIN:[#:0]:/\fstatus/GROUP/type(/instance?) and has no data and no links.
+- A reply is of the form DOMAIN:[#:0]/\status/GROUP/type/instance with some data and at least one link.
+
+Note that the packets are in `#:0`.
+This function is only for local status updates.
+
+The group argument does not ask inside GROUP, it only signals which group the query is about.
+Other processes are meant to answer a request.
+
+The following are statuses that the exchange process should set:
+
+- exchange GROUP process
+- exchange GROUP connection PUBKEY
+- exchange GROUP pull PULL PULL_HASH
+
+** lk_status_poll
+:PROPERTIES:
+:CUSTOM_ID: lk_status_poll
+:END:
+
+Request the status of a `domain group obj_type ?instance timeout`.
+
+
+** lk_pull
+:PROPERTIES:
+:CUSTOM_ID: lk_pull
+:END:
+A pull request is made by a domain application and signals the set of packets it wants.
+The function takes the query and saves it as: 
+~[f:exchange]:[#:0]:/pull/[query.group]/[query.domain]/[query.watch]~
+
+#+BEGIN_VERSE
+Note that from a domain's perspective, there is no such thing as 'fully synchronized'.
+The most straight forwards way to emulate such a thing is to create 'log' packets that link to
+known packets from a single device's perspective.
+#+END_VERSE
+
+Pull queries must have the predicates 'domain:=:..' and 'group:=:..', and ':watch'
+
+An exchange process (such as [[#anyhost][anyhost]]) watches these packets and attempts to fulfill it.
+The exchange is only responsible for pull requests received when it is running.
+The exchange can drop requests when you reuse the 'watch'.
+The function returns the hash of the request.
+
+A domain application should be conservative with its query.
+Requesting too much can add overhead.
+
+** lk_key
+:PROPERTIES:
+:CUSTOM_ID: lk_key
+:END:
+
+Read ( or creates ) an encrypted private key from lns:[#:0]:/local/NAME.
+Also writes into the local LNS lookup table such that the public key can be requested with ~[@:NAME:local]~
+
+* LNS
+:PROPERTIES:
+:CUSTOM_ID: lns
+:END:
+
+See [[../../lns.html][LNS]] for some general information.
+See [[#ABELNS][abe#lns]] for how to use LNS for lookup and reverse lookup.
+
+The LNS system works by making a claim in ~lns:[#:pub]:/claim/test/example/john~ which we'll call ~$Claim1~
+A claim can have 3 types of special links.
+The first link with the tag pubkey@ has as ptr the ~pubkey~ bytes to use when referring to ~@:john:example:test~.
+The first link with the tag group# has as ptr the ~group~ bytes to use when referring to ~#:john:example:test~.
+Every tag ending with '~^~' e.g. ~root_00^~ is an authority public key.
+An authority has the right to vote for all subclaims. For example the claim ~lns:[#:pub]:/claim/test/example/john/home/~
+
+~$Claim1~ becomes 'live' when a single authority of ~claim/test/example~ creates a vote by creating a keypoint ~lns:[#:pub]:/claim/test/example/john~ with
+the link ~vote:$Claim1.hash~. The first claim to get a majority of votes wins.
+
+
+
+* Q&A
+:PROPERTIES:
+:CUSTOM_ID: qa
+:END:
+
+
+**** Why Big Endian?
+The tree index is in the expected order when using the numbers as path components.
+E.g. ~lk linkpoint ::/some/dir/[now]~ will come after ~lk linkpoint ::/some/dir/[now:-1D]~ because ~now > (now - one day)~
+
+**** Every user of my domain app needs X from my server/I want to add advertisements to my domain app.
+Hardcode a public key into the app and publish a group exchange service.
+There are two primary ways to centralize things with this public key.
+Either everybody connects over a single group, or you can exchange over the group: their-key XOR your-key group.
+
+**** I'm not in control of the user! / Anybody in my group can leak data from it!?
+I don't make the rules, I just make them obvious.
+
+**** A domain application can write outside its own domain space.
+Yes, the current API has no restriction.
+Maybe at some point we can effectively restrict processes through wasm or some other access control.
+It will take some time before we reached that point.
+
+**** Why not use an SQL backend? / Why invent queries?
+That is a complex question.
+First off, if you desire to run SQL queries it is relatively straight forward to stream packets into a SQL table and query them.
+
+But SQL isn't magic, and its non-trivial price to pay for something that is not a great fit for a few fundamental problems including:
+1) What are the tables peers should have?
+2) How to constrain a query as it travels across a group?
+   
+Both can be solved in a number of ways, but most solutions are quickly going to bloat.
+I've tried.
+
+Queries have a few desirable properties.
+They handle byte values, and you can concatenate them to get their common subset.
+
+* Example Domain App - linkmail
+:PROPERTIES:
+:CUSTOM_ID: linkmail
+:END:
+
+#+begin_ctabs
+#+begin_info
+
+#+BEGIN_VERSE
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples
+#+END_VERSE
+linkmail is a app to write messages in a group.
+Note that it will complain if you have not also started an exchange process for the group.
+#+end_info
+
+#+begin_py
+#+INCLUDE: "../../examples/linkmail/linkmail.py" src python
+#+end_py
+
+#+end_ctabs
+
+
+
+* Example Domain App - Imageboard
+:PROPERTIES:
+:CUSTOM_ID: imageboard
+:END:
+
+#+begin_ctabs
+#+begin_info
+
+#+BEGIN_VERSE
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
+#+END_VERSE
+
+This is a basic domain application example.
+Should you build applications in bash? Fuck no.
+
+The purpose of the app will be to create an image collage with multiple people.
+
+The data structure is as follows:
+
+Adding an image is done by creating a linkpoint where the first path component indicates the name of the image.
+The tag of the link is a decimal encoded [X, Y] coordinates.
+Its ptr is a datapoint packet hash.
+Building the collage is done by adding all images to a base image in 'create' order.
+#+end_info
+
+#+begin_sh
+
+- placing images
+  
+#+INCLUDE: "../../examples/imageboard/imageboard.place.sh" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.sh" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.sh" src bash
+#+end_sh
+
+
+#+begin_py
+This is a straight-up copy of the bash script.
+It works, but it could be done better by having only a single python instance running.
+- placing images
+#+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.py" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
+#+end_py
+#+end_ctabs
+
+* Example Group Exchange - Anyhost
+:PROPERTIES:
+:CUSTOM_ID: anyhost
+:END:
+
+#+BEGIN_VERSE
+Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/
+#+END_VERSE
+
+#+begin_ctabs
+#+begin_info
+#+BEGIN_VERSE
+Available in the repo/examples/
+See repo/dev/exchange.md for some open design issues/notes.
+#+END_VERSE
+
+This is a rather dumb client & host.
+It simply forwards requests.
+It does no pruning before sending or receiving.
+#+end_info
+#+begin_sh
+
+- anyhost client
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.connect.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.client-io.sh" src bash
+
+- handshake
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.handshake.sh" src bash
+
+- anyhost server
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.server.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.serve-io.sh" src bash
+#+end_sh
+#+end_ctabs
