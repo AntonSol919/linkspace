@@ -16,7 +16,7 @@ members = [
     "examples/mineweeper-rs"
 ]
 exclude = [
-   #     "ffi/linkspace-js", # wasm-pack target config is poorly supported - so its done as an individual crate.
+        "ffi/linkspace-js", # wasm-pack target config is poorly supported - so its done as an individual crate.
         "cli/tree",
         "cli/impex",
         "crates/bloomhash",
@@ -53,7 +53,3 @@ opt-level = 2
 
 [profile.release]
 lto = true
-
-[profile.release.package.linkspace-js]
-codegen-units = 1
-opt-level="z"

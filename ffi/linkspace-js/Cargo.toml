@@ -31,11 +31,11 @@ wee_alloc = { version = "0.4.2", optional = true }
 base64 = { version="*", default-features = false}
 blake3 = "*"
 
-# [profile.release]
-# lto = true
-# codegen-units = 1
-# panic = "abort"
-# opt-level="z"
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level="z"
 # [package.metadata.wasm-pack.profile.dev]
 # wasm-opt = false
 
