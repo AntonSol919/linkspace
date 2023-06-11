@@ -11,6 +11,6 @@
 
 
 #+begin_py
-#+INCLUDE: "../../../examples/mineweeper/lobby.py" src python
+#+INCLUDE: "../../../examples/mineweeper/mineweeper-lobby.py" src python
 #+end_py
 

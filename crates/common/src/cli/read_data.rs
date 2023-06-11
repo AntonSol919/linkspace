@@ -24,11 +24,11 @@ pub struct ReadOpt {
     pub read: Option<PathBuf>,
     /// default when stdin is not used for packets
     #[clap(long,conflicts_with_all(["read","read_str","read_empty","read_repeat"]))]
-    pub read_stdin: Option<bool>,
+    pub read_stdin: bool,
     #[clap(long, conflicts_with_all(["read","read_stdin","read_empty"]))]
     pub read_str: Option<String>,
     #[clap(long,conflicts_with_all(["read","read_str","read_stdin"]))]
-    pub read_empty: Option<bool>,
+    pub read_empty: bool,
     #[clap(long, alias = "rr")]
     pub read_repeat: bool,
     #[clap(short = 'D', long)]
@@ -91,7 +91,7 @@ impl ReadSource {
 impl ReadOpt {
     pub fn open<'o>(&self, default_stdin: bool) -> anyhow::Result<Option<ReadSource>> {
         use std::io::*;
-        if self.read_empty == Some(true){return Ok(None)};
+        if self.read_empty {return Ok(None)};
         let r = if let Some(o) = &self.read_str {
             ReadSource::String(Cursor::new(o.clone()))
         } else if let Some(path) = &self.read {
@@ -105,14 +105,16 @@ impl ReadOpt {
                 tracing::info!("new file");
                 ReadSource::File(BufReader::new(file))
             }
-        } else {
-            if self.read_stdin == Some(false) || !default_stdin { return Ok(None)}
+        } else if self.read_stdin || default_stdin{
             ensure!(!self.read_repeat, "repeat not supported for stdin");
             ReadSource::Stdin(stdin().lock())
+        }else {
+            return Ok(None)
         };
         Ok(Some(r))
     }
 
+    #[instrument(skip(ctx))]
     pub fn open_reader(
         &self,
         default_stdin: bool,
@@ -127,6 +129,7 @@ impl ReadOpt {
             None => None,
         };
         let input = self.open(default_stdin)?;
+        tracing::trace!(?input);
         Ok(Reader {
             next: None,
             call_limit: self.read_calllimit.unwrap_or(usize::MAX),

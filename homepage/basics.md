@@ -32,11 +32,10 @@ This model is ideal for phone-calls or video streams.
 To build more interesting applications we encode our data in a specific way.
 There are thousands of different encodings, but what they share is that they transmit questions and answers.
 Or in other words: queries and responses, or keys and values[^jargon].
+i.e. a mapping between input and output.
 
-A mapping between input and output.
-
-[^jargon]: Sometimes "query-response" and "key-value" systems are different things.
-But when used in a network (where origin and time are implied) they are indistinguishable.
+[^jargon]: In some situations there is a technical difference between "query-response" and "key-value" systems.
+But when describing them in a network (where origin and time are implied) they are indistinguishable.
 
 Over the years we've built a thousand different protocols to facilitate this design.
 Some are extremely specific to a use-case, some are more generic.
@@ -53,9 +52,6 @@ A couple of well known systems that can map keys to values over the internet are
 The reason for building linkspace is this:
 
 **We have reached the limit of this paradigm.**
-
-We have converged on what a website or app is suppose to be like.
-The incentives and its results are bad for everyone.
 
 ## Linkspace
 
@@ -191,7 +187,7 @@ This means there exists a unique number to reference it.
 
 A point can also carry a creation date, and can be cryptographically signed.
 These cryptographic public keys look like [b:0XITdhLAhfdIiWrdO8xYAJR1rplJCfM98fYb66WzN8c].
-Eventually we'll be able to refer to them by a [lns](#LNS) name such as [@:anton:nl].
+Eventually we'll be able to refer to them by a [lns](./lns.html) name such as [@:anton:nl].
 
 Because we have a hash and a path, we can choose how to reference data.
 
@@ -364,13 +360,6 @@ Maybe, maybe not. If a users can walk away from a host platform without losing t
 
 ## Why not <alternative>?
 
-Because they create a different model and none have felt right.
-
-I don't think a 'global ledger', or 'faster email' is the right way forward.
-
-Linkspace attempts to provide a model where: for any group and any application, there exists a space to address data.
-To that end, Linkspace is selective in what it does and doesn't do, and consequently how a stack ends up looking.
-
 Some limitations i've found are:
 
 - It has either hash addresses or custom url addresses, not both.
@@ -380,7 +369,8 @@ Some limitations i've found are:
 - Its distracted with facilitating digital signatures and concensus, instead of focusing on the utility without a consensus.
 - A blessed/fixed method of exchanging data, instead of a external/modular system to be filled in per use case.
 - An ever growing set of built in (stream) protocols to negotiate a state. (A consequence of the previous point)
-- A stagnating set of protocols and thus improvements are hard to roll out. 
+- A stagnating set of protocols and thus improvements are hard to roll out.
+- Poor (bash) scripting/piping support
 
-That does not mean I think alternative are worse or useless. 
+That does not mean I think alternative are worse or useless.
 Different models have different strong points, more than one supernet can co-exist.

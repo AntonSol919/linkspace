@@ -13,7 +13,7 @@ Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahea
 #+END_VERSE
 
 This is a technical document describing linkspace from first principle.
-You should be familiar with the [[../../index.html#basics][basics]].
+You should be familiar with the [[../../basics.html][basics]].
 If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
 
 * Introduction
@@ -74,7 +74,7 @@ This guide uses Python and (Bash) CLI snippets.
 
 ** Binary
 
-The [[https://antonsol919.github.io/linkspace/index.html#download][zip]] contains the CLI and python library and the examples used in this document.
+The [[https://github.com/AntonSol919/linkspace/releases][zip]] contains the CLI and python library and the examples used in this document.
 
 ** Package manager
 
@@ -235,10 +235,8 @@ Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
   
 #+END_SRC
 
-There are various ways to add data. The two common are ~--data stdin~ and ~--data file:./somefile~ .
-
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello | lk link my_domain --data stdin | lk printf
+  echo hello | lk link my_domain --read-stdin | lk printf
 #+END_SRC
 
 #+END_sh
@@ -763,7 +761,7 @@ It allows you to register as ~@:Alice:nl~, ~#:sales:company:com~, etc.
 LNS is easy to use from an abe expression.
 Both to lookup and do a reverse lookup.
 
-See [[../../index.html#LNS][lns]] for info.
+See [[../../lns.html][lns]] for info.
 
 #+BEGIN_VERSE
 You can create local bindings, allowing you to reference ~[@:my_identity:local]~ or ~[#:friends:local]~
@@ -1246,7 +1244,7 @@ Also writes into the local LNS lookup table such that the public key can be requ
 :CUSTOM_ID: lns
 :END:
 
-See [[../../index.html#LNS][LNS]] for some general information.
+See [[../../lns.html][LNS]] for some general information.
 See [[#ABELNS][abe#lns]] for how to use LNS for lookup and reverse lookup.
 
 The LNS system works by making a claim in ~lns:[#:pub]:/claim/test/example/john~ which we'll call ~$Claim1~
@@ -1307,7 +1305,7 @@ They handle byte values, and you can concatenate them to get their common subset
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples
 #+END_VERSE
 linkmail is a app to write messages in a group.
 Note that it will complain if you have not also started an exchange process for the group.
@@ -1330,7 +1328,7 @@ Note that it will complain if you have not also started an exchange process for 
 #+begin_info
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/app
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples/app
 #+END_VERSE
 
 This is a basic domain application example.
@@ -1380,7 +1378,7 @@ It works, but it could be done better by having only a single python instance ru
 :END:
 
 #+BEGIN_VERSE
-Available in the [[https://antonsol919.github.io/linkspace/index.html#download][pkg]] or in repository/examples/
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples/
 #+END_VERSE
 
 #+begin_ctabs

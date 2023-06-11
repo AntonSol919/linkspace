@@ -3,8 +3,8 @@ version = "0.3.0"
 edition = "2021"
 authors = ["Anton Sol <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
-homepage = "www.linkspace.dev"
-documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
+homepage = "https://www.linkspace.dev"
+documentation = "https://www.linkspace.dev/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 
 [workspace]

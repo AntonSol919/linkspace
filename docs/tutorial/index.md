@@ -1,5 +1,5 @@
 
-Tutorials for [linkspace](https://antonsol919.github.io/linkspace/index.html).
+Tutorials for [linkspace](https://www.linkspace.dev).
 
 # Applications
 

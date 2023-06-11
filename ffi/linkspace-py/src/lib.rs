@@ -528,7 +528,7 @@ pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
 
 
 
-/** linkspace python bindings. follows the linkspace api (https://antonsol919.github.io/linkspace/docs/cargo-doc/linkspace/index.html)
+/** linkspace python bindings. follows the linkspace api (https://www.linkspace.dev/docs/cargo-doc/linkspace/index.html)
 **/
 #[pymodule]
 fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {

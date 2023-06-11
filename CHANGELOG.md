@@ -1,3 +1,24 @@
+# v0.3.0
+### General
+- rename lk_enckey/lk_keyopen => lk_key_encrypt/lk_key_decrypt
+- lk_get_all and lk_watch have similar signatures
+- split read into read and read_unchecked
+- expose the blake3 function
+- lk_query(&Q) instead off using lk_query(Some(..))
+- reorder arguments to lk_*point
+- make all packet length functions explicitly u16
+- ABE : rename [env:] to [file:]
+
+### Python
+
+### CLI
+- new '--read*' options.
+- LK_CHECK_CACHE => LK_SKIP_HASH
+- get-links --recurs
+
+### js/wasm
+- create first bindings (lk_read/lk_write , lk_*point)
+
 # v0.2.0
 ### General
 - add ./activate to both the repo and zip for a quick start

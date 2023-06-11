@@ -21,7 +21,7 @@ build-debug:
 
 rust-docs: 
 	cargo +nightly doc -p linkspace --target-dir ./build --no-deps
-	cp -r ./build/doc/ ./docs/cargo-doc
+	rsync -rvkP ./build/doc/ ./docs/cargo-doc
 
 tutorials:
 	make -C ./docs/tutorial/

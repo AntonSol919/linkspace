@@ -11,16 +11,16 @@ In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
 This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
 
-[Linkspace](https://antonsol919.github.io/linkspace/index.html) is supernet with the following highlights:
+[Linkspace](https://www.linkspace.dev/index.html) is supernet with the following highlights:
 
 - Small API
 - Fast packets (Blake3, no JSON/Base64 encoding, well aligned fields)
 - Path (URL like) addressing
 - Group/Domain split
 
-[Basics](www.linkspace.dev/basics.html) gives a high level introduction.
-Check out the [tutorials](www.linkspace.dev/docs/tutorial/index.html) to see an example of building an application.
-For a technical document regarding the API and CLI see the [Guide](www.linkspace.dev/docs/guide/index.html).
+[Basics](https://www.linkspace.dev/basics.html) gives a high level introduction.
+Check out the [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) to see an example of building an application.
+For a technical document regarding the API and CLI see the [Guide](https://www.linkspace.dev/docs/guide/index.html).
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try and say hi.
 
@@ -50,7 +50,7 @@ linkmail.py
 
 The 3 primary ways of using linkspace are:
 The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/linkspace](./crates/linkspace), and the python library [ffi/linkspace-py](./ffi/linkspace-py)
-The [Guide#setup](https://antonsol919.github.io/linkspace/docs/guide/index.html#setup) has more details.
+The [Guide#setup](https://www.linkspace.dev/docs/guide/index.html#setup) has more details.
 
 ## Development
 
