@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "abe"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -97,16 +97,6 @@ name = "arc-swap"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bddcadddf5e9015d310179a59bb28c4d4b9920ad0f11e8e14dbadf654890c9a6"
-
-[[package]]
-name = "argon2"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95c2fcf79ad1932ac6269a738109997a83c227c09b75842ae564dc8ede6a861c"
-dependencies = [
- "base64ct",
- "blake2",
-]
 
 [[package]]
 name = "arrayref"
@@ -271,15 +261,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
-name = "blake2"
-version = "0.10.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe"
-dependencies = [
- "digest",
-]
-
-[[package]]
 name = "blake2b_simd"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -347,7 +328,7 @@ checksum = "9b1ce199063694f33ffb7dd4e0ee620741495c32833cde5aa08f02a0bf96f0c8"
 
 [[package]]
 name = "byte-fmt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "abe",
  "base64 0.21.0",
@@ -1008,7 +989,7 @@ checksum = "6a987beff54b60ffa6d51982e1aa1146bc42f19bd26be28b0586f252fccf5317"
 
 [[package]]
 name = "linkspace"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -1018,9 +999,8 @@ dependencies = [
 
 [[package]]
 name = "linkspace-argon2-identity"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "argon2",
  "base64 0.21.0",
  "linkspace-cryptography",
  "rust-argon2",
@@ -1029,7 +1009,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "crossbeam-channel",
@@ -1044,7 +1024,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-common"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "abe",
  "anyhow",
@@ -1069,7 +1049,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -1090,7 +1070,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-cryptography"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "blake3",
  "getrandom",
@@ -1103,7 +1083,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-handshake"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "linkspace",
  "linkspace-common",
@@ -1112,9 +1092,9 @@ dependencies = [
 
 [[package]]
 name = "linkspace-js"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.13.1",
  "blake3",
  "console_error_panic_hook",
  "js-sys",
@@ -1127,7 +1107,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-lns"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "linkspace",
  "linkspace-common",
@@ -1136,7 +1116,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-pkt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -1156,7 +1136,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-py"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "linkspace",

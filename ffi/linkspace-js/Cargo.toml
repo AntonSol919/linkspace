@@ -1,11 +1,11 @@
 [package]
 name = "linkspace-js"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Anton Sol <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
-homepage = "https://antonsol919.github.io/linkspace/index.html"
-documentation = "https://antonsol919.github.io/linkspace/docs/guide/index.html"
+homepage = "https://www.linkspace.dev"
+documentation = "https://www.linkspace.dev/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 
 [lib]
@@ -31,8 +31,16 @@ wee_alloc = { version = "0.4.2", optional = true }
 base64 = { version="*", default-features = false}
 blake3 = "*"
 
-#[profile.release]
-#lto = true
-#codegen-units = 1
-#panic = "abort"
-#opt-level="z"
+# [profile.release]
+# lto = true
+# codegen-units = 1
+# panic = "abort"
+# opt-level="z"
+# [package.metadata.wasm-pack.profile.dev]
+# wasm-opt = false
+
+# [package.metadata.wasm-pack.profile.profiling]
+# wasm-opt = false
+
+# [package.metadata.wasm-pack.profile.release]
+# wasm-opt = false

@@ -18,8 +18,8 @@ name = "lk"
 path = "src/main.rs"
 
 [dependencies]
-linkspace = { path = "../../crates/linkspace" , version ="0.2.0"}
-linkspace-common = { path = "../../crates/common" , version="0.2.0"}
+linkspace = { path = "../../crates/linkspace" , version ="0.3.0"}
+linkspace-common = { path = "../../crates/common" , version="0.3.0"}
 
 tracing = {workspace=true}
 tracing-subscriber = {workspace=true,features=["env-filter"]}

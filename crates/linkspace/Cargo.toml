@@ -1,6 +1,6 @@
 [package]
 name = "linkspace"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Anton Sol <AntonSol919@gmail.com>"]
 license = "MPL-2.0"
@@ -23,5 +23,5 @@ full = ["linkspace-common/full"]
 [dependencies]
 anyhow.workspace=true
 backtrace = "0.3.67"
-linkspace-common = { path = "../common", version = "0.2.0", default-features = false}
+linkspace-common = { path = "../common", version = "0.3.0", default-features = false}
 tracing.workspace = true
