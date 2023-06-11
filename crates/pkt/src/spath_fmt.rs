@@ -144,8 +144,10 @@ pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         let b64 = B64(b).to_string();
         write!(f, "/[b:{b64}]")?;
     } else if let Ok(b) = <[u8; 16]>::try_from(seg) {
-        let abt = AB(b).to_abe_str();
-        write!(f, "/{abt}")?;
+        match as_abtxt(&b){
+            std::borrow::Cow::Borrowed(b) => write!(f,"/{b}")?,
+            std::borrow::Cow::Owned(_) => write!(f,"/{}",AB(b).to_abe_str())?,
+        }
     } else {
         write!(f, "/{}", AB(seg))?
     }

@@ -13,6 +13,7 @@
 - have python and `lk` use LK_DOMAIN and LK_GROUP for defaults
 - Add a static [#:lan] group for packets that should be transmitted at most once
 - lk_scan_manual( table, order, start, cb :&dyn NetPkt -> ) where NetPkt stubs to do lookup off values when requested.
+- Split off CLI point functions from `lk` into `lkpoint`
 
 # Pending
 
