@@ -93,12 +93,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
-name = "arc-swap"
-version = "1.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bddcadddf5e9015d310179a59bb28c4d4b9920ad0f11e8e14dbadf654890c9a6"
-
-[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2066,11 +2060,10 @@ dependencies = [
 [[package]]
 name = "triomphe"
 version = "0.1.8"
+source = "git+https://github.com/AntonSol919/triomphe#25f7047119235a7f705b8a73eb5e7089bafb3ae4"
 dependencies = [
- "arc-swap",
  "serde",
  "stable_deref_trait",
- "unsize",
 ]
 
 [[package]]
@@ -2090,15 +2083,6 @@ name = "unindent"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1766d682d402817b5ac4490b3c3002d91dfa0d22812f341609f97b08757359c"
-
-[[package]]
-name = "unsize"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fa7a7a734c1a5664a662ddcea0b6c9472a21da8888c957c7f1eaa09dba7a939"
-dependencies = [
- "autocfg",
-]
 
 [[package]]
 name = "utf8parse"
