@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["STATUS_PATH"],"fn":["lk_status_overwatch","lk_status_poll","lk_status_request","lk_status_set"],"struct":["LkStatus"]};

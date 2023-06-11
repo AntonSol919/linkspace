@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["FieldEnum","StopReason"],"fn":["cb","nop_stopped"],"mod":["read"],"static":["DEFAULT_ROUTING_BITS"],"struct":["Cb","RecvPkt","ReroutePkt","ShareArcPkt","TreeEntry"]};
