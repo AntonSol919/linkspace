@@ -140,12 +140,14 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
             .query_tree_entries(predicates, ord)
             .map(move |v| {
                 crate::prelude::read_pkt(&c1, v.local_log_ptr())
-                    .expect("BTree Is inconsistent")
-                    .expect("BTree Is inconsistent")
+                    .map_err(|e|("Btree Error - tree query",v.local_log_ptr(),e))
+                    .unwrap()
+                    .ok_or_else(||("BTree inconsistent - cant find",v.local_log_ptr()))
+                    .unwrap()
             })
             .filter(move |pkt| {
                 let ok = pkt_filter.test(pkt);
-                tracing::trace!(ok,pkt=%linkspace_pkt::pkt_fmt(pkt.pkt),"filter log");
+                tracing::trace!(ok,pkt=%linkspace_pkt::pkt_fmt(pkt),"filter log");
                 ok
             });
         let nth_log_set = predicates.state.i_db.iter(0);

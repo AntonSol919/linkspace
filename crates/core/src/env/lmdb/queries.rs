@@ -245,7 +245,7 @@ pub fn insert<B: NetPkt + ?Sized>(
             unsafe { segments.write_segments_unchecked(dest.as_mut_ptr()) };
             if cfg!(debug_assertions){
                 let pkt = unsafe { NetPktFatPtr::from_bytes_unchecked(dest) };
-                pkt.check(false).unwrap();
+                pkt.check(true).unwrap();
             }
         })?;
         if let Some((key, val)) =

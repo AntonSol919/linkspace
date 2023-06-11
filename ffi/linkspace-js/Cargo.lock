@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "abe"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -115,7 +115,7 @@ checksum = "a3e2c3daef883ecc1b5d58c15adae93470a91d425f3532ba1695849656af3fc1"
 
 [[package]]
 name = "byte-fmt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "abe",
  "base64 0.21.0",
@@ -190,15 +190,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e4c1eaa2012c47becbbad2ab175484c2a84d1185b566fb2cc5b8707343dfe58"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "crossbeam-utils"
-version = "0.8.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c063cd8cc95f5c377ed0d4b49a4b21f632396ff690e8470c29b3359b346984b"
-dependencies = [
- "cfg-if 1.0.0",
 ]
 
 [[package]]
@@ -377,7 +368,7 @@ checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
 
 [[package]]
 name = "linkspace-argon2-identity"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.21.0",
  "linkspace-cryptography",
@@ -387,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-cryptography"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "blake3",
  "getrandom",
@@ -399,9 +390,9 @@ dependencies = [
 
 [[package]]
 name = "linkspace-js"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.13.1",
  "blake3",
  "console_error_panic_hook",
  "js-sys",
@@ -414,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "linkspace-pkt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -580,7 +571,6 @@ dependencies = [
  "base64 0.13.1",
  "blake2b_simd",
  "constant_time_eq 0.1.5",
- "crossbeam-utils",
 ]
 
 [[package]]
@@ -767,6 +757,7 @@ dependencies = [
 [[package]]
 name = "triomphe"
 version = "0.1.8"
+source = "git+https://github.com/AntonSol919/triomphe#25f7047119235a7f705b8a73eb5e7089bafb3ae4"
 dependencies = [
  "serde",
  "stable_deref_trait",
