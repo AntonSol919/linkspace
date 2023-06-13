@@ -162,24 +162,15 @@ impl DGPDExpr {
 pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
     use abe::*;
     let mut it = ast.split(|v| matches!(v, ABE::Ctr(Ctr::Colon)));
-    let mut domain = it
-        .next()
-        .map(|v| v.try_into())
-        .transpose()?
-        .unwrap_or(default_domain_expr());
-    if domain.is_empty() {
-        domain = TypedABE::from_unchecked(crate::static_env::domain().to_abe());
-    }
-    let grp = || TypedABE::from_unchecked(crate::static_env::group().to_abe());
-    let mut group = it
-        .next()
-        .map(|v| v.try_into())
-        .transpose()?
-        .unwrap_or_else(grp);
-    if group.is_empty() {
-        group = grp();
-    }
 
+    let domain = match it.next().unwrap_or(&[]){
+        &[] => TypedABE::from_unchecked(crate::static_env::domain().to_abe()),
+        v => v.try_into()?,
+    };
+    let group = match it.next().unwrap_or(&[]){
+        &[] => TypedABE::from_unchecked(crate::static_env::group().to_abe()),
+        v => v.try_into()?
+    };
     let path = it.next().unwrap_or_default().try_into()?;
     Ok((
         DGPExpr {

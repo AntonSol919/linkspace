@@ -30,7 +30,7 @@ arrayvec = "=0.7.2  "
 serde = "=1.0.160"
 hex = "=0.4.3"
 base64 ="=0.21.0"
-tracing = "=0.1.37"
+tracing = {version = "=0.1.37",features=["release_max_level_info"]}
 tracing-subscriber = "=0.3.17"
 thiserror =  "=1.0.40"
 rand = "=0.8.5"

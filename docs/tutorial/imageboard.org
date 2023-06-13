@@ -1,4 +1,4 @@
-#+TITLE:  Imageboard 
+#+TITLE: Imageboard
 #+SUBTITLE: A Linkspace Application Tutorial
 #+AUTHOR: Anton Sol
 
@@ -15,65 +15,7 @@ Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or i
 #+END_VERSE
 #+end_ctabs
 
-This tutorial is a quick demonstration of how to use ~lk~ (the linkspace cli) to quickly hack something together. 
-You should be familiar with the [[http://www.linkspace.dev/basics.html][basics]].
-
-Should you build applications in bash? Fuck no.
-But knowing how to use ~lk~ allows you to quickly prototype or debug things.
-
-The end result is a script that allows the user to place an image at a coordinate,
-and create a collage from all the images placed by people in the group.
-
-*** Data points
-
-We can wrap file or stream of data in to one or more packets.
-
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello world! | lk data | xxd
-#+END_SRC
-
-To inspect some field of a packet stream we can use ~lk printf~
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello world! | lk data | lk printf "[hash:str] = [data]"
-#+END_SRC
-
-By default, ~lk data~ will continuously produce the packets by reading the maximum data size.
-This behavior can be changed with the various ~--data-*~ commands (~lk data --help~)
-To inspect some field of a packet stream we can use ~lk printf~
-
-The maximum size of the data field is ~2^{16}-512-4 = 65020~[fn:: The maximum point size is 2^{16}-512. The maximum packet size on the network is 2^{16}-512+64. This is to avoid fragmentation & slow edge cases whenever data sizes approach ~2^{16}.]
-
-So by printing 150000 bytes we'd produce 3 data packets.
-
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-    python -c 'print("-" * 150000)' | lk data > three_datapoints.lkp
-    cat three_datapoints.lkp | lk printf "[hash:str] holding [data_size:str] bytes"
-#+END_SRC
-
-*** Linkpoint
-
-So far we've only created data points. But linkspace is just as much about linking points together.
-There are a couple of ways to go about this. The ~lk link~ command is the most straight forward.
-
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  lk link imageboard:[#:pub] -- \
-     a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
-     other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
-      | lk printf  # You can see the default printf format with lk printf --help
-#+END_SRC
-
-
-
-
-
-
-
-The data structure is as follows:
-
-Adding an image is done by creating a linkpoint where the first path component indicates the name of the image.
-The tag of the link is a decimal encoded [X, Y] coordinates.
-Its ptr is a datapoint packet hash.
-Building the collage is done by adding all images to a base image in 'create' order.
+Checkout the [[./lk.html]] tutorial
 
 #+begin_sh
 
@@ -90,7 +32,7 @@ Building the collage is done by adding all images to a base image in 'create' or
 
 
 #+begin_py
-This is a straight-up copy of the bash script.
+This is a straight-up translation of the bash script.
 It works, but it could be done better by having only a single python instance running.
 - placing images
 #+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
@@ -101,5 +43,3 @@ It works, but it could be done better by having only a single python instance ru
 - streaming images
 #+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
 #+end_py
-#+end_ctabs
-

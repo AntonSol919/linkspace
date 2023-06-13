@@ -1,16 +1,17 @@
-use std::{ffi::OsStr, os::unix::prelude::OsStrExt};
-
-use anyhow::Context;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use std::{ffi::OsStr, os::unix::prelude::OsStrExt};
+
+use anyhow::Context;
+
 use linkspace_core::prelude::*;
 /// Various ABE eval Scope's with database access.
 
 use crate::{
-    runtime::Linkspace, protocols::lns::eval::{NetLNS, PrivateLNS},
+    runtime::Linkspace, protocols::lns::eval::{NetLNS, PrivateLNS}, 
 };
 pub trait LKS  where Self: Fn() -> anyhow::Result<Linkspace> + Sized + Copy{
     fn lk(self) -> anyhow::Result<Linkspace>{ (self)()}
@@ -165,7 +166,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 },
                 info: ScopeFuncInfo {
                     id:  "read", init_eq: None, argc: 2..=16,to_abe:false,
-                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str], prefer eval ctx"
+                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx"
                 },
                 to_abe:none
             },

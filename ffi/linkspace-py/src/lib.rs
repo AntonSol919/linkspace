@@ -103,6 +103,19 @@ impl PktHandler for PyPktStreamHandler {
     }
 }
 
+fn grp_arg(group:Option<&[u8]>) -> anyhow::Result<GroupID>{
+    match group{
+        None => Ok(linkspace_rs::prelude::group()),
+        Some(bytes) => Ok(GroupID::try_fit_bytes_or_b64(bytes)?)
+    }
+}
+fn domain_arg(domain:Option<&[u8]>) -> anyhow::Result<Domain>{
+    match domain{
+        None => Ok(linkspace_rs::prelude::domain()),
+        Some(bytes) => Ok(Domain::try_fit_byte_slice(bytes)?) 
+    }
+}
+
 fn common_args(
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
@@ -110,14 +123,8 @@ fn common_args(
     links: Option<Vec<crate::pynetpkt::Link>>,
     create_stamp: Option<&[u8]>,
 ) -> anyhow::Result<(GroupID, Domain, IPathBuf, Vec<Link>, Option<Stamp>)> {
-    let group = group
-        .map(|group| GroupID::try_fit_bytes_or_b64(group))
-        .transpose()?
-        .unwrap_or_else(linkspace_rs::group);
-    let domain = domain
-        .map(|domain| Domain::try_fit_byte_slice(domain))
-        .transpose()?
-        .unwrap_or_else(linkspace_rs::domain);
+    let group = grp_arg(group)?;
+    let domain = domain_arg(domain)?;
     let path = match path {
         None => IPathBuf::new(),
         Some(p) => {
@@ -440,20 +447,20 @@ pub fn lk_process_while(
 pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
     linkspace_rs::runtime::lk_stop(&lk.0, id, range)
 }
-
 #[pyfunction]
+#[pyo3(signature =(lk,qid,objtype,callback,group,domain,instance))]
 pub fn lk_status_set(
     lk: &Linkspace,
     qid: &[u8],
-    callback: PyFunc,
-    group: &[u8],
-    domain: &[u8],
     objtype: &[u8],
+    callback: PyFunc,
+    group: Option<&[u8]>,
+    domain: Option<&[u8]>,
     instance: Option<&[u8]>,
 ) -> anyhow::Result<()> {
     use linkspace_rs::conventions::status::*;
-    let group = GroupID::try_fit_bytes_or_b64(group)?;
-    let domain = Domain::try_fit_byte_slice(domain)?;
+    let group = grp_arg(group)?;
+    let domain = domain_arg(domain)?;
     let status_ctx = LkStatus {
         domain,
         group,
@@ -475,20 +482,21 @@ pub fn lk_status_set(
     })
 }
 #[pyfunction]
+#[pyo3(signature =(lk,qid,objtype,timeout,instance,callback,group,domain))]
 pub fn lk_status_poll(
     lk: &Linkspace,
     qid: &[u8],
-    timeout: &[u8],
-    group: &[u8],
-    domain: &[u8],
     objtype: &[u8],
-    callback: Option<PyFunc>,
+    timeout: &[u8],
     instance: Option<&[u8]>,
+    callback: Option<PyFunc>,
+    group: Option<&[u8]>,
+    domain: Option<&[u8]>,
 ) -> anyhow::Result<bool> {
     use linkspace_rs::conventions::status::*;
     let timeout = Stamp::try_from(timeout)?;
-    let group = GroupID::try_fit_bytes_or_b64(group)?;
-    let domain = Domain::try_fit_byte_slice(domain)?;
+    let group = grp_arg(group)?;
+    let domain = domain_arg(domain)?;
     let status_ctx = LkStatus {
         domain,
         group,
@@ -584,6 +592,9 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_list_watches, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_info, m)?)?;
 
+    m.add_function(wrap_pyfunction!(crate::lk_list_watches, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_info, m)?)?;
+
     m.add_function(wrap_pyfunction!(crate::lk_key, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_pull, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_status_poll, m)?)?;
@@ -593,6 +604,11 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
     m.add_function(wrap_pyfunction!(crate::blake3_hash, m)?)?;
     m.add_function(wrap_pyfunction!(crate::bytes2uniform, m)?)?;
+
+    m.add_function(wrap_pyfunction!(crate::group, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::set_group, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::domain, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::set_domain, m)?)?;
 
     m.add("PRIVATE", PyBytes::new(py, &consts::PRIVATE.0))?;
     m.add("TEST_GROUP", PyBytes::new(py, &**consts::TEST_GROUP))?;
@@ -627,4 +643,20 @@ pub fn bytes2uniform<'p>(bytes:&[u8]) -> anyhow::Result<f64> {
     Ok(linkspace_rs::misc::bytes2uniform(b))
 }
 
+#[pyfunction]
+pub fn set_group(group:&[u8]){
+    linkspace_rs::prelude::set_group(GroupID::try_fit_bytes_or_b64(group).unwrap())
+}
+#[pyfunction]
+pub fn group<'p>(py:Python<'p>) -> &'p PyBytes{
+    PyBytes::new(py,&linkspace_rs::prelude::group().0)
+}
+#[pyfunction]
+pub fn set_domain(domain:&[u8]){
+    linkspace_rs::prelude::set_domain(Domain::try_fit_byte_slice(domain).unwrap())
+}
+#[pyfunction]
+pub fn domain<'p>(py:Python<'p>) -> &'p PyBytes{
+    PyBytes::new(py,&linkspace_rs::prelude::domain().0)
+}
 

@@ -37,7 +37,6 @@ linkmail_keypoint = functools.partial(lk_keypoint,key=key,domain=b"linkmail",gro
 linkmail_linkpoint = functools.partial(lk_linkpoint,domain=b"linkmail",group=group)
 
 
-
 def tag_str(t):
     """strip nulls from 16 byte value and escape"""
     return lk_eval2str("[0/?a0]",argv=[t])

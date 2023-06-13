@@ -14,7 +14,6 @@ ok = lk_status_poll(lk,
                qid=b"ex",
                timeout=lk_eval("[s:+2s]"),
                domain=b"exchange",
-               group=PUBLIC,
                objtype=b"process")
 if not ok and lk_process_while(lk,qid=b"ex") == 0:
     sys.exit("No exchange process active?") # not strictly necessary, but otherwise pull does nothing

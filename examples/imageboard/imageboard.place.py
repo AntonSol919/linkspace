@@ -27,7 +27,6 @@ print(lk_eval2str("Using image [hash:str]",datap))
 tag = f"{x:08d}{y:08d}".encode() # Everything in linkspace is plain bytes
 links = [Link(tag,datap.hash)]
 linkp = lk_linkpoint(domain=b"imageboard",
-                     group=lk_eval(os.environ.get("LK_GROUP","[#:pub]")),
                      path=[boardname.encode()],
                      links=links)
 # print(lk_eval2str("Placing new image [pkt]",linkp))

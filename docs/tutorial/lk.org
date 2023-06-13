@@ -1,0 +1,165 @@
+#+TITLE: lk - The Linkspace CLI
+#+SUBTITLE: A Linkspace Application Tutorial
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+#+INCLUDE: "../utils.js" export html 
+
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
+
+#+BEGIN_SRC bash :session cli0 :exports nil
+  cd /tmp
+  export LK_DIR=/tmp/linkspace
+#+END_SRC
+
+This tutorial is a demonstration on how to use ~lk~ (the linkspace cli).
+You should be familiar with the [[http://www.linkspace.dev/basics.html][basics]].
+
+Should you build applications in bash? Fuck no.
+But knowing how to use ~lk~ allows for quick prototyping, inspecting, and debugging.
+For example [[./imageboard.html]]
+
+*** Data points
+
+We can wrap a file or stdin into one or more packets.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello world! | lk data | xxd
+#+END_SRC
+
+Use ~lk printf~ to print to inspect a stream of packets
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello world! | lk data | lk printf 
+#+END_SRC
+
+~lk printf~ takes an [[../guide/index.html#ABE]] template.
+ABE is a byte templating language.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello world! | lk data | lk printf "[hash:str] = [data]"
+#+END_SRC
+
+Try out these commands to get a feeling for it. 
+
+| [hash/?b] = [data/?b] |
+| [hash:str/b]          |
+| [hash:str/b/?b]       |
+
+You can use ~lk eval~ to run a single expression without a packet
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk eval "hello [:world]"
+#+END_SRC
+
+Try out these expressions:
+
+| [:hello world/?b] |
+| [now/?u]          |
+| [help]            |
+
+By default, ~lk data~ produces multiple packets by reading the maximum data size able to fit.
+This behavior can be changed with the various ~--data-*~ commands (~lk data --help~)
+The maximum size of the data field is ~2^{16}-512-4 = 65020~[fn:: The maximum point size is 2^{16}-512. The maximum packet size on the network is 2^{16}-512+64. This is to avoid fragmentation & slow edge cases whenever data sizes approach ~2^{16}.]
+
+Wrapping 150000 bytes produces 3 data packets.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+    python -c 'print("-" * 150000)' | lk data > three_datapoints.lkp
+    cat three_datapoints.lkp | lk printf "[hash/?b] contains [data_size/?u] bytes"
+#+END_SRC
+
+*** Linkpoint
+
+So far we're packing data into datapoint, but linkspace is also about linking points.
+
+A ~linkpoint~ is a type of point that has a couple of additional fields: 
+
+A (domain,group) tuple, to indicate the application and intended set of recipients.
+A path to give it a useful name and query later.
+A create stamp to add some order.
+
+
+For our application we'll be using the "imageboard" domain, and stick to the [#:pub] group for now.
+
+~lk~ has multiple ways of producing linkpoints. ~lk linkpoint~ is the most straight forward.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk link imageboard:[#:pub] -- \
+     a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
+     other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
+      | lk printf  # You can see the default printf format with lk printf --help
+#+END_SRC
+
+
+
+We can get fancy and use xargs;
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  cat three_datapoints.lkp | lk printf "onetag:[hash:str]" | xargs lk link imageboard:[#:pub]:/a/pathname/for/this/point -- | lk printf
+#+END_SRC
+
+linkpoints can contain data, set with one of the --data-* arguments.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello | lk link ::/a/path --data-stdin | lk printf [data]
+#+END_SRC
+
+Note that for linkpoints the total size is still 2^{16}-512. That means the free space for data is shared with the other fields.
+
+If no domain:group is given the value of $LK_DOMAIN and $LK_GROUP are used. If neither is set they default to "\0" and "[#:pub] respectively.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  export LK_DOMAIN="imageboard"
+  export LK_GROUP="[#:test]"
+  lk link ::/a/path --data-str "hello world" | lk printf 
+#+END_SRC
+
+
+** Keypoints
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  export LK_DOMAIN="imageboard"
+  export LK_GROUP="[#:test]"
+  lk link ::/a/path --data-str "hello world" | lk printf 
+#+END_SRC
+
+
+
+** collect
+Using xargs to set the links is one option.
+An alternative is the ~lk collect~.
+We can take 
+Adding an image is done by creating a linkpoint where the first path component indicates the name of the image.
+The tag of the link is a decimal encoded [X, Y] coordinates.
+Its ptr is a datapoint packet hash.
+Building the collage is done by adding all images to a base image in 'create' order.
+
+** Imageboard
+
+
+#+begin_sh
+
+- placing images
+  
+#+INCLUDE: "../../examples/imageboard/imageboard.place.sh" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.sh" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.sh" src bash
+#+end_sh
+
+
+#+begin_py
+This is a straight-up copy of the bash script.
+It works, but it could be done better by having only a single python instance running.
+- placing images
+#+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.py" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
+#+end_py
+#+end_ctabs
+

@@ -22,9 +22,9 @@ Bindings in other languages follow the same pattern.
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
 "#]
-use std::{ops::ControlFlow, sync::OnceLock, cell::{ OnceCell}};
+use std::{ops::ControlFlow};
 
-use linkspace_common::{pkt, runtime::handlers::StopReason, prelude::{DomainExpr, GroupExpr}};
+use linkspace_common::{pkt, runtime::handlers::StopReason,};
 
 pub type LkError = anyhow::Error;
 pub type LkResult<T = ()> = std::result::Result<T, LkError>;
@@ -188,12 +188,15 @@ pub mod point {
         Ok((pkt,&buf[size..]))
     }
     pub fn lk_read_unchecked(buf:&[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError>{
+        if cfg!(debug_assertions) { return lk_read(buf,allow_private) };
+
         let pkt = super::misc::read::parse_netpkt(buf,true)?;
         if !allow_private{pkt.check_private()?};
         let size = pkt.size() as usize;
         Ok((pkt,&buf[size..]))
     }
     pub fn lk_read_arc_unchecked(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
+        if cfg!(debug_assertions) { return lk_read_arc(buf,allow_private) };
         let pkt = super::misc::read::parse_netarc(buf, false)?;
         if !allow_private{pkt.check_private()?};
         let size = pkt.size() as usize;
@@ -334,7 +337,7 @@ pub mod abe {
     // the options are a list of '/' separated functions
     // In this example 'u32' wont fit, LNS '#' lookup will succeed, if not the encoding would be base64
 
-    let mut public_grp = PUBLIC;
+    let public_grp = PUBLIC;
     assert_eq!(lk_encode(&*public_grp,"u32/#/b"), "[#:pub]");
 
     # Ok(())

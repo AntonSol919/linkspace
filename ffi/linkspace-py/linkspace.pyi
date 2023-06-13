@@ -82,11 +82,11 @@ class Pkt:
 
 
 def lk_datapoint(data:bytes) -> Pkt: ...
-def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
+def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|list[bytes|str]|None=None,
                  links:list[Link] | None=None,data:bytes |str| None=None,
                  create:bytes | None =None) -> Pkt: ...
 def lk_keypoint(key: SigningKey,
-                group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|None=None,
+                group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|list[bytes|str]|None=None,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
@@ -201,6 +201,7 @@ def lk_process_while(lk:Linkspace, qid:bytes|None=None,timeout:bytes|None=None) 
     ...
 
 def lk_query(template:Query | None = None) -> Query: ...
+
 def lk_query_parse(q:Query, *statement : str,
                    pkt:Pkt|None=None, argv:list[bytes|str]|None=None):
     """
@@ -284,9 +285,12 @@ def lk_pull(lk: Linkspace, query: Query):
     """
     ...
 
-def lk_status_poll(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:bytes, objtype:bytes,
+def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
+                   timeout:bytes, 
+                   instace : bytes | None = None ,
                    callback:Callable[[Pkt],Any] | None = None,
-                   instace : bytes | None = None ) -> bool:
+                   group:bytes|None = None,domain:bytes|None=None
+                   ) -> bool:
     """
     status_set and status_poll are a convention to communicate between two processes over the [#:0] group about a (group,domain,obj_type, ?instace).
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
@@ -327,9 +331,12 @@ def lk_status_poll(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:byt
     ...
 
 
-def lk_status_set(lk:Linkspace,qid:bytes, timeout:bytes, group:bytes,domain:bytes, objtype:bytes,
+def lk_status_set(lk:Linkspace,qid:bytes,
+                  objtype:bytes,
                    get_current_status:Callable[[],bytes] | None = None,
-                   instace : bytes | None = None ) -> bool:
+                   instance : bytes | None = None ,
+                   group:bytes|None = None,domain:bytes|None =None,
+                   ) -> bool:
     """
     status_set and status_poll are a convention to communicate between two processes over the [#:0] group about a (group,domain,obj_type, ?instace).
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
@@ -382,3 +389,23 @@ def bytes2uniform(bytes:bytes) -> float:
     """
     ...
 
+
+
+def set_group(group:bytes):
+    """manualy set the default `group()`"""
+def group() -> bytes:
+    """get the default group bytes - set_group || $LK_GROUP || [#:pub]
+
+    This is a thread local value. Is only determined once and can't be changed afterwards.
+    Is used as a default when no group argument is given for various functions.
+    """
+    ...
+def set_domain(domain:bytes):
+    """manualy set the default `domain()`"""
+def domain() -> bytes:
+    """get the default domain bytes - set_domain || $LK_DOMAIN || bytes(16) 
+
+    This is a thread local value. Is only determined once and can't be changed afterwards.
+    Is used as a default when no group argument is given for various functions.
+    """
+    ...

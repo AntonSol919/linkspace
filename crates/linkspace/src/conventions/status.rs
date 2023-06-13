@@ -48,6 +48,11 @@ pub struct LkStatus<'o> {
     pub instance: Option<&'o [u8]>,
     pub qid: &'o [u8]
 }
+impl Default for LkStatus<'static> {
+    fn default() -> Self {
+        Self { domain: domain(), group: group(), objtype: &[], instance: None, qid: b"status" }
+    }
+}
 impl<'o> std::fmt::Debug for LkStatus<'o>{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LkStatus")
