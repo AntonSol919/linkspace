@@ -7,7 +7,7 @@ use anyhow::Context;
 use linkspace_common::{
     cli::{
         clap::{self, Parser},
-        opts::{CommonOpts, PktIn},
+        opts::{CommonOpts,},reader::PktReadOpts,
         tracing, WriteDest, WriteDestSpec,
     },
     prelude::{TypedABE, *},
@@ -20,7 +20,7 @@ Format packets from stdin according to a template.
 #[derive(Parser, Clone)]
 pub struct PrintFmtOpts {
     #[clap(flatten)]
-    pkt_in: PktIn,
+    pkt_in: PktReadOpts,
     /// set forward to stdout and print to stderr. Similar to `| tee >( linkspace printf >&2 )`
     #[clap(long)]
     inspect: bool,

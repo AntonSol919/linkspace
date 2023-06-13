@@ -11,7 +11,7 @@ use std::{
 use crossbeam_channel::{Sender,bounded};
 use crate::{point::PointOpts };
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::{CommonOpts, PktIn}, tracing, WriteDest, WriteDestSpec, read_data::Reader},
+    cli::{clap, clap::Parser, opts::{CommonOpts }, tracing, WriteDest, WriteDestSpec, reader::{Reader, PktReadOpts, check_stdin}},
     core::stamp_fmt::DurationStr,
     prelude::*,
 };
@@ -42,7 +42,7 @@ does nothing
 **/
 pub struct Collect {
     #[clap(flatten)]
-    pkt_in: PktIn,
+    pkt_in: PktReadOpts,
     #[clap(flatten)]
     build: PointOpts,
 
@@ -150,8 +150,8 @@ impl Collector {
 }
 
 pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
+    check_stdin(&c_opts.pkt_in, &c_opts.build.read, false)?;
     let eval_ctx = common.eval_ctx();
-
     let initial_links: Vec<_> = c_opts
         .init_link
         .iter()
@@ -176,6 +176,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
     };
     match collector.c_opts.min_interval {
         None => {
+            
             let inp = common.inp_reader(&collector.c_opts.pkt_in)?;
             tracing::debug!("Reading packets");
             for p in inp {

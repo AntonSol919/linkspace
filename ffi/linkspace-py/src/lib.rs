@@ -113,11 +113,11 @@ fn common_args(
     let group = group
         .map(|group| GroupID::try_fit_bytes_or_b64(group))
         .transpose()?
-        .unwrap_or(consts::PUBLIC);
+        .unwrap_or_else(linkspace_rs::group);
     let domain = domain
         .map(|domain| Domain::try_fit_byte_slice(domain))
         .transpose()?
-        .unwrap_or(AB::default());
+        .unwrap_or_else(linkspace_rs::domain);
     let path = match path {
         None => IPathBuf::new(),
         Some(p) => {
@@ -626,3 +626,5 @@ pub fn bytes2uniform<'p>(bytes:&[u8]) -> anyhow::Result<f64> {
     let b : &[u8;8] = bytes[..8].try_into()?;
     Ok(linkspace_rs::misc::bytes2uniform(b))
 }
+
+

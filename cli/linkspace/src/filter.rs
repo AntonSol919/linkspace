@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
-    cli::{opts::{CommonOpts, PktIn}, clap,tracing,  WriteDestSpec, clap::Parser},
+    cli::{opts::{CommonOpts }, clap,tracing,  WriteDestSpec, clap::Parser, reader::PktReadOpts},
     prelude::*,
 };
 
@@ -22,7 +22,7 @@ pub struct Filter {
     #[clap(short = 'f', long, default_value = "null")]
     write_false: Vec<WriteDestSpec>,
     #[clap(flatten)]
-    pkt_in: PktIn,
+    pkt_in: PktReadOpts,
     /// re-evaluate the query after every packet.
     #[clap(short,long)]
     live: bool,

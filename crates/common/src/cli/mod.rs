@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 pub mod keys;
 pub mod opts;
-pub mod read_data;
+pub mod reader;
 use abe::{
     abev,
     ast::{as_bytes, single},

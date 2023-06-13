@@ -22,9 +22,9 @@ Bindings in other languages follow the same pattern.
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
 "#]
-use std::ops::ControlFlow;
+use std::{ops::ControlFlow, sync::OnceLock, cell::{ OnceCell}};
 
-use linkspace_common::{pkt, runtime::handlers::StopReason};
+use linkspace_common::{pkt, runtime::handlers::StopReason, prelude::{DomainExpr, GroupExpr}};
 
 pub type LkError = anyhow::Error;
 pub type LkResult<T = ()> = std::result::Result<T, LkError>;
@@ -34,6 +34,7 @@ pub mod prelude {
     pub use linkspace_common::{
         byte_fmt::{endian_types, AB, B64},
         core::env::RecvPktPtr,
+        static_env::{group,set_group,domain,set_domain},
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
@@ -1009,3 +1010,4 @@ pub mod varctx {
 // Allow for interop when importing linkspace_common
 #[doc(hidden)]
 pub mod interop;
+

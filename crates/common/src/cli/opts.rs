@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{
-    io::{self, stdin },
-    path::PathBuf, fs::OpenOptions,
+    io::{self },
+    path::PathBuf, 
 };
 
 use crate::{
@@ -17,7 +17,7 @@ use anyhow::Context;
 use clap::Parser;
 use linkspace_core::prelude::lmdb::BTreeEnv;
 
-use super::{write_pkt2, WriteDest, WriteDestSpec};
+use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
 #[derive(Parser, Debug, Clone)]
 pub struct CommonOpts {
     #[clap(flatten)]
@@ -229,26 +229,14 @@ impl CommonOpts {
             write_pkt2(&None, p, &ctx.eval_ctx(), &mut out)
         }
     }
-    pub fn inp_reader(&self,inp: &PktIn) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {
+    pub fn inp_reader(&self,inp: &PktReadOpts) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {
         // Do not buffer. cli like handshake must not buffer partial packets and have  subsequent programs fail
-        let inp :Box<dyn std::io::Read> = match inp.pkt_in.as_str(){
-            "-" => Box::new(stdin()),
-            o => {
-                let file = OpenOptions::new().create(false).read(true).write(false).open(o)?;
-                Box::new(file)
-            }
-        };
+        let reader = inp.open()?.expect("bug: - should be empty reader").into_read();
         Ok(NetPktDecoder {
+            reader,
             allow_private: self.read_private().unwrap_or(false),
-            reader: inp,
             hop: self.io.inp.hop.unwrap_or_default(),
             skip_hash: self.io.inp.skip_hash,
         })
     }
-}
-
-#[derive(Parser, Debug, Clone)]
-pub struct PktIn{
-    #[clap(long,help="input file for reading packets - ignored for most commands",default_value="-")]
-    pub pkt_in: String
 }

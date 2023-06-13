@@ -12,7 +12,7 @@
 ### Python
 
 ### CLI
-- new '--read*' options.
+- new '--data*' options.
 - LK_CHECK_CACHE => LK_SKIP_HASH
 - get-links --recurs
 

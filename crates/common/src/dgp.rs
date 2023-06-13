@@ -40,7 +40,7 @@ impl DGPExpr {
     }
     pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGP> {
         let domain = self.domain.eval(ctx);
-        let group = self.group.eval_default(PUBLIC, ctx);
+        let group = self.group.eval(ctx);
         let path = self.path.eval(ctx)?.try_ipath();
         match (domain, group, path) {
             (Ok(domain), Ok(group), Ok(path)) => Ok(DGP {
@@ -143,7 +143,6 @@ impl DGPDExpr {
         Must add ':**' and manually set -- path_len ...")
                     }
 
-
         if self.subsegment_limit < MAX_PATH_LEN as u8 {
             let prefix_len = self
                 .dgp
@@ -169,15 +168,16 @@ pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
         .transpose()?
         .unwrap_or(default_domain_expr());
     if domain.is_empty() {
-        domain = default_domain_expr();
+        domain = TypedABE::from_unchecked(crate::static_env::domain().to_abe());
     }
+    let grp = || TypedABE::from_unchecked(crate::static_env::group().to_abe());
     let mut group = it
         .next()
         .map(|v| v.try_into())
         .transpose()?
-        .unwrap_or(default_group_expr());
+        .unwrap_or_else(grp);
     if group.is_empty() {
-        group = default_group_expr();
+        group = grp();
     }
 
     let path = it.next().unwrap_or_default().try_into()?;
@@ -224,12 +224,19 @@ pub fn try_take_subsegm_expr(ast: &[ABE]) -> anyhow::Result<(u8, &[ABE])> {
     };
     let depth = match as_expr(e)? {
         Expr::Bytes(s) => {
-            if s == b"*" {
-                1
-            } else if s == b"**" {
-                MAX_PATH_LEN as u8
-            } else {
-                bail!("??")
+            match s.as_slice() {
+                b"0" => 0,
+                b"1" => 1,
+                b"2" => 2,
+                b"3" => 3,
+                b"4" => 4,
+                b"5" => 5,
+                b"6" => 6,
+                b"7" => 7,
+                b"8" => 8,
+                b"*" => 1,
+                b"**" => MAX_PATH_LEN as u8,
+                _e => bail!("{} is an invalid depth",e)
             }
         }
         Expr::Lst(_) => bail!("todo"),

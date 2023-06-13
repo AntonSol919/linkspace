@@ -29,8 +29,8 @@ use linkspace_common::{
         clap,
         clap::Parser,
         keys,
-        opts::{CommonOpts, LinkspaceOpts, PktIn},
-        tracing, WriteDestSpec, read_data::ReadOpt,
+        opts::{CommonOpts, LinkspaceOpts },
+        tracing, WriteDestSpec, reader::{DataReadOpts, PktReadOpts},
     },
     core::{
         mut_header::{MutFieldExpr, NetHeaderMutate},
@@ -113,11 +113,11 @@ enum Command {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(flatten)]
-        read_opts: ReadOpt
+        read_opts: DataReadOpts
     },
     /** points - create a new linkpoint
 
-    Use --read-empty by default
+    Use --no-data by default
     */
     #[clap(alias = "l", alias = "link")]
     Linkpoint {
@@ -130,7 +130,7 @@ enum Command {
     },
     /** points - create a new keypoint
 
-    Use --read-empty by default
+    Use --no-data by default
     */
     #[clap(alias = "keyp")]
     Keypoint {
@@ -256,12 +256,12 @@ enum Command {
         #[clap(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[clap(flatten)]
-        pkt_in: PktIn
+        pkt_in: PktReadOpts
     },
     /// mutate the netheader of packets
     Route {
         #[clap(flatten)]
-        pkt_in: PktIn,
+        pkt_in: PktReadOpts,
         field_mut: Vec<MutFieldExpr> ,
     },
     /// Output known link.ptr packets ( this is not the same as setting :follow )

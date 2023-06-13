@@ -2,14 +2,14 @@ use std::cell::RefCell;
 
 use anyhow::bail;
 use linkspace::{lk_watch, query::lk_hash_query, try_cb, lk_process_while, lk_query_push, lk_stop, lk_process};
-use linkspace_common::cli::opts::CommonOpts;
+use linkspace_common::cli::{opts::CommonOpts, reader::PktReadOpts};
 use crate::*;
 
 
 #[derive(Parser)]
 pub struct GetLinks{
     #[clap(flatten)]
-    pkt_in: PktIn,
+    pkt_in: PktReadOpts,
     /// writedest of linked packets
     #[clap(short, long, default_value = "stdout")]
     forward: Vec<WriteDestSpec>,

@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use anyhow::Context;
 use linkspace_common::{
-    cli::{clap, clap::Parser, keys::KeyOpts, opts::CommonOpts,  WriteDest, read_data::{ReadOpt, Reader}},
+    cli::{clap, clap::Parser, keys::KeyOpts, opts::CommonOpts,  WriteDest, reader::{DataReadOpts, Reader}},
     prelude::*,
 };
 
@@ -34,7 +34,7 @@ pub struct PointOpts {
     pub key: KeyOpts,
 
     #[clap(flatten)]
-    pub read: ReadOpt,
+    pub read: DataReadOpts,
     pub dgs: DGPExpr,
 
     #[clap(last=true)]

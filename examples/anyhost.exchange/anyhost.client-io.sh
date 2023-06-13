@@ -20,7 +20,7 @@ LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [cre
 LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
-lk set-status exchange $LK_GROUP process anyhost-client --read-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --read-repeat &
+lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --data-repeat &
 
 export LK_SKIP_HASH=true
 

@@ -6,7 +6,7 @@
 #![feature(unix_sigpipe)]
 use linkspace_common::{
     anyhow::{self, Context},
-    cli::{clap::Parser, keys::KeyOpts, opts::{CommonOpts, PktIn}, *},
+    cli::{clap::Parser, keys::KeyOpts, opts::{CommonOpts}, *, reader::PktReadOpts},
     pkt_reader,
     prelude::NetPktFatPtr,
 };
@@ -31,7 +31,7 @@ pub struct Opts {
     #[clap(subcommand)]
     mode: Handshake,
     #[clap(flatten)]
-    inp: PktIn,
+    inp: PktReadOpts,
 }
 
 #[derive(Parser, Debug)]

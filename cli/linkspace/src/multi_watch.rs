@@ -7,7 +7,7 @@ use std::thread::JoinHandle;
 
 use anyhow::{ Context};
 use linkspace_common::{
-    cli::{clap, clap::Args, opts::{CommonOpts, PktIn}, tracing  },
+    cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
     core::pull::read_pull_pkt,
     prelude::*,
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
@@ -22,7 +22,7 @@ Read multiple queries from pkts on stdin.
 #[group(skip)]
 pub struct MultiWatch {
     #[clap(flatten)]
-    inp:PktIn,
+    inp:PktReadOpts,
     #[clap(flatten)]
     print: PrintABE,
     /// by default evaluation in ctx is limited to static functions. enable 'live' queries.

@@ -20,7 +20,5 @@ pub type PExpr = TypedABE<Ptr>;
 pub type GroupExpr = TypedABE<GroupID>;
 pub type PubKeyExpr = TypedABE<PubKey>;
 
-pub fn default_group_expr() -> GroupExpr {
-    GroupExpr::from_unchecked(abe!( { "#" : "pub" }).collect())
-}
+
 pub type LinkExpr = TypedABE<Link>;

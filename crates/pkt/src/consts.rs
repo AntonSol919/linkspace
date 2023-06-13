@@ -5,9 +5,16 @@ use std::{mem::size_of, sync::LazyLock};
 pub const MIN_POINT_SIZE: usize = size_of::<LkHash>() + size_of::<PointHeader>();
 pub const MIN_LINKPOINT_SIZE: usize = MIN_POINT_SIZE + size_of::<LinkPointHeader>();
 pub const MIN_NETPKT_SIZE: usize = size_of::<NetPktHeader>() + MIN_POINT_SIZE;
-pub const MAX_NETPKT_SIZE: usize = u16::MAX as usize - 256;
-pub const MAX_POINT_SIZE: usize = MAX_NETPKT_SIZE - size_of::<NetPktHeader>() + size_of::<LkHash>();
-pub const MAX_CONTENT_SIZE: usize = MAX_POINT_SIZE - size_of::<PartialNetHeader>();
+
+pub const MAX_POINT_SIZE: usize = u16::MAX as usize - 512;
+
+// ensure compiler error if it exceeds u16::MAX
+pub const MAX_NETPKT_U16SIZE: u16 = MAX_POINT_SIZE as u16 + size_of::<NetPktHeader>() as u16 + size_of::<LkHash>() as u16; 
+pub const MAX_NETPKT_SIZE: usize = MAX_NETPKT_U16SIZE as usize;
+
+pub const MAX_CONTENT_SIZE: usize = MAX_POINT_SIZE - size_of::<PointHeader>();
+
+
 pub const MAX_DATA_SIZE: usize = MAX_CONTENT_SIZE;
 pub const MAX_LINKPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<LinkPointHeader>();
 pub const MAX_KEYPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<KeyPointHeader>();
@@ -45,6 +52,10 @@ pub const PUBLIC: LkHash = B64([
     178, 1, 129, 127, 11, 91, 171, 40, 102, 116, 4, 29,
 ]);
 
+//static consistency check
+const _EQ_ASSERT_SIZE: fn() = || {
+    let _ = core::mem::transmute::<[u8;MAX_DATA_SIZE], [u8;MAX_NETPKT_SIZE - size_of::<PartialNetHeader>()]>;
+};
 #[test]
 fn correct_public_ids() {
     assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.hash());

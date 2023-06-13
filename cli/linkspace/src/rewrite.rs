@@ -9,8 +9,8 @@ use linkspace_common::{
         clap,
         clap::{Parser },
         keys::KeyOpts,
-        opts::{CommonOpts, PktIn},
-        WriteDestSpec, read_data::{ReadOpt, Reader},
+        opts::{CommonOpts} ,
+        WriteDestSpec, reader::{DataReadOpts, Reader,PktReadOpts, check_stdin},
     },
     core::eval::Scope,
     prelude::*,
@@ -30,7 +30,7 @@ rewrite --create "[create:+1D]"
 #[derive(Parser)]
 pub struct Rewrite {
     #[clap(flatten)]
-    pkt_in: PktIn,
+    pkt_in: PktReadOpts,
 
     #[clap(long, default_value = "stdout")]
     pub write: Vec<WriteDestSpec>,
@@ -52,10 +52,10 @@ pub struct Rewrite {
     #[clap(flatten)]
     pub key: KeyOpts,
     #[clap(short,long)]
-    /// If set, use --read* options - --read-eval has pkt is in scope
+    /// If set, use --data* options - --data-eval has pkt is in scope
     pub interpret: bool,
     #[clap(flatten)]
-    pub data_read: ReadOpt
+    pub data_read: DataReadOpts
 }
 pub fn rewrite_pkt(
     h: &LinkPointHeader,
@@ -115,6 +115,7 @@ pub enum SignMode {
     Resign,
 }
 pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
+    check_stdin(&ropts.pkt_in, &ropts.data_read, false)?;
     ensure!( ropts.interpret || ropts.data_read == Default::default(),"read options are ignored if --interpret is not set");
     let Rewrite {
         write,
@@ -130,10 +131,8 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
     if matches!(sign_mode, SignMode::SignAll | SignMode::Resign) {
         key.identity(&common, true)?;
     }
-    let inp = common.inp_reader(&pkt_in)?;
-    
-
     let mut reader = data_read.open_reader(false,&ctx)?;
+    let inp = common.inp_reader(&pkt_in)?;
     let mut write = common.open(&write)?;
     let mut forward = common.open(&forward)?;
     for p in inp {

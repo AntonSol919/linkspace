@@ -2,7 +2,7 @@ use linkspace::consts::MAX_DATA_SIZE;
 use linkspace_common::{
     cli::{
         opts::CommonOpts,
-        WriteDestSpec, read_data::ReadOpt,
+        WriteDestSpec, reader::DataReadOpts,
     },
     prelude::*,
 };
@@ -10,7 +10,7 @@ use linkspace_common::{
 pub fn write_datapoint(
     write: Vec<WriteDestSpec>,
     common: &CommonOpts,
-    opts: ReadOpt,
+    opts: DataReadOpts,
 ) -> anyhow::Result<()> {
     let mut buf = Vec::with_capacity(MAX_DATA_SIZE);
     let mut reader = opts.open_reader(true, &common.eval_ctx())?;

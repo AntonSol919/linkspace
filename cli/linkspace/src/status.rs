@@ -9,7 +9,7 @@ use std::ops::ControlFlow;
 use anyhow::Context;
 use linkspace::misc::{ try_cb};
 use linkspace::{ lk_process_while };
-use linkspace_common::cli::read_data::ReadOpt;
+use linkspace_common::cli::reader::DataReadOpts;
 use linkspace_common::cli::{clap };
 use linkspace_common::runtime::handlers::PktStreamHandler;
 use linkspace_common::{
@@ -47,7 +47,7 @@ pub struct SetStatus {
     args: StatusArgs,
     /// the status data.
     #[clap(flatten)]
-    readopts: ReadOpt,
+    readopts: DataReadOpts,
     #[clap(short,long)]
     link: Vec<LinkExpr>,
 }
