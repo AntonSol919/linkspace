@@ -1,12 +1,8 @@
-
-
-
 all: index.html mineweeper
-mineweeper: ./mineweeper/01.html ./mineweeper/02.html
+mineweeper: ./mineweeper/01.html ./mineweeper/02.html ./bash.exchange.html ./imageboard.html
 
 %.html: %.md
 	pandoc --standalone $< > $@
 
 %.html: %.org
-	echo "TODO: Currently not able to make $< outside of emacs"
-	exit 1
+	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-html-export-to-html))"

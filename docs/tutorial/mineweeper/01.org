@@ -6,10 +6,9 @@
 #+INCLUDE: "../../utils.js" export html 
 
 #+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../../images/logo2.png">
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css"/>
 
-This is the first a [[../index.html][series]] of tutorials to showcase linkspace.
+This is the first a [[../index.html][series]] of tutorials to show how to use linkspace from python.
 
 We'll follow Bob in his journey.
 
@@ -18,7 +17,7 @@ We'll follow Bob in his journey.
 He build the greatest and must impressive game ever.  
 Or so he says.
 
-The game is MineWeeper: A Multiplayer minesweeper clone where players take turns. 
+He calls it MineWeeper: A Multiplayer minesweeper clone where players take turns. 
 
 These knowledge/skills are assumed:
 
@@ -228,9 +227,9 @@ One method to do so is as follows:
   # Edit this setup.json by hand to look like the json above.
   cat ./*/emulate_name_key > setup.json
 
-  lk link mineweeper:[#:test] --read ./setup.json | tee setup.pkt | lk printf
+  lk link mineweeper:[#:test] --data ./setup.json | tee setup.pkt | lk printf
   # Manually save this packet to each instance
-  find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkt-in ./setup.pkt \;
+  find ./ -mindepth 1 -maxdepth 1 -type d -exec lk --dir "{}" save --pkts ./setup.pkt \;
 #+end_src
 
 If properly done the middle panel of each instance should show a new packet.

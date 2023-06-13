@@ -1,3 +1,50 @@
+
+html,body { width:100%;padding:0px;margin:0px;}
+body {
+    display:flex;
+    flex-flow:column;
+    background: #828282
+}
+
+#content{
+    align-self:center;
+    margin:1em;
+    padding:1em;
+    max-width:80vw;
+    max-height:auto;
+}
+
+#postamble{
+    display:none;
+}
+
+nav#table-of-contents{
+    background: #828282;
+    max-width:10vw;
+    display:flex;
+}
+nav#table-of-contents > * {
+    display:none;
+}
+div#text-table-of-contents{
+    display:block;
+    align-self:center;
+}
+
+
+#consent:checked ~ #consent-form {
+    display:none;
+}
+#consent-ok{
+    display:none
+}
+#consent:checked ~ #consent-ok{
+    display:block;
+}
+
+h1.title{ margin-bottom:0px !important;}
+p.subtitle{ color:grey;}
+
 .ctabs {
     display: flex;
     flex-wrap: wrap;
