@@ -50,17 +50,17 @@ impl BTreeEnv {
         {
             let mut writer = env.inner.write_txn()?;
             let new = save_pkt(&mut writer, &**PUBLIC_GROUP_PKT)?;
-            if new {
-            let mut bytes = LNS_ROOTS;
-            let roots:Vec<_> = std::iter::from_fn(||{
-                if bytes.is_empty() { return None;}
-                let pkt = crate::pkt::read::parse_netpkt(bytes, true).unwrap();
-                let pkt = pkt.as_netbox();
-                bytes = &bytes[pkt.size() as usize..];
-                Some(pkt)
-            }).collect();
-            let mut it = roots.iter().map(|p| p as &dyn NetPkt);
-            let (i,_) = writer.write_many_state(&mut it, None).unwrap();
+            if new && std::env::var_os("LK_NO_LNS").is_none(){
+                let mut bytes = LNS_ROOTS;
+                let roots:Vec<_> = std::iter::from_fn(||{
+                    if bytes.is_empty() { return None;}
+                    let pkt = crate::pkt::read::parse_netpkt(bytes, true).unwrap();
+                    let pkt = pkt.as_netbox();
+                    bytes = &bytes[pkt.size() as usize..];
+                    Some(pkt)
+                }).collect();
+                let mut it = roots.iter().map(|p| p as &dyn NetPkt);
+                let (i,_) = writer.write_many_state(&mut it, None).unwrap();
                 assert_eq!(i,464);
             }
         }
