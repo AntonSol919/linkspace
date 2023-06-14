@@ -19,3 +19,4 @@ serde={workspace=true,features=["derive"]}
 thiserror.workspace = true
 arrayvec.workspace = true
 hex.workspace = true
+bstr.workspace = true

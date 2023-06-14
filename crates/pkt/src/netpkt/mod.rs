@@ -144,6 +144,7 @@ where
     {
         NetPktParts::from(self)
     }
+    fn to_default_str(&self) -> String{ PktFmt(&self).to_string()}
 }
 
 impl<T> Point for T where T: NetPktExt{

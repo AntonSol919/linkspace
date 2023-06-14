@@ -40,7 +40,8 @@ pub mod prelude {
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
             NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
-            Error as PktError
+            Error as PktError,
+            repr::PktFmt
         },
     };
 }

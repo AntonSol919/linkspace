@@ -34,7 +34,7 @@ impl Pkt {
         {linkspace_pkt::pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
 
         #[cfg(not(feature = "abe"))]
-        {linkspace_pkt::repr::static_pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
+        PktFmt(&self.0.netpktptr()).to_string()
         //{format!("<not compiled>")}
     }
 

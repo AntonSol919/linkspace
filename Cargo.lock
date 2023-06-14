@@ -8,6 +8,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
+ "bstr",
  "hex",
  "serde",
  "thiserror",
@@ -312,6 +313,18 @@ dependencies = [
  "fastrand",
  "futures-lite",
  "log",
+]
+
+[[package]]
+name = "bstr"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a246e68bb43f6cd9db24bea052a53e40405417c5fb372e3d1a8a7f770a564ef5"
+dependencies = [
+ "memchr",
+ "once_cell",
+ "regex-automata",
+ "serde",
 ]
 
 [[package]]
@@ -1086,6 +1099,7 @@ dependencies = [
  "auto_impl",
  "bincode",
  "bitflags",
+ "bstr",
  "byte-fmt",
  "bytes",
  "linkspace-cryptography",

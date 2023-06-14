@@ -26,7 +26,7 @@ fn main() -> std::result::Result<(), JsValue> {
 #[wasm_bindgen]
 pub fn lk_datapoint(data: &JsValue) -> Result<Pkt> {
     let data = bytelike(data)?;
-    Ok(Pkt(try_datapoint_ref(b"", NetOpts::Default)?.as_netarc()))
+    Ok(Pkt(try_datapoint_ref(&data, NetOpts::Default)?.as_netarc()))
 }
 
 
@@ -223,5 +223,5 @@ pub fn b64(bytes:&[u8], mini:Option<bool>) -> String{
 }
 #[wasm_bindgen]
 pub fn blake3_hash(bytes:&[u8]) -> Box<[u8]>{
-    blake3::hash(bytes).as_bytes().clone().into()
+    Box::new(*blake3::hash(bytes).as_bytes())
 }

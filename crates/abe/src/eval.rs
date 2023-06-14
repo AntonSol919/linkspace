@@ -1188,7 +1188,7 @@ impl EvalScopeImpl for BytesFE {
             ("b2",1..=1,"decode binary",|_,i:&[&[u8]]| bin(i,2)),
             ("b8",1..=1,"decode octets",|_,i:&[&[u8]]| bin(i,8)),
             ("b16",1..=1,"decode hex",|_,i:&[&[u8]]| bin(i,16)),
-            ("~utf8",1..=1,"lossy encode as utf8",|_,i:&[&[u8]]| AR::Value(String::from_utf8_lossy(i[0]).into_owned().into_bytes()))
+            ("~utf8",1..=1,"lossy encode as utf8",|_,i:&[&[u8]]| AR::Value(bstr::BStr::new(&i[0]).to_string().into_bytes()))
 
         ])
     }
