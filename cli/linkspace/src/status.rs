@@ -3,7 +3,6 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#![allow(dead_code, unused_variables)]
 use std::ops::ControlFlow;
 
 use anyhow::Context;
@@ -28,6 +27,7 @@ pub struct StatusArgs {
     pub instance: Option<TypedABE<Vec<u8>>>,
 }
 impl StatusArgs {
+    #[allow(clippy::type_complexity)]
     pub fn eval(
         self,
         ctx: &EvalCtx<impl Scope>,
@@ -48,11 +48,11 @@ pub struct SetStatus {
     /// the status data.
     #[clap(flatten)]
     readopts: DataReadOpts,
-    #[clap(short,long)]
-    link: Vec<LinkExpr>,
+    // #[clap(short,long)]
+    //link: Vec<LinkExpr>,
 }
 pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
-    let SetStatus { args, readopts, link } = ss;
+    let SetStatus { args, readopts } = ss;
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
     use linkspace::prelude::*;
@@ -77,7 +77,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;
 
-    return Ok(())
+    Ok(())
 }
 
 #[derive(Parser)]

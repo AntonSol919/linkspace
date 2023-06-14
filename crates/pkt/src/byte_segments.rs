@@ -72,7 +72,7 @@ impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub const fn from_array<const N: usize>(segments: [&'a [u8]; N]) -> Self {
         assert!(N < 8);
-        let mut r = [&[] as &'a [u8]; 8];
+        let mut r : [&'a [u8];8]= [&[]; 8];
         let mut i = 0;
         while i < N {
             r[i] = segments[i];

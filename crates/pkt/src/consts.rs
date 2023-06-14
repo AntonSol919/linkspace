@@ -1,3 +1,4 @@
+#![allow(clippy::as_conversions)]
 // === size/len constraints. By Convention '_size' is n bytes . '_len' is number of elements
 use super::*;
 use std::{mem::size_of, sync::LazyLock};
@@ -7,7 +8,6 @@ pub const MIN_LINKPOINT_SIZE: usize = MIN_POINT_SIZE + size_of::<LinkPointHeader
 pub const MIN_NETPKT_SIZE: usize = size_of::<NetPktHeader>() + MIN_POINT_SIZE;
 
 pub const MAX_POINT_SIZE: usize = u16::MAX as usize - 512;
-
 // ensure compiler error if it exceeds u16::MAX
 pub const MAX_NETPKT_U16SIZE: u16 = MAX_POINT_SIZE as u16 + size_of::<NetPktHeader>() as u16 + size_of::<LkHash>() as u16; 
 pub const MAX_NETPKT_SIZE: usize = MAX_NETPKT_U16SIZE as usize;

@@ -40,7 +40,7 @@ pub fn statements2query(it: &[TypedABE<ABList>], ctx: &EvalCtx<impl Scope>) -> a
     let mut query = Query::default();
     for e in it{
         tracing::trace!(?e, "add expr");
-        let e = e.eval(&ctx)?;
+        let e = e.eval(ctx)?;
         query.add_stmt(e)?;
     }
     Ok(query)
@@ -90,7 +90,7 @@ impl CLIQuery {
             select.add_option(&KnownOptions::Mode.to_string(), &[st.as_bytes()]);
         }
         if self.print.do_print() {
-            self.print.print_query(&select.into(), &mut std::io::stdout())?;
+            self.print.print_query(&select, &mut std::io::stdout())?;
             return Ok(None);
         }
         Ok(Some(select))

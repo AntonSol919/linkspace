@@ -14,7 +14,6 @@ use crate::{ NetPktPtr, NetPktHeader, reroute::{Reroute, RecvPkt, PktShareArc}, 
 #[derive(Debug,Clone)]
 pub struct IPkt<'o>(InnerIPkt<'o>);
 #[derive(Debug,Clone)]
-#[allow(dead_code)]
 enum InnerIPkt<'o>{
     Constr(PktShareArc<NetPktParts<'o>>),
     Ref(Reroute<RecvPkt<PktShareArc<&'o NetPktPtr>>>),

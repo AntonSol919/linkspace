@@ -369,16 +369,17 @@ impl Point for PointPtr {
     }
 }
 
-#[allow(dead_code)]
 #[repr(align(4))]
 enum BarePointFields<'o> {
     DataPoint(&'o [u8]),
     LinkPoint {
         lp_header: &'o LinkPointHeader,
+        #[allow(unused)]
         tail: &'o [u8],
     },
     KeyPoint {
         a_header: &'o KeyPointHeader,
+        #[allow(unused)]
         tail: &'o [u8],
     },
     Error(&'o [u8]),

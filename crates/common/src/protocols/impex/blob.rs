@@ -169,7 +169,7 @@ pub fn checkout_from(
     Ok(())
 }
 
-pub fn checkout<'o>(reader: &ReadTxn, out: impl std::io::Write, hash: LkHash) -> Result<(), Error> {
+pub fn checkout(reader: &ReadTxn, out: impl std::io::Write, hash: LkHash) -> Result<(), Error> {
     let outer = reader.read(&hash)?.ok_or(Error::Incomplete(vec![hash]))?;
     checkout_from(reader, out, &*outer)
 }

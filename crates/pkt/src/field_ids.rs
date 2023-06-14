@@ -259,12 +259,11 @@ field_val!([
         .point_header()
         .point_size
         .get())),
-    (DataSizeF, u16, |pkt: &'o T| pkt.as_point().data().len()
-        as u16),
+    (DataSizeF, u16, |pkt: &'o T| pkt.as_point().data().len().try_into().expect("bug: impossible tail")),
     (
         LinksLenF,
         u16,
-        |pkt: &'o T| pkt.as_point().get_links().len() as u16
+        |pkt: &'o T| pkt.as_point().get_links().len().try_into().expect("bug: impossible links")
     ),
     (CreateF, u64, |pkt: &'o T| pkt
         .as_point()

@@ -3,8 +3,17 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#![warn(clippy::pedantic,clippy::restriction,clippy::nursery)]
+
+#![allow(clippy::mod_module_files,
+         clippy::pub_use,clippy::many_single_char_names,clippy::single_char_lifetime_names,clippy::unseparated_literal_suffix,
+         clippy::partial_pub_fields
+)]
+
+
 #![allow(incomplete_features)]
 #![feature(
+    ptr_from_ref,
     io_error_other,
     try_blocks,
     slice_split_at_unchecked,
@@ -51,7 +60,6 @@ pub mod spath_macro;
 pub mod utils;
 pub mod read;
 mod builder;
-mod pkt_bytes;
 mod stamp;
 
 
@@ -73,7 +81,6 @@ pub use spath::*;
 pub use spath_fmt::*;
 pub use stamp::*;
 pub use builder::*;
-pub use pkt_bytes::*;
 
 #[cfg(test)]
 pub mod asm_tests;
@@ -383,9 +390,9 @@ impl Error {
     }
     pub fn io(self) -> std::io::Error { std::io::Error::other(self)}
 }
-impl Into<std::io::Error> for Error {
-    fn into(self) -> std::io::Error {
-        self.io()
+impl From<Error> for std::io::Error {
+    fn from(val: Error) -> Self {
+        val.io()
     }
 }
 

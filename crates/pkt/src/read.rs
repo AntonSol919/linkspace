@@ -60,8 +60,8 @@ fn parsing() {
 
 
     let data : Vec<u8>= parts.byte_segments().collect();
-    let box_parse = parse_netpkt(&data, true).unwrap().unwrap();
-    let arc_parse = parse_netarc(&data, true).unwrap().unwrap();
+    let box_parse = parse_netpkt(&data, true).unwrap();
+    let arc_parse = parse_netarc(&data, true).unwrap();
 
     let list : Vec<&dyn NetPkt>= vec![&parts,&boxed_parts,&arc_box_parts,&arc_parts,&parts_arc_box,&parts_box_parts,&box_arc_box_parts,&box_parse,&arc_parse];
 

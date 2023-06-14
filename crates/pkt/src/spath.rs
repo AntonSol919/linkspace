@@ -63,6 +63,7 @@ impl AsRef<SPath> for SPath {
     }
 }
 impl<X: AsRef<[u8]>> FromIterator<X> for SPathBuf {
+    #[track_caller]
     fn from_iter<T: IntoIterator<Item = X>>(iter: T) -> Self {
         SPathBuf::try_from_iter(iter).unwrap()
     }
@@ -221,10 +222,7 @@ impl SPathBuf {
     ) -> Result<SPathBuf, PathError> {
         SPathBytes::new().extend_from_iter(iter)
     }
-    #[track_caller]
-    pub fn from_iter(iter: impl IntoIterator<Item = impl AsRef<[u8]>>) -> SPathBuf {
-        SPathBuf::try_from_iter(iter).unwrap()
-    }
+
 
     pub fn truncate_last(&mut self) {
         if let Some(l) = self.iter().last().map(|v| v.len() + 1) {
@@ -293,6 +291,7 @@ impl SPathBuf {
         Ok(self)
     }
 }
+
 
 impl SPath {
     pub const fn is_empty(&self) -> bool {

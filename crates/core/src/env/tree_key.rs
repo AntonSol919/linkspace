@@ -211,7 +211,8 @@ impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
 /// check if this type can be answered by a treekey - currently conservative to simplify tree query impl
 pub const fn treekey_checked(r:RuleType) -> bool {
     match r {
-        RuleType::Field(f) =>match f{
+        #[allow(clippy::match_like_matches_macro)]
+        RuleType::Field(f) => match f{
             FieldEnum::PktHashF => true,
             FieldEnum::PubKeyF => true,
             FieldEnum::GroupIDF => true,

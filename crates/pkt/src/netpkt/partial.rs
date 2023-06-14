@@ -21,7 +21,7 @@ impl PartialNetHeader {
         point_header: PointHeader::ERROR,
     };
     pub fn from(bytes: &[u8; MIN_NETPKT_SIZE]) -> PartialNetHeader {
-        unsafe { std::ptr::read_unaligned(bytes.as_ptr() as *const Self) }
+        unsafe { std::ptr::read_unaligned(bytes.as_ptr().cast::<Self>()) }
     }
     /// # Safety
     ///
@@ -33,7 +33,7 @@ impl PartialNetHeader {
             std::alloc::handle_alloc_error(layout);
         }
         let ptr: *mut NetPktFatPtr =
-            std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr as *mut (), metadata);
+            std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr.cast::<()>(), metadata);
         let mut val = Box::from_raw(ptr);
         val._net_header = self.net_header;
         val.hash = self.hash;

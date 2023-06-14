@@ -78,10 +78,10 @@ pub fn rewrite_pkt(
         .transpose()?
         .unwrap_or(h.domain);
     let path = opts.path.as_ref().map(|v| v.eval(ctx)).transpose()?;
-    let path = path.as_deref().unwrap_or(&t.ipath);
+    let path = path.as_deref().unwrap_or(t.ipath);
     let mut buf = vec![];
     let data :&[u8]= match data {
-        Either::Left(d) => &d,
+        Either::Left(d) => d,
         Either::Right(reader) => {
             let freespace : usize = calc_free_space(path, t.links, &[], key.is_some()).try_into()?;
             reader.read_next_data(&ctx.dynr(),freespace, &mut buf)?.context("No data provided")?;
@@ -94,7 +94,7 @@ pub fn rewrite_pkt(
         domain,
         path,
         t.links,
-        &data,
+        data,
         opts.create
             .as_ref()
             .map(|o| o.eval(ctx))
@@ -129,12 +129,12 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
     } = &ropts;
     let ctx = common.eval_ctx();
     if matches!(sign_mode, SignMode::SignAll | SignMode::Resign) {
-        key.identity(&common, true)?;
+        key.identity(common, true)?;
     }
     let mut reader = data_read.open_reader(false,&ctx)?;
-    let inp = common.inp_reader(&pkt_in)?;
-    let mut write = common.open(&write)?;
-    let mut forward = common.open(&forward)?;
+    let inp = common.inp_reader(pkt_in)?;
+    let mut write = common.open(write)?;
+    let mut forward = common.open(forward)?;
     for p in inp {
         let pkt = p?;
         let data = if *interpret { Either::Right(&mut reader)} else { Either::Left(pkt.data())};

@@ -16,10 +16,9 @@
     unix_sigpipe
 )]
 use std::{
-    cell::LazyCell,
     ffi::OsString,
     io::{ Write},
-    process::ExitCode, 
+    process::ExitCode, sync::{ LazyLock}, 
 };
 
 use anyhow::{ensure };
@@ -56,8 +55,7 @@ pub mod watch;
 pub mod get_links;
 pub mod datapoint;
 
-// const is wrong but who cares.
-const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
+static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
     use std::fmt::Write;
     let mut st: String = "\n".into();
     for f in PredicateType::ALL {
@@ -79,7 +77,7 @@ const QUERY_HELP: LazyCell<String> = LazyCell::new(|| {
     }
     st
 });
-const PKT_HELP: LazyCell<String> = LazyCell::new(|| {
+static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
     let ctx = LinkspaceOpts::fake_eval_ctx();
     let pctx = pkt_ctx(ctx, &*PUBLIC_GROUP_PKT);
     let v = eval(&pctx, &abev!({ "help" })).unwrap().concat();
@@ -380,10 +378,12 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Rewrite(cmd) => rewrite::rewrite(&common, cmd)?,
         Command::GetLinks(cmd) => get_links::exec(common,cmd)?,
         Command::WatchHash { hash, write, rest } => {
-            let mut cquery = CLIQuery::default();
-            cquery.mode = Some(Mode::HASH_ASC);
+            let mut cquery = CLIQuery{
+                mode : Some(Mode::HASH_ASC),
+                ..CLIQuery::default()
+            };
             cquery.opts.watch_opts = rest;
-            let hpred = abev!( "hash" : "=" : +(hash.0.clone()));
+            let hpred = abev!( "hash" : "=" : +(hash.0));
             cquery.opts.watch_opts.exprs.push( hpred.into());
             watch::watch(common, cquery, write)?;
         }

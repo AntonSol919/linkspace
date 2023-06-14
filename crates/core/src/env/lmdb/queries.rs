@@ -132,7 +132,6 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
     }
     /*
     fn fixed_size_prefix_iter<const N:usize>(&self,_start:[u8;N]) -> impl Iterator<Item = TreeEntryRef<'_>>{
-        #[allow(unreachable_code)]
         std::iter::once(todo!())
         let mut c2 = self.btree_txn.tree_cursor();
         let mut prefix = Some(start);

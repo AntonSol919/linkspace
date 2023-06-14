@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![allow(incomplete_features)]
 #![feature(
+    ptr_from_ref,
     array_windows,
     slice_flatten,
     int_roundings,
@@ -21,7 +22,7 @@ use core::ops::{Deref, DerefMut};
 use std::{
     borrow::{Borrow, Cow},
     mem::size_of,
-    str::FromStr,
+    str::FromStr, ptr,
 };
 
 
@@ -397,7 +398,7 @@ where
 impl<N> B64<N> {
     #[inline(always)]
     pub fn into_bytes(self) -> [u8; size_of::<Self>()] {
-        unsafe { *(&self as *const Self as *const [u8; size_of::<Self>()]) }
+        unsafe { *(ptr::from_ref(&self).cast::<[u8;size_of::<Self>()]>()) }
     }
     pub fn inner(self) -> N {
         self.0

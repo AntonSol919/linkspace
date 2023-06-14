@@ -35,6 +35,8 @@ pub enum GetLinksMode{
     Watch
 }
 
+
+#[allow(clippy::type_complexity)]
 pub fn get_links(lk: &linkspace::Linkspace, pkt:&dyn NetPkt, level: usize, mode:GetLinksMode, out:Rc<RefCell<dyn FnMut(&dyn NetPkt)-> std::io::Result<()>>> )-> anyhow::Result<()>{
     for link in pkt.get_links()
     {

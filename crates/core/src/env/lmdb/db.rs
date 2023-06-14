@@ -104,6 +104,7 @@ pub fn as_io(e: lmdb::Error) -> std::io::Error {
 }
 
 pub fn open(path: &Path, make_dir: bool) -> std::io::Result<RawBTreeEnv> {
+    tracing::trace!(?path,make_dir,"open db");
     path.as_os_str().to_str().ok_or(io::Error::new(
         io::ErrorKind::Other,
         "Path must be valid utf8",
@@ -408,7 +409,6 @@ impl<'txn> TreeCursor<'txn> {
         }
     }
 
-    #[allow(dead_code)]
     pub(crate) fn range_multi(
         self,
         start: &[u8],
@@ -468,7 +468,6 @@ impl<'txn> TreeCursor<'txn> {
         })
     }
 
-    #[allow(dead_code)]
     pub(crate) fn read_next(
         &mut self,
         start: &[u8],

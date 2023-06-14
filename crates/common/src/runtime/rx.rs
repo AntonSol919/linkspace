@@ -103,12 +103,10 @@ impl Linkspace {
         };
         self.exec.cbs.borrow_mut().0.gc(now()).ok_or(()).map(Some)
     }
-    #[must_use]
     pub fn new(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         Self::new_opt_rt(env, OnceCell::from(spawner))
     }
 
-    #[must_use]
     pub fn new_opt_rt(env: BTreeEnv, spawner: OnceCell<Rc<dyn LocalAsync>>) -> Linkspace {
         let reader = env.get_reader().unwrap();
         let at = reader.log_head();

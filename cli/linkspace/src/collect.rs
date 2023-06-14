@@ -109,14 +109,13 @@ impl Collector {
         self.links.extend(
             self.c_opts
                 .chain_tag
-                .clone()
                 .map(|tag| Link { tag, ptr: hash }),
         );
         for l in self.c_opts.build.link.iter() {
             self.links.push(l.eval(&ctx)?);
         }
         #[allow(dropping_copy_types)]
-        let _ = std::mem::drop(pkt);
+        std::mem::drop(pkt);
 
         self.current_links = 0;
         if !self.buf.is_empty() {
@@ -165,7 +164,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
     let dgs = c_opts.build.dgs.eval(&eval_ctx)?;
     tracing::debug!(?dgs);
     let mut collector = Collector {
-        links: initial_links.clone(),
+        links: initial_links,
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
         reader: c_opts.build.read.open_reader(false,&eval_ctx)?,
@@ -187,8 +186,10 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                         return Err(e)?;
                     }
                 };
-                if collector.new_pkt(pkt, common)?{
-                    if collector.collect(common)?.is_none(){
+                let try_collect = collector.new_pkt(pkt, common)?;
+                if try_collect{
+                    let collect = collector.collect(common)?;
+                    if collect.is_none(){
                         return Ok(());
                     }
                 }
@@ -196,7 +197,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
             if !collector.links.is_empty() {
                 collector.collect(common)?;
             }
-            return Ok(())
+            Ok(())
         }
         Some(interval) => {
             tracing::debug!("Setup interval");
@@ -235,7 +236,8 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                             tracing::debug!("Timeout collect");
                             next = Instant::now() + interval.0;
                             if f.is_completed() {
-                                if collector.collect(common)?.is_none(){
+                                let collect = collector.collect(common)?;
+                                if collect.is_none(){
                                     return Ok(())
                                 }
                             }

@@ -6,7 +6,7 @@
 use super::*;
 use crate::{netpkt::reroute::ReroutePkt, *};
 use core::fmt;
-use std::borrow::Borrow;
+use std::{borrow::Borrow, ptr};
 
 
 #[doc(hidden)]
@@ -54,7 +54,7 @@ impl NetPktPtr {
     #[inline(always)]
     pub fn as_sized(&self) -> &NetPktFatPtr {
         let (_layout, metadata) = netpktbox_layout(self.point.point_header());
-        unsafe { &*std::ptr::from_raw_parts(self as *const NetPktPtr as *const (), metadata) }
+        unsafe { &*std::ptr::from_raw_parts( ptr::from_ref(self).cast::<()>(), metadata) }
     }
     /// # Safety
     ///

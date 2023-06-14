@@ -184,7 +184,7 @@ pub mod point {
     pub fn lk_read(buf: &[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError> {
         let pkt = super::misc::read::parse_netpkt(buf,false )?;
         if !allow_private{pkt.check_private()?};
-        let size = pkt.size() as usize;
+        let size : usize = pkt.size().into();
         Ok((pkt,&buf[size..]))
     }
     pub fn lk_read_unchecked(buf:&[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError>{
@@ -192,14 +192,14 @@ pub mod point {
 
         let pkt = super::misc::read::parse_netpkt(buf,true)?;
         if !allow_private{pkt.check_private()?};
-        let size = pkt.size() as usize;
+        let size : usize = pkt.size().into();
         Ok((pkt,&buf[size..]))
     }
     pub fn lk_read_arc_unchecked(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
         if cfg!(debug_assertions) { return lk_read_arc(buf,allow_private) };
         let pkt = super::misc::read::parse_netarc(buf, false)?;
         if !allow_private{pkt.check_private()?};
-        let size = pkt.size() as usize;
+        let size : usize = pkt.size().into();
         Ok((pkt,&buf[size..]))
     }
     pub fn lk_read_arc(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
@@ -381,6 +381,7 @@ pub mod abe {
         /// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         pub struct LkCtx<'o>(pub(crate) InlineCtx<'o>);
         // we optimise for the instance where contains _ctx, but we expose several other context situations
+        #[allow(clippy::large_enum_variant)]
         pub(crate) enum InlineCtx<'o> {
             Std(StdCtx<'o>),
             // TODO UserCb
@@ -590,6 +591,7 @@ pub mod query {
     }
 
     /// Compile a [Query] into a function which tests packets to deteremine if they match - WARN - slow and subject to change.
+    #[allow(clippy::type_complexity)]
     pub fn lk_query_compile(
         q: Query,
     ) -> LkResult<Box<dyn FnMut(&dyn NetPkt) -> (bool, ControlFlow<()>)>> {
@@ -832,6 +834,7 @@ pub mod consts {
 }
 pub use misc::try_cb;
 pub mod misc {
+    #![allow(clippy::type_complexity)]
     use std::ops::{ControlFlow, Try};
 
     pub use linkspace_common::core::env::tree_key::TreeEntry;
@@ -850,6 +853,7 @@ pub mod misc {
         pub stopped: B,
     }
     pub fn nop_stopped(_: Query, _: &Linkspace, _: StopReason, _: u32, _: u32) {}
+
 
     pub fn cb<A>(mut handle_pkt:A) -> Cb<impl FnMut(&dyn NetPkt,&Linkspace) -> ControlFlow<()>,fn(Query,&Linkspace,StopReason,u32,u32)>
     where A: FnMut(&dyn NetPkt,&Linkspace) -> bool {

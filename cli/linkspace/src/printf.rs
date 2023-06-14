@@ -77,7 +77,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
     let error = error.map(|b| b.eval(&ctx)).transpose()?;
     let delimiter = delimiter.eval(&ctx)?;
     #[allow(dropping_copy_types)]
-    let _ = std::mem::drop(ctx);
+    std::mem::drop(ctx);
     let out: &mut dyn Write;
     let mut stdo;
     let mut stde;
@@ -117,7 +117,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<(
                     if join_delimiter && !first {
                         out.write_all(&delimiter)?
                     };
-                    out.write_all(&err_fmt)?;
+                    out.write_all(err_fmt)?;
                 } else {
                     Err(e)?
                 }

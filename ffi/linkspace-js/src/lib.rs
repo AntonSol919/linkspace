@@ -1,5 +1,4 @@
 #![feature(try_blocks,thread_local,lazy_cell,ptr_from_ref,iterator_try_collect)]
-#![allow(dead_code,unused_variables)]
 pub mod jspkt;
 pub mod utils;
 pub mod consts;

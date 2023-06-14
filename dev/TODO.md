@@ -50,6 +50,8 @@ Having the keys ordered by 'first' might set a bad incentive.
 - abe : Missing a syntax to select a subset of links. (useful for :follow and lns in general)
 - predicate-aliases impls (--links)
 
+- --data-prefixed-size - read first line to determine datablock size, can be combined with with rolling checksum tool to produce more equal datapoints (like rsync)
+
 # Internals
 
 - ipath and spath (const) macro's need a rewrite.

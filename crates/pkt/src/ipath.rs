@@ -36,7 +36,9 @@ impl<const U: usize> AsRef<IPath> for IPathC<U> {
     }
 }
 
+#[allow(clippy::as_conversions)]
 pub const fn ipath1<const C0: usize>(c0: &[u8; C0]) -> IPathC<{ C0 + 9 }> {
+    assert!(C0 < MAX_SPATH_COMPONENT_SIZE );
     let mut r = [0u8; C0 + 9];
     r[0] = 1;
     let mut i = 1;
@@ -110,6 +112,8 @@ impl IPathBuf {
         self.try_append_component(component).unwrap();
         self
     }
+
+    #[allow(clippy::as_conversions)]
     pub fn try_append_component(&mut self, component: &[u8]) -> Result<&mut Self, PathError> {
         let bs = &mut self.ipath_bytes;
         if component.len() > MAX_SPATH_COMPONENT_SIZE {
@@ -121,7 +125,7 @@ impl IPathBuf {
         if bs.is_empty() {
             *bs = vec![0; 8]
         }
-        if bs[0] >= MAX_PATH_LEN as u8 {
+        if bs[0] >= MAX_PATH_LEN as u8{
             return Err(PathError::CapacityError);
         }
         if bs.len() + component.len() + 1 > MAX_IPATH_SIZE {
@@ -224,6 +228,7 @@ impl IPath {
                     len += 1;
                 }
             };
+            #[allow(clippy::as_conversions)]
             if idx[i as usize + 1] as usize != ptr {
                 return Err(PathError::BadOffset);
             }
@@ -236,6 +241,7 @@ impl IPath {
         self.fields().2
     }
     #[inline(always)]
+    #[allow(clippy::as_conversions)]
     pub const fn fields(&self) -> (u8, [u8; 9], &SPath) {
         let b = &self.ipath_bytes;
         if b.is_empty() {
@@ -265,6 +271,7 @@ impl IPath {
         self.len() == 0
     }
     #[allow(clippy::len_without_is_empty)] // wtf?
+    #[allow(clippy::as_conversions)]
     pub const fn len(&self) -> usize {
         *self.path_len() as usize
     }
@@ -278,11 +285,13 @@ impl IPath {
     pub fn comps_bytes(&self) -> [&[u8]; 8] {
         pre_idx_comp(&self.ipath_bytes).map(|b| b.first())
     }
+    #[allow(clippy::as_conversions)]
     pub fn range(&self, r: std::ops::Range<usize>) -> &SPath {
         let (_, segm, bytes) = self.fields();
         let bytes = &bytes.spath_bytes()[segm[r.start] as usize..segm[r.end] as usize];
         SPath::from_unchecked(bytes)
     }
+    #[allow(clippy::as_conversions)]
     pub fn last(&self) -> &[u8] {
         self.comp((*self.path_len() as usize).saturating_sub(1))
     }
@@ -327,6 +336,7 @@ impl IPath {
 }
 
 #[inline(always)]
+#[allow(clippy::as_conversions)]
 const fn pre_idx_comp(b: &[u8]) -> [&SPath; 8] {
     let mut result = [SPath::from_unchecked(b); 8];
     if b.is_empty() {

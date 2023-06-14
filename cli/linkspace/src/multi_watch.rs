@@ -39,7 +39,7 @@ pub struct MultiWatch {
 
 pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Result<()> {
     let linger = multi_watch.linger;
-    let rx = common.runtime()?.clone();
+    let rx = common.runtime()?;
 
     let ctx = Arc::new((common, multi_watch));
     let handle: JoinHandle<anyhow::Result<()>> =
@@ -50,7 +50,7 @@ pub fn multi_watch(common: CommonOpts, multi_watch: MultiWatch) -> anyhow::Resul
                 let pkt = pkt?;
                 let c = ctx.clone();
                 spawner.unbounded_send(Box::new(move |rx| {
-                    if let Err(e) = setup_watch(&*pkt, &rx, &c) {
+                    if let Err(e) = setup_watch(&pkt, &rx, &c) {
                         eprintln!("{:#?}", e);
                     }
                 }))?;
@@ -79,7 +79,7 @@ pub fn setup_watch(
     } else {
         core.dynr()
     };
-    let _ = read_pull_pkt(&mut query, pkt, &*rx.get_reader(), ctx)?;
+    read_pull_pkt(&mut query, pkt, &rx.get_reader(), ctx)?;
     
     let mut ok = mv.constraint.or.is_empty();
     for opt in mv.constraint.or.iter(){

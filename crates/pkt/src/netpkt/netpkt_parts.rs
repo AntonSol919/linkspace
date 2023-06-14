@@ -1,3 +1,5 @@
+use std::ptr;
+
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -50,7 +52,7 @@ impl<'a> NetPkt for NetPktParts<'a> {
     fn byte_segments(&self) -> ByteSegments {
         let segments = self.point_parts.pkt_segments();
         let head = unsafe {
-            let ptr: *const u8 = self as *const Self as *const u8;
+            let ptr: *const u8 = ptr::from_ref(self).cast();
             core::slice::from_raw_parts(ptr, size_of::<NetPktHeader>() + size_of::<LkHash>())
         };
         segments.push_front(head)

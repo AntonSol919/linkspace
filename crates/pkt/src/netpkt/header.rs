@@ -8,6 +8,7 @@ use byte_fmt::{
     endian_types::{U32, U8},
      AB, B64,
 };
+use std::ptr;
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
@@ -70,6 +71,8 @@ impl fmt::Display for NetPktHeader {
     }
 }
 
+
+
 impl Default for NetPktHeader {
     /// DEFAULT_ROUTING_BITS
     fn default() -> Self {
@@ -87,15 +90,15 @@ impl NetPktHeader {
 
     #[inline(always)]
     pub const fn as_bytes(&self) -> &[u8; 32] {
-        unsafe { &*(self as *const Self as *const [u8; 32]) }
+        unsafe { &*ptr::from_ref(self).cast::<[u8;32]>()}
     }
     #[inline(always)]
     pub const fn cfrom(b: [u8; 32]) -> Self {
-        unsafe { *(b.as_ptr() as *const [u8; 32] as *const Self) }
+        unsafe { b.as_ptr().cast::<Self>().read_unaligned()}
     }
     #[inline(always)]
     pub const fn cinto(self) -> [u8; 32] {
-        unsafe { *(&self as *const Self as *const [u8; 32]) }
+        unsafe{*ptr::from_ref(&self).cast::<[u8;32]>()}
     }
 
     #[must_use]
@@ -117,10 +120,10 @@ impl NetPktHeader {
         self
     }
     pub fn flags_u8(&self) -> &u8 {
-        unsafe { &*(&self.flags as *const NetFlags as *const u8) }
+        unsafe { &*(ptr::from_ref(&self.flags).cast::<u8>()) }
     }
     pub fn mut_flags_u8(&mut self) -> &mut u8 {
-        unsafe { &mut *(&mut self.flags as *mut NetFlags as *mut u8) }
+        unsafe {  &mut *(ptr::from_mut(&mut self.flags).cast::<u8>()) }
     }
 }
 
@@ -132,9 +135,9 @@ bitflags! {
     pub struct NetFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
         /// Implementations can ignore this, mostly useful for importing many datablocks.
-        const SILENT = 0b00000001;
-        const LINKED_IN_FUTURE_PKT = 0b00000010;
-        const LINKED_IN_PREVIOUS_PKT = 0b00000100;
+        const SILENT = 0b0000_0001;
+        const LINKED_IN_FUTURE_PKT = 0b0000_0010;
+        const LINKED_IN_PREVIOUS_PKT = 0b0000_0100;
         /// Request that this packet is not forwarded
         const DONT_FORWARD = 0b0000_1000;
         const ALWAYS_ZERO = 0b1000_0000;

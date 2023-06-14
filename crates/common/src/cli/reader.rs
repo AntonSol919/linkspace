@@ -38,7 +38,7 @@ impl PktReadOpts {
 }
 
 pub fn check_stdin(pkt_in:&PktReadOpts,read_in:&DataReadOpts,read_default_in:bool) -> anyhow::Result<()>{
-    ensure!( pkt_in.is_stdin() && read_in.common.is_stdin(read_default_in) != true , "both pkts and read data is claiming stdin - change either (e.g. --no-pkts)");
+    ensure!( !(pkt_in.is_stdin() && read_in.common.is_stdin(read_default_in)) , "both pkts and read data is claiming stdin - change either (e.g. --no-pkts)");
     Ok(())
 }
 
@@ -63,7 +63,7 @@ pub struct CommonReadOpts{
 impl CommonReadOpts {
     pub fn is_stdin(&self,default_stdin:bool) -> bool{
         self.data_stdin
-            || ( !self.no_data && !self.data_str.is_some() && !self.data.is_some() && default_stdin)
+            || ( !self.no_data && self.data_str.is_none() && self.data.is_none() && default_stdin)
     }
    pub fn open(&self,default_stdin:bool) -> std::io::Result<Option<ReadSource>>{
         use std::io::*;

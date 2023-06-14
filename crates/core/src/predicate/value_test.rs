@@ -378,10 +378,9 @@ impl<U: UInt> Mask<U> {
         (over, v)
     }
 }
+#[ignore]
 #[test]
-fn test_inset() {
-    #![allow(unreachable_code)]
-    return;
+fn _disabled_test_inset() {
     for zeros in 0..=255 {
         for ones in 0..=255 {
             for val in 0..=255 {

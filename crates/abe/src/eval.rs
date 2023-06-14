@@ -1216,8 +1216,7 @@ impl EvalScopeImpl for LogicOps {
                         b"=" => {
                             if blen != size {
                                 return Err(anyhow!("expected {size} bytes got {blen}"));
-                            } else {
-                            }
+                            } 
                         }
                         _ => return Err(anyhow!("unknown op")),
                     };
@@ -1234,8 +1233,7 @@ impl EvalScopeImpl for LogicOps {
                         b"=" => {
                             if bytes != i[2] {
                                 return Err(anyhow!("unequal bytes"));
-                            } else {
-                            }
+                            } 
                         }
                         _ => return Err(anyhow!("unknown op")),
                     };

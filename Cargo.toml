@@ -47,7 +47,7 @@ libc = "=0.2.142"
 
 [profile.dev.package.linkspace-argon2-identity]
 opt-level = 2
-[profile.dev.package.blake3 ]
+[profile.dev.package.linkspace-cryptography]
 opt-level = 2
 
 

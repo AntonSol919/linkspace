@@ -138,15 +138,15 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             "links",
             ":{EXPR} where expr is repeated for each link binding 'ptr' and 'tag'",
             |links: &Self, abe: &[ABE], scope| {
-                let abe = match abe {
-                    &[ABE::Ctr(Ctr::Colon), ref r @ ..] => r,
+                let abe = match &abe {
+                    &[ABE::Ctr(Ctr::Colon), r @ ..] => r,
                     _ => anyhow::bail!("links expects")
                 };
                 let mut out = vec![];
                 for link in links.0 {
                     let ctx = EvalCtx { scope }.scope(EScope(LinkEnv { link }));
                     match eval(&ctx, abe) {
-                        Ok(abl) => match abl.into_exact_bytes() {
+                        Ok(ablist) => match ablist.into_exact_bytes() {
                             Ok(o) => {
                                 out.extend_from_slice(&o);
                             }

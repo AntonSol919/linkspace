@@ -57,7 +57,7 @@ pub fn build<'o>(
         .or(build_opts.create_int)
         .unwrap_or_else(now);
     let key = if build_opts.sign {
-        Some(build_opts.key.identity(&common, true)?)
+        Some(build_opts.key.identity(common, true)?)
     } else {
         None
     };
@@ -82,7 +82,7 @@ pub fn build_with_reader<'o>(
     reader: &mut Reader,
 ) -> anyhow::Result<Option<NetPktParts<'o>>> {
     let ctx = common.eval_ctx();
-    let freespace : usize = calc_free_space(&dgs.path, &links, &[], build_opts.sign).try_into()?;
+    let freespace : usize = calc_free_space(&dgs.path, links, &[], build_opts.sign).try_into()?;
     match reader.read_next_data(&ctx.dynr(),freespace, data_buf)?{
         Some(_) => Ok(Some(build(common, build_opts, dgs, links, data_buf)?)),
         None => Ok(None),
@@ -107,7 +107,7 @@ pub fn linkpoint(
     if !multi.multi{ return Ok(()) }
     let mut ptr = pkt.hash();
     #[allow(dropping_copy_types)]
-    let _ = std::mem::drop(pkt);
+    std::mem::drop(pkt);
 
     loop {
         if let Some(e) = &multi.multi_link{
