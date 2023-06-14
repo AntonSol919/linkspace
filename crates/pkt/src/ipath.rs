@@ -6,7 +6,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
 use crate::{spath::*, MAX_IPATH_SIZE, MAX_PATH_LEN, MAX_SPATH_COMPONENT_SIZE};
-use std::{borrow::Borrow, ops::Deref};
+use std::{borrow::Borrow, ops::Deref, ptr};
 
 /// An IPath is an [[SPath]] with 8 bytes prefix: (length, \[component_offset;7\])
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -36,7 +36,8 @@ impl<const U: usize> AsRef<IPath> for IPathC<U> {
     }
 }
 
-#[allow(clippy::as_conversions)]
+
+#[allow(clippy::as_conversions,clippy::cast_possible_truncation)]
 pub const fn ipath1<const C0: usize>(c0: &[u8; C0]) -> IPathC<{ C0 + 9 }> {
     assert!(C0 < MAX_SPATH_COMPONENT_SIZE );
     let mut r = [0u8; C0 + 9];
@@ -113,7 +114,7 @@ impl IPathBuf {
         self
     }
 
-    #[allow(clippy::as_conversions)]
+    #[allow(clippy::as_conversions,clippy::cast_possible_truncation)]
     pub fn try_append_component(&mut self, component: &[u8]) -> Result<&mut Self, PathError> {
         let bs = &mut self.ipath_bytes;
         if component.len() > MAX_SPATH_COMPONENT_SIZE {
@@ -194,7 +195,8 @@ impl IPath {
         Self::EMPTY
     }
     pub const fn from_unchecked(b: &[u8]) -> &IPath {
-        unsafe { std::mem::transmute(b) }
+
+        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(), b.len())}
     }
 
     pub const fn check_components(&self) -> Result<(), PathError> {
@@ -228,7 +230,6 @@ impl IPath {
                     len += 1;
                 }
             };
-            #[allow(clippy::as_conversions)]
             if idx[i as usize + 1] as usize != ptr {
                 return Err(PathError::BadOffset);
             }

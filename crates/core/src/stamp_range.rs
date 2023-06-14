@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use core::fmt;
-use std::{cmp::Ordering, ops::RangeInclusive, str::FromStr};
+use std::{cmp::Ordering, ops::RangeInclusive, str::FromStr, hint::unreachable_unchecked};
 
 use linkspace_pkt::Stamp;
 
@@ -80,7 +80,7 @@ impl StampRange {
             (0, v) => -v,
             (a, b) => a * b,
         };
-        unsafe { std::mem::transmute(r) }
+        IterCmp::unchecked_from(r)
     }
     pub fn lower_bound(&self) -> Stamp {
         Stamp::new(self.start.min(self.end))
@@ -139,6 +139,16 @@ pub enum IterCmp {
     Pre = -1,
     In = 0,
     Post = 1,
+}
+impl IterCmp {
+    pub fn unchecked_from(i:i8) -> Self {
+        match i {
+            -1 => IterCmp::Pre,
+            0 => IterCmp::In,
+            1 => IterCmp::Post,
+            _ => unsafe{unreachable_unchecked()}
+        }
+    }
 }
 
 #[test]

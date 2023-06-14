@@ -88,7 +88,7 @@ impl<R: LKS> NetLNS<R> {
 
 impl<R: LKS > EvalScopeImpl for NetLNS<R> {
     fn about(&self) -> (String, String) {
-        ("lns".into(), "".into())
+        ("lns".into(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([

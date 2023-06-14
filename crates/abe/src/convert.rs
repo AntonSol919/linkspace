@@ -169,7 +169,7 @@ impl TryFrom<ABList> for String {
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
         let b = value.into_exact_bytes().map_err(|_| {
             ABEError::MatchError(MatchError {
-                at: "".into(),
+                at: String::new(),
                 err: MatchErrorKind::ExpectedExpr,
             })
         })?;

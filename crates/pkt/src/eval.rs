@@ -24,7 +24,7 @@ pub fn opt_pkt_ctx<'o>(
     ctx: EvalCtx<impl Scope + 'o>,
     pkt: Option<&'o dyn NetPkt>,
 ) -> EvalCtx<impl Scope + 'o> {
-    let pkt_scope = pkt.map(|pkt| pkt_scope(pkt));
+    let pkt_scope = pkt.map(pkt_scope);
     ctx.scope(pkt_scope)
 }
 
@@ -84,7 +84,7 @@ impl<'o> EvalScopeImpl for NetPktFieldsEval<'o> {
 pub struct NetPktPrintDefault<'o>(&'o dyn NetPkt);
 impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
     fn about(&self) -> (String, String) {
-        ("print pkt default".into(), "".into())
+        ("print pkt default".into(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
@@ -121,7 +121,7 @@ impl<'o> SelectLink<'o> {
 
 impl<'o> EvalScopeImpl for SelectLink<'o> {
     fn about(&self) -> (String, String) {
-        ("select link".into(), "".into())
+        ("select link".into(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([(

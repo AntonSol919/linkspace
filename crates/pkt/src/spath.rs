@@ -12,7 +12,7 @@ Components are non-empty, length delimited, bytes.
 [SPath] and [SPathBuf] are similar to [std::path::Path] and [std::path::PathBuf].
 [IPath] and [IPathBuf] are SPath's with a [u8;8] prefix that holds the number of components and their offset.
 */
-use std::{borrow::Borrow, ops::Deref};
+use std::{borrow::Borrow, ops::Deref, ptr};
 
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -127,7 +127,7 @@ impl SPath {
         }
     }
     pub const fn from_unchecked(b: &[u8]) -> &SPath {
-        unsafe { std::mem::transmute(b) }
+        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(),b.len())}
     }
     pub const fn spath_bytes(&self) -> &[u8] {
         &self.spath_bytes
@@ -264,7 +264,7 @@ impl SPathBuf {
         if self.spath_bytes.len() + component.len() + 1 > MAX_SPATH_SIZE {
             return Err(PathError::CapacityError);
         }
-        self.spath_bytes.push(component.len() as u8);
+        self.spath_bytes.push(component.len().try_into().unwrap());
         self.spath_bytes.extend_from_slice(component);
         Ok(self)
     }
@@ -284,7 +284,7 @@ impl SPathBuf {
         }
         self.spath_bytes.splice(
             0..0,
-            [component.len() as u8]
+            [component.len().try_into().unwrap()]
                 .into_iter()
                 .chain(component.iter().cloned()),
         );
@@ -321,7 +321,7 @@ impl SPath {
 
         while !this.is_empty() {
             last = Some(this);
-            let len = this.spath_bytes[0] as usize;
+            let len :usize = this.spath_bytes[0].into();
             this = SPath::from_unchecked(&this.spath_bytes[len + 1..]);
         }
         match last {
@@ -354,10 +354,11 @@ impl SPath {
         if self.is_empty() {
             return None;
         }
-        let len = self.spath_bytes[0] as usize;
+        let len = usize::from(self.spath_bytes[0]);
         let bytes = &self.spath_bytes[1..len + 1];
         Some((bytes, SPath::from_unchecked(&self.spath_bytes[len + 1..])))
     }
+    #[allow(clippy::as_conversions)]
     pub const fn first(&self) -> &[u8] {
         match self.spath_bytes.split_first() {
             Some((len, bytes)) => bytes.split_at(*len as usize).0,
@@ -398,13 +399,13 @@ impl SPath {
         arrayvec::ArrayVec::from_iter(self.iter())
     }
     pub fn iter(&self) -> &SPathIter {
-        unsafe { std::mem::transmute(self) }
+        unsafe{&*ptr::from_raw_parts(ptr::from_ref(self).cast(),self.spath_bytes.len())}
     }
     pub const fn checked_iter(&self) -> Result<&CheckedSPathIter, PathError> {
         if self.spath_bytes.len() > MAX_SPATH_SIZE {
             return Err(PathError::MaxLen);
         };
-        Ok(unsafe { std::mem::transmute(self) })
+        Ok(unsafe{&*ptr::from_raw_parts(ptr::from_ref(self).cast(),self.spath_bytes.len())})
     }
     /// Return the components and the spath upto and including that component
     pub fn track(&self) -> Track {
@@ -438,7 +439,8 @@ pub struct CheckedSPathIter {
 }
 
 impl CheckedSPathIter {
-    pub const EMPTY: &Self = unsafe { std::mem::transmute(&[] as &[u8]) };
+    pub const EMPTY: &Self = unsafe { &*ptr::from_raw_parts(ptr::from_ref(SPath::empty()).cast(), 0)};
+    #[allow(clippy::as_conversions)]
     pub const fn next_sp_c(&self) -> Option<Result<(&SPath, &Self), PathError>> {
         if self.spath.spath_bytes.is_empty() {
             return None;
@@ -454,7 +456,8 @@ impl CheckedSPathIter {
             return Some(Err(PathError::TailLength));
         }
         let (segm,rest) = self.spath.spath_bytes.split_at(len+1);
-        Some(Ok((SPath::from_unchecked(segm),unsafe { std::mem::transmute(rest)})))
+        let rest : *const Self= std::ptr::from_raw_parts(rest.as_ptr().cast(),rest.len());
+        Some(Ok((SPath::from_unchecked(segm),unsafe{&*rest})))
     }
     pub const fn next_c(&self) -> Option<Result<(&[u8], &Self), PathError>> {
         match self.next_sp_c() {
@@ -501,7 +504,7 @@ impl<'a> Iterator for &'a SPathIter {
         if self.spath.spath_bytes.is_empty() {
             return None;
         }
-        let len = self.spath.spath_bytes[0] as usize;
+        let len = usize::from(self.spath.spath_bytes[0]);
         if len > MAX_SPATH_COMPONENT_SIZE || len == 0 {
             panic!("Invalid spath");
         }
@@ -570,6 +573,7 @@ macro_rules! spath {
 }
 
 #[track_caller]
+#[allow(clippy::as_conversions)]
 pub const fn prefix_len<const N: usize>(component: [u8; N]) -> [u8; N + 1] {
     if N > MAX_SPATH_COMPONENT_SIZE {
         panic!()
@@ -623,6 +627,10 @@ fn pop_slice() {
 
 #[test]
 fn check() {
+    let mut empty = CheckedSPathIter::EMPTY;
+    assert!(empty.next().is_none(), "bad empty iter?");
+    assert!(CheckedSPathIter::EMPTY.spath.spath_bytes.is_empty(), "bad empty iter?");
+
     use crate::*;
     let spath = SPathBuf::try_from_iter(&["hello", "world"]).unwrap();
     let mut it = spath.checked_iter().unwrap();
@@ -687,9 +695,9 @@ impl SPath {
         let mut it = self.checked_iter()?;
         let mut count = 0u8;
         for i in 0..8 {
-            data[i] = data.len() as u8 - 8;
+            data[i] = unsafe {u8::try_from(data.len()).unwrap_unchecked().checked_sub(8).unwrap_unchecked()};
             if let Some(v) = it.next().transpose()? {
-                data.push(v.len() as u8);
+                data.push( unsafe {v.len().try_into().unwrap_unchecked()});
                 data.extend_from_slice(v);
                 count += 1;
             }

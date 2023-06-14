@@ -453,7 +453,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
 }
 pub trait EvalScopeImpl {
     fn about(&self) -> (String, String) {
-        ("".into(), "".into())
+        (String::new(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[]
@@ -1333,7 +1333,7 @@ impl EvalScopeImpl for Encode {
 pub struct Help;
 impl EvalScopeImpl for Help {
     fn about(&self) -> (String, String) {
-        ("help".into(), "".into())
+        ("help".into(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[ScopeFunc {
@@ -1468,7 +1468,7 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
 pub struct Comment;
 impl EvalScopeImpl for Comment{
     fn about(&self) -> (String, String) {
-        ("comment function / void function. evaluates to nothing".into(), "".into())
+        ("comment function / void function. evaluates to nothing".into(), String::new())
     }
 
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {

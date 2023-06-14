@@ -61,7 +61,7 @@ impl<'a> Tail<'a> {
     pub fn links_as_bytes(&'a self) -> &'a [u8] {
         unsafe {
             from_raw_parts(
-                self.links.as_ptr() as *const u8,
+                self.links.as_ptr().cast::<u8>(),
                 std::mem::size_of_val(self.links),
             )
         }
@@ -75,8 +75,8 @@ impl<'tail> PointParts<'tail> {
     pub fn data_ptr(&self) -> &'tail [u8] {
         match self.fields {
             PointFields::DataPoint(b) => b,
-            PointFields::LinkPoint(LinkPoint { head: _, tail }) => tail.data,
-            PointFields::KeyPoint(KeyPoint { head: _, tail }) => tail.data,
+            PointFields::LinkPoint(LinkPoint {  tail, .. }) => tail.data,
+            PointFields::KeyPoint(KeyPoint {  tail,.. }) => tail.data,
             PointFields::Error(b) => b,
             PointFields::Unknown(o) => o,
         }
@@ -90,7 +90,7 @@ impl<'tail> Point for PointParts<'tail> {
     }
     #[inline(always)]
     fn pkt_segments(&self) -> ByteSegments {
-        let pkt_head = self.pkt_header.as_bytes() as &[u8];
+        let pkt_head = self.pkt_header.as_bytes();
         match &self.fields {
             PointFields::Unknown(b) => ByteSegments::from_array([pkt_head, b]),
             PointFields::DataPoint(b) => ByteSegments::from_array([pkt_head, b]),
@@ -120,8 +120,8 @@ impl<'tail> Point for PointParts<'tail> {
     #[inline(always)]
     fn tail(&self) -> Option<Tail> {
         match self.fields {
-            PointFields::LinkPoint(LinkPoint { head: _, tail }) => Some(tail),
-            PointFields::KeyPoint(KeyPoint { head: _, tail }) => Some(tail),
+            PointFields::LinkPoint(LinkPoint {  tail ,.. }) => Some(tail),
+            PointFields::KeyPoint(KeyPoint {  tail , .. }) => Some(tail),
             _ => None,
         }
     }
@@ -132,8 +132,8 @@ impl<'tail> Point for PointParts<'tail> {
     #[inline(always)]
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         match &self.fields {
-            PointFields::LinkPoint(LinkPoint { head, tail: _ }) => Some(head),
-            PointFields::KeyPoint(KeyPoint { head, tail: _ }) => Some(&head.linkpoint),
+            PointFields::LinkPoint(LinkPoint { head, ..}) => Some(head),
+            PointFields::KeyPoint(KeyPoint { head, ..}) => Some(&head.linkpoint),
             _ => None,
         }
     }

@@ -54,7 +54,12 @@ impl NetPktPtr {
     #[inline(always)]
     pub fn as_sized(&self) -> &NetPktFatPtr {
         let (_layout, metadata) = netpktbox_layout(self.point.point_header());
-        unsafe { &*std::ptr::from_raw_parts( ptr::from_ref(self).cast::<()>(), metadata) }
+        unsafe { &*ptr::from_raw_parts( ptr::from_ref(self).cast::<()>(), metadata) }
+    }
+    #[inline(always)]
+    pub fn as_mut_sized(&mut self) -> &mut NetPktFatPtr {
+        let (_layout, metadata) = netpktbox_layout(self.point.point_header());
+        unsafe { &mut *ptr::from_raw_parts_mut( ptr::from_mut(self).cast::<()>(), metadata) }
     }
     /// # Safety
     ///
@@ -68,7 +73,7 @@ impl NetPktPtr {
             &b
         );
         assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
-        let netpkt = &*{ b.as_ptr() as *const Self };
+        let netpkt = &*{ b.as_ptr().cast::<Self>()};
         debug_assert!(netpkt.check(true).is_ok());
         netpkt
     }
@@ -90,7 +95,7 @@ impl NetPktPtr {
         Ok(self.as_netpkt_bytes())
     }
     pub fn as_netpkt_bytes(&self) -> &[u8] {
-        unsafe { from_raw_parts(self as *const Self as *const u8, self.size() as usize ) }
+        unsafe { from_raw_parts(ptr::from_ref(self).cast::<u8>(), usize::from(self.size())) }
     }
 }
 
@@ -102,7 +107,7 @@ impl Clone for NetPktBox {
 
 impl NetPktFatPtr {
     pub fn thin_netpkt(&self) -> &NetPktPtr {
-        unsafe { &*(self as *const Self as *const NetPktPtr) }
+        unsafe { &*(ptr::from_ref(self).cast::<NetPktPtr>()) }
     }
     /// # Safety
     ///
@@ -110,15 +115,15 @@ impl NetPktFatPtr {
     pub unsafe fn from_bytes_unchecked(b: &[u8]) -> &Self {
         NetPktPtr::from_bytes_unchecked(b).as_sized()
     }
-    pub fn into_raw_box(this: Box<Self>) -> *const NetPktPtr {
-        Box::into_raw(this) as *const NetPktPtr
+    pub fn into_raw_box(this: Box<Self>) -> *mut NetPktPtr {
+        Box::into_raw(this).cast()
     }
     /// # Safety
     ///
     /// Must be constructed with [Self::into_raw_box]
-    pub unsafe fn from_raw_box(ptr: *const NetPktPtr) -> Box<Self> {
+    pub unsafe fn from_raw_box(ptr: *mut NetPktPtr) -> Box<Self> {
         Box::from_raw(
-            (*ptr).as_sized() as *const NetPktFatPtr as *mut NetPktFatPtr as *mut NetPktFatPtr,
+            ptr::from_mut((*ptr).as_mut_sized())
         )
     }
 }
@@ -205,10 +210,10 @@ pub fn netpktbox_layout(
     pkt_header: &PointHeader,
 ) -> (
     std::alloc::Layout,
-    <NetPktFatPtr as std::ptr::Pointee>::Metadata,
+    <NetPktFatPtr as ptr::Pointee>::Metadata,
 ) {
     use std::alloc::Layout;
-    let clen = pkt_header.content_size() as usize;
+    let clen : usize = pkt_header.content_size().into();
     (
         Layout::new::<PartialNetHeader>()
             .extend(Layout::new::<u8>().repeat(clen).unwrap().0)

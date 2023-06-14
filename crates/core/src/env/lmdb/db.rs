@@ -21,7 +21,7 @@ use crate::{env::write_result::WriteResult, prelude::TreeValueBytes};
 pub struct RawBTreeEnv(Arc<LMDBEnv>);
 pub use lmdb::Error;
 
-use super::misc::{ Refreshable, assert_align, IterDirection, Cursors};
+use super::misc::{ Refreshable, assert_align,  Cursors};
 
 pub type WriteTxn<'o> = LMDBTxn<lmdb::RwTransaction<'o>>;
 pub type MutHashCursor<'o> = UniqCursor<'o, [u8; 32], RwCursor<'o>>;
@@ -409,6 +409,7 @@ impl<'txn> TreeCursor<'txn> {
         }
     }
 
+    /*
     pub(crate) fn range_multi(
         self,
         start: &[u8],
@@ -478,6 +479,7 @@ impl<'txn> TreeCursor<'txn> {
             e => todo!("{:?}", e),
         }
     }
+    */
 }
 
 impl<'txn> MutPktCursor<'txn> {

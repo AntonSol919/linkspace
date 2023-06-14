@@ -29,7 +29,7 @@ pub struct LinkPointHeader {
 }
 impl LinkPointHeader {
     pub fn as_bytes(&self) -> &[u8; size_of::<Self>()] {
-        as_bytes(self)
+        unsafe {&*std::ptr::from_ref(self).cast()}
     }
 }
 
@@ -45,7 +45,7 @@ pub struct KeyPointHeader {
 }
 impl KeyPointHeader {
     pub fn as_bytes(&self) -> &[u8; size_of::<Self>()] {
-        as_bytes(self)
+        unsafe {&*std::ptr::from_ref(self).cast()}
     }
 }
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -66,24 +66,28 @@ impl Signed {
 }
 
 impl PointHeader {
-    pub const ERROR: Self = PointHeader {
-        point_type: PointTypeFlags::ERROR_POINT,
-        reserved: 0,
-        point_size: U16::new(4),
+    pub const ERROR: Self = match PointHeader::new(PointTypeFlags::ERROR_POINT,0){
+        Ok(o) => o,
+        Err(_) => panic!(),
     };
+    #[allow(clippy::as_conversions)]
     pub const fn new(kind: PointTypeFlags, content_len: usize) -> Result<Self, Error> {
+        let point_size = content_len.saturating_add(size_of::<PointHeader>());
+        if point_size > MAX_CONTENT_SIZE { return Err(Error::ContentLen)};
         PointHeader {
             point_type: kind,
             reserved: 0,
-            point_size: U16::new(content_len as u16 + 4),
+            point_size: U16::new(point_size as u16) 
         }
         .check()
     }
+    #[allow(clippy::as_conversions)]
     pub const fn check(self) -> Result<Self, Error> {
         if self.reserved != 0 {
             return Err(Error::HeaderReservedSet(self.reserved));
         }
-        let len = self.content_size() as usize;
+
+        let len = self.content_size() as usize ;
         if len > MAX_CONTENT_SIZE {
             return Err(Error::ContentLen);
         }
@@ -101,17 +105,19 @@ impl PointHeader {
         }
     }
     pub fn as_bytes(&self) -> &[u8; 4] {
-        as_bytes(self)
+        unsafe {&*std::ptr::from_ref(self).cast()}
     }
     /// Size of a point (type,length,content). This is without the hash.
     pub const fn point_size(&self) -> u16{
         self.point_size.get() 
     }
     /// size of a point's content. If it is a datapoint, this is the size of the data.
+    #[allow(clippy::as_conversions)]
     pub const fn content_size(&self) -> u16{
-        self.point_size().saturating_sub(size_of::<PointHeader>() as u16)
+        self.point_size().saturating_sub( size_of::<PointHeader>() as u16)
     }
     /// Size of a netpkt. The pointsize plus pointhash and netpktheader
+    #[allow(clippy::as_conversions)]
     pub const fn net_pkt_size(&self) -> u16{
         self.point_size() + size_of::<LkHash>() as u16 + size_of::<NetPktHeader>() as u16
     }

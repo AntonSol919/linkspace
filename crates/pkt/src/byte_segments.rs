@@ -1,22 +1,28 @@
 // Copyright Anton Sol
-//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 /**
 Utility to create packets from multiple byte slices without allocating.
 **/
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct ByteSegments<'a>(pub(crate) [&'a [u8]; 8]);
 
 impl<'a> ExactSizeIterator for ByteSegments<'a> {
     #[inline(always)]
     fn len(&self) -> usize {
-        self.0.iter().fold(0, |a, b| a + b.len())
+        // Wrapping ok because Self is only created from valid packets. 
+        self.0.iter().fold(0, |a, b| a.wrapping_add( b.len()))
+    }
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.0 == [&[];8]
     }
 }
+
 impl<'a> Iterator for ByteSegments<'a> {
     type Item = u8;
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -71,15 +77,16 @@ pub fn it() {
 impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub const fn from_array<const N: usize>(segments: [&'a [u8]; N]) -> Self {
-        assert!(N < 8);
+        assert!(N < 8,"not supported");
         let mut r : [&'a [u8];8]= [&[]; 8];
         let mut i = 0;
         while i < N {
             r[i] = segments[i];
-            i += 1;
+            i = i.wrapping_add(1);
         }
         ByteSegments(r)
     }
+    #[inline]
     pub const fn as_slice(&self) -> &[&'a [u8]] {
         &self.0
     }
@@ -88,9 +95,10 @@ impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub(crate) fn push_front(self, head: &'a [u8]) -> Self {
         let [a, b, c, d, e, f, g, h] = self.0;
-        debug_assert!(h.is_empty());
+        debug_assert!(h.is_empty(), "segmented packet construction stacked to deep");
         ByteSegments([head, a, b, c, d, e, f, g])
     }
+    #[inline]
     pub fn to_bytes(self) -> Box<[u8]> {
         self.0.concat().into_boxed_slice()
     }
@@ -99,13 +107,13 @@ impl<'a> ByteSegments<'a> {
     ///
     /// dest needs to be initialized to fit the entire length;
     #[inline(always)]
-    pub unsafe fn write_segments_unchecked(self, mut dest: *mut u8) {
+    pub const unsafe fn write_segments_unchecked(self, mut dest: *mut u8) {
         let mut i = 0;
         while i < 8 {
             let len = self.0[i].len();
             core::ptr::copy_nonoverlapping(self.0[i].as_ptr(), dest, len);
             dest = dest.add(len);
-            i += 1;
+            i = i.wrapping_add(1);
         }
     }
     #[inline(always)]

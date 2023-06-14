@@ -55,7 +55,6 @@ impl NetPktArcPtr {
         let inner_arc : *const () =unsafe{ ptr.cast::<u8>().sub(size_of::<AtomicUsize>()).cast::<()>()};
 
         let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size);
-
         let ptr : &(*const ArcInner,()) = &(inner,()); // Yes we're casting a reference to a pointer 
         let npa : &NetPktArc = unsafe { &*std::ptr::from_ref(ptr).cast::<NetPktArc>()};
         f(npa)

@@ -103,10 +103,9 @@ fn linkp<'t>(
     ipath.check_components().unwrap();
     let tail = Tail { links, data, ipath };
     let ipath_size = ipath.ipath_bytes().len();
-    let offset_ipathu =
-        size_of::<PointHeader>() + size_of::<LinkPointHeader>() + std::mem::size_of_val(links);
-    let offset_ipath = U16::new(offset_ipathu as u16);
-    let offset_data = U16::new((offset_ipathu + ipath_size) as u16);
+    let offset_ipathu = (size_of::<PointHeader>() + size_of::<LinkPointHeader>()).saturating_add(std::mem::size_of_val(links));
+    let offset_ipath = U16::new( offset_ipathu.try_into().map_err(|_| Error::ContentLen)?);
+    let offset_data = U16::new((offset_ipathu + ipath_size).try_into().map_err(|_| Error::ContentLen)?);
     let pkt_header = PointHeader::new(
         PointTypeFlags::LINK_POINT,
         size_of::<LinkPointHeader>() + tail.byte_len(),
@@ -212,6 +211,7 @@ fn __error_blk_ref(error: &[u8], netopts: NetOpts) -> NetPktParts<'_> {
 
 /// Calculate the free space left in bytes. Negative values means it will not fit.
 #[inline]
+#[allow(clippy::as_conversions)]
 pub const fn calc_free_space(
     path: &SPath,
     links: &[Link],

@@ -14,8 +14,8 @@ pub fn from_systime(time: std::time::SystemTime) -> Stamp {
     let v = time
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
-        .as_micros() as u64;
-    Stamp::new(v)
+        .as_micros();
+    Stamp::new(unsafe{v.try_into().unwrap_unchecked()})
 }
 pub fn as_systime(stamp: Stamp) -> std::time::SystemTime {
     std::time::UNIX_EPOCH + Duration::from_micros(stamp.get())
@@ -53,20 +53,24 @@ pub fn stamp_age(stamp: Stamp) -> Result<Duration, Duration> {
 
 /// saturating add
 pub fn stamp_add(stamp: Stamp, dur: Duration) -> Stamp {
-    let plus = dur.as_micros().min(u64::MAX as u128) as u64;
+    let plus = dur.as_micros().min(u64::MAX.into());
+    let plus = unsafe {u64::try_from(plus).unwrap_unchecked()};
     Stamp::new(stamp.get().saturating_add(plus))
 }
 pub fn checked_stamp_add(stamp: Stamp, dur: Duration) -> Option<Stamp> {
-    let plus = dur.as_micros().min(u64::MAX as u128) as u64;
+    let plus = dur.as_micros().min(u64::MAX.into());
+    let plus = unsafe {u64::try_from(plus).unwrap_unchecked()};
     stamp.get().checked_add(plus).map(Stamp::new)
 }
 /// saturating sub
 pub fn stamp_sub(stamp: Stamp, dur: Duration) -> Stamp {
-    let sub = dur.as_micros().min(u64::MAX as u128) as u64;
+    let sub = dur.as_micros().min(u64::MAX.into());
+    let sub = unsafe {u64::try_from(sub).unwrap_unchecked()};
     Stamp::new(stamp.get().saturating_sub(sub))
 }
 pub fn checked_stamp_sub(stamp: Stamp, dur: Duration) -> Option<Stamp> {
-    let sub = dur.as_micros().min(u64::MAX as u128) as u64;
+    let sub = dur.as_micros().min(u64::MAX.into());
+    let sub = unsafe {u64::try_from(sub).unwrap_unchecked()};
     stamp.get().checked_sub(sub).map(Stamp::new)
 }
 #[cfg(target_arch = "wasm32")]
@@ -86,3 +90,4 @@ extern "C" {
 pub fn now() -> Stamp {
     Stamp::new((date_now() * 1000.0) as u64)
 }
+

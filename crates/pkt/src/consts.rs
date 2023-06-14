@@ -1,4 +1,3 @@
-#![allow(clippy::as_conversions)]
 // === size/len constraints. By Convention '_size' is n bytes . '_len' is number of elements
 use super::*;
 use std::{mem::size_of, sync::LazyLock};

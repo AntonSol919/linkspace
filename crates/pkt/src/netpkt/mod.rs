@@ -62,10 +62,10 @@ pub trait NetPkt: Debug {
             if ptr.is_null() {
                 alloc::handle_alloc_error(layout);
             }
-            let ptr: *mut NetPktFatPtr =
-                std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr as *mut (), metadata);
+            let ptr: *mut NetPktFatPtr =std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr.cast(), metadata);
+
             {
-                let s = std::slice::from_raw_parts_mut(ptr as *mut u8, layout.size());
+                let s = std::slice::from_raw_parts_mut(ptr.cast::<u8>(), layout.size());
                 segm.write_segments_unchecked(s.as_mut_ptr());
             }
             Box::from_raw(ptr)

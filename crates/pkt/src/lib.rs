@@ -3,16 +3,11 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#![warn(clippy::pedantic,clippy::restriction,clippy::nursery)]
-
-#![allow(clippy::mod_module_files,
-         clippy::pub_use,clippy::many_single_char_names,clippy::single_char_lifetime_names,clippy::unseparated_literal_suffix,
-         clippy::partial_pub_fields
-)]
-
 
 #![allow(incomplete_features)]
 #![feature(
+    exact_size_is_empty,
+    pointer_is_aligned,
     ptr_from_ref,
     io_error_other,
     try_blocks,
@@ -36,11 +31,10 @@ use byte_fmt::abe::FitSliceErr;
 use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
-use std::fmt::Display;
+use core::fmt::Display;
 use serde::{Deserialize, Serialize};
 pub use spath::*;
 pub use spath_fmt::*;
-use utils::as_bytes;
 
 pub mod byte_segments;
 pub mod eval;
@@ -294,11 +288,10 @@ bitflags! {
     pub struct PointTypeFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
         /// Implementations can ignore this, mostly useful for importing many datablocks.
-        const EMPTY = 0b00000000;
-        const ANY_PKT = 0b00000001;
-        const DATA = 0b00000001;
-        const LINK = 0b00000010;
-        const SIGNATURE = 0b00000100;
+        const EMPTY = 0b0000_0000;
+        const DATA = 0b000_00001;
+        const LINK = 0b0000_0010;
+        const SIGNATURE = 0b0000_0100;
         const ERROR = 0b1000_0000;
 
         const DATA_POINT = Self::DATA.bits;
@@ -323,7 +316,7 @@ impl PointTypeFlags {
         }
     }
     pub fn unchecked_from(b: u8) -> Self {
-        unsafe { std::mem::transmute(b) }
+        unsafe {PointTypeFlags::from_bits_unchecked(b)}
     }
 }
 
@@ -384,7 +377,7 @@ impl Error {
     pub fn requires_more(self) -> Option<usize>{
         match self {
             Error::MissingHeader => Some(MIN_NETPKT_SIZE),
-            Error::MissingBytes{netpkt_size} => Some(netpkt_size as usize),
+            Error::MissingBytes{netpkt_size} => Some(netpkt_size.into()),
             _ => None
         }
     }
