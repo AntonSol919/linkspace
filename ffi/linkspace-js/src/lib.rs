@@ -225,3 +225,8 @@ pub fn b64(bytes:&[u8], mini:Option<bool>) -> String{
 pub fn blake3_hash(bytes:&[u8]) -> Box<[u8]>{
     Box::new(*blake3::hash(bytes).as_bytes())
 }
+
+#[wasm_bindgen]
+pub fn build_info() -> String{
+    build_info::format!("{}", $).to_string()
+}

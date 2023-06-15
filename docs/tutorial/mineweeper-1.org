@@ -2,11 +2,7 @@
 #+SUBTITLE: A Linkspace Application Tutorial
 #+AUTHOR: Anton Sol
 
-#+SETUPFILE: ../../utils.org
-#+INCLUDE: "../../utils.js" export html 
-
-#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../../images/logo2.png">
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css"/>
+#+SETUPFILE: ../utils.org
 
 This is the first a [[../index.html][series]] of tutorials to show how to use linkspace from python.
 
@@ -73,7 +69,7 @@ It asks the user for a list of player names.
 Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
 
 #+begin_py
-#+INCLUDE: "../../../examples/mineweeper/mineweeper-hotseat.py" src python
+#+INCLUDE: "../../examples/mineweeper/mineweeper-hotseat.py" src python
 #+end_py
 
 
@@ -94,7 +90,7 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 #+end_info
 
 #+begin_py
-#+INCLUDE: "../../../examples/mineweeper/mineweeper.py" src python
+#+INCLUDE: "../../examples/mineweeper/mineweeper.py" src python
 #+end_py
 #+end_ctabs
 
@@ -163,7 +159,7 @@ The hash of the packet can fill the role.
 He ends up with a packet to start the game with that looks as follows:
 
  # #+BEGIN_SRC bash :session cli0 :exports result :results output verbatim :cache yes
- # cat ../../../examples/private/setup.pkt  | lk p
+ # cat ../../examples/private/setup.pkt  | lk p
  # #+END_SRC
 
 #+RESULTS[120bdb7bb9e047a26774463083e95ad81197dd8c]:
@@ -259,7 +255,7 @@ In linkspace ordering some packets is actually trivial.
 Adding a link to another packet is proof that one was created before the other.
 
 #+begin_py
-#+INCLUDE: "../../../examples/mineweeper/mineweeper-multiplayer.py" src python
+#+INCLUDE: "../../examples/mineweeper/mineweeper-multiplayer.py" src python
 #+end_py
 
 #+begin_ctabs

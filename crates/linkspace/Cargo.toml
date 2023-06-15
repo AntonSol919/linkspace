@@ -25,3 +25,8 @@ anyhow.workspace=true
 backtrace = "0.3.67"
 linkspace-common = { path = "../common", version = "0.3.0", default-features = false}
 tracing.workspace = true
+build-info.workspace = true
+
+[build-dependencies]
+build-info-build.workspace =true
+

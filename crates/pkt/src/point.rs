@@ -73,7 +73,7 @@ impl PointHeader {
     #[allow(clippy::as_conversions)]
     pub const fn new(kind: PointTypeFlags, content_len: usize) -> Result<Self, Error> {
         let point_size = content_len.saturating_add(size_of::<PointHeader>());
-        if point_size > MAX_CONTENT_SIZE { return Err(Error::ContentLen)};
+        if point_size > MAX_POINT_SIZE { return Err(Error::ContentLen)};
         PointHeader {
             point_type: kind,
             reserved: 0,

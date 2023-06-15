@@ -1,61 +1,56 @@
 #+TITLE: lk - The Linkspace CLI
-#+SUBTITLE: A Linkspace Application Tutorial
+#+SUBTITLE: Getting started
 #+AUTHOR: Anton Sol
 
 #+SETUPFILE: ../utils.org
-#+INCLUDE: "../utils.js" export html 
 
 #+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 
-#+BEGIN_SRC bash :session cli0 :exports nil
+#+BEGIN_SRC bash :session cli0 :exports none
   cd /tmp
   export LK_DIR=/tmp/linkspace
 #+END_SRC
 
-This tutorial is a demonstration on how to use ~lk~ (the linkspace cli).
-You should be familiar with the [[http://www.linkspace.dev/basics.html][basics]].
-
-Should you build applications in bash? Fuck no.
-But knowing how to use ~lk~ allows for quick prototyping, inspecting, and debugging.
-For example [[./imageboard.html]]
-
-*** Data points
-
-We can wrap a file or stdin into one or more packets.
-
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello world! | lk data | xxd
+  lk --version
 #+END_SRC
 
-Use ~lk printf~ to print to inspect a stream of packets
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello world! | lk data | lk printf 
-#+END_SRC
-
-~lk printf~ takes an [[../guide/index.html#ABE]] template.
-ABE is a byte templating language.
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello world! | lk data | lk printf "[hash:str] = [data]"
-#+END_SRC
-
-Try out these commands to get a feeling for it. 
-
-| [hash/?b] = [data/?b] |
-| [hash:str/b]          |
-| [hash:str/b/?b]       |
-
-You can use ~lk eval~ to run a single expression without a packet
+*** ~lk datapoint~
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  lk eval "hello [:world]"
+  echo -n hello world! | lk datapoint | lk printf
 #+END_SRC
 
-Try out these expressions:
+also usable as ~lk data~ and ~lk d~
 
-| [:hello world/?b] |
-| [now/?u]          |
-| [help]            |
+#+begin_ctabs
+#+begin_O
+#+end_O
+#+begin_help
+#+BEGIN_SRC bash :session cli0 :exports results :results output verbatim
+  lk data --help
+#+END_SRC
+#+end_help
+
+#+begin_xxd
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo -n hello world! | lk data | xxd
+#+END_SRC
+#+end_xxd
+#+end_ctabs
+
+#+begin_ctabs
+#+begin_info
+~printf~, and many other functions, take [[../guide/index.html#ABE][ABE]] input. A byte templating language.
+
+src_bash[:exports both]{echo -n "hello" | lk d | lk printf "[hash/?b] => [data]"}
+
+src_bash[:exports both]{echo -n "hello" | lk d | lk printf "[hash/?b/b/?b] => [data/b2]"}
+#+end_info
+#+end_ctabs
+
+
 
 By default, ~lk data~ produces multiple packets by reading the maximum data size able to fit.
 This behavior can be changed with the various ~--data-*~ commands (~lk data --help~)
@@ -121,9 +116,7 @@ If no domain:group is given the value of $LK_DOMAIN and $LK_GROUP are used. If n
   lk link ::/a/path --data-str "hello world" | lk printf 
 #+END_SRC
 
-
-
-** collect
+** Collect
 Using xargs to set the links is one option.
 An alternative is the ~lk collect~.
 We can take 
@@ -131,35 +124,42 @@ Adding an image is done by creating a linkpoint where the first path component i
 The tag of the link is a decimal encoded [X, Y] coordinates.
 Its ptr is a datapoint packet hash.
 Building the collage is done by adding all images to a base image in 'create' order.
+** Rewrite 
 
-** Imageboard
+** Watch 
+
+** Eval
+You can use ~lk eval~ to run a single expression instead of for each packet in a stream.
+
+src_bash[:exports both]{lk eval "[:hello] world"}
+
+src_bash[:exports both]{lk eval "[:hello/?b] world"}
+
+src_bash[:exports both]{lk eval "[:hello/?b/b] world"}
+
+src_bash[:exports both]{lk eval "[now/?u]"}
+
+src_bash[:exports both :results output]{lk eval "[now/s:str]"}
+
+src_bash[:exports both :results output]{lk eval "[epoch/s:str]"}
+
+src_bash[:exports both :results output]{lk eval "[epoch/s:delta]"}
+
+*** LNS 
+
+src_bash[:exports both :results output]{lk eval "[[#:0]/b]"}
+
+src_bash[:exports both :results output]{lk eval "[[#:pub]/b]"}
 
 
-#+begin_sh
 
-- placing images
-  
-#+INCLUDE: "../../examples/imageboard/imageboard.place.sh" src bash
-
-- viewing images
-#+INCLUDE: "../../examples/imageboard/imageboard.view.sh" src bash
-
-- streaming images
-#+INCLUDE: "../../examples/imageboard/imageboard.stream.sh" src bash
-#+end_sh
-
-
-#+begin_py
-This is a straight-up copy of the bash script.
-It works, but it could be done better by having only a single python instance running.
-- placing images
-#+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
-
-- viewing images
-#+INCLUDE: "../../examples/imageboard/imageboard.view.py" src bash
-
-- streaming images
-#+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
-#+end_py
+#+begin_ctabs
+#+begin_O
+#+end_O
+#+begin_help
+#+BEGIN_SRC bash :session cli0 :exports results :results output verbatim
+  lk eval [help]
+#+END_SRC
+#+end_help
 #+end_ctabs
 

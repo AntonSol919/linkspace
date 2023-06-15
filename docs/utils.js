@@ -1,27 +1,33 @@
-<script type="text/javascript">
-    // Setup clickable tabs
-document.addEventListener('DOMContentLoaded', ()=>
-    document.querySelectorAll(".ctabs").forEach((outer,i)=>
-        [... outer.children].forEach((el,j) => {
+// Setup clickable tabs
+document.addEventListener('DOMContentLoaded', () =>
+    document.querySelectorAll(".ctabs").forEach((outer, i) => [...outer.children].forEach((el, j) => {
+
+        let forName = `tabs${i}`;
+        let checkedEl = window.localStorage.getItem(forName) || 0;
+        let checkbox = `
+<input
+name="${forName}"
+tabindex="${i}"
+type="radio"
+id="tab${i}x${j}"
+${j == checkedEl ? "checked" : ""}
+/>
+<label for="tab${i}x${j}" class="checkbox-${el.classList[0]}" >${el.className}</label>`;
+
         el.insertAdjacentHTML(
-            "beforebegin",
-            `<input name="tabs${i}" tabindex="${i}" type="radio" id="tab${i}x${j}" ${j == 0 ? "checked" : ""}>
-                 <label for="tab${i}x${j}">${el.className}</label>`
+            "beforebegin", checkbox
         );
-    el.setAttribute("tabindex",i);
-        } )
-    )
-    );
+        outer.querySelector(`#tab${i}x${j}`).addEventListener("change", () => {
+            window.localStorage.setItem(forName, j);
+        })
+        el.setAttribute("tabindex", i);
+    }))
+);
 
-    // Setup highlight js 
-
-document.addEventListener('DOMContentLoaded', (event) => {
-        document.querySelectorAll('pre.src').forEach((el) => {
-            let lang = el.classList[1].slice(4)
-            el.classList.add("language-" + lang)
-            hljs.highlightElement(el);
-        });
+document.addEventListener('DOMContentLoaded', (_) => {
+    document.querySelectorAll('pre.src').forEach((el) => {
+        let lang = el.classList[1].slice(4);
+        el.classList.add("language-" + lang);
+        hljs && hljs.highlightElement(el);
+    });
 });
-
-</script>
-

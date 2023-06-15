@@ -1019,3 +1019,4 @@ pub mod varctx {
 #[doc(hidden)]
 pub mod interop;
 
+pub static BUILD_INFO : &str = build_info::format!("{}", $);

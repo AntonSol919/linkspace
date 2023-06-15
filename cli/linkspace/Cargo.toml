@@ -29,3 +29,8 @@ serde_json = "1.0.82"
 memmap2 = "0.6.2"
 crossbeam-channel = "0.5.8"
 either.workspace = true
+build-info.workspace = true
+
+[build-dependencies]
+build-info-build.workspace =true
+

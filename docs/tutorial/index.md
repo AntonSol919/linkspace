@@ -1,15 +1,14 @@
 
 Tutorials for [linkspace](https://www.linkspace.dev).
+These are all in various states of development.
+
+[lk - the command line interface](./lk-command-line-interface.html)
 
 # Applications
 
-## CLI
+- [mineweeper 1](./mineweeper-1.html)
+- [mineweeper 2](./mineweeper-2.html)
 - [imageboard](./imageboard.html)
 
-## Python
-- [MineWeeper 1](./mineweeper/01.html)
-- (WIP) [MineWeeper 2](./mineweeper/02.html)
-
 # Exchange
-
 - [bash.exchange](./bash.exchange.html)

@@ -891,7 +891,7 @@ macro_rules! fnc {
         $crate::fnc!($id,$argc,None,$help,$fnc)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr ) => {
-        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), $crate::eval::none)
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), none)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr ) => {
         $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), $to_abe)
@@ -902,7 +902,7 @@ macro_rules! fnc {
             apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
                 $fnc(a,b,init,ctx).into()
             },
-            to_abe:none
+            to_abe:$crate::eval::none
         }
     };
     ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr) => {
@@ -1286,7 +1286,25 @@ impl EvalScopeImpl for Encode {
                 AR::Value(eval(&ctx, &expr)?.concat())
             },
             to_abe: none,
-        }]
+        },
+          ScopeFunc {
+              info: ScopeFuncInfo {
+                  id: "?",
+                  init_eq: None,
+                  to_abe: false, // TODO
+                  argc: 2..=8,
+                  help: "encode",
+              },
+              apply: |_, inp, _, scope| {
+                  let ctx = EvalCtx{scope};
+                  if inp.len() > 2 { return ApplyResult::Err(anyhow!("Options not yet supported"))};
+                  let kind = std::str::from_utf8(inp[1]).context("bad encoder")?;
+                  let r = encode(&ctx, inp[0], kind, false)?;
+                  AR::Value(r.into_bytes())
+              },
+              to_abe: none,
+          },
+        ]
     }
     fn list_eval(&self) -> &[ScopeEval<&Self>] {
         &[
@@ -1407,15 +1425,15 @@ fn fmt_describer(
     } in funcs
     {
         if std::mem::take(&mut fnc_head) {
-            writeln!(f, "## functions")?;
+            writeln!(f, "## Functions")?;
         }
         let state = if seen.insert(id) {
             "        "
         } else {
             "<partial>"
         };
-        let fslash = if init_eq != Some(false) { "/" } else { " " };
-        let colon = if init_eq != Some(true) { ":" } else { " " };
+        let fslash = if init_eq != Some(false) { "[" } else { " " };
+        let colon = if init_eq != Some(true) { "/" } else { " " };
         let encode = if to_abe { "?" } else { " " };
         writeln!(
             f,
@@ -1424,7 +1442,7 @@ fn fmt_describer(
     }
     for ScopeEvalInfo { id, help } in evals {
         if std::mem::take(&mut evl_head) {
-            writeln!(f, "## eval")?;
+            writeln!(f, "## Macros")?;
         }
         writeln!(f, "- {id: <16} {help}  ")?;
     }
@@ -1434,7 +1452,14 @@ fn fmt_describer(
 
 impl<A: Scope> Display for EvalCtx<A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "==scopes==")?;
+        writeln!(f, "The context has one or more scopes active")?;
+        writeln!(f, "Each scope has functions and macros")?;
+        writeln!(f, "For each function the option set  ['[' , '/' , '?'] is given")?;
+        writeln!(f, "These refers to its use as:")?;
+        writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
+        writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
+        writeln!(f, " '?'  => Can be 'reversed' to some extend '[../?:func]' || [?:..:func]")?;
+
         let mut err = Ok(());
         let mut set = HashSet::<&'static str>::new();
         self.scope.describe(&mut |name, about, fncs, revals| {

@@ -1,8 +1,12 @@
-all: index.html mineweeper
-mineweeper: ./mineweeper/01.html ./mineweeper/02.html ./bash.exchange.html ./imageboard.html
+.PHONY: all mineweeper
+
+all: index.html mineweeper-1.html mineweeper-2.html bash.exchange.html imageboard.html lk-command-line-interface.html 
 
 %.html: %.md
 	pandoc --standalone $< > $@
 
-%.html: %.org
+%.html: %.org ../utils.org
 	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-html-export-to-html))"
+
+clean:
+	rm *.html

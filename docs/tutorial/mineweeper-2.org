@@ -2,15 +2,14 @@
 #+SUBTITLE: A Linkspace Application Tutorial
 #+AUTHOR: Anton Sol
 
-#+SETUPFILE: ../../utils.org
-#+INCLUDE: "../../utils.js" export html 
+#+SETUPFILE: ../utils.org
 
 #+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../../images/logo2.png">
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./blog.css"/>
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./mineweeper.css"/>
 
 
 #+begin_py
-#+INCLUDE: "../../../examples/mineweeper/mineweeper-lobby.py" src python
+#+INCLUDE: "../../examples/mineweeper/mineweeper-lobby.py" src python
 #+end_py
 

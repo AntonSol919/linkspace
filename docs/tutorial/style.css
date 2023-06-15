@@ -93,6 +93,9 @@ p.subtitle{ color:grey;}
     display: block; 
 }
 
+.ctabs > .O {
+    display:none !important;
+}
 @media (min-width: 600px) {
     .ctabs > div{
         order: 99;
@@ -101,5 +104,7 @@ p.subtitle{ color:grey;}
     .ctabs > label {
         width: 8%;
     }
+
+    .ctabs > .checkbox-O { width:2em !important;}
 
 }

@@ -28,8 +28,12 @@ js-sys = "0.3.63"
 console_error_panic_hook = { version = "0.1.1", optional = true }
 
 wee_alloc = { version = "0.4.2", optional = true }
+# Hopefully picks up the linkspace workspace versions - (-js is excluded from the workspace because profiles are poorly supported)
 base64 = { version="*", default-features = false}
 blake3 = "*"
+build-info = { version = "*"}
+[build-dependencies]
+build-info-build = { version = "*"}
 
 [profile.release]
 lto = true
