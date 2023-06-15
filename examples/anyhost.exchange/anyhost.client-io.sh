@@ -17,8 +17,8 @@ THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
 lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
-LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [create:str])
-LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
+LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk pktf [create:str])
+LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk pktf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
 lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --data-repeat &
@@ -27,7 +27,7 @@ export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
 LK_SKIP_HASH=false lk save --new db --new stdout \
-    | lk printf --inspect "RX [domain:str] [path:str] [hash:str]" \
+    | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
               --forward null \
@@ -45,7 +45,7 @@ lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
 lk watch --bare --mode log-asc -- "group:=:$LK_GROUP" "hop:=:[u32:0]" "recv:>:[u64:$LAST_TX]" \
     | lk get-links skip \
     | lk dedup \
-    | lk printf --inspect "[now:str] SENDING [hash:str]" \
+    | lk pktf --inspect "[now:str] SENDING [hash:str]" \
     | tee --output-error=exit >( cat >&4 ) \
     | lk --private collect ":[#:0]:/txlog/$THEIR_KEY" \
          --min-interval 1m \

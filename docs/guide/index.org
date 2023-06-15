@@ -103,7 +103,7 @@ It consists of the following functions:
   - [[#lk_linkpoint][lk_linkpoint]]
   - [[lk_keypoint]]
 
-- [[ABE]] - ascii byte expressions - a language for manipulating and templating bytes
+- [[ABE]] - (Byte) templating for convenience
   - [[lk_eval]]
   - [[lk_encode]]
 
@@ -156,7 +156,7 @@ Functions usually deal with packet.
 #+begin_sh
 
 #+BEGIN_SRC bash :session cli2 :exports both :results output verbatim
-echo -n "Hello, Sol" | lk data | lk printf "[hash:str]\n[data]"
+echo -n "Hello, Sol" | lk data | lk pktf "[hash:str]\n[data]"
 #+END_SRC
 
 #+end_sh
@@ -227,12 +227,12 @@ Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
   lk link "a_domain:[#:pub]:/dir1/dir2/thing" -- \
             first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
             another_tag:[#:pub] \
-  | lk printf
+  | lk pktf
   
 #+END_SRC
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello | lk link my_domain --data-stdin | lk printf
+  echo hello | lk link my_domain --data-stdin | lk pktf
 #+END_SRC
 
 #+END_sh
@@ -295,7 +295,7 @@ With the added benefit that you can address your own public key as ~[@:me:local]
 #+END_SRC
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
-lk keypoint "example::" --password "my secret" | lk printf
+lk keypoint "example::" --password "my secret" | lk pktf
 #+END_SRC
 
 #+BEGIN_VERSE
@@ -394,7 +394,7 @@ The CLI automatically reads and writes in packet format from the relevant pipes.
   echo -n hello | lk link my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
   echo keypoint:
   echo -n hello | lk keypoint --password "my secret" my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
-  cat /tmp/pkts | lk printf [hash:str]
+  cat /tmp/pkts | lk pktf [hash:str]
 #+END_SRC
 #+end_bash
 
@@ -616,11 +616,11 @@ It evaluates the inner scope for each link with setting the ~tag~ and ~ptr~ func
 
 #+BEGIN_ctabs
 #+begin_sh
-~printf~ is ~eval~ that reads packets from stdin and puts them in scope.
+~pktf~ is ~eval~ that reads packets from stdin and puts them in scope.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
   lk link "::" -- tag1:[#:0] tag2:[#:pub] | \
-      lk printf "HASH:[hash/?b]\n[/links:TAG = [tag:str] PTR = [ptr:str] \n]"
+      lk pktf "HASH:[hash/?b]\n[/links:TAG = [tag:str] PTR = [ptr:str] \n]"
 #+END_SRC
 
 #+end_sh
@@ -730,7 +730,7 @@ We can get meta. lk_encode is available as the evaluator ~[/?:bytes:options]~
 #+end_ctabs
 
 *** DEFAULT_FMT
-This is how packets are printed by default using ~lk printf~ or pythons ~str(pkt)~.
+This is how packets are printed by default using ~lk pktf~ or pythons ~str(pkt)~.
 
 #+begin_ctabs
 #+begin_py
@@ -1281,7 +1281,7 @@ Maybe at some point we can effectively restrict processes through wasm or some o
 
 **** Why not use an SQL backend? / Why invent queries?
 That is a complex question.
-First off, if you desire to run SQL queries it is not too difficult to stream packets into a SQL table with `lk printf` or some custom code, and query them.
+First off, if you desire to run SQL queries it is not too difficult to stream packets into a SQL table with `lk pktf` or some custom code, and query them.
 
 But SQL isn't magic, and its non-trivial price to pay for something that is not a great fit for a few fundamental problems including:
 1) What are the tables peers should have?

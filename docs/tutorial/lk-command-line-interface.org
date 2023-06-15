@@ -19,7 +19,7 @@
 *** ~lk datapoint~
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo -n hello world! | lk datapoint | lk printf
+  echo -n hello world! | lk datapoint | lk pktf
 #+END_SRC
 
 also usable as ~lk data~ and ~lk d~
@@ -42,11 +42,11 @@ also usable as ~lk data~ and ~lk d~
 
 #+begin_ctabs
 #+begin_info
-~printf~, and many other functions, take [[../guide/index.html#ABE][ABE]] input. A byte templating language.
+~pktf~, and many other functions, take [[../guide/index.html#ABE][ABE]] input. A byte templating language.
 
-src_bash[:exports both]{echo -n "hello" | lk d | lk printf "[hash/?b] => [data]"}
+src_bash[:exports both]{echo -n "hello" | lk d | lk pktf "[hash/?b] => [data]"}
 
-src_bash[:exports both]{echo -n "hello" | lk d | lk printf "[hash/?b/b/?b] => [data/b2]"}
+src_bash[:exports both]{echo -n "hello" | lk d | lk pktf "[hash/?b/b/?b] => [data/b2]"}
 #+end_info
 #+end_ctabs
 
@@ -60,7 +60,7 @@ Wrapping 150000 bytes produces 3 data packets.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
     python -c 'print("-" * 150000)' | lk data > three_datapoints.lkp
-    cat three_datapoints.lkp | lk printf "[hash/?b] contains [data_size/?u] bytes"
+    cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
 #+END_SRC
 
 *** Linkpoint
@@ -82,19 +82,19 @@ For our application we'll be using the "imageboard" domain, and stick to the [#:
   lk link imageboard:[#:pub] -- \
      a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
      other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
-      | lk printf  # You can see the default printf format with lk printf --help
+      | lk pktf  # You can see the default pktf format with lk pktf --help
 #+END_SRC
 
 
 
 We can get fancy and use xargs;
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  cat three_datapoints.lkp | lk printf "onetag:[hash:str]" | xargs lk link imageboard:[#:pub]:/a/pathname/for/this/point -- | lk printf
+  cat three_datapoints.lkp | lk pktf "onetag:[hash:str]" | xargs lk link imageboard:[#:pub]:/a/pathname/for/this/point -- | lk pktf
 #+END_SRC
 
 linkpoints can contain data, set with one of the --data-* arguments.
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  echo hello | lk link ::/a/path --data-stdin | lk printf [data]
+  echo hello | lk link ::/a/path --data-stdin | lk pktf [data]
 #+END_SRC
 
 Note that for linkpoints the total size is still 2^{16}-512. That means the free space for data is shared with the other fields.
@@ -104,7 +104,7 @@ If no domain:group is given the value of $LK_DOMAIN and $LK_GROUP are used. If n
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   export LK_DOMAIN="imageboard"
   export LK_GROUP="[#:test]"
-  lk link ::/a/path --data-str "hello world" | lk printf 
+  lk link ::/a/path --data-str "hello world" | lk pktf 
 #+END_SRC
 
 
@@ -113,7 +113,7 @@ If no domain:group is given the value of $LK_DOMAIN and $LK_GROUP are used. If n
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   export LK_DOMAIN="imageboard"
   export LK_GROUP="[#:test]"
-  lk link ::/a/path --data-str "hello world" | lk printf 
+  lk link ::/a/path --data-str "hello world" | lk pktf 
 #+END_SRC
 
 ** Collect

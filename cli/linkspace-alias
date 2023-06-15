@@ -4,11 +4,11 @@ set -euo pipefail
 case "${1:-UNKNOWN}" in
   inspect-tree)
   	  lk --private watch --bare --mode ${2:-tree-desc} --no-new -- "type:1:[b2:00000010]" "${@:3}" | \
-     		  lk printf  "[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] _rx_ }"
+     		  lk pktf  "[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] _rx_ }"
       
       ;;
   log)
-      lk --private watch --bare --mode log-asc --no-new | lk printf
+      lk --private watch --bare --mode log-asc --no-new | lk pktf
       ;;
   blobs-in)
       export FILE=$2

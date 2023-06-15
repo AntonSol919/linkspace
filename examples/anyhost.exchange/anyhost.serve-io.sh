@@ -18,15 +18,15 @@ THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
 lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
-LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk printf [create:str])
-LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk printf [create:str])
+LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk pktf [create:str])
+LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk pktf [create:str])
 lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
 
 export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
 LK_SKIP_HASH=false lk save --new db --new stdout \
-        --old file:>( lk printf "$PID Ignored [hash:str] (old)" >&2 ) \
-   | lk printf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
+        --old file:>( lk pktf "$PID Ignored [hash:str] (old)" >&2 ) \
+   | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
         --min-interval 1m \
         --forward null \
@@ -34,10 +34,10 @@ LK_SKIP_HASH=false lk save --new db --new stdout \
 
 # Read new request keypoints and return their content
 lk watch --new "[f:exchange]:$LK_GROUP:/pull/$LK_GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
-    | lk printf --inspect ">>>>Pull req [hash:str]\n[data]\n<<<<$PID " \
+    | lk pktf --inspect ">>>>Pull req [hash:str]\n[data]\n<<<<$PID " \
     | lk multi-watch \
     | lk dedup \
-    | lk printf --inspect "$PID Tx [hash:str]" >&4 
+    | lk pktf --inspect "$PID Tx [hash:str]" >&4 
 
 
 echo PIDS $(jobs -p)

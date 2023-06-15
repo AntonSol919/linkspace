@@ -18,10 +18,10 @@ use std::io::{stderr, stdout, Write};
 Format packets from stdin according to a template.
 **/
 #[derive(Parser, Clone)]
-pub struct PrintFmtOpts {
+pub struct PktFmtOpts {
     #[clap(flatten)]
     pkt_in: PktReadOpts,
-    /// set forward to stdout and print to stderr. Similar to `| tee >( linkspace printf >&2 )`
+    /// set forward to stdout and print to stderr. Similar to `| tee >( lk pktf >&2 )`
     #[clap(long)]
     inspect: bool,
     /// fallback on eval error
@@ -44,8 +44,8 @@ pub struct PrintFmtOpts {
     fmt: Vec<Vec<ABE>>,
 }
 
-pub fn pkt_info(mut common: CommonOpts, popts: PrintFmtOpts) -> anyhow::Result<()> {
-    let PrintFmtOpts {
+pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()> {
+    let PktFmtOpts {
         inspect,
         error,
         silent,

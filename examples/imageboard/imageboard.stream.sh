@@ -16,7 +16,7 @@ $BINS/imageboard.view.sh $BOARD 0 # run once
 
 #On receiving a new packet of interest we repaint the board from that stamp
 lk watch --new "imageboard:$LK_GROUP:/$BOARD" | \
-    lk printf "[create:str]" | \
+    lk pktf "[create:str]" | \
     while read STAMP; do
         $BINS/imageboard.view.sh $BOARD $STAMP
     done

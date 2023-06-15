@@ -11,10 +11,10 @@ shift 4
 IMG_HASH=$(\
     cat "$IMG_FILE" \
         | lk data --write db --write stdout \
-        | lk printf "[hash:str]")
+        | lk pktf "[hash:str]")
 TAG=$(printf "%08d%08d" "$X" "$Y")
 
 lk link "imageboard:$LK_GROUP:/$BOARD" \
    -l "$TAG":"$IMG_HASH" "$@" \
    --write db --write stdout \
-    | lk printf
+    | lk pktf

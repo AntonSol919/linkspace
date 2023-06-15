@@ -12,6 +12,7 @@
 ### Python
 
 ### CLI
+- rename printf to pktf
 - new '--data*' options.
 - LK_CHECK_CACHE => LK_SKIP_HASH
 - get-links --recurs

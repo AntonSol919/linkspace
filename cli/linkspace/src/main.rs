@@ -47,7 +47,7 @@ pub mod collect;
 pub mod filter;
 pub mod multi_watch;
 pub mod point;
-pub mod printf;
+pub mod pktf;
 pub mod rewrite;
 pub mod save;
 pub mod status;
@@ -161,7 +161,7 @@ enum Command {
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
     */
     #[clap(alias="p",before_long_help=PKT_HELP.to_string())]
-    Printf(printf::PrintFmtOpts),
+    Pktf(pktf::PktFmtOpts),
     /// abe   - encode input into abe
     #[clap(alias = "n")]
     Encode {
@@ -173,7 +173,7 @@ enum Command {
     },
 
     /// query - print full query from common aliases
-    #[clap(alias="pq",alias="print-predicate",before_help=QUERY_HELP.to_string())]
+    #[clap(alias="q",alias="print-predicate",before_help=QUERY_HELP.to_string())]
     PrintQuery {
         #[clap(flatten)]
         opts: CLIQuery,
@@ -321,8 +321,8 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Save(opts) => {
             crate::save::save(opts, common)?;
         }
-        Command::Printf(opts) => {
-            crate::printf::pkt_info(common, opts)?;
+        Command::Pktf(opts) => {
+            crate::pktf::pkt_info(common, opts)?;
         }
         Command::Encode { opts, ignore_err } => {
             use std::io::Read;
