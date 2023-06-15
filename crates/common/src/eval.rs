@@ -127,7 +127,7 @@ impl<R:LKS> ReadHash<R> {
             .context("no matching packet")?;
         let id = inp.get(4).copied().unwrap_or(b"pkt");
         let args = inp.get(5..).unwrap_or(&[]);
-        let r = pkt_scope(&*pkt).lookup_apply(id, args, true, scope);
+        let r = pkt_scope(&*pkt).try_apply_func(id, args, true, scope);
         drop(reader);
         match r.into_opt() {
             Some(o) => o,
@@ -150,7 +150,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                     let reader = this.0.lk()?.get_reader();
                     let pkt = reader.read(&hash)?.with_context(||format!("could not find pkt {}",hash))?;
                     let (id, args) = inp[1..].split_first().unwrap_or((&{b"pkt" as &[u8]},&[]));
-                    let r = pkt_scope(&*pkt).lookup_apply(id, args, true,scope);
+                    let r = pkt_scope(&*pkt).try_apply_func(id, args, true,scope);
                     drop(reader);
                     r
                 },
@@ -172,8 +172,8 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
             },
         ]
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
-        &[ScopeEval {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
+        &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
                 let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_colon());
@@ -199,7 +199,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                     }
                 }
             },
-            info: ScopeEvalInfo {
+            info: ScopeMacroInfo {
                 id: "readhash",
                 help: "HASH ':' expr (':' alt if not found) ",
             },

@@ -389,11 +389,11 @@ A domain application rarely has to deal with this representation.
 The CLI automatically reads and writes in packet format from the relevant pipes.
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
   echo datapoint:
-  printf hello | lk data | tee /tmp/pkts | xxd 
+  echo -n hello | lk data | tee /tmp/pkts | xxd 
   echo linkpoint:
-  printf hello | lk link my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  echo -n hello | lk link my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
   echo keypoint:
-  printf hello | lk keypoint --password "my secret" my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
+  echo -n hello | lk keypoint --password "my secret" my_domain:[#:pub]:/hello/world -- link1:[#:0] link2:[#:test] | tee -a /tmp/pkts | xxd 
   cat /tmp/pkts | lk printf [hash:str]
 #+END_SRC
 #+end_bash
@@ -472,7 +472,6 @@ All packet fields are arbitrary bytes, and lk_encode can print them as abtext
   print(lk_encode(lkp.path2),"\t",list(lkp.path2))
   print(lk_encode(lkp.path3),"\t",list(lkp.path3))
   print(lk_encode(lkp.path4),"\t",list(lkp.path4), lkp.path4.decode("utf-8"))
-  
 #+end_src
 
 #+end_py
@@ -495,7 +494,6 @@ The result of an ABE is a list of (bytes, ?delimiter).
 lk eval --json "h[u8:101]ll[u8:111] / world:etc" 
 #+END_SRC
 
-
 Note that bytes are joined after evaluating. In the example this results in the component ~('hello ', /)~.
 The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
 In the top level of the template given to ~lk eval~ they are printed as is.
@@ -505,17 +503,19 @@ but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ 
 
 #+Begin_VERSE
 The rest of this chapter goes further in depth.
-Knowing ABE is not a requirement. Depending on the context there are other ways.
-E.g. In python you can stick to using bytes objects, where possible the cli accepts a base64 string, etc. 
-Its a language of convenience. 
-With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters the reader can choose to
-skip to the next chapter [[Query]] and return here for reference.
+Knowing ABE is extremely powerful, but is not requirement to use the linkspace library.
+
+In python you can stick to using bytes objects, and where possible the cli accepts a base64 string, etc. 
+
+ABE a language of convenience, but not trivial to learn.
+With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters,
+the rest of the guide (starting at [[Query]]) can be read while you return here for reference in case something is unclear.
 #+end_VERSE
 
 
 *** Sub-expressions
 
-A list of functions/evaluators be found by evaluating
+A list of functions/macros be found by evaluating
 [[Help][[[help]]][\[help\]]].
 
 **** Functions
@@ -524,8 +524,8 @@ A list of functions/evaluators be found by evaluating
 - ~[fn:arg0]~
 - ~[fn:arg0:arg1]~
 
-The arguments are bytes. They take upto 8 arguments.
-The resulting bytes are concatenated with their surrounding.
+The arguments are plain bytes. A function can take upto 8 arguments.
+Usually the results is concatenated with its surrounding bytes.
 The empty function ~'[:...]'~ resolves to its first argument.
 
 - ~hello [:world]~ == ~hello world~
@@ -533,7 +533,7 @@ The empty function ~'[:...]'~ resolves to its first argument.
 Arguments are evaluated before application.
 ~[fn0:[fn1]]~ will call fn1 and use its result as the first argument to fn0.
 
-You can carry results with ~/~.
+You can chain results with ~/~.
 It uses the result as the first argument to the next function.
 
 - ~[:97/u8]~ == ~[u8:97]~ == ~a~
@@ -545,7 +545,6 @@ You can think of ABE functions as a translation of conventional function calling
 | ~[name:[other_name:argA]:arg2]~ | ~name( other_name(argA) , arg2 )~  |
 | ~[other_name:argA/name:arg2]~   | ~name ( other_name(argA) , arg2 )~ |
 
-
 #+BEGIN_VERSE
 Functions are aware if they are first or not.
 The vast majority of functions do not care.
@@ -555,30 +554,36 @@ The vast majority of functions do not care.
 ~[[:u8]:97]~ is explicitly not allowed. Variable function identifiers are conceptually interesting but practically begging for bugs.
 #+END_VERSE
 
-**** Evaluators
-The second type of operation is calling an evaluator.
+Note: describing ABE can be a bit tricky in relation to conventional languages.
+Specifically, there is no syntax to "reference" a function, they are always resolved to their result.
+i.e. ~fn name(){..}; let x = name; let y = name();~ has the ~()~ syntax to differentiate between calling a function or referencing a value.
+There are no 'variables' by design, because ABE is not meant to be used that way.
+
+
+**** Macros
+The second type of operation is applying a macro.
 Whereas functions are called after their arguments are evaluated.
-Evaluators are called without evaluation ~[..]~ expressions.
+Macros are called _as is_ up until its matching ']' without evaluation ~[..]~ expressions.
 
-- ~[/re]~
-- ~[/re:arg0:arg1]~
-- ~[/re:[fn:arg0]:arg1]~
+- ~[/a_macro]~
+- ~[/a_macro:arg0:arg1]~
+- ~[/a_macro:[fn:arg0]:arg1/hello]~
 
-The ~/re~ evaluator operates on ~:[fn:arg0]:arg1~ without it being evaluatedd.[fn:: similar to some definition of 'macros']
+The ~/a_macro~ macro operates on ~:[fn:arg0]:arg1/hello~ without it being evaluated.
 
-The most common use-case for evaluators is extending the scope.
 
-*** Scope & context
+*** Scope & Context
 
-Functions and evaluators are defined in a scope.
-The standard scope contains functions to manipulate bytes.
-Some scopes require a context.
+Functions and Macros are defined in a scope.
+Scopes can be chained, so that if no matching function is found it looks in the next scope. 
+The standard scope chain has multiple functions and macros to manipulate bytes.
+You can see all active scopes with the [help] function.
 
-You can see all active scopes with the help function.
+Sometimes the scope chain is extended with additional context: 
 
 **** Argv
 
-A straightforward scope is the argument vector.
+A scope containing functions resolving to an argument vector. 
 
 #+BEGIN_ctabs
 #+begin_py
@@ -591,12 +596,10 @@ A straightforward scope is the argument vector.
 #+end_py
 #+end_ctabs
 
+**** Packet
 
-
-**** Packet scope
-
-By providing a packet, the packet scope is added.
-This adds operations to evaluate packet fields such as ~hash~, ~group~, ~path~ etc.
+By providing a packet, the packet scope is added to the chain.
+This adds functions such as ~hash~, ~group~, ~path~ etc.
 These are bytes that you can use as arguments.
 
 e.g ~[hash/?b]~ encodes the hash in base 64.
@@ -608,7 +611,7 @@ For convenience all packet fields accept 'str' and 'abe' as a first argument to 
 | ~[links_len:str]~ | ~[links_len/?u]~ |
 | ...               |                  |
 
-The ~[/links:...]~ evaluator iterates over every link in a packet.
+The ~[/links:...]~ macro iterates over every link in a packet.
 It evaluates the inner scope for each link with setting the ~tag~ and ~ptr~ function.
 
 #+BEGIN_ctabs

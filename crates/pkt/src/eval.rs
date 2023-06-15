@@ -133,7 +133,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             }
         )])
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[eval_fnc!(
             "links",
             ":{EXPR} where expr is repeated for each link binding 'ptr' and 'tag'",

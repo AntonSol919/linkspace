@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use abe::{fncs, eval::{ScopeEval,  EvalScopeImpl, ScopeFunc, EvalCtx,eval, ApplyResult, ScopeEvalInfo}, ABE, ast};
+use abe::{fncs, eval::{ScopeMacro,  EvalScopeImpl, ScopeFunc, EvalCtx,eval, ApplyResult, ScopeMacroInfo}, ABE, ast};
 use anyhow::{anyhow, Context, bail };
 use linkspace_pkt::{Tag, Ptr, pkt_ctx, ptrv};
 
@@ -119,8 +119,8 @@ impl<R: LKS > EvalScopeImpl for NetLNS<R> {
         ])
     }
 
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
-        &[ScopeEval {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
+        &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
                 let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_fslash());
@@ -134,7 +134,7 @@ impl<R: LKS > EvalScopeImpl for NetLNS<R> {
                 let v: ApplyResult = eval(&pkt_ctx(ctx, &claim.pkt), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
                 v
             },
-            info: ScopeEvalInfo {
+            info: ScopeMacroInfo {
                 id: "lns",
                 help: "[:comp]*/expr",
             },
@@ -174,8 +174,8 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
         ])
     }
 
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
-        &[ScopeEval {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
+        &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
                 let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_fslash());
@@ -190,7 +190,7 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
                 let v: ApplyResult = eval(&pkt_ctx(ctx, &claim.pkt), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
                 v
             },
-            info: ScopeEvalInfo {
+            info: ScopeMacroInfo {
                 id: "private-lns",
                 help: "[:comp]*/expr",
             },

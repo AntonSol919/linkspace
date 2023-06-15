@@ -388,20 +388,20 @@ pub type Describer<'cb> = &'cb mut dyn FnMut(
     &str,
     &str,
     &mut dyn Iterator<Item = ScopeFuncInfo>,
-    &mut dyn Iterator<Item = ScopeEvalInfo>,
+    &mut dyn Iterator<Item = ScopeMacroInfo>,
 );
 pub trait Scope {
-    fn lookup_eval(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
         ApplyResult::NoValue
     }
-    fn lookup_apply(
+    fn try_apply_func(
         &self,
         id: &[u8],
         inp_and_args: &[&[u8]],
         init: bool,
         ctx: &dyn Scope,
     ) -> ApplyResult;
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String>;
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String>;
     fn describe(&self, cb: Describer) {
         cb("todo", "", &mut std::iter::empty(), &mut std::iter::empty())
     }
@@ -409,7 +409,7 @@ pub trait Scope {
 #[derive(Copy, Clone)]
 pub struct EScope<T>(pub T);
 impl<T: EvalScopeImpl> Scope for EScope<T> {
-    fn lookup_apply(&self, id: &[u8], inp: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(&self, id: &[u8], inp: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
         for ScopeFunc { apply, info, .. } in self.0.list_funcs() {
             if info.id.as_bytes() == id {
                 if info.init_eq.is_some() && info.init_eq != Some(init) {
@@ -425,15 +425,15 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
     }
 
     fn describe(&self, cb: Describer) {
-        let mut fncx = self.0.list_funcs().iter().map(|v| v.info.clone());
-        let mut evls = self.0.list_eval().iter().map(|v| v.info);
+        let mut funcs = self.0.list_funcs().iter().map(|v| v.info.clone());
+        let mut macros = self.0.list_macros().iter().map(|v| v.info);
         let (name, info) = self.0.about();
-        cb(&name, &info, &mut fncx, &mut evls);
+        cb(&name, &info, &mut funcs, &mut macros);
     }
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], funcs: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], funcs: &dyn Scope) -> ApplyResult {
         if let Some(e) = self
             .0
-            .list_eval()
+            .list_macros()
             .iter()
             .find(|i| i.info.id.as_bytes() == id)
         {
@@ -442,7 +442,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
         ApplyResult::NoValue
     }
 
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
         for ScopeFunc { to_abe, info, .. } in self.0.list_funcs() {
             if info.to_abe && info.id.as_bytes() == id {
                 return to_abe(&self.0, bytes, options);
@@ -458,7 +458,7 @@ pub trait EvalScopeImpl {
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[]
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[]
     }
 }
@@ -476,18 +476,18 @@ pub struct ScopeFuncInfo {
     pub argc: std::ops::RangeInclusive<usize>,
     pub help: &'static str,
 }
-pub struct ScopeEval<T> {
+pub struct ScopeMacro<T> {
     pub apply: fn(T, &[ABE], &dyn Scope) -> ApplyResult,
-    pub info: ScopeEvalInfo,
+    pub info: ScopeMacroInfo,
 }
 #[derive(Copy, Clone)]
-pub struct ScopeEvalInfo {
+pub struct ScopeMacroInfo {
     pub id: &'static str,
     pub help: &'static str,
 }
 
 impl Scope for () {
-    fn lookup_apply(
+    fn try_apply_func(
         &self,
         _id: &[u8],
         _args: &[&[u8]],
@@ -497,7 +497,7 @@ impl Scope for () {
         AR::NoValue
     }
 
-    fn lookup_eval(&self, _id: &[u8], _abe: &[ABE], _scopes: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _scopes: &dyn Scope) -> ApplyResult {
         AR::NoValue
     }
 
@@ -505,12 +505,12 @@ impl Scope for () {
         cb("()", "", &mut std::iter::empty(), &mut std::iter::empty())
     }
 
-    fn encode(&self, _id: &[u8], _options: &[ABE], _bytes: &[u8]) -> ApplyResult<String> {
+    fn try_encode(&self, _id: &[u8], _options: &[ABE], _bytes: &[u8]) -> ApplyResult<String> {
         AR::NoValue
     }
 }
 impl<A: Scope> Scope for Option<A> {
-    fn lookup_apply(
+    fn try_apply_func(
         &self,
         id: &[u8],
         inpt_and_args: &[&[u8]],
@@ -518,7 +518,7 @@ impl<A: Scope> Scope for Option<A> {
         ctx: &dyn Scope,
     ) -> ApplyResult {
         self.as_ref()
-            .map(|x| x.lookup_apply(id, inpt_and_args, init, ctx))
+            .map(|x| x.try_apply_func(id, inpt_and_args, init, ctx))
             .unwrap_or(ApplyResult::NoValue)
     }
     fn describe(&self, cb: Describer) {
@@ -532,84 +532,84 @@ impl<A: Scope> Scope for Option<A> {
             ),
         }
     }
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
         self.as_ref()
-            .map(|x| x.lookup_eval(id, abe, scopes))
+            .map(|x| x.try_apply_macro(id, abe, scopes))
             .unwrap_or(ApplyResult::NoValue)
     }
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
         self.as_ref()
-            .map(|v| v.encode(id, options, bytes))
+            .map(|v| v.try_encode(id, options, bytes))
             .unwrap_or(AR::NoValue)
     }
 }
 
 impl Scope for &dyn Scope {
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
-        (**self).lookup_eval(id, abe, scopes)
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_macro(id, abe, scopes)
     }
-    fn lookup_apply(
+    fn try_apply_func(
         &self,
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
         ctx: &dyn Scope,
     ) -> ApplyResult {
-        (**self).lookup_apply(id, inpt_and_args, init, ctx)
+        (**self).try_apply_func(id, inpt_and_args, init, ctx)
     }
 
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
     }
 
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
-        (**self).encode(id, options, bytes)
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        (**self).try_encode(id, options, bytes)
     }
 }
 impl<A: Scope> Scope for &A {
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
-        (**self).lookup_eval(id, abe, scopes)
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn lookup_apply(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).lookup_apply(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, ctx)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
     }
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
-        (**self).encode(id, options, bytes)
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        (**self).try_encode(id, options, bytes)
     }
 }
 impl<A: Scope, B: Scope> Scope for (A, B) {
     #[inline(always)]
-    fn lookup_apply(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
         self.0
-            .lookup_apply(id, args, init, ctx)
-            .or_else(|| self.1.lookup_apply(id, args, init, ctx))
+            .try_apply_func(id, args, init, ctx)
+            .or_else(|| self.1.try_apply_func(id, args, init, ctx))
     }
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
         self.0
-            .lookup_eval(id, abe, scope)
-            .or_else(|| self.1.lookup_eval(id, abe, scope))
+            .try_apply_macro(id, abe, scope)
+            .or_else(|| self.1.try_apply_macro(id, abe, scope))
     }
     fn describe(&self, cb: Describer) {
         self.0.describe(cb);
         self.1.describe(cb);
     }
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
         self.0
-            .encode(id, options, bytes)
-            .or_else(|| self.1.encode(id, options, bytes))
+            .try_encode(id, options, bytes)
+            .or_else(|| self.1.try_encode(id, options, bytes))
     }
 }
 impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
     #[inline(always)]
-    fn lookup_apply(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        ((&self.0, &self.1), &self.2).lookup_apply(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+        ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, ctx)
     }
-    fn lookup_eval(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
-        ((&self.0, &self.1), &self.2).lookup_eval(id, abe, scope)
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
+        ((&self.0, &self.1), &self.2).try_apply_macro(id, abe, scope)
     }
 
     fn describe(&self, cb: Describer) {
@@ -618,11 +618,11 @@ impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
         self.2.describe(cb);
     }
 
-    fn encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
         self.0
-            .encode(id, options, bytes)
-            .or_else(|| self.1.encode(id, options, bytes))
-            .or_else(|| self.2.encode(id, options, bytes))
+            .try_encode(id, options, bytes)
+            .or_else(|| self.1.try_encode(id, options, bytes))
+            .or_else(|| self.2.try_encode(id, options, bytes))
     }
 }
 
@@ -689,7 +689,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                         [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] => (id, r),
                     };
                     dbgprintln!("Eval('{}')", as_abtxt(id));
-                    match ctx.scope.lookup_eval(id, rest, &ctx.scope) {
+                    match ctx.scope.try_apply_macro(id, rest, &ctx.scope) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Value(b) => return Ok(ABItem::Bytes(b)),
                         ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
@@ -712,7 +712,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     as_abtxt(id),
                     input_and_args
                 );
-                match scope.lookup_apply(id, input_and_args, init, &scope) {
+                match scope.try_apply_func(id, input_and_args, init, &scope) {
                     ApplyResult::NoValue => Err(EvalError::NoSuchFunc(id.to_vec())),
                     ApplyResult::Value(b) => Ok(b),
                     ApplyResult::Err(e) => Err(EvalError::Func(id.to_vec(), e)),
@@ -837,7 +837,7 @@ pub fn encode_abe(
             e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got '{}')",print_abe(e)))),
         };
         //eprintln!("Try {}",as_abtxt(func_id));
-        match ctx.scope.encode(func_id, args, bytes) {
+        match ctx.scope.try_encode(func_id, args, bytes) {
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
                 debug_assert_eq!(
@@ -861,8 +861,8 @@ pub fn encode_abe(
 #[macro_export]
 macro_rules! eval_fnc {
     ( $id:expr, $help:literal,$fnc:expr) => {
-        $crate::eval::ScopeEval {
-            info: $crate::eval::ScopeEvalInfo {
+        $crate::eval::ScopeMacro {
+            info: $crate::eval::ScopeMacroInfo {
                 id: $id,
                 help: $help,
             },
@@ -1242,7 +1242,7 @@ impl EvalScopeImpl for LogicOps {
             )
         ])
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[
             eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
                   |_,i:&[ABE],scope:&dyn Scope|{
@@ -1306,10 +1306,10 @@ impl EvalScopeImpl for Encode {
           },
         ]
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[
-            ScopeEval {
-                info: ScopeEvalInfo { id: "?", help: "find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]* " },
+            ScopeMacro {
+                info: ScopeMacroInfo { id: "?", help: "find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]* " },
                 apply:|_,abe,scope|-> ApplyResult{
                     let ctx = EvalCtx{scope};
                     let (head,abe) = take_first(abe)?;
@@ -1321,8 +1321,8 @@ impl EvalScopeImpl for Encode {
                     AR::Value(encode_abe(&ctx, &bytes, rest,false)?.into_bytes())
                 }
             },
-            ScopeEval {
-                info: ScopeEvalInfo { id: "~?", help: "same as '?' but ignores all errors" },
+            ScopeMacro {
+                info: ScopeMacroInfo { id: "~?", help: "same as '?' but ignores all errors" },
                 apply:|_,abe,scope|-> ApplyResult{
                     let ctx = EvalCtx{scope};
                     let (head,abe) = take_first(abe)?;
@@ -1334,8 +1334,8 @@ impl EvalScopeImpl for Encode {
                     AR::Value(encode_abe(&ctx, &bytes, rest,true)?.into_bytes())
                 }
             },
-            ScopeEval {
-                info: ScopeEvalInfo { id: "e", help: "eval inner expression list. Useful to avoid escapes: eg file:{/e:/some/dir:thing}:opts does not require escapes the '/' " },
+            ScopeMacro {
+                info: ScopeMacroInfo { id: "e", help: "eval inner expression list. Useful to avoid escapes: eg file:{/e:/some/dir:thing}:opts does not require escapes the '/' " },
                 apply:|_,abe,scope|-> ApplyResult{
                     let (head,abe) = take_first(abe)?;
                     is_colon(head)?;
@@ -1397,7 +1397,7 @@ impl EvalScopeImpl for Help {
             to_abe: none,
         }]
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[eval_fnc!(
             "help",
             "desribe current eval context",
@@ -1412,7 +1412,7 @@ fn fmt_describer(
     name: &str,
     about: &str,
     funcs: &mut dyn Iterator<Item = ScopeFuncInfo>,
-    evals: &mut dyn Iterator<Item = ScopeEvalInfo>,
+    evals: &mut dyn Iterator<Item = ScopeMacroInfo>,
 ) -> std::fmt::Result {
     let (mut fnc_head, mut evl_head) = (true, true);
     writeln!(f, "# {name}\n{about}")?;
@@ -1440,7 +1440,7 @@ fn fmt_describer(
             "- {id: <16} {fslash}{colon}{encode} {state} {argc:?}     {help}  "
         )?;
     }
-    for ScopeEvalInfo { id, help } in evals {
+    for ScopeMacroInfo { id, help } in evals {
         if std::mem::take(&mut evl_head) {
             writeln!(f, "## Macros")?;
         }
@@ -1462,11 +1462,11 @@ impl<A: Scope> Display for EvalCtx<A> {
 
         let mut err = Ok(());
         let mut set = HashSet::<&'static str>::new();
-        self.scope.describe(&mut |name, about, fncs, revals| {
+        self.scope.describe(&mut |name, about, fncs, macros| {
             if err.is_err() {
                 return;
             }
-            err = fmt_describer(f, &mut set, name, about, fncs, revals);
+            err = fmt_describer(f, &mut set, name, about, fncs, macros);
         });
         err
     }
@@ -1502,7 +1502,7 @@ impl EvalScopeImpl for Comment{
         ]
     }
 
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[]
     }
 }

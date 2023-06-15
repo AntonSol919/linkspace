@@ -14,7 +14,7 @@ use byte_fmt::{
         ABEValidator, ToABE, ABE,
     },
     eval::{
-        parse_b, ApplyErr, ApplyResult, EvalCtx, EvalScopeImpl, Scope, ScopeEval, ScopeEvalInfo,
+        parse_b, ApplyErr, ApplyResult, EvalCtx, EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
         ScopeFunc,
     },
     *,
@@ -365,17 +365,17 @@ impl EvalScopeImpl for PathFE {
             )
         ])
     }
-    fn list_eval(&self) -> &[ScopeEval<&Self>] {
+    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[
-            ScopeEval {
+            ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
-                info: ScopeEvalInfo { id: "", help: "the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val" }
+                info: ScopeMacroInfo { id: "", help: "the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val" }
             },
-            ScopeEval {
+            ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let mut lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
                     let mut skip_first = true;
@@ -383,7 +383,7 @@ impl EvalScopeImpl for PathFE {
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
-                info: ScopeEvalInfo { id: "~", help: "similar to '//' but forgiving on empty components" }
+                info: ScopeMacroInfo { id: "~", help: "similar to '//' but forgiving on empty components" }
             }
         ]
     }
