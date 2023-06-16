@@ -601,6 +601,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::as_ab, m)?)?;
     m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
     m.add_function(wrap_pyfunction!(crate::blake3_hash, m)?)?;
     m.add_function(wrap_pyfunction!(crate::bytes2uniform, m)?)?;

@@ -37,7 +37,19 @@ impl Pkt {
         PktFmt(&self.0.netpktptr()).to_string()
         //{format!("<not compiled>")}
     }
+    #[wasm_bindgen(js_name = toHTML)]
+    pub fn to_html(&self) -> Result<String,JsValue>{
+        #[cfg(feature = "abe")]
+        { todo!()}
 
+        #[cfg(not(feature = "abe"))]
+        {
+            let mut buf = String::new();
+            PktFmt(&self.0.netpktptr()).to_html(&mut buf, |_,_| Ok(()))
+                .map_err(|e|e.to_string())?;
+            Ok(buf)
+        }
+    }
     #[wasm_bindgen(getter)]
     pub fn obj(&self) -> Object {
         crate::pkt_obj(self.clone())
@@ -201,6 +213,12 @@ impl Link {
     }
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> Result<String,JsValue>{
+        let mut tag = self.0.tag.0;
+        let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
+        Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))
+    }
+    #[wasm_bindgen(js_name = toHTML)]
+    pub fn to_html(&self) -> Result<String,JsValue>{
         let mut tag = self.0.tag.0;
         let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
         Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))

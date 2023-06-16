@@ -221,6 +221,11 @@ pub fn b64(bytes:&[u8], mini:Option<bool>) -> String{
     let b = linkspace_pkt::B64(bytes);
     if mini.unwrap_or(false){b.b64_mini()} else{b.to_string()}
 }
+#[wasm_bindgen] 
+pub fn lk_encode(bytes:&[u8],_ignored:&str) -> String {
+    // a trivially correct stub
+    linkspace_pkt::as_abtxt_c(bytes,false).to_string()
+}
 #[wasm_bindgen]
 pub fn blake3_hash(bytes:&[u8]) -> Box<[u8]>{
     Box::new(*blake3::hash(bytes).as_bytes())
