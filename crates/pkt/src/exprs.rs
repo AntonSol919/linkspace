@@ -12,7 +12,7 @@ pub type DomainExpr = TypedABE<Domain>;
 
 
 pub type HashExpr = TypedABE<LkHash>;
-pub type PExpr = TypedABE<Ptr>;
+pub type PExpr = TypedABE<LkHash>;
 pub type GroupExpr = TypedABE<GroupID>;
 pub type PubKeyExpr = TypedABE<PubKey>;
 

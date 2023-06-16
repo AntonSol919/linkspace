@@ -2,11 +2,12 @@
 use super::*;
 use std::{mem::size_of, sync::LazyLock};
 
+pub const MAX_POINT_SIZE: usize = (u16::MAX as usize+1) - 512;
+
 pub const MIN_POINT_SIZE: usize = size_of::<LkHash>() + size_of::<PointHeader>();
 pub const MIN_LINKPOINT_SIZE: usize = MIN_POINT_SIZE + size_of::<LinkPointHeader>();
 pub const MIN_NETPKT_SIZE: usize = size_of::<NetPktHeader>() + MIN_POINT_SIZE;
 
-pub const MAX_POINT_SIZE: usize = u16::MAX as usize - 512;
 // ensure compiler error if it exceeds u16::MAX
 pub const MAX_NETPKT_U16SIZE: u16 = MAX_POINT_SIZE as u16 + size_of::<NetPktHeader>() as u16 + size_of::<LkHash>() as u16; 
 pub const MAX_NETPKT_SIZE: usize = MAX_NETPKT_U16SIZE as usize;
@@ -54,6 +55,7 @@ pub const PUBLIC: LkHash = B64([
 //static consistency check
 const _EQ_ASSERT_SIZE: fn() = || {
     let _ = core::mem::transmute::<[u8;MAX_DATA_SIZE], [u8;MAX_NETPKT_SIZE - size_of::<PartialNetHeader>()]>;
+    let _ = core::mem::transmute::<[u8;MAX_DATA_SIZE], [u8;65020]>;
 };
 #[test]
 fn correct_public_ids() {

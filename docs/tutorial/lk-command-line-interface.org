@@ -4,8 +4,6 @@
 
 #+SETUPFILE: ../utils.org
 
-#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
 
 #+BEGIN_SRC bash :session cli0 :exports none
   cd /tmp
@@ -40,6 +38,7 @@ also usable as ~lk data~ and ~lk d~
 #+end_xxd
 #+end_ctabs
 
+
 #+begin_ctabs
 #+begin_info
 ~pktf~, and many other functions, take [[../guide/index.html#ABE][ABE]] input. A byte templating language.
@@ -51,12 +50,7 @@ src_bash[:exports both]{echo -n "hello" | lk d | lk pktf "[hash/?b/b/?b] => [dat
 #+end_ctabs
 
 
-
-By default, ~lk data~ produces multiple packets by reading the maximum data size able to fit.
-This behavior can be changed with the various ~--data-*~ commands (~lk data --help~)
-The maximum size of the data field is ~2^{16}-512-4 = 65020~[fn:: The maximum point size is 2^{16}-512. The maximum packet size on the network is 2^{16}-512+64. This is to avoid fragmentation & slow edge cases whenever data sizes approach ~2^{16}.]
-
-Wrapping 150000 bytes produces 3 data packets.
+The max size is ~2^{16}-512-4 = 65020~[fn:: The maximum point size is 2^{16}-512. The maximum packet size on the network is 2^{16}-512+64. This is to avoid fragmentation & slow edge cases whenever sizes approach ~2^{16}.]
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
     python -c 'print("-" * 150000)' | lk data > three_datapoints.lkp
@@ -65,21 +59,15 @@ Wrapping 150000 bytes produces 3 data packets.
 
 *** Linkpoint
 
-So far we're packing data into datapoint, but linkspace is also about linking points.
+A ~linkpoint~ has the additional fields:
 
-A ~linkpoint~ is a type of point that has a couple of additional fields: 
-
-A (domain,group) tuple, to indicate the application and intended set of recipients.
-A path to give it a useful name and query later.
-A create stamp to add some order.
-
-
-For our application we'll be using the "imageboard" domain, and stick to the [#:pub] group for now.
-
-~lk~ has multiple ways of producing linkpoints. ~lk linkpoint~ is the most straight forward.
+- (domain,group) tuple
+- path
+- create stamp
+- links = [ (tag,hash) ]
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
-  lk link imageboard:[#:pub] -- \
+  lk linkpoint imageboard:[#:pub] -- \
      a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
      other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
       | lk pktf  # You can see the default pktf format with lk pktf --help

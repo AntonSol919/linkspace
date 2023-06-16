@@ -105,7 +105,7 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
     }
 }
 
-pub fn lptr(l:&Link)->&Ptr{&l.ptr}
+pub fn lptr(l:&Link)->&LkHash{&l.ptr}
 pub fn ptrv(l:&Link)->Vec<u8>{l.ptr.to_vec()}
 #[derive(Copy,Clone)]
 pub struct SelectLink<'o>(pub &'o [Link]);

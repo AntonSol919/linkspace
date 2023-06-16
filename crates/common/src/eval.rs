@@ -183,7 +183,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 let expr = it.next().context("missing expr")?;
                 let alt = it.next();
                 let hash = eval(&ctx, hash)?.concat();
-                let hash: Ptr = Ptr::try_fit_slice(&hash)?;
+                let hash: LkHash = LkHash::try_fit_slice(&hash)?;
                 let reader = this.0.lk()?.get_reader();
                 match reader.read(&hash)? {
                     None => {

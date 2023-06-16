@@ -85,12 +85,12 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
 }
 
 #[instrument(ret,skip(reader),level="debug")]
-pub fn ptr_lookup(reader: &ReadTxn, tag: Tag, ptr: Ptr,admin:Option<PubKey>) -> ApplyResult<Claim> {
+pub fn ptr_lookup(reader: &ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<Claim> {
     let ple = ptr_lookup_entry(reader, tag, ptr, admin);
     read_claims(reader, ple.into_ok()??.pkt, now()).find_map(|(_,p)| p.ok()?).into()
 }
 #[instrument(ret,skip(reader),level="debug")]
-pub fn ptr_lookup_entry(reader: &ReadTxn, tag: Tag, ptr: Ptr,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr> {
+pub fn ptr_lookup_entry(reader: &ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr> {
     let path = BY_TAG_P.into_spathbuf().push(tag).push(ptr);
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).path(path)?.create_before(now()).unwrap();
     // entries have the form /by-tag/TAG/PTR
@@ -110,7 +110,7 @@ fn read_claims<'o>(reader: &'o ReadTxn,pkt: &'o impl NetPkt,valid_at:Stamp) -> i
         .map(|(rt,p)| (rt,Claim::read(reader,&p)))
 }
 
-pub fn list_ptr_lookups(reader: &ReadTxn, tag: AB<[u8; 16]>,ptr:Option<Ptr>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'_ {
+pub fn list_ptr_lookups(reader: &ReadTxn, tag: AB<[u8; 16]>,ptr:Option<LkHash>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'_ {
     let path = BY_TAG_P.into_spathbuf().push(tag);
     let path = if let Some(p) = ptr { path.push(*p)} else { path}; 
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).create_before(now()).unwrap();
@@ -128,7 +128,7 @@ pub fn list_ptr_lookups(reader: &ReadTxn, tag: AB<[u8; 16]>,ptr:Option<Ptr>,admi
 
 
 #[instrument(ret,level="trace")]
-pub fn mut_ptrlookup_entry(links:&[Link],path:&IPath,remove:Option<Ptr>,add_link_first:Option<(bool,Link)>,admin:Option<&SigningKey>,now:Stamp) -> NetPktBox{
+pub fn mut_ptrlookup_entry(links:&[Link],path:&IPath,remove:Option<LkHash>,add_link_first:Option<(bool,Link)>,admin:Option<&SigningKey>,now:Stamp) -> NetPktBox{
     let (pre,post) = match add_link_first {
         Some((true,link)) => (Some(link),None),
         Some((false,link)) => (None,Some(link)),

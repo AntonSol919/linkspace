@@ -84,8 +84,6 @@ pub mod asm_tests;
 /// Blake3 hash of the packet content. Alias for `B64<[u8;32]\>`
 pub type LkHash = B64<[u8; 32]>;
 /// Alias for `B64<[u8;32]\>`
-pub type Ptr = B64<[u8; 32]>;
-/// Alias for `B64<[u8;32]\>`
 pub type GroupID = B64<[u8; 32]>;
 /// Alias for `AB<[u8;16]>`
 pub type Domain = AB<[u8; 16]>;
@@ -98,17 +96,17 @@ pub type Tag = AB<[u8; 16]>;
 pub struct Link {
     pub tag: Tag,
     /// Usually a [LkHash], sometimes a [PubKey] or [GroupID]
-    pub ptr: Ptr,
+    pub ptr: LkHash,
 }
-impl From<(Tag,Ptr)> for Link {
-    fn from((tag,ptr): (Tag,Ptr)) -> Self {
+impl From<(Tag,LkHash)> for Link {
+    fn from((tag,ptr): (Tag,LkHash)) -> Self {
         Link{tag,ptr}
     }
 }
-impl TryFrom<(&str,Ptr)> for Link {
+impl TryFrom<(&str,LkHash)> for Link {
     type Error = FitSliceErr;
 
-    fn try_from((tag,ptr): (&str,Ptr)) -> Result<Self, Self::Error> {
+    fn try_from((tag,ptr): (&str,LkHash)) -> Result<Self, Self::Error> {
         Ok(Link{tag: Tag::try_fit_byte_slice(tag.as_bytes())?,ptr})
     }
 }

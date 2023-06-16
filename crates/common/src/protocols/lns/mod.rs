@@ -24,7 +24,7 @@ use abe::eval::{clist, ApplyResult};
 use anyhow::{Context };
 use byte_fmt::ab;
 use linkspace_argon2_identity::pubkey;
-use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, Ptr, Stamp, Link, ipath1, IPathC };
+use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC };
 use tracing::instrument;
 
 use crate::runtime::Linkspace;
@@ -147,7 +147,7 @@ pub fn lookup_claim(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<Claim>>{
 }
 
 #[instrument(skip(lk),ret)]
-pub fn reverse_lookup(lk:&Linkspace,tag:Tag,ptr:Ptr) -> ApplyResult<Claim>{
+pub fn reverse_lookup(lk:&Linkspace,tag:Tag,ptr:LkHash) -> ApplyResult<Claim>{
     // Because we can't yet trust the admin, we have to do a forward lookup as well to validate this is a valid claim.
     let claim = admin::ptr_lookup(&lk.get_reader(), tag, ptr, None)?;
     let name = &claim.name;

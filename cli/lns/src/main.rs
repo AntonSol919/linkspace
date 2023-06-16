@@ -144,7 +144,7 @@ fn main() -> anyhow::Result<()> {
         Cmd::CreateClaim { name, group, pubkey, auth, until, write,allow_empty, no_auth, enckey,copy_from} => {
             let mut write = common.open(&write)?;
 
-            let as_link = |tag:Tag| move |ptr:Ptr| Link::new(tag,ptr);
+            let as_link = |tag:Tag| move |ptr:LkHash| Link::new(tag,ptr);
             let mut links = vec![];
             let ctx = common.eval_ctx();
             let name = name.eval(&ctx)?;

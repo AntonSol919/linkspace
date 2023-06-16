@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use abe::{fncs, eval::{ScopeMacro,  EvalScopeImpl, ScopeFunc, EvalCtx,eval, ApplyResult, ScopeMacroInfo}, ABE, ast};
 use anyhow::{anyhow, Context, bail };
-use linkspace_pkt::{Tag, Ptr, pkt_ctx, ptrv};
+use linkspace_pkt::{Tag, LkHash, pkt_ctx, ptrv};
 
 use crate::{ eval::LKS };
 
@@ -35,11 +35,11 @@ impl<R: LKS> PrivateLNS<R> {
     fn get_claim(&self, name: Name) -> anyhow::Result<Option<Claim>>{
         super::lookup_claim(&self.rt.lk()?, &name)
     }
-    fn get_by_tag(&self, tag: Tag,ptr:Ptr) -> anyhow::Result<Option<Name>>{
+    fn get_by_tag(&self, tag: Tag,ptr:LkHash) -> anyhow::Result<Option<Name>>{
         Ok(super::reverse_lookup(&self.rt.lk()?, tag,ptr).into_ok()?.map(|o| o.name))
     }
     
-    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult<String> {
+    fn get_by_tag_abe(&self,tag:Tag,ptr:LkHash) -> ApplyResult<String> {
         let name :Name= self.get_by_tag(tag, ptr)??;
         if tag == GROUP_TAG { Ok(format!("[#:{name}]")).into()}
         else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]")).into()}
@@ -72,13 +72,13 @@ impl<R: LKS> NetLNS<R> {
             }
         }
     }
-    fn get_by_tag(&self, tag: Tag,ptr:Ptr) -> anyhow::Result<Option<Name>>{
+    fn get_by_tag(&self, tag: Tag,ptr:LkHash) -> anyhow::Result<Option<Name>>{
         match self.private().get_by_tag(tag, ptr)?{
             Some(v) => Ok(Some(v)),
             None => Ok(None)
         }
     }
-    fn get_by_tag_abe(&self,tag:Tag,ptr:Ptr) -> ApplyResult<String> {
+    fn get_by_tag_abe(&self,tag:Tag,ptr:LkHash) -> ApplyResult<String> {
         let name :Name= self.get_by_tag(tag, ptr)??;
         if tag == GROUP_TAG { Ok(format!("[#:{name}]")).into()}
         else if tag == PUBKEY_TAG { Ok(format!("[@:{name}]")).into()}
@@ -100,10 +100,10 @@ impl<R: LKS > EvalScopeImpl for NetLNS<R> {
                 // error on get failure
                 |this: &Self, args: &[&[u8]]| this.get_claim_link_ptr(Name::from(args)?, GROUP_TAG ),
                 // pass on get failure
-                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(GROUP_TAG, Ptr::try_fit_bytes_or_b64(phash)?)
+                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(GROUP_TAG, LkHash::try_fit_bytes_or_b64(phash)?)
             ),
             // error on get failure
-            ("?#", 1..=1, "find by group# tag", |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(GROUP_TAG, Ptr::try_fit_bytes_or_b64(i[0])?))),
+            ("?#", 1..=1, "find by group# tag", |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(GROUP_TAG, LkHash::try_fit_bytes_or_b64(i[0])?))),
             (
                 "@",
                 1..=7,
@@ -112,10 +112,10 @@ impl<R: LKS > EvalScopeImpl for NetLNS<R> {
                 // error on get failure
                 |this: &Self, args: &[&[u8]]| this.get_claim_link_ptr(Name::from(args)?, PUBKEY_TAG),
                 // pass on get failure
-                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(PUBKEY_TAG, Ptr::try_fit_bytes_or_b64(phash)?)
+                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(PUBKEY_TAG, LkHash::try_fit_bytes_or_b64(phash)?)
             ),
             // error on get failure
-            ("?@", 1..=1, "find by pubkey@ tag", |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(PUBKEY_TAG, Ptr::try_fit_bytes_or_b64(i[0])?)))
+            ("?@", 1..=1, "find by pubkey@ tag", |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(PUBKEY_TAG, LkHash::try_fit_bytes_or_b64(i[0])?)))
         ])
     }
 
@@ -154,11 +154,11 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
                 Some(true),
                 "(namecomp)* - get the associated lns group",
                 |this: &Self, args: &[&[u8]]| this.get_claim_link_ptr(Name::from(args)?, GROUP_TAG ).require("no private claim set"),
-                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(GROUP_TAG, Ptr::try_fit_bytes_or_b64(phash)?)
+                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(GROUP_TAG, LkHash::try_fit_bytes_or_b64(phash)?)
             ),
             ("?private#", 1..=1, "find by group# tag",
              
-             |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(GROUP_TAG, Ptr::try_fit_bytes_or_b64(i[0])?))
+             |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(GROUP_TAG, LkHash::try_fit_bytes_or_b64(i[0])?))
             ),
             (
                 "private@",
@@ -166,10 +166,10 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
                 Some(true),
                 "(namecomp)* - get the associated lns key",
                 |this: &Self, args: &[&[u8]]| this.get_claim_link_ptr(Name::from(args)?, PUBKEY_TAG).require("no private claim set"),
-                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(PUBKEY_TAG, Ptr::try_fit_bytes_or_b64(phash)?)
+                |this: &Self, phash: &[u8], _| this.get_by_tag_abe(PUBKEY_TAG, LkHash::try_fit_bytes_or_b64(phash)?)
             ),
             ("?private@", 1..=1, "find by pubkey@ tag",
-             |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(PUBKEY_TAG, Ptr::try_fit_bytes_or_b64(i[0])?))
+             |this:&Self, i: &[&[u8]]| name_str(this.get_by_tag(PUBKEY_TAG, LkHash::try_fit_bytes_or_b64(i[0])?))
             )
         ])
     }

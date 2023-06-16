@@ -17,7 +17,7 @@ pub fn print_links(l: &[Link]) -> String {
 impl Link {
     pub const DEFAULT : Link = Link { ptr: B64([0;32]),tag:AB([0;16])};
     #[track_caller]
-    pub fn new(tag: impl AsRef<[u8]>, ptr: impl Into<Ptr>) -> Link {
+    pub fn new(tag: impl AsRef<[u8]>, ptr: impl Into<LkHash>) -> Link {
         Link {
             ptr: ptr.into(),
             tag: ab(tag.as_ref()),

@@ -38,7 +38,7 @@ pub mod prelude {
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
-            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
+            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, LkHash, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
             Error as PktError,
             repr::PktFmt
