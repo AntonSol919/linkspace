@@ -9,7 +9,7 @@ use anyhow::{ Context};
 use linkspace_common::{
     cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
     core::pull::read_pull_pkt,
-    prelude::*,
+    prelude::{*, scope::core_ctx},
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
 

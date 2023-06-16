@@ -38,7 +38,7 @@ pub mod prelude {
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
-            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, LkHash, PubKey,
+            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
             Error as PktError,
             repr::PktFmt
@@ -373,7 +373,8 @@ pub mod abe {
 
         use anyhow::Context;
         use linkspace_common::abe::eval::{EvalCtx, Scope};
-        use linkspace_common::prelude::{ArgV, EScope, NetPkt};
+        use linkspace_common::prelude::scope::ArgV;
+        use linkspace_common::prelude::{EScope, NetPkt};
         use linkspace_common::runtime::Linkspace;
         use std::cell::RefCell;
 
@@ -478,7 +479,7 @@ pub mod abe {
                 match &self.0 {
                     InlineCtx::Std(scope) => EvalCtx { scope },
                     InlineCtx::Core => EvalCtx {
-                        scope: &linkspace_common::prelude::EVAL_SCOPE,
+                        scope: &linkspace_common::prelude::scope::EVAL_SCOPE,
                     },
                     InlineCtx::Empty => EvalCtx { scope: &() },
                 }

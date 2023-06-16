@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![feature(
+    slice_as_chunks,
     split_as_slice,
     split_array,
     try_trait_v2,
@@ -18,6 +19,7 @@ pub mod abtxt;
 pub mod ast;
 pub mod convert;
 pub mod eval;
+pub mod scope;
 pub use thiserror;
 
 use std::error::Error;

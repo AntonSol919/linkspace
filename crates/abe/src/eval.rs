@@ -3,17 +3,16 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::fmt::Write;
 use std::ops::{Try, ControlFlow};
 
-use anyhow::{ anyhow, Context};
-use arrayvec::ArrayVec;
+use anyhow::{ anyhow};
+use bstr::BStr;
 use std::fmt::{Debug, Display};
-use std::{collections::HashSet, convert::Infallible, ops::FromResidual, str::FromStr};
+use std::{collections::HashSet, convert::Infallible, ops::FromResidual};
 use thiserror::Error;
 
 use crate::abtxt::as_abtxt;
-use crate::{ast::*, cut_ending_nulls2, cut_prefix_nulls};
+use crate::{ast::* };
 
 const fn as_str(o: Option<Ctr>) -> &'static str {
     match o {
@@ -245,7 +244,7 @@ impl<'o> TryFrom<&'o [ABE]> for ABList{
 #[derive(Debug)]
 /// Utility that impl's try for both None and Err
 /// Semantically the None value means the caller has to decide whether to continue.
-// TODO rename to Val, NoVal, Err
+// TODO: This might benefit a lot from Cow
 pub enum ApplyResult<V=Vec<u8>> {
     NoValue,
     Value(V),
@@ -837,14 +836,14 @@ pub fn encode_abe(
         match ctx.scope.try_encode(func_id, args, bytes) {
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
-                debug_assert_eq!(
-                    eval(ctx, &parse_abe(&st).expect("bug: encode fmt"))
-                        .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st))
-                        .as_exact_bytes()
-                        .expect("bug: encode multi")
-                        , bytes,
-                    "bug: eval(encode) {st}"
-                );
+                if cfg!(debug_assertions){
+                    let redo = eval(ctx, &parse_abe(&st).expect("bug: encode fmt"))
+                        .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
+                    let redo = redo.as_exact_bytes()
+                        .expect("bug: encode multi");
+                    assert_eq!(redo,bytes, "bug: eval(encode) for {bytes:?}({}) gave {st}, but but re-evaluated would be {redo:?}({})",
+                               BStr::new(&bytes), BStr::new(&redo) );
+                }
                 return Ok(st);
             }
             ApplyResult::Err(e) => {
@@ -856,14 +855,14 @@ pub fn encode_abe(
 }
 
 #[macro_export]
-macro_rules! eval_fnc {
+macro_rules! scope_macro {
     ( $id:expr, $help:literal,$fnc:expr) => {
         $crate::eval::ScopeMacro {
             info: $crate::eval::ScopeMacroInfo {
                 id: $id,
                 help: $help,
             },
-            apply: |a, b: &[ABE], c| -> $crate::eval::ApplyResult {
+            apply: |a, b: &[$crate::ast::ABE], c| -> $crate::eval::ApplyResult {
                 let r: Result<Vec<u8>, $crate::eval::ApplyErr> = $fnc(a, b, c);
                 $crate::eval::ApplyResult::from(r)
             },
@@ -923,529 +922,13 @@ macro_rules! fncs {
         &[ $( $crate::fnc!($($fni)*) ),*]
     };
 }
-pub fn parse_b<T: FromStr>(b: &[u8]) -> Result<T, ApplyErr>
-where
-    <T as FromStr>::Err: std::error::Error + Send + Sync + 'static,
-{
-    Ok(std::str::from_utf8(b)?.parse()?)
-}
-pub fn carry_add_be(bytes: &mut [u8], val: &[u8]) -> bool {
-    debug_assert!(bytes.len() == val.len());
-    let mut carry = false;
-    let mut idx = bytes.len() - 1;
-    loop {
-        let (ni, nc) = bytes[idx].carrying_add(val[idx], carry);
-        bytes[idx] = ni;
-        carry = nc;
-        if idx == 0 {
-            break;
-        }
-        idx -= 1;
-    }
-    carry
-}
-pub fn carry_sub_be(bytes: &mut [u8], val: &[u8]) -> bool {
-    debug_assert!(bytes.len() == val.len());
-    let mut carry = false;
-    let mut idx = bytes.len() - 1;
-    loop {
-        let (ni, nc) = bytes[idx].borrowing_sub(val[idx], carry);
-        bytes[idx] = ni;
-        carry = nc;
-        if idx == 0 {
-            break;
-        }
-        idx -= 1;
-    }
-    carry
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct UIntFE;
-impl EvalScopeImpl for UIntFE {
-    fn about(&self) -> (String, String) {
-        ("UInt".into(), "Unsigned integer functions".into())
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fncs!([
-            ( "+" , 1..=16,   "Saturating addition. Requires all inputs to be equal size",
-                    |_,inp:&[&[u8]]| {
-                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err(anyhow!("Mismatch length"))}
-                        let mut r = inp[0].to_vec();
-                        for i in &inp[1..]{
-                            if carry_add_be(&mut r, i){
-                                r.iter_mut().for_each(|v| *v = 255);
-                                return Ok(r)
-                            }
-                        }
-                        Ok(r)
-                    }
-            ),
-            ( "-" , 1..=16,   "Saturating subtraction. Requires all inputs to be equal size",
-                    |_,inp:&[&[u8]]| {
-                        if !inp.iter().all(|v| v.len() == inp[0].len()){ return Err(anyhow!("Mismatch length"))}
-                        let mut r = inp[0].to_vec();
-                        for i in &inp[1..]{
-                            if carry_sub_be(&mut r, i){
-                                r.iter_mut().for_each(|v| *v = 0);
-                                return Ok(r)
-                            }
-                        }
-                        Ok(r)
-                    }
-            ),
-            ( "u8" , 1..=1,   "parse 1 byte", |_,inp:&[&[u8]]| Ok(parse_b::<u8>(inp[0])?.to_be_bytes().to_vec()),
-               { id : |b:&[u8],_| b.try_into().ok().map(u8::from_be_bytes).map(|t| t.to_string()) }
-            ),
-            ( "u16" , 1..=1,  "parse 2 byte", |_,inp:&[&[u8]]| Ok(parse_b::<u16>(inp[0])?.to_be_bytes().to_vec()),
-               { id : |b:&[u8],_| b.try_into().ok().map(u16::from_be_bytes).map(|t| t.to_string()) }
-            ),
-            ( "u32" , 1..=1,  "parse 4 byte", |_,inp:&[&[u8]]| Ok(parse_b::<u32>(inp[0])?.to_be_bytes().to_vec()),
-               { id : |b:&[u8],_| b.try_into().ok().map(u32::from_be_bytes).map(|t| t.to_string()) }
-            ),
-            ( "u64" , 1..=1,  "parse 8 byte", |_,inp:&[&[u8]]| Ok(parse_b::<u64>(inp[0])?.to_be_bytes().to_vec()),
-               { id : |b:&[u8],_| b.try_into().ok().map(u64::from_be_bytes).map(|t| t.to_string()) }
-            ),
-            ( "u128" , 1..=1, "parse 16 byte", |_,inp:&[&[u8]]| Ok(parse_b::<u128>(inp[0])?.to_be_bytes().to_vec()) ,
-               { id : |b:&[u8],_| b.try_into().ok().map(u128::from_be_bytes).map(|t| t.to_string()) }
-            ),
-            ( "?u" , 1..=1, "Print big endian bytes as decimal",
-              |_,inp:&[&[u8]]| {
-                  let val = inp[0];
-                  if val.len() > 16 { return Err(anyhow!("ints larger than 16 bytes (fixme)"))}
-                  let mut v = [0;16];
-                  v[16-val.len()..].copy_from_slice(val);
-                  Ok(u128::from_be_bytes(v).to_string().into_bytes())
-              }
-              ),
-            ( "lu" , 1..=1, "parse little endian byte (upto 16)",
-              |_,inp:&[&[u8]]| Ok(cut_ending_nulls2(&parse_b::<u128>(inp[0])?.to_le_bytes()).to_vec())
-            ),
-            ( "lu8" , 1..=1, "parse 1 little endian byte", |_,inp:&[&[u8]]| Ok(parse_b::<u8>(inp[0])?.to_le_bytes().to_vec()) ),
-            ( "lu16" , 1..=1, "parse 2 little endian byte", |_,inp:&[&[u8]]| Ok(parse_b::<u16>(inp[0])?.to_le_bytes().to_vec()) ),
-            ( "lu32" , 1..=1, "parse 4 little endian byte", |_,inp:&[&[u8]]| Ok(parse_b::<u32>(inp[0])?.to_le_bytes().to_vec()) ),
-            ( "lu64" , 1..=1, "parse 8 little endian byte", |_,inp:&[&[u8]]| Ok(parse_b::<u64>(inp[0])?.to_le_bytes().to_vec()) ),
-            ( "lu128" , 1..=1, "parse 16 little endian byte", |_,inp:&[&[u8]]| Ok(parse_b::<u128>(inp[0])?.to_le_bytes().to_vec()) ),
-            ( "?lu",1..=1,"print little endian number",
-             |_,inp:&[&[u8]]| {
-                 let val = inp[0];
-                 if val.len() > 16 { return Err(anyhow!("ints larger than 16 bytes (fixme)"));}
-                 let mut v = [0;16];
-                 v[0..val.len()].copy_from_slice(val);
-                 Ok(u128::from_le_bytes(v).to_string().into_bytes())
-             })
-        ])
-    }
-}
 
 
 
 
-#[derive(Copy, Clone, Debug)]
-pub struct BytesFE;
-    
-impl EvalScopeImpl for BytesFE {
-    fn about(&self) -> (String, String) {
-        (
-            "bytes".into(),
-            "Byte padding/trimming".into(),
-        )
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fn pad(inp: &[&[u8]], left: bool, default_pad: u8,check_len:bool,fixed: bool) -> Result<Vec<u8>, ApplyErr> {
-            let bytes = inp[0];
-
-            let len = inp
-                .get(1)
-                .filter(|v| !v.is_empty())
-                .map(|i| parse_b(i))
-                .transpose()?
-                .unwrap_or(16usize);
-            let bytes = if !fixed {
-                bytes
-            }else {
-                let nlen = len.min(bytes.len());
-                if left{ &bytes[..nlen] }
-                else {&bytes[bytes.len() - nlen..]}
-            };
-            if len < bytes.len() {
-                if check_len { return Err(anyhow!("exceeds length {len} ( use  ~[lr]pad or [lr]fixed )"))};
-                return Ok(bytes.to_vec());
-            };
-            let tmp_pad = [default_pad];
-            let padb = inp.get(2).copied().unwrap_or(&tmp_pad);
-            if padb.len() != 1 {
-                return Err(anyhow!("pad byte should be a single byte"));
-            };
-            let mut v = vec![padb[0]; len];
-            if !left {
-                &mut v[0..bytes.len()]
-            } else {
-                &mut v[len - bytes.len()..]
-            }
-            .copy_from_slice(bytes);
-            Ok(v)
-        }
-        
-        fn cut(inp: &[&[u8]], left: bool,check_len:bool) -> Result<Vec<u8>, ApplyErr> {
-            let bytes = inp[0];
-            let len = inp
-                .get(1)
-                .map(|i| parse_b(i))
-                .transpose()?
-                .unwrap_or(16usize);
-            if len > bytes.len() {
-                if check_len { return Err( anyhow!("less than length {len} ( use '~[lr]cut or [lr]fixed")) }
-                return Ok(bytes.to_vec());
-            };
-            Ok(if left {
-                &bytes[..len]
-            } else {
-                &bytes[bytes.len() - len..]
-            }
-            .to_vec())
-        }
-        fn encode_a(_:&BytesFE, b:&[u8], _:&[ABE]) -> ApplyResult<String>{
-            let cut_b = as_abtxt(cut_prefix_nulls(b));
-            let len = b.len();
-            ApplyResult::Value(if len == 16 { format!("[a:{cut_b}]")}else{format!("[a:{cut_b}:{len}]")})
-        }
-        fn bin(inp: &[&[u8]], radix: u32) -> Result<Vec<u8>, ApplyErr> {
-            // FIXME probably want to better handle leading '000000000'
-            let st = std::str::from_utf8(inp[0])?;
-            let i = u128::from_str_radix(st, radix)?;
-            if i == 0 {
-                Ok(vec![0])
-            } else {
-                Ok(cut_prefix_nulls(&i.to_be_bytes()).to_vec())
-            }
-        }
-        fn slice(inp: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
-            #[derive(Debug,Copy,Clone)]
-            struct SignedInt{neg:bool,val:usize}
-            fn parse_b_signed(bytes:Option<&[u8]>) -> anyhow::Result<Option<SignedInt>>{
-                let bytes = bytes.unwrap_or(&[]);
-                if bytes.is_empty() { return Ok(None)}
-                let (neg,val_b) = bytes.strip_prefix(b"-").map(|s|(true,s)).unwrap_or((false,bytes));
-                Ok(Some(SignedInt{neg,val: std::str::from_utf8(val_b)?.parse()?}))
-            }
-            let bytes = inp[0];
-            let len = bytes.len() as isize;
-            let start = parse_b_signed(inp.get(1).copied())?;
-            let end = parse_b_signed(inp.get(2).copied())?;
-            let step : isize = inp.get(3).map(|b| anyhow::Ok::<isize>(std::str::from_utf8(b)?.parse()?)).transpose()?.unwrap_or(1);
-            if step == 0 {
-                return Ok(vec![]);
-            }
-            let (sb,eb) = if step >= 0 {  (0, len) } else { (len - 1, -1) };
-            
-            let to_bound= |v:Option<SignedInt>| -> Option<isize>{
-                match v{
-                    Some(SignedInt { neg:false, val }) => Some((val as isize).clamp(sb.min(eb),sb.max(eb))),
-                    Some(SignedInt { neg:true, val }) => Some((len-val as isize).clamp(sb.min(eb),sb.max(eb))),
-                    None => None,
-                }
-            };
-            let mut i = to_bound(start).unwrap_or(sb);
-            let end = to_bound(end).unwrap_or(eb);
-            
-            Ok(std::iter::from_fn(||{
-                let in_range = if step >= 0 { i< end} else { i> end};
-                if !in_range { return None}
-                let result = *bytes.get(i as usize)?;
-                i+= step;
-                Some(result)
-            }).collect())
-        }
-
-        fncs!([
-            ("",1..=16,"the '' (empty) fnc can be used to start an expr such as {:12/u8} which is the same as {u8:12}",
-             |_,i:&[&[u8]]| Ok(i.concat()),
-             { id : |b:&[u8],_| Some(as_abtxt(b).to_string()) }
-            ),
-            ("?a",1..=1,"encode bytes into ascii-bytes format",|_,i:&[&[u8]]| Ok(as_abtxt(i[0]).into_owned().into_bytes())),
-            ("?a0",1..=1,"encode bytes into ascii-bytes format but strip prefix '0' bytes",
-             |_,i:&[&[u8]]| Ok(as_abtxt(cut_prefix_nulls(i[0])).into_owned().into_bytes())),
-            (@C "a",1..=3,None,"[bytes,length = 16,pad_byte = \\0] - alias for 'lpad'",|_,i:&[&[u8]],_,_| pad(i,true,0,true,false),
-             encode_a),
-            ("f",1..=3,"same as 'a' but uses \\xff as padding ",|_,i:&[&[u8]]| pad(i,true,255,true,false)),
-            ("lpad",1..=3,"[bytes,length = 16,pad_byte = \\0] - left pad input bytes",|_,i:&[&[u8]]| pad(i,true,0,true,false)),
-            ("rpad",1..=3,"[bytes,length = 16,pad_byte = \\0] - right pad input bytes",|_,i:&[&[u8]]| pad(i,false,0,true,false)),
-            ("~lpad",1..=3,"[bytes,length = 16,pad_byte = \\0] - left pad input bytes",|_,i:&[&[u8]]| pad(i,true,0,false,false)),
-            ("~rpad",1..=3,"[bytes,length = 16,pad_byte = \\0] - right pad input bytes",|_,i:&[&[u8]]| pad(i,false,0,false,false)),
-
-            ("lcut",1..=2,"[bytes,length = 16] - left cut input bytes",|_,i:&[&[u8]]| cut(i,true,true)),
-            ("rcut",1..=2,"[bytes,length = 16] - right cut input bytes",|_,i:&[&[u8]]| cut(i,false,true)),
-            ("~lcut",1..=2,"[bytes,length = 16] - lcut without error",|_,i:&[&[u8]]| cut(i,true,false)),
-            ("~rcut",1..=2,"[bytes,length = 16] - lcut without error",|_,i:&[&[u8]]| cut(i,false,false)),
-            ("lfixed",1..=3,"[bytes,length = 16,pad_byte = \\0] - left pad and cut input bytes",|_,i:&[&[u8]]| pad(i,true,0,false,true)),
-            ("rfixed",1..=3,"[bytes,length = 16,pad_byte = \\0] - right pad and cut input bytes",|_,i:&[&[u8]]| pad(i,false,0,false,true)),
-
-            ("slice",1..=4,"[bytes,start=0,stop=len,step=1] - python like slice indexing",|_,i:&[&[u8]]|slice(i)),
-            ("b2",1..=1,"decode binary",|_,i:&[&[u8]]| bin(i,2)),
-            ("b8",1..=1,"decode octets",|_,i:&[&[u8]]| bin(i,8)),
-            ("b16",1..=1,"decode hex",|_,i:&[&[u8]]| bin(i,16)),
-            ("~utf8",1..=1,"lossy encode as utf8",|_,i:&[&[u8]]| AR::Value(bstr::BStr::new(&i[0]).to_string().into_bytes()))
-
-        ])
-    }
-}
 
 
-#[derive(Copy, Clone, Debug)]
-pub struct LogicOps;
-impl EvalScopeImpl for LogicOps {
-    fn about(&self) -> (String, String) {
-        ("logic ops".into(), "ops are : < > = 0 1 ".into())
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        // TODO, extra crate for test_ops
-        fncs!([
-            (
-                "size?",
-                3..=3,
-                "[in,OP,VAL] error unless size passes the test ( UNIMPLEMENTED )",
-                |_, i: &[&[u8]]| {
-                    let size = parse_b::<usize>(i[2])?;
-                    let bytes = i[0];
-                    let blen = bytes.len();
-                    match i[1] {
-                        b"=" => {
-                            if blen != size {
-                                return Err(anyhow!("expected {size} bytes got {blen}"));
-                            } 
-                        }
-                        _ => return Err(anyhow!("unknown op")),
-                    };
-                    Ok(i[0].to_vec())
-                }
-            ),
-            (
-                "val?",
-                3..=3,
-                "[in,OP,VAL] error unless value passes the test ( UNIMPLMENTED)",
-                |_, i: &[&[u8]]| {
-                    let bytes = i[0];
-                    match i[1] {
-                        b"=" => {
-                            if bytes != i[2] {
-                                return Err(anyhow!("unequal bytes"));
-                            } 
-                        }
-                        _ => return Err(anyhow!("unknown op")),
-                    };
-                    Ok(i[0].to_vec())
-                }
-            )
-        ])
-    }
-    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
-        &[
-            eval_fnc!("or",":{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty",
-                  |_,i:&[ABE],scope:&dyn Scope|{
-                      let mut it = i.split(|v| v.is_colon());
-                      if !it.next().context("missing expr")?.is_empty(){ return Err(anyhow!("expected ':EXPR'"))};
-                      let mut err = vec![];
-                      for o in it{
-                          match eval(&EvalCtx { scope }, o){
-                              Ok(b) => return Ok(b.concat()),
-                              Err(e) => err.push((o,e)),
-                          }
-                      }
-                      Err(anyhow!("{err:#?}"))
-                  }
-            )
-        ]
-    }
-}
 
-#[derive(Copy, Clone)]
-pub struct Encode;
-impl EvalScopeImpl for Encode {
-    fn about(&self) -> (String, String) {
-        (
-            "encode".into(),
-            "attempt an inverse of a set of functions".into(),
-        )
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        &[ScopeFunc {
-            info: ScopeFuncInfo {
-                id: "eval",
-                init_eq: None,
-                to_abe: false,
-                argc: 1..=1,
-                help: "parse and evaluate",
-            },
-            apply: |_, inp, _, scope| {
-                let expr = parse_abe_b(inp[0])?;
-                let ctx = EvalCtx { scope };
-                AR::Value(eval(&ctx, &expr)?.concat())
-            },
-            to_abe: none,
-        },
-          ScopeFunc {
-              info: ScopeFuncInfo {
-                  id: "?",
-                  init_eq: None,
-                  to_abe: false, // TODO
-                  argc: 2..=8,
-                  help: "encode",
-              },
-              apply: |_, inp, _, scope| {
-                  let ctx = EvalCtx{scope};
-                  if inp.len() > 2 { return ApplyResult::Err(anyhow!("Options not yet supported"))};
-                  let kind = std::str::from_utf8(inp[1]).context("bad encoder")?;
-                  let r = encode(&ctx, inp[0], kind, false)?;
-                  AR::Value(r.into_bytes())
-              },
-              to_abe: none,
-          },
-        ]
-    }
-    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
-        &[
-            ScopeMacro {
-                info: ScopeMacroInfo { id: "?", help: "find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]* " },
-                apply:|_,abe,scope|-> ApplyResult{
-                    let ctx = EvalCtx{scope};
-                    let (head,abe) = take_first(abe)?;
-                    is_colon(head)?;
-                    let mut it = abe.split(|v| v.is_fslash());
-                    let id = it.next().context("missing argument")?;
-                    let rest = it.as_slice();
-                    let bytes = eval(&ctx, id)?.concat();
-                    AR::Value(encode_abe(&ctx, &bytes, rest,false)?.into_bytes())
-                }
-            },
-            ScopeMacro {
-                info: ScopeMacroInfo { id: "~?", help: "same as '?' but ignores all errors" },
-                apply:|_,abe,scope|-> ApplyResult{
-                    let ctx = EvalCtx{scope};
-                    let (head,abe) = take_first(abe)?;
-                    is_colon(head)?;
-                    let mut it = abe.split(|v| v.is_fslash());
-                    let id = it.next().context("missing argument")?;
-                    let rest = it.as_slice();
-                    let bytes = eval(&ctx, id)?.concat();
-                    AR::Value(encode_abe(&ctx, &bytes, rest,true)?.into_bytes())
-                }
-            },
-            ScopeMacro {
-                info: ScopeMacroInfo { id: "e", help: "eval inner expression list. Useful to avoid escapes: eg file:{/e:/some/dir:thing}:opts does not require escapes the '/' " },
-                apply:|_,abe,scope|-> ApplyResult{
-                    let (head,abe) = take_first(abe)?;
-                    is_colon(head)?;
-                    let ctx = EvalCtx{scope};
-                    ApplyResult::Value(eval(&ctx, abe)?.concat())
-                }
-            },
-        ]
-    }
-}
-
-#[derive(Copy, Clone)]
-pub struct Help;
-impl EvalScopeImpl for Help {
-    fn about(&self) -> (String, String) {
-        ("help".into(), String::new())
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        &[ScopeFunc {
-            apply: |_, i: &[&[u8]], _, scope| {
-                ApplyResult::Value({
-                    if let Some(id) = i.get(0) {
-                        let mut out = "".to_string();
-                        scope.describe(&mut |name, about, fncs, evls| {
-                            if !out.is_empty() {
-                                return;
-                            }
-                            let fs: Vec<_> = fncs.collect();
-                            let es: Vec<_> = evls.collect();
-                            if fs.iter().any(|e| e.id.as_bytes() == *id)
-                                || es.iter().any(|e| e.id.as_bytes() == *id)
-                            {
-                                let _ = fmt_describer(
-                                    &mut out,
-                                    &mut Default::default(),
-                                    name,
-                                    about,
-                                    &mut fs.into_iter(),
-                                    &mut es.into_iter(),
-                                );
-                            }
-                        });
-                        if out.is_empty() {
-                            write!(&mut out, "no such fnc found")?;
-                        };
-                        out.into_bytes()
-                    } else {
-                        EvalCtx { scope }.to_string().into_bytes()
-                    }
-                })
-            },
-            info: ScopeFuncInfo {
-                id: "help",
-                init_eq: None,
-                argc: 0..=16,
-                help: "help",
-                to_abe: false,
-            },
-            to_abe: none,
-        }]
-    }
-    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
-        &[eval_fnc!(
-            "help",
-            "desribe current eval context",
-            |_, _, scope| { Ok(EvalCtx { scope }.to_string().into_bytes()) }
-        )]
-    }
-}
-
-fn fmt_describer(
-    f: &mut dyn Write,
-    seen: &mut HashSet<&'static str>,
-    name: &str,
-    about: &str,
-    funcs: &mut dyn Iterator<Item = ScopeFuncInfo>,
-    evals: &mut dyn Iterator<Item = ScopeMacroInfo>,
-) -> std::fmt::Result {
-    let (mut fnc_head, mut evl_head) = (true, true);
-    writeln!(f, "# {name}\n{about}")?;
-    for ScopeFuncInfo {
-        id,
-        init_eq,
-        argc,
-        help,
-        to_abe,
-    } in funcs
-    {
-        if std::mem::take(&mut fnc_head) {
-            writeln!(f, "## Functions")?;
-        }
-        let state = if seen.insert(id) {
-            "        "
-        } else {
-            "<partial>"
-        };
-        let fslash = if init_eq != Some(false) { "[" } else { " " };
-        let colon = if init_eq != Some(true) { "/" } else { " " };
-        let encode = if to_abe { "?" } else { " " };
-        writeln!(
-            f,
-            "- {id: <16} {fslash}{colon}{encode} {state} {argc:?}     {help}  "
-        )?;
-    }
-    for ScopeMacroInfo { id, help } in evals {
-        if std::mem::take(&mut evl_head) {
-            writeln!(f, "## Macros")?;
-        }
-        writeln!(f, "- {id: <16} {help}  ")?;
-    }
-    writeln!(f)?;
-    Ok(())
-}
 
 impl<A: Scope> Display for EvalCtx<A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -1455,7 +938,8 @@ impl<A: Scope> Display for EvalCtx<A> {
         writeln!(f, "These refers to its use as:")?;
         writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
         writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
-        writeln!(f, " '?'  => Can be 'reversed' to some extend '[../?:func]' || [?:..:func]")?;
+        writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
+        writeln!(f, "")?;
 
         let mut err = Ok(());
         let mut set = HashSet::<&'static str>::new();
@@ -1463,7 +947,7 @@ impl<A: Scope> Display for EvalCtx<A> {
             if err.is_err() {
                 return;
             }
-            err = fmt_describer(f, &mut set, name, about, fncs, macros);
+            err = crate::scope::help::fmt_describer(f, &mut set, name, about, fncs, macros);
         });
         err
     }
@@ -1486,48 +970,8 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
     }
 }
 
-#[derive(Copy,Clone)]
-pub struct Comment;
-impl EvalScopeImpl for Comment{
-    fn about(&self) -> (String, String) {
-        ("comment function / void function. evaluates to nothing".into(), String::new())
-    }
 
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        &[
-            fnc!("C",1..=16,"the comment function. all arguments are ignored. evaluates to ''",|_,_| Ok(vec![]))
-        ]
-    }
 
-    fn list_macros(&self) -> &[ScopeMacro<&Self>] {
-        &[]
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ArgV<'o>(pub ArrayVec<&'o [u8],8>);
-impl<'o> ArgV<'o>{
-    pub fn try_fit(v: &'o [&'o [u8]]) -> Option<Self>{
-        v.try_into().map(ArgV).ok()
-    }
-}
-impl<'o> EvalScopeImpl for ArgV<'o>{
-    fn about(&self) -> (String, String) {
-        ("user input list".into(), "Provide values, access with [0] [1] .. [7] ".into())
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fncs!([
-            ( "0" , 0..=0,Some(true), "argv[0]", |t:&Self,_| Ok(t.0.get(0).context("no 0 value")?.to_vec())),
-            ( "1" , 0..=0,Some(true), "argv[1]", |t:&Self,_| Ok(t.0.get(1).context("no 1 value")?.to_vec())),
-            ( "2" , 0..=0,Some(true), "argv[2]", |t:&Self,_| Ok(t.0.get(2).context("no 2 value")?.to_vec())),
-            ( "3" , 0..=0,Some(true), "argv[3]", |t:&Self,_| Ok(t.0.get(3).context("no 3 value")?.to_vec())),
-            ( "4" , 0..=0,Some(true), "argv[4]", |t:&Self,_| Ok(t.0.get(4).context("no 4 value")?.to_vec())),
-            ( "5" , 0..=0,Some(true), "argv[5]", |t:&Self,_| Ok(t.0.get(5).context("no 5 value")?.to_vec())),
-            ( "6" , 0..=0,Some(true), "argv[6]", |t:&Self,_| Ok(t.0.get(6).context("no 6 value")?.to_vec())),
-            ( "7" , 0..=0,Some(true), "argv[7]", |t:&Self,_| Ok(t.0.get(7).context("no 7 value")?.to_vec()))
-        ])
-    }
-}
 
 #[test]
 fn try_applyresult(){

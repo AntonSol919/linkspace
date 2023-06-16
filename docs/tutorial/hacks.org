@@ -1,0 +1,24 @@
+#+TITLE: Hacks
+#+SUBTITLE: A bunch of quick hacks to try out
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+
+*** A poor man's REPL 
+
+#+BEGIN_SRC bash :session cli0 :exports code 
+  lk eval [argv:-1] argv -D'\n' --data-eval --data-stdin 
+#+END_SRC
+
+Each read goes into argv, which is added to the context of each read.
+
+#+BEGIN_SRC bash :session cli0 :exports code 
+  hello
+  [0] world
+  The value of \[1\] = [1]
+  # press Ctrl-d to close stdin
+#+END_SRC
+
+prints ~The value of [1] = hello world~
+
+# add video streaming example

@@ -220,7 +220,9 @@ pub const fn calc_free_space(
 ) -> isize {
     let mut size = if signed { MAX_KEYPOINT_DATA_SIZE } else { MAX_LINKPOINT_DATA_SIZE} as isize;
     size = size.saturating_sub_unsigned(links.len() * std::mem::size_of::<Link>());
-    size = size.saturating_sub_unsigned(path.spath_bytes().len() + 8);
+    if !path.spath_bytes().is_empty(){
+        size = size.saturating_sub_unsigned(path.spath_bytes().len() + 8);
+    }
     size = size.saturating_sub_unsigned(data.len());
     size
 }

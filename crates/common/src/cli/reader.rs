@@ -48,16 +48,20 @@ pub fn check_stdin(pkt_in:&PktReadOpts,read_in:&DataReadOpts,read_default_in:boo
 // Shared between reading packets and reading arbitrary data
 #[derive(Parser, Clone, Debug,Default,PartialEq)]
 pub struct CommonReadOpts{
+    /// open a path to read from
     #[clap(long)]
     pub data: Option<PathBuf>,
     /// default when stdin is not used for packets
     #[clap(long,conflicts_with_all(["data","data_str","no_data","data_repeat"]))]
     pub data_stdin: bool,
+    /// read a static string
     #[clap(long, conflicts_with_all(["data","data_stdin","no_data"]))]
     pub data_str: Option<String>,
+    /// read nothing
     #[clap(long,conflicts_with_all(["data","data_str","data_stdin"]))]
     pub no_data: bool,
-    #[clap(long, alias = "rr")]
+    /// after finishing jump back to start
+    #[clap(long, alias = "rr", conflicts_with("data_stdin"))]
     pub data_repeat: bool,
 }
 impl CommonReadOpts {
@@ -95,15 +99,16 @@ impl CommonReadOpts {
 pub struct DataReadOpts {
     #[clap(flatten)]
     pub common : CommonReadOpts,
+    /// set a byte to function as a delimiter.
     #[clap(short = 'D', long)]
     pub data_delim: Option<TypedABE<Vec<u8>>>,
-    /// Maximum amount read per call - defaults to free space in packet
+    /// maximum amount read per call - defaults to free space in packet
     #[clap(short = 'n', long)]
     pub data_bufsize: Option<usize>,
-    /// Limit many results to read
+    /// limit number of 'reads' 
     #[clap(long)]
-    pub data_limit: Option<usize>,
-    /// Set how to deal when the data ( after eval ) exceeds the free space in a packet.
+    pub data_reads: Option<usize>,
+    /// set how to deal when the data ( after eval ) exceeds the free space in a packet.
     #[arg(long,value_enum)]
     pub data_overflow : Option<EMode>,
     /// evaluate data as ABE expression.
@@ -156,7 +161,7 @@ impl ReadSource {
     }
     pub fn read(&mut self, take: u64, delim:Option<u8>,buf:&mut Vec<u8>) -> std::io::Result<usize>{
         match delim {
-            Some(byte) => self.bufr().take(take+ 1).read_until(byte, buf),
+            Some(byte) => self.bufr().take(take.saturating_add(1)).read_until(byte, buf),
             None => self.bufr().take(take).read_to_end(buf)
         }
     }
@@ -181,7 +186,7 @@ impl DataReadOpts{
         tracing::trace!(?input);
         Ok(Reader {
             next: None,
-            call_limit: self.data_limit.unwrap_or(usize::MAX),
+            call_limit: self.data_reads.unwrap_or(usize::MAX),
             input,
             cycle: self.common.data_repeat ,
             eval: self.data_eval,

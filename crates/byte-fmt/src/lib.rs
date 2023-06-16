@@ -30,10 +30,10 @@ pub use abe;
 pub use abe::eval;
 use abe::{
     abtxt::{ABTxtError, MAX_STR, as_abtxt},
-    ast::{as_bytes, no_ctrs, MatchError},
+    ast::{no_ctrs, MatchError},
     cut_prefix_nulls, cut_prefixeq,
-    eval::{ABList, ApplyResult, EScope, EvalScopeImpl, ScopeFunc, Comment},
-    fit_back, fncs, thiserror, ABEValidator, FitSliceErr, ToABE, ABE,
+    eval::{ABList },
+    fit_back, thiserror, ABEValidator, FitSliceErr, ToABE, ABE,
 };
 
 use std::fmt::{self, Debug, Display};
@@ -50,12 +50,6 @@ pub fn ab_slice<X>(i: &[X]) -> &[AB<X>] {
 }
 
 use base64_crate::prelude::*;
-pub fn base64(b: impl AsRef<[u8]>) -> String {
-    BASE64_URL_SAFE_NO_PAD.encode(b.as_ref())
-}
-pub fn base64_decode(st: impl AsRef<[u8]>) -> Result<Vec<u8>, DecodeError> {
-    BASE64_URL_SAFE_NO_PAD.decode(st.as_ref())
-}
 
 pub fn b64(b: &[u8], mini: bool) -> String {
     if mini{
@@ -64,22 +58,8 @@ pub fn b64(b: &[u8], mini: bool) -> String {
         base64(b)
     }
 }
-pub fn mini_b64(v: &[u8]) -> String {
-    let mut r = String::with_capacity(10);
-    let len = v.len();
-    let padc = len / 8;
-    let st = base64(v);
-    if v.len() <= 12 {
-        return st;
-    }
-    r.push_str(&st[0..6]);
-    r.push_str(&":".repeat(padc / 2));
-    if padc % 2 != 0 {
-        r.push('.');
-    }
-    r.push_str(&st[st.len() - 2..]);
-    r
-}
+pub use abe::scope::base::{base64,base64_decode,mini_b64};
+
 
 #[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
@@ -534,54 +514,8 @@ where
         Display::fmt(self, f)
     }
 }
-/// Implements [AAAAAA/b64] and [\0\0\xff/2b64]
-#[derive(Copy, Clone, Debug)]
-pub struct B64EvalFnc;
-impl EvalScopeImpl for B64EvalFnc {
-    fn about(&self) -> (String, String) {
-        ("b64".into(), "base64 url-safe no-padding".into())
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fncs!([
-            ("?b",1..=1,"encode base64",|_,i:&[&[u8]]| Ok(base64(i[0]).into_bytes())),
-            ("2mini",1..=1,"encode mini",|_,i:&[&[u8]]| Ok(mini_b64(i[0]).into_bytes())),
-            ( @C "b", 1..=1, None, "decode base64",
-               |_,i:&[&[u8]],_,_| Ok(base64_decode(i[0])?),
-               |_,b:&[u8],opts:&[ABE]| -> ApplyResult<String>{
-                   if opts.is_empty(){
-                       return ApplyResult::Value(format!("[b:{}]",base64(b)));
-                   }
-                   for len_st in opts.iter().filter_map(|v| as_bytes(v).ok()){
-                       let len = std::str::from_utf8(len_st)?.parse::<u32>()?;
-                       if len as usize == b.len() {
-                           return ApplyResult::Value(format!("[b:{}]",base64(b)));
-                       }
-                   }
-                   ApplyResult::NoValue
-               }
-             )
-        ])
-    }
-}
 
-use abe::eval::{BytesFE, Encode, EvalCtx, Help, LogicOps, UIntFE};
-pub type EvalCore = (
-    (EScope<BytesFE>, EScope<UIntFE>, EScope<B64EvalFnc>),
-    ((EScope<Comment>,EScope<Help>), EScope<LogicOps>, EScope<Encode>),
-);
-pub type EvalCoreCtx = EvalCtx<EvalCore>;
-pub const EVAL_SCOPE: EvalCore = core_scope();
-pub const fn core_scope() -> EvalCore {
-    (
-        (EScope(BytesFE), EScope(UIntFE), EScope(B64EvalFnc)),
-        ((EScope(Comment),EScope(Help)), EScope(LogicOps), EScope(Encode)),
-    )
-}
-pub const fn core_ctx() -> EvalCoreCtx {
-    EvalCtx {
-        scope: core_scope()
-    }
-}
+
 
 impl AB<[u8;16]> {
     pub const fn to_u128(self) -> u128 {

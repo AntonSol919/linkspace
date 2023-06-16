@@ -59,19 +59,22 @@ Having the keys ordered by 'first' might set a bad incentive.
 - Detangle field_ids abe and ruletype
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.
 - make testset its own crate ( required for selectlink interface )
-- review all AS casts
 - core::env cleanup
 - common:rx needs a rewrite. Lots of cruft from a time it was a multithreaded dispatch.  
 Probably want a non-borrow-lock solution.
 instead of a cmd queue we could do a 'close' as
 WatchEntry{ update_now: RefCell<Result<(),Option<Box<WatchEntry>>>>> ...} and check update_now after pkt_handle is complete
 must clarify nested query open semantics.
+
 - DGPDExpr should impl ABEValidator and be split up into two types. One where the spath length is know and one where it can be dynamic
 - PktPredicates.index(RuleType) -> &mut dyn FieldPred
 - :mode:hash-* iteration should use uint_set_info
 - Normalize lingo around abe "seperators" and "ctr characters"
-- stack spath/ipath - max size is 250bytes. Could impl copy
+- Stack spath/ipath - max size is 250bytes. Could impl copy
+
 - abe - change macro '{}' into '[]'
+- Making abe 'list_functions' instead be a visitor pattern with &mut cb(Func) could simplify some things. 
+
 - Add a UnHashed<Pkt> type such that hashing can be delayed and moved to another thread.
 
 

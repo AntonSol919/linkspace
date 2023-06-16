@@ -9,13 +9,11 @@ use crate::consts::TEST_GROUP;
 pub use crate::stamp_fmt::StampEF;
 pub use linkspace_pkt::abe::eval::*;
 pub use linkspace_pkt::abe::*;
-pub use linkspace_pkt::abe::*;
-use linkspace_pkt::core_scope;
-pub use linkspace_pkt::B64EvalFnc;
-use linkspace_pkt::EvalCore;
 use linkspace_pkt::GroupID;
 use linkspace_pkt::PathFE;
 use linkspace_pkt::B64;
+use linkspace_pkt::abe::scope::EvalCore;
+use linkspace_pkt::abe::scope::core_scope;
 
 pub const EVAL0_1: &str = "0.1";
 

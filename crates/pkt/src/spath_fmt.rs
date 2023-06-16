@@ -11,10 +11,10 @@ use byte_fmt::{
         ast::{is_fslash, take_ctr_expr, ABEError, Ctr, MatchError},
         convert::TypedABE,
         eval::ABList,
-        ABEValidator, ToABE, ABE,
+        ABEValidator, ToABE, ABE, scope::{core_scope, uint::parse_b},
     },
     eval::{
-        parse_b, ApplyErr, ApplyResult, EvalCtx, EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
+         ApplyErr, ApplyResult, EvalCtx, EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
         ScopeFunc,
     },
     *,

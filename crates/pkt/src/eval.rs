@@ -6,8 +6,9 @@
 use crate::*;
 use anyhow::{anyhow, bail, Context};
 use byte_fmt::abe::ast::Ctr;
+use byte_fmt::abe::scope::core_ctx;
 use byte_fmt::abe::{eval::*, ToABE, ABE};
-use byte_fmt::abe::{eval_fnc, fncs};
+use byte_fmt::abe::{scope_macro, fncs};
 
 pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     let pkt_env = EScope(NetPktFieldsEval(pkt));
@@ -134,7 +135,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
         )])
     }
     fn list_macros(&self) -> &[ScopeMacro<&Self>] {
-        &[eval_fnc!(
+        &[scope_macro!(
             "links",
             ":{EXPR} where expr is repeated for each link binding 'ptr' and 'tag'",
             |links: &Self, abe: &[ABE], scope| {

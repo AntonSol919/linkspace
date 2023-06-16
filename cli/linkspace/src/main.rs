@@ -37,7 +37,7 @@ use linkspace_common::{
     prelude::{
         predicate_type::PredInfo,
         query_mode::{Mode, Order, Table},
-        *,
+        *, 
     }, predicate_aliases::ExtWatchCLIOpts,
 };
 use tracing_subscriber::EnvFilter;
@@ -54,6 +54,7 @@ pub mod status;
 pub mod watch;
 pub mod get_links;
 pub mod datapoint;
+pub mod eval;
 
 static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
     use std::fmt::Write;
@@ -147,15 +148,7 @@ enum Command {
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
     Use "[help]" for a list of functions.
     */
-    Eval {
-        /// output json ABList format 
-        #[clap(long)]
-        json: bool,
-        abe: String,
-        /// Read stdin as argv [0]
-        #[clap(long,default_value_t)]
-        stdin: bool
-    },
+    Eval(eval::EvalOpts),
     /** abe   - eval expression for each pkt from stdin
 
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
@@ -413,36 +406,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         )?,
         Command::Watch { watch, write } => watch::watch(common, watch,write)?,
         Command::Filter(filter) => filter::select(common, filter)?,
-        Command::Eval { json, abe ,stdin} => {
-            let abe = parse_abe(&abe)?;
-
-            use std::io::Read;
-            let mut argv = vec![];
-            let mut bytes = vec![];
-            if stdin{
-                std::io::stdin().read_to_end(&mut bytes)?;
-                tracing::trace!(?bytes);
-                argv.push(bytes.as_slice());
-            }
-            let argv = ArgV::try_fit(&argv).unwrap();
-
-            let ctx = common.eval_ctx();
-            let ctx = ctx.scope(EScope(argv));
-            let val = eval(&ctx, &abe)?;
-            let mut out = std::io::stdout();
-            if json {
-                use serde_json::{to_value,value::Value};
-                let mut lst = val.inner().iter()
-                    .map(|(b,v)| (String::from_utf8(b.clone()).map(Value::String)
-                                  .unwrap_or_else(|_|to_value(b).unwrap()),v))
-                    .map(to_value);
-                let vec = Value::Array(lst.try_collect()?);
-                println!("{vec}");
-            } else {
-                out.write_all(&val.concat())?;
-            }
-            out.flush()?;
-        }
+        Command::Eval(eval_opts) => eval::eval_cmd(common, eval_opts)?,
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
         Command::Route { field_mut , pkt_in} => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
