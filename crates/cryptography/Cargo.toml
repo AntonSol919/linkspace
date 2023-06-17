@@ -13,7 +13,7 @@ repository.workspace = true
 [dependencies]
 
 blake3 = { workspace = true, features = ["traits-preview"] }
-k256 = "0.11"
+k256 = {version="0.13.1",features=["schnorr"]}
 rand.workspace = true
 rand_core.workspace = true
 thiserror.workspace = true

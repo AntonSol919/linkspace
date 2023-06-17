@@ -38,12 +38,17 @@ pub type Signature = [u8; 64];
 pub use ops::*;
 #[cfg(not(miri))]
 pub mod ops {
+
+    use k256::schnorr::signature::hazmat::PrehashVerifier;
+    use rand::{Rng};
+
     use super::*;
     pub fn sign_hash(key: &SigningKey, hash: &Hash) -> Signature {
-        *key.0
-            .try_sign_prehashed(hash, &Default::default())
+        let mut aux_rand = [0;32];
+        if false { rand::thread_rng().fill(&mut aux_rand);}
+        key.0.sign_prehash_with_aux_rand(hash,&aux_rand)
             .unwrap()
-            .as_bytes()
+            .to_bytes()
     }
     pub fn validate_signature(
         pubkey: &PublicKey,
@@ -51,7 +56,7 @@ pub mod ops {
         hash: &Hash,
     ) -> Result<(), k256::ecdsa::Error> {
         schnorr::VerifyingKey::from_bytes(pubkey)?
-            .verify_prehashed(hash, &schnorr::Signature::try_from(signature.as_slice())?)
+            .verify_prehash(hash, &schnorr::Signature::try_from(signature.as_slice())?)
     }
     pub fn hash_segments(s: &[&[u8]]) -> Hash {
         let mut hasher = blake3::Hasher::new();
