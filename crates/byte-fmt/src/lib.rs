@@ -46,7 +46,7 @@ pub fn as_abtxt_c(mut b: &[u8], cut: bool) -> std::borrow::Cow<'_, str> {
 }
 
 pub fn ab_slice<X>(i: &[X]) -> &[AB<X>] {
-    unsafe { std::mem::transmute(i) }
+    unsafe { std::slice::from_raw_parts(i.as_ptr().cast(), i.len())}
 }
 
 use base64_crate::prelude::*;
@@ -72,7 +72,7 @@ pub struct B64<N = [u8; 32]>(pub N);
 
 impl<'o> From<&'o [u8]> for &'o AB<[u8]> {
     fn from(d: &'o [u8]) -> Self {
-        unsafe { *(d.as_ptr() as *const Self) }
+        unsafe { *(d.as_ptr().cast()) }
     }
 }
 
@@ -359,7 +359,7 @@ impl<N> AsRef<N> for B64<N> {
 
 impl AsRef<[u8; 32]> for B64<[u128; 2]> {
     fn as_ref(&self) -> &[u8; 32] {
-        unsafe { std::mem::transmute(self) }
+        unsafe { *std::ptr::from_ref(self).cast()}
     }
 }
 impl<N> ToABE for B64<N>
@@ -384,7 +384,7 @@ impl<N> B64<N> {
         self.0
     }
     pub fn from_ref(b: &N) -> &B64<N> {
-        unsafe { std::mem::transmute(b) }
+        unsafe { *ptr::from_ref(b).cast() }
     }
 }
 
@@ -501,9 +501,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut out = [0;43];
-        let _ = BASE64_URL_SAFE_NO_PAD.encode_slice(self.as_ref(), &mut out);
-        f.write_str(unsafe { std::str::from_utf8_unchecked(&out)})
+        base64_crate::display::Base64Display::new(&self.as_ref(), &BASE64_URL_SAFE_NO_PAD).fmt(f)
     }
 }
 impl<N> std::fmt::Debug for B64<N>

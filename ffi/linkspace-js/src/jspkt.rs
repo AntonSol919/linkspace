@@ -37,15 +37,18 @@ impl Pkt {
         PktFmt(&self.0.netpktptr()).to_string()
         //{format!("<not compiled>")}
     }
+    // TODO pass js function to format data field
     #[wasm_bindgen(js_name = toHTML)]
-    pub fn to_html(&self) -> Result<String,JsValue>{
+    pub fn to_html(&self, include_lossy_escaped_data:Option<bool>) -> Result<String,JsValue>{
         #[cfg(feature = "abe")]
         { todo!()}
 
         #[cfg(not(feature = "abe"))]
         {
             let mut buf = String::new();
-            PktFmt(&self.0.netpktptr()).to_html(&mut buf, |_,_| Ok(()))
+
+            PktFmt(&self.0.netpktptr())
+                .to_html(&mut buf,include_lossy_escaped_data.unwrap_or(true), None)
                 .map_err(|e|e.to_string())?;
             Ok(buf)
         }

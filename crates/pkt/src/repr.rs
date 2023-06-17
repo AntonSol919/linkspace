@@ -3,10 +3,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::{sync::LazyLock, fmt::{Formatter, Result, self}};
+use std::{sync::LazyLock, fmt::{Formatter, Result, self, Display}};
 
-use bstr::BStr;
-use byte_fmt::{abe::{parse_abe, ABE, ToABE}, B64};
+use bstr::{BStr };
+use byte_fmt::{abe::{parse_abe, ABE, ToABE}, B64, AB};
 
 use crate::{NetPkt, PointExt, Point, PRIVATE, PUBLIC, TEST_GROUP };
 /// default fmt in many cases and output for `[pkt]`
@@ -93,14 +93,21 @@ pub fn fmt_b64(bytes:&B64, class:&'static str , f:&mut impl fmt::Write) -> Resul
         e if e == *TEST_GROUP => "[#:test]".into(),
         e => {use_mini = true; e.to_abe_str()}
     };
-    let code = bytes.0[0] >> 4;
-    write!(f,"<div class=\"{class} lk-c{code}\" lk-b64=\"{b64}\">{}</div> ",
+    let ccode = bytes.0[14] >> 4;
+    let dcode = bytes.0[15] >> 4;
+    write!(f,"<span lk-{class}='{b64}' class='lk-b64 lk-c{ccode} lk-d{dcode}'>{}</span>",
             if use_mini{bytes.b64_mini()} else {group_abe})
- 
 }
 impl<'o> PktFmt<'o>{
+    /** create a html fragment describing the packet
+
+    The format is a bit arbitrary. Its designed to be safe to paste into an html document and usable for most usecases. But it is verbose and somewhat opinionated.
+    If it doesn't fit your usecase, just build your own template.
+    Note: the lk-c[0..31] and lk-d[0..31] class's are derived from the hash and should be used for color coding when appropriate.
+    */
     pub fn to_html<F: fmt::Write>(&self, f: &mut F,
-                   data_el: impl FnOnce(&dyn NetPkt, &mut F) -> Result
+                   write_escaped_lossy_data: bool,
+                   include: Option<&mut dyn FnMut(&dyn NetPkt, &mut F) -> Result>
     ) -> Result{
 
         let pkt = self.0;
@@ -108,37 +115,78 @@ impl<'o> PktFmt<'o>{
         let hash = pkt.hash_ref().to_string();
         let code = pkt.hash_ref().0[0] >> 4;
 
-        let point = pkt.as_point();
-        let ptype = point.point_header_ref().point_type.as_str();
+        let data = pkt.data();
+        let size = data.len();
 
-        write!(f,"<div lk-point=\"{hash}\" class=\"lk-point {ptype} lk-c{code}\">")?;
-        fmt_b64(pkt.hash_ref(), "lk-hash", f)?;
+        let links_len = pkt.get_links().len();
+        let point = pkt.as_point();
+        let ptype = point.point_header_ref().point_type.bits();
+        let path_len = pkt.get_path_len();
+        let with_pubkey = pkt.pubkey().map(|e| format!("lk-pubkey='{e}'")).unwrap_or(String::new());
+        write!(f,"<div lk-point='{hash}' lk-ptype='{ptype}' class='lk-c{code}' {with_pubkey}
+lk-data-size='{size}' lk-links-len='{links_len}' lk-path-len='{path_len}'>")?;
+        fmt_b64(pkt.hash_ref(), "hash", f)?;
 
         if let Some(lh) = point.linkpoint_header(){
             if let Some(kp) = point.keypoint_header(){
-                fmt_b64(&kp.signed.pubkey, "lk-pubkey", f)?;
+                fmt_b64(&kp.signed.pubkey, "pubkey", f)?;
             }
-            fmt_b64(&lh.group, "lk-group", f)?;
-            write!(f,"<div class=\"lk-domain\">{}</div>",lh.domain.as_str(true))?;
-            
-            let _path = pkt.get_path().to_string();
-            let _create = pkt.get_create_stamp().get();
+            let domain64 = B64(lh.domain.0);
+            let domain = EscapeHTML(lh.domain.as_str(true));
+            write!(f,"<span lk-domain='{domain64}'>{domain}</span>")?;
+            fmt_b64(&lh.group, "group", f)?;
+
+            let create = pkt.get_create_stamp();
+            write!(f,"<span lk-create='{create}'>{create}</span>")?;
+
+            let path = pkt.get_path();
+            write!(f,"<span lk-path-len='{path_len}' >{path_len}</span>")?;
+            let pathb = B64(path.spath_bytes());
+            writeln!(f,"<ol lk-path='{pathb}' lk-path-len='{path_len}'>")?;
+            for (i,p) in path.iter().enumerate(){
+                let pb64= B64(p);
+                let pathc = EscapeHTML( AB(p));
+                write!(f,"<li lk-path{i}='{pb64}'>{pathc}</li>")?;
+            }
+            writeln!(f,"</ol>")?;
 
             let links_len = pkt.get_links().len();
-            write!(f,"<div class=\"lk-links-len\">{links_len}</div>")?;
+            write!(f,"<span lk-links-len='{links_len}'>{links_len}</span>")?;
 
-            write!(f,"<ol class=\"lk-links\">")?;
+            writeln!(f,"<ol lk-links='{links_len}'>")?;
             for crate::Link{ptr,tag}in pkt.get_links(){
-                write!(f,"<li><div class=\"lk-tag\">{}</div>",tag.as_str(true))?;
-                fmt_b64(&ptr,"lk-ptr",f)?;
-                write!(f,"</li>")?;
+                let tagb64 = B64(tag.0); // 
+                let tag = EscapeHTML(tag.as_str(true));
+                write!(f,"<li lk-link-tag='{tagb64}'><span lk-tag='{tagb64}'>{tag}</span>")?;
+                fmt_b64(&ptr,"ptr",f)?;
+                writeln!(f,"</li>")?;
             }
             write!(f,"</ol>")?;
         }
 
-        let data = pkt.data();
-        write!(f,"<div class=\"lk-data-size\">{}</div>",data.len())?;
-        data_el(self.0,f)?;
-        write!(f,"</dvi>")
+        writeln!(f,"<span lk-data-size='{size}'>{size}</span>")?;
+        if write_escaped_lossy_data {
+            let data = EscapeHTML(BStr::new(data));
+            write!(f,"<pre lk-data='{size}'>{data}</pre>")?;
+        }
+        if let Some(incf) = include {
+            incf(self.0,f)?;
+        }
+        write!(f,"</div>")
+    }
+}
+
+struct EscapeHTML<X>(X);
+impl<X:Display>  Display for EscapeHTML<X>{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        for ch in self.0.to_string().chars(){
+            match ch{
+                '&' =>  f.write_str("&amp")?,
+                '<' =>  f.write_str("&lt")?,
+                '>' =>  f.write_str("&gt")?,
+                o => write!(f,"{o}")?
+            }
+        }
+        Ok(())
     }
 }

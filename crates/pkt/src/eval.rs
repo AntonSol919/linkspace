@@ -101,6 +101,17 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
                 let ctx = EvalCtx{scope}.pre_scope(pkt_scope(pkt.0));
                 Ok(abe::eval::eval(&ctx,&DEFAULT_FMT).unwrap().concat())
             }, none),
+            ( @C "pkt-quick",0..=0,Some(true),"same as pkt but without dynamic lookup",|pkt:&Self,_,_,_| {
+                Ok(PktFmt(pkt.0).to_string().into_bytes())
+            }, none),
+
+
+            ( @C "html-quick",0..=0,Some(true),"same as html but without dynamic lookup",|pkt:&Self,_,_,_| {
+                let mut buf = String::new();
+                PktFmt(pkt.0).to_html(&mut buf,true,None)?;
+                Ok(buf.into_bytes())
+            }, none),
+
             ( "netbytes", 0..=0, Some(true),"raw netpkt bytes",|pkt:&Self,_| Ok(pkt.0.byte_segments().to_bytes().into_vec()))
         ])
     }

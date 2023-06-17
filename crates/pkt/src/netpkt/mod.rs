@@ -49,6 +49,11 @@ pub trait NetPkt: Debug {
     fn net_header_mut(&mut self) -> Option<&mut NetPktHeader> {
         None
     }
+    /**
+    recv is somewhat special.
+    It depends on the context. Reading directly from the database it should return the stamp at which it was inserted.
+    NOTE: Do not rely on this value being unique - in the db or otherwise.
+    */
     fn recv(&self) -> Option<Stamp>;
 
     fn byte_segments(&self) -> ByteSegments;
@@ -126,6 +131,7 @@ pub trait NetPktExt
 where
     Self: NetPkt,
 {
+    /// see [NetPkt::recv]
     fn get_recv(&self) -> Stamp {
         self.recv().unwrap_or_else(now)
     }

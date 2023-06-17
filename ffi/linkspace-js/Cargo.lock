@@ -8,6 +8,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "arrayvec",
+ "base64 0.21.0",
  "bstr",
  "hex",
  "serde",
