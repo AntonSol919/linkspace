@@ -14,7 +14,9 @@
   lk --version
 #+END_SRC
 
-*** ~lk datapoint~
+* creating points
+
+** datapoint
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   echo -n hello world! | lk datapoint | lk pktf
@@ -57,7 +59,7 @@ The max size is ~2^{16}-512-PointHeader_{4} = 65020~[fn:: The maximum point size
     cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
 #+END_SRC
 
-*** Linkpoint
+** linkpoint
 
 A ~linkpoint~ has the additional fields:
 
@@ -119,7 +121,7 @@ The max size is still 2^{16}-512-PointHeader_{4}. Free space is shared between o
 - ~--create [epoch]~ : For demonstrating 2 packets with the same fields have the same hash
 
 
-** Keypoints
+** keypoint
 
 Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 
@@ -133,7 +135,7 @@ Or use ~--sign~ on a linkpoint command
   lk link :: --sign --password "my secret" | lk pktf "[pubkey:str]"
 #+END_SRC
 
-** Collect
+** collect
 :PROPERTIES:
 :CUSTOM_ID: collect
 :END:
@@ -146,11 +148,24 @@ Collect creates a linkpoint with links pointing to the incoming pkts.
       lk pktf "[type:str]\t[pubkey:str] [data_size:str] [links_len:str]"
 #+END_SRC
 
-** Rewrite 
+** rewrite
 
-** Watch 
+* query and filter
 
-** Eval
+** print-query
+
+** filter
+
+* database and runtime
+
+** save
+
+** watch
+
+* ABE
+
+** eval
+
 You can use ~lk eval~ to run a single expression instead of for each packet in a stream.
 
 src_bash[:exports both]{lk eval "[:hello] world"}

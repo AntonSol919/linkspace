@@ -3,14 +3,19 @@
 
 #+SETUPFILE: ../utils.org
 
+
 #+BEGIN_VERSE
 This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
-This is a technical document describing linkspace from first principle.
+This is a technical document describing linkspace protocol, library, and how they fit together.
 You should be familiar with the [[../../basics.html][basics]].
 If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk --version
+#+END_SRC
 
 * Introduction
 
@@ -196,11 +201,14 @@ It consists of these fields:
 | -Link[...]_{48}   |                                                    |
 | Data_{var<2^{16}} |                                                    |
 
-A packets' location refers to its (Domain, Group, Path) triple.
+Each (Domain,Group) is a 'tree', and each (Domain,Group,Path) is a packets 'location'.
+
 All values, including the Path, contain arbitrary bytes.
 
-The max space is shared between the links and data so beware that too much data and links won't fit into a single packet
-[fn::To overcome this, create a new linkpoint, either as a collecting or with a special tag that points to a next linkpoint] .
+An entire point can be 2^{16}-512 bytes in size. The header is always 4 bytes.
+A data point can hold a maximum of 2^{16}-512-4 bytes.
+This space is shared between the links and data so beware that too much data and links won't fit into a single packet
+[fn::To overcome this, create multiple packets and link them in a new linkpoint]
 
 #+BEGIN_VERSE
 Packet hashes, GroupID's, and public keys are 32 bytes.
@@ -459,13 +467,13 @@ printf "emoji ⌨" | lk encode -i
 #+end_bash
 
 #+begin_py
-All packet fields are arbitrary bytes, and lk_encode can print them as abtext
+All packet fields are arbitrary bytes, and lk_encode can print them as ab text
 
 #+begin_src python :session lkpy :exports both :results output verbatim
   multiline = """newline
   tab	""".encode()
 
-  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]", " ⌨".encode()]) # encode implies utf-8
+  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]"])]) # encode implies utf-8
 
   print(lk_encode(lkp.path0),"\t",list(lkp.path0))
   print(lk_encode(lkp.path1),"\t",list(lkp.path1))

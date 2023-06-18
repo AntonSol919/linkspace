@@ -8,7 +8,7 @@ This is the first a [[../index.html][series]] of tutorials to show how to use li
 
 We'll follow Bob in his journey.
 
-[[../images/bob-hi.png]]
+[[./images/bob-hi.png]]
 
 He build the greatest and must impressive game ever.  
 Or so he says.
@@ -43,7 +43,7 @@ Before you continue, please check this consent form to not hold Bob accountable 
     <label for="consent">Click to Consent [ ] </label>
 </fieldset>
 <div id="consent-ok">
-<img src="../images/bob-cheer.png" alt="bob-cheer.png">
+<img src="./images/bob-cheer.png" alt="bob-cheer.png">
 <p>With that piece of vital and productive administration out of the way, let's check out what Bob has build</p>
 </div>
 </div>
@@ -81,7 +81,7 @@ You can try the code with ~python ./examples/mineweeper/mineweeper-hotseat.py~
 
 Bob's a little disappointed with the graphics.
 Maybe someday he'll make it a 3D VR experience.
-[[../images/bob-doubt.png]]
+[[./images/bob-doubt.png]]
 
 #+begin_ctabs
 #+begin_info
@@ -98,13 +98,13 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 
 After searching high and low for a method to share it with the world, our friend Bob reaches for enlightenment.
 
-[[../images/bob-enlightend.png]]
+[[./images/bob-enlightend.png]]
 
 
 He finds linkspace.
 
-A thoroughly untested protocol with very few users.
-But he figures it's the best solution to make MineWeeper a true multiplayer game.
+A brand new protocol with very few users.
+But it has some features he can't get anywhere else and he figures it's the best solution to make MineWeeper a true multiplayer game.
 
 With linkspace:
 - his (user administrative) workload drops dramatically.
@@ -112,6 +112,7 @@ With linkspace:
 - user network/account/group problems can be solved once (hopefully by someone else).
 
 Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
+Made worse by selling one of his livers to pay the AWS bill.
 
 Developing linkspace system boils down to:
 
@@ -119,20 +120,12 @@ Developing linkspace system boils down to:
 - Optionally: set a path, add links to other packets, sign it.
 - Save that packet.
 - Build a query; a list of predicates for a packet (e.g. pubkey, hash, path). 
-- Get or watch for those results.
+- Use the query to react to packets matching it - either from the local db or as they become available.
 
+For Bob, the linkspace library is an abstraction such that all the players share a common tree where he can read from, and write into.
 
-For Bob, the linkspace library is an abstraction such that all the players share a common space where he can read from, and write into.
-
-In the linkspace world, Bob's game is a domain application.
-A program providing a friendly interface reading/writing the bytes that the developer wants to be shared around.
-
-#+begin_verse
-When the program calls the 'lk_pull' function for a query, the requested bytes saved with lk_save on another machine eventually become available.
-This is done by a linkspace group exchange process. A group exchange process is build like a domain application.
-But its role is to exchange all packets with its group ID to the members that require it.
-More on them another day.
-#+end_verse
+For a user of linkspace, Bob's game is just another domain application.
+It provides friendly interface reading/writing the bytes that the developer wants to be shared around.
 
 Bob recognizes that his game has two distinct phases.
 
@@ -188,7 +181,8 @@ data	278
 
 #+begin_ctabs
 #+begin_info
-Bob isn't infallible, so in building this he needs to test it locally.
+
+Bob isn't infallible, so he'll want to test it locally.
 The ./emulate folder contains two script to create and connect two instances locally.
 It requires tmux to be installed (available in most package managers)
 #+end_info
@@ -215,7 +209,8 @@ The bottom panel is the exchange process, the middle panel is watching the log, 
 You can test if the sessions are correctly connected by running ~linkmail.py~ and writing a message.
 
 Finally, we have to create the game packet and share it.
-Eventually this will be done with a lobby we'll create. Right now we have to manually create it for our test.
+Eventually this will be done with a [[./mineweeper-2.html][lobby system]]. Right now we create and share it manually to test our program.
+
 One method to do so is as follows:
 
 #+begin_src bash 
@@ -277,7 +272,7 @@ There are three ways to deal with cheating.
 
 Four if you count Bobs disapproval as an option.
 
-[[../images/bob-angry.png]]
+[[./images/bob-angry.png]]
 
 Keep in mind what is normal today.
 

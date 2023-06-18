@@ -358,7 +358,7 @@ Having this as the foundational 'truth' to how billions of people spend hours ea
 
 Maybe, maybe not. If a users can walk away from a host platform without losing their history, the host has to give a better deal than they do now.
 
-## Why not <alternative>?
+## Why not [alternative]?
 
 Some limitations i've found are:
 

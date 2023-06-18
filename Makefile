@@ -26,12 +26,11 @@ rust-docs:
 tutorials:
 	make -C ./docs/tutorial/
 
-# ensure our index.html is up to date.
-docs/guide/index.html: docs/guide/index.org
-	echo "TODO: Currently not able to make guide/index.html outside of emacs"
-	exit 1
+# This requires the latest `lk` to be in path - for my setup build-debug is sufficient
+guide: build-debug 
+	make -C ./docs/guide/
 
-docs: docs/guide/index.html tutorials rust-docs
+docs: guide tutorials rust-docs
 
 homepage:
 	make -C ./homepage
