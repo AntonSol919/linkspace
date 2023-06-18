@@ -1,5 +1,9 @@
 # v0.3.0
 ### General
+
+- include build_info in output
+- pkt-quick and html-quick fmt options
+- default domain/groups (set by LK_DOMAIN/LK_GROUP env)
 - rename lk_enckey/lk_keyopen => lk_key_encrypt/lk_key_decrypt
 - lk_get_all and lk_watch have similar signatures
 - split read into read and read_unchecked
@@ -8,6 +12,10 @@
 - reorder arguments to lk_*point
 - make all packet length functions explicitly u16
 - ABE : rename [env:] to [file:]
+
+### Rust
+
+Remove 'Ptr' type alias
 
 ### Python
 
