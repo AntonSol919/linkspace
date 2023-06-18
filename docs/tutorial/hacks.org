@@ -1,0 +1,43 @@
+#+TITLE: Hacks
+#+SUBTITLE: A bunch of quick hacks to try out
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+
+*** A poor man's REPL 
+
+#+BEGIN_SRC bash :session cli0 :exports code 
+  lk eval [argv:-1] argv -D'\n' --data-eval --data-stdin 
+#+END_SRC
+
+Each read goes into argv, which is added to the context of each read.
+
+#+BEGIN_SRC bash :session cli0 :exports code 
+  hello
+  [0] world
+  The value of \[1\] = [1]
+  # press Ctrl-d to close stdin
+#+END_SRC
+
+prints ~The value of [1] = hello world~
+
+# add video streaming example
+
+
+* Appendix
+
+** Single thread performance:
+
+FIXME: The debug build is significant slower - especially for keypoint:
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lscpu | grep "Model name"
+  lk --version
+  echo Datapoints
+  lk data --data /dev/zero --data-reads 10000 | pv > /dev/null
+  echo Linkpoints  
+  lk link :: --data-reads 10000 --create-int 0 --multi --data /dev/zero | pv > /dev/null
+  echo keypoints
+  lk keypoint :: --password "my secret" --data-reads 1000 --create-int 0 --multi --data /dev/zero | pv > /dev/null
+#+END_SRC
+

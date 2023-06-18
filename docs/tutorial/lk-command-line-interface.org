@@ -1,0 +1,204 @@
+#+TITLE: lk - The Linkspace CLI
+#+SUBTITLE: Getting started
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+
+
+#+BEGIN_SRC bash :session cli0 :exports none
+  cd /tmp
+  export LK_DIR=/tmp/linkspace
+#+END_SRC
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk --version
+#+END_SRC
+
+* creating points
+
+** datapoint
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo -n hello world! | lk datapoint | lk pktf
+#+END_SRC
+
+also usable as ~lk data~ and ~lk d~
+
+#+begin_ctabs
+#+begin_O
+#+end_O
+#+begin_help
+#+BEGIN_SRC bash :session cli0 :exports results :results output verbatim
+  lk data --help
+#+END_SRC
+#+end_help
+
+#+begin_xxd
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo -n hello world! | lk data | xxd
+#+END_SRC
+#+end_xxd
+#+end_ctabs
+
+
+#+begin_ctabs
+#+begin_info
+~pktf~, and many other functions, take [[../guide/index.html#ABE][ABE]] input. A byte templating language.
+
+src_bash[:exports both]{echo -n "hello" | lk d | lk pktf "[hash/?b] => [data]"}
+
+src_bash[:exports both]{echo -n "hello" | lk d | lk pktf "[hash/?b/b/?b] => [data/b2]"}
+#+end_info
+#+end_ctabs
+
+
+The max size is ~2^{16}-512-PointHeader_{4} = 65020~[fn:: The maximum point size is 2^{16}-512. The maximum packet size on the network is 2^{16}-512+64. This is to avoid fragmentation & slow edge cases whenever sizes approach ~2^{16}.]
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+    python -c 'print("-" * 150000)' | lk data > three_datapoints.lkp
+    cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
+#+END_SRC
+
+** linkpoint
+
+A ~linkpoint~ has the additional fields:
+
+- (domain_{16},group_{32}) tuple
+- path_{<240}
+- create_{8} = microseconds since UNIX epoch - defaults to 'now'.
+- links = [ (tag_{16},ptr_{32}) ]
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk linkpoint imageboard:[#:pub]:/hello/world -- \
+     a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
+     other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
+      | lk pktf
+#+END_SRC
+
+also usable as ~lk link~ and ~lk l~
+
+You can use ABE to set the tag or ptr:
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk link :: -- hello:[#:pub] my_key:[@:me:local] other:[#:0] | lk pktf
+#+END_SRC
+
+#+begin_info
+To use ~[@:me:local]~ you'll have to generate a key and create a local binding. ~lk key~ does this for you.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk --init key --decrypt-cost 0 --password "my secret" # 
+#+END_SRC
+#+end_info
+
+You can use xargs to dynamically set links, but a better tool is [[#collect][lk collect]]
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  cat three_datapoints.lkp | lk pktf "onetag:[hash:str]" | xargs lk link imageboard:[#:pub]:/a/pathname/for/this/point -- | lk pktf
+#+END_SRC
+
+Unlike ~lk datapoint~ the ~lk linkpoint~ command does not read from stdin by default
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  echo hello | lk link ::/a/path --data-stdin | lk pktf [data]
+#+END_SRC
+
+Giving no domain implies ~$LK_DOMAIN || \\0~.
+Giving no group implies ~$LK_GROUP || [#:pub]~
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  export LK_DOMAIN="imageboard"
+  export LK_GROUP="[#:test]"
+  lk link ::/a/path --data-str "hello world" | lk pktf 
+#+END_SRC
+
+The max size is still 2^{16}-512-PointHeader_{4}. Free space is shared between other fields.
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+    python -c 'print("-" * 150000)' | lk link :: --multi --create [epoch] --data-stdin -- hello:[#:pub] | lk pktf "[hash/?b] contains [data_size/?u] bytes"
+#+END_SRC
+
+- 64912 = 2^{16} - 512 - PointHeader_{4} - PathLinkHeader_{4}  - group_{32} - domain_{16} - create_{8} -  1 * Link_{48}
+- ~--multi~ : by default ~lk link~ only produces one output - prefer to use [[#collect]] for producing multiple linkpoints
+- ~--create [epoch]~ : For demonstrating 2 packets with the same fields have the same hash
+
+
+** keypoint
+
+Keypoints are linkpoints with an additional pubkey_32 and signature_64.
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk keypoint :: --password "my secret" | lk pktf 
+#+END_SRC
+
+Or use ~--sign~ on a linkpoint command
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk link :: --sign --password "my secret" | lk pktf "[pubkey:str]"
+#+END_SRC
+
+** collect
+:PROPERTIES:
+:CUSTOM_ID: collect
+:END:
+
+
+Collect creates a linkpoint with links pointing to the incoming pkts. 
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  cat three_datapoints.lkp | \
+      lk collect hello::/world --sign --password "my secret" | \
+      lk pktf "[type:str]\t[pubkey:str] [data_size:str] [links_len:str]"
+#+END_SRC
+
+** rewrite
+
+* query and filter
+
+** print-query
+
+** filter
+
+* database and runtime
+
+** save
+
+** watch
+
+* ABE
+
+** eval
+
+You can use ~lk eval~ to run a single expression instead of for each packet in a stream.
+
+src_bash[:exports both]{lk eval "[:hello] world"}
+
+src_bash[:exports both]{lk eval "[:hello/?b] world"}
+
+src_bash[:exports both]{lk eval "[:hello/?b/b] world"}
+
+src_bash[:exports both]{lk eval "[now/?u]"}
+
+src_bash[:exports both :results output]{lk eval "[now/s:str]"}
+
+src_bash[:exports both :results output]{lk eval "[epoch/s:str]"}
+
+src_bash[:exports both :results output]{lk eval "[epoch/s:delta]"}
+
+*** LNS 
+
+src_bash[:exports both :results output]{lk eval "[[#:0]/b]"}
+
+src_bash[:exports both :results output]{lk eval "[[#:pub]/b]"}
+
+
+
+#+begin_ctabs
+#+begin_O
+#+end_O
+#+begin_help
+#+BEGIN_SRC bash :session cli0 :exports results :results output verbatim
+  lk eval [help]
+#+END_SRC
+#+end_help
+#+end_ctabs
+
+
+

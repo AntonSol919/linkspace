@@ -1,0 +1,110 @@
+
+html,body { width:100%;padding:0px;margin:0px;}
+body {
+    display:flex;
+    flex-flow:column;
+    background: #828282
+}
+
+#content{
+    align-self:center;
+    margin:1em;
+    padding:1em;
+    max-width:80vw;
+    max-height:auto;
+}
+
+#postamble{
+    display:none;
+}
+
+nav#table-of-contents{
+    background: #828282;
+    max-width:10vw;
+    display:flex;
+}
+nav#table-of-contents > * {
+    display:none;
+}
+div#text-table-of-contents{
+    display:block;
+    align-self:center;
+}
+
+
+#consent:checked ~ #consent-form {
+    display:none;
+}
+#consent-ok{
+    display:none
+}
+#consent:checked ~ #consent-ok{
+    display:block;
+}
+
+h1.title{ margin-bottom:0px !important;}
+p.subtitle{ color:grey;}
+
+.ctabs {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 auto 20px;
+}
+
+.ctabs > [type=radio]{
+    position: absolute;
+    opacity: 0;
+}
+
+.ctabs > label {
+    width: 100%;
+    margin:3px;
+    margin-left:0px;
+    text-align:center;
+    background: #e5e5e5;
+    cursor: pointer;
+    font-weight: bold;
+    color: #7f7f7f;
+    transition: background .3s, color .3s;
+    border: none;
+    border-radius: 0;
+}
+.ctabs > label:hover {
+    background: #d8d8d8;
+}
+
+.ctabs > [type=radio]:checked + label , .ctabs > div {
+    box-shadow:1.0px 1.9px 1.9px hsl(0deg 0% 0% / 0.47);
+    background: #fff;
+    border: 1px solid #222 ;
+}
+.ctabs > div {
+    box-shadow: 4.8px 9.6px 9.6px hsl(0deg 0% 0% / 0.35);
+    display: none;
+    padding: 20px 30px 30px;
+    width: 100%;
+}
+
+.ctabs > label:active {
+    background: #ccc;  
+}
+
+.ctabs > [type=radio]:checked + label + div {
+    display: block; 
+}
+
+.ctabs > .O {
+    display:none !important;
+}
+@media (min-width: 600px) {
+    .ctabs > div{
+        order: 99;
+    }
+
+    .ctabs > label {
+        width: 8%;
+    }
+
+    .ctabs > .checkbox-O { width:2em !important;}
+
+}

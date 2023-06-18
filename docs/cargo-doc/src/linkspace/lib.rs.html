@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/linkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-2fcac8296ac587d8.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="linkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (101fa903b 2023-06-04)" data-search-js="search-4926e5fc22a5646a.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-48600a9606eff342.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../linkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/linkspace/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-2fcac8296ac587d8.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="linkspace" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0-nightly (371994e0d 2023-06-13)" data-search-js="search-6ad6b976982acb3d.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-762bcae8c0777c4b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../linkspace/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1009,6 +1009,18 @@
 <a href="#1009" id="1009">1009</a>
 <a href="#1010" id="1010">1010</a>
 <a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1033,9 +1045,9 @@ Bindings in other languages follow the same pattern.
 [prelude] includes some additional utilities.
 Some internals structs defs are currently leaking and will be removed.
 &quot;#</span>]
-</span><span class="kw">use </span>std::ops::ControlFlow;
+</span><span class="kw">use </span>std::{ops::ControlFlow};
 
-<span class="kw">use </span>linkspace_common::{pkt, runtime::handlers::StopReason};
+<span class="kw">use </span>linkspace_common::{pkt, runtime::handlers::StopReason,};
 
 <span class="kw">pub type </span>LkError = anyhow::Error;
 <span class="kw">pub type </span>LkResult&lt;T = ()&gt; = std::result::Result&lt;T, LkError&gt;;
@@ -1045,12 +1057,14 @@ Some internals structs defs are currently leaking and will be removed.
     <span class="kw">pub use </span>linkspace_common::{
         byte_fmt::{endian_types, AB, B64},
         core::env::RecvPktPtr,
+        static_env::{group,set_group,domain,set_domain},
         pkt::{
             ab, as_abtxt_c, ipath1, ipath_buf, now, spath_buf, try_ab, Domain, GroupID, IPath,
             IPathBuf, IPathC,PathError, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox, NetPktExt,
-            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, Ptr, PubKey,
+            NetPktHeader, NetPktParts, NetPktPtr, PointTypeFlags, Point, PointExt, PubKey,
             SPath, SPathBuf, SigningExt, SigningKey, Stamp, Tag,
-            Error <span class="kw">as </span>PktError
+            Error <span class="kw">as </span>PktError,
+            repr::PktFmt
         },
     };
 }
@@ -1194,19 +1208,22 @@ Some internals structs defs are currently leaking and will be removed.
     <span class="kw">pub fn </span>lk_read(buf: <span class="kw-2">&amp;</span>[u8],allow_private:bool) -&gt; <span class="prelude-ty">Result</span>&lt;(NetPktBox,<span class="kw-2">&amp;</span>[u8]),PktError&gt; {
         <span class="kw">let </span>pkt = <span class="kw">super</span>::misc::read::parse_netpkt(buf,<span class="bool-val">false </span>)<span class="question-mark">?</span>;
         <span class="kw">if </span>!allow_private{pkt.check_private()<span class="question-mark">?</span>};
-        <span class="kw">let </span>size = pkt.size() <span class="kw">as </span>usize;
+        <span class="kw">let </span>size : usize = pkt.size().into();
         <span class="prelude-val">Ok</span>((pkt,<span class="kw-2">&amp;</span>buf[size..]))
     }
     <span class="kw">pub fn </span>lk_read_unchecked(buf:<span class="kw-2">&amp;</span>[u8],allow_private:bool) -&gt; <span class="prelude-ty">Result</span>&lt;(NetPktBox,<span class="kw-2">&amp;</span>[u8]),PktError&gt;{
+        <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) { <span class="kw">return </span>lk_read(buf,allow_private) };
+
         <span class="kw">let </span>pkt = <span class="kw">super</span>::misc::read::parse_netpkt(buf,<span class="bool-val">true</span>)<span class="question-mark">?</span>;
         <span class="kw">if </span>!allow_private{pkt.check_private()<span class="question-mark">?</span>};
-        <span class="kw">let </span>size = pkt.size() <span class="kw">as </span>usize;
+        <span class="kw">let </span>size : usize = pkt.size().into();
         <span class="prelude-val">Ok</span>((pkt,<span class="kw-2">&amp;</span>buf[size..]))
     }
     <span class="kw">pub fn </span>lk_read_arc_unchecked(buf: <span class="kw-2">&amp;</span>[u8],allow_private:bool) -&gt; <span class="prelude-ty">Result</span>&lt;(NetPktArc,<span class="kw-2">&amp;</span>[u8]),PktError&gt;{
+        <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) { <span class="kw">return </span>lk_read_arc(buf,allow_private) };
         <span class="kw">let </span>pkt = <span class="kw">super</span>::misc::read::parse_netarc(buf, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
         <span class="kw">if </span>!allow_private{pkt.check_private()<span class="question-mark">?</span>};
-        <span class="kw">let </span>size = pkt.size() <span class="kw">as </span>usize;
+        <span class="kw">let </span>size : usize = pkt.size().into();
         <span class="prelude-val">Ok</span>((pkt,<span class="kw-2">&amp;</span>buf[size..]))
     }
     <span class="kw">pub fn </span>lk_read_arc(buf: <span class="kw-2">&amp;</span>[u8],allow_private:bool) -&gt; <span class="prelude-ty">Result</span>&lt;(NetPktArc,<span class="kw-2">&amp;</span>[u8]),PktError&gt;{
@@ -1344,7 +1361,7 @@ See guide#ABE to understand its use and indepth explanation.
     // the options are a list of &#39;/&#39; separated functions
     // In this example &#39;u32&#39; wont fit, LNS &#39;#&#39; lookup will succeed, if not the encoding would be base64
 
-    let mut public_grp = PUBLIC;
+    let public_grp = PUBLIC;
     assert_eq!(lk_encode(&amp;*public_grp,&quot;u32/#/b&quot;), &quot;[#:pub]&quot;);
 
     # Ok(())
@@ -1379,7 +1396,8 @@ See guide#ABE to understand its use and indepth explanation.
 
         <span class="kw">use </span>anyhow::Context;
         <span class="kw">use </span>linkspace_common::abe::eval::{EvalCtx, Scope};
-        <span class="kw">use </span>linkspace_common::prelude::{ArgV, EScope, NetPkt};
+        <span class="kw">use </span>linkspace_common::prelude::scope::ArgV;
+        <span class="kw">use </span>linkspace_common::prelude::{EScope, NetPkt};
         <span class="kw">use </span>linkspace_common::runtime::Linkspace;
         <span class="kw">use </span>std::cell::RefCell;
 
@@ -1388,6 +1406,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="doccomment">/// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         </span><span class="kw">pub struct </span>LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) InlineCtx&lt;<span class="lifetime">&#39;o</span>&gt;);
         <span class="comment">// we optimise for the instance where contains _ctx, but we expose several other context situations
+        </span><span class="attr">#[allow(clippy::large_enum_variant)]
         </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>InlineCtx&lt;<span class="lifetime">&#39;o</span>&gt; {
             Std(StdCtx&lt;<span class="lifetime">&#39;o</span>&gt;),
             <span class="comment">// TODO UserCb
@@ -1483,7 +1502,7 @@ See guide#ABE to understand its use and indepth explanation.
                 <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0 </span>{
                     InlineCtx::Std(scope) =&gt; EvalCtx { scope },
                     InlineCtx::Core =&gt; EvalCtx {
-                        scope: <span class="kw-2">&amp;</span>linkspace_common::prelude::EVAL_SCOPE,
+                        scope: <span class="kw-2">&amp;</span>linkspace_common::prelude::scope::EVAL_SCOPE,
                     },
                     InlineCtx::Empty =&gt; EvalCtx { scope: <span class="kw-2">&amp;</span>() },
                 }
@@ -1597,6 +1616,7 @@ See guide#ABE to understand its use and indepth explanation.
     }
 
     <span class="doccomment">/// Compile a [Query] into a function which tests packets to deteremine if they match - WARN - slow and subject to change.
+    </span><span class="attr">#[allow(clippy::type_complexity)]
     </span><span class="kw">pub fn </span>lk_query_compile(
         q: Query,
     ) -&gt; LkResult&lt;Box&lt;<span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt) -&gt; (bool, ControlFlow&lt;()&gt;)&gt;&gt; {
@@ -1839,7 +1859,8 @@ See guide#ABE to understand its use and indepth explanation.
 }
 <span class="kw">pub use </span>misc::try_cb;
 <span class="kw">pub mod </span>misc {
-    <span class="kw">use </span>std::ops::{ControlFlow, Try};
+    <span class="attr">#![allow(clippy::type_complexity)]
+    </span><span class="kw">use </span>std::ops::{ControlFlow, Try};
 
     <span class="kw">pub use </span>linkspace_common::core::env::tree_key::TreeEntry;
     <span class="kw">pub use </span>linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
@@ -1857,6 +1878,7 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">pub </span>stopped: B,
     }
     <span class="kw">pub fn </span>nop_stopped(<span class="kw">_</span>: Query, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Linkspace, <span class="kw">_</span>: StopReason, <span class="kw">_</span>: u32, <span class="kw">_</span>: u32) {}
+
 
     <span class="kw">pub fn </span>cb&lt;A&gt;(<span class="kw-2">mut </span>handle_pkt:A) -&gt; Cb&lt;<span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt,<span class="kw-2">&amp;</span>Linkspace) -&gt; ControlFlow&lt;()&gt;,<span class="kw">fn</span>(Query,<span class="kw-2">&amp;</span>Linkspace,StopReason,u32,u32)&gt;
     <span class="kw">where </span>A: FnMut(<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt,<span class="kw-2">&amp;</span>Linkspace) -&gt; bool {
@@ -2020,4 +2042,6 @@ See guide#ABE to understand its use and indepth explanation.
 <span class="comment">// Allow for interop when importing linkspace_common
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub mod </span>interop;
+
+<span class="kw">pub static </span>BUILD_INFO : <span class="kw-2">&amp;</span>str = <span class="macro">build_info::format!</span>(<span class="string">&quot;{}&quot;</span>, $);
 </code></pre></div></section></main></body></html>

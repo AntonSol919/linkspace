@@ -1,8 +1,17 @@
+---
+title:  Tutorials
+---
 
-Tutorials for [linkspace](https://www.linkspace.dev).
+# Tools
+
+- [lk - the command line interface](./lk-command-line-interface.html)
 
 # Applications
 
-## MineWeeper
-- [MineWeeper 1](./mineweeper/01.html)
-- (WIP) [MineWeeper 2](./mineweeper/02.html)
+- [mineweeper 1](./mineweeper-1.html)
+- [mineweeper 2](./mineweeper-2.html)
+- [imageboard](./imageboard.html)
+
+# Exchange
+
+- [bash.exchange](./bash.exchange.html)

@@ -1,12 +1,12 @@
+.PHONY: all mineweeper
 
-
-
-all: index.html mineweeper
-mineweeper: ./mineweeper/01.html ./mineweeper/02.html
+all: index.html mineweeper-1.html mineweeper-2.html bash.exchange.html imageboard.html lk-command-line-interface.html 
 
 %.html: %.md
-	pandoc --standalone $< > $@
+	pandoc --embed-resources --standalone $< > $@
 
-%.html: %.org
-	echo "TODO: Currently not able to make $< outside of emacs"
-	exit 1
+%.html: %.org ../utils.org
+	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-html-export-to-html))"
+
+clean:
+	rm *.html

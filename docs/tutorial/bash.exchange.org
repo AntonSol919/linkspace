@@ -1,0 +1,40 @@
+#+TITLE:  A bash exchange example
+#+SUBTITLE: A Linkspace Exchange Tutorial
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+#+INCLUDE: "../utils.js" export html 
+
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
+
+
+#+BEGIN_VERSE
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples/
+#+END_VERSE
+
+#+begin_ctabs
+#+begin_info
+#+BEGIN_VERSE
+Available in the repo/examples/
+See repo/dev/exchange.md for some open design issues/notes.
+#+END_VERSE
+
+This is a rather dumb client & host.
+It simply forwards requests.
+It does no pruning before sending or receiving.
+#+end_info
+#+begin_sh
+
+- anyhost client
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.connect.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.client-io.sh" src bash
+
+- handshake
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.handshake.sh" src bash
+
+- anyhost server
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.server.sh" src bash
+#+INCLUDE: "../../examples/anyhost.exchange/anyhost.serve-io.sh" src bash
+#+end_sh
+#+end_ctabs

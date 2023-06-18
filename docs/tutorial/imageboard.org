@@ -1,0 +1,45 @@
+#+TITLE: Imageboard
+#+SUBTITLE: A Linkspace Application Tutorial
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+#+INCLUDE: "../utils.js" export html 
+
+#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
+
+
+#+begin_ctabs
+#+BEGIN_VERSE
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples/app
+#+END_VERSE
+#+end_ctabs
+
+Checkout the [[./lk.html]] tutorial
+
+#+begin_sh
+
+- placing images
+  
+#+INCLUDE: "../../examples/imageboard/imageboard.place.sh" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.sh" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.sh" src bash
+#+end_sh
+
+
+#+begin_py
+This is a straight-up translation of the bash script.
+It works, but it could be done better by having only a single python instance running.
+- placing images
+#+INCLUDE: "../../examples/imageboard/imageboard.place.py" src bash
+
+- viewing images
+#+INCLUDE: "../../examples/imageboard/imageboard.view.py" src bash
+
+- streaming images
+#+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
+#+end_py

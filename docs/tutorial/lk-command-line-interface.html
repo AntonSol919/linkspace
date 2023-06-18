@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-06-18 Sun 10:05 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>lk - The Linkspace CLI</title>
+<meta name="generator" content="Org Mode" />
+<link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script type="text/javascript" src="../utils.js"></script>
+<link rel="stylesheet" type="text/css" href="./style.css"/>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">lk - The Linkspace CLI</h1>
+<p class="subtitle" role="doc-subtitle">Getting started</p>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org6706d72">creating points</a>
+<ul>
+<li><a href="#org48dc675">datapoint</a></li>
+<li><a href="#org72e86ba">linkpoint</a></li>
+<li><a href="#org2266aaf">keypoint</a></li>
+<li><a href="#collect">collect</a></li>
+<li><a href="#orgffcc204">rewrite</a></li>
+</ul>
+</li>
+<li><a href="#org04a9038">query and filter</a>
+<ul>
+<li><a href="#orga3ddc45">print-query</a></li>
+<li><a href="#org4f2ecc7">filter</a></li>
+</ul>
+</li>
+<li><a href="#org76f87a4">database and runtime</a>
+<ul>
+<li><a href="#orgcaa2d63">save</a></li>
+<li><a href="#org5b074be">watch</a></li>
+</ul>
+</li>
+<li><a href="#org37adf98">ABE</a>
+<ul>
+<li><a href="#orge98bcd1">eval</a>
+<ul>
+<li><a href="#org1ec69db">LNS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+<div class="org-src-container">
+<pre class="src src-bash">lk --version
+</pre>
+</div>
+
+<pre class="example" id="org24c5a53">
+linkspace-cli linkspace-cli v0.3.0 debug build from 37932780208e52d657a257b8607c003117e26fc9 (main)
+</pre>
+
+<div id="outline-container-org6706d72" class="outline-2">
+<h2 id="org6706d72">creating points</h2>
+<div class="outline-text-2" id="text-org6706d72">
+</div>
+<div id="outline-container-org48dc675" class="outline-3">
+<h3 id="org48dc675">datapoint</h3>
+<div class="outline-text-3" id="text-org48dc675">
+<div class="org-src-container">
+<pre class="src src-bash">echo -n hello world! | lk datapoint | lk pktf
+</pre>
+</div>
+
+<pre class="example" id="orgb159c4c">
+type	DataPoint
+hash	kSYxvPrTRSuqQlDjnxkEg83QiUH1fZGIOOrbYJ1FMLc
+group	[#:0]
+domain	
+path	
+pubkey	[@:none]
+create	0
+links	0
+
+data	12
+hello world!
+</pre>
+
+<p>
+also usable as <code>lk data</code> and <code>lk d</code>
+</p>
+
+<div class="ctabs" id="orgdcb3309">
+<div class="O" id="org9e7596a">
+
+</div>
+<div class="help" id="org0f600b8">
+<pre class="example" id="orgc2ff386">
+points - create a new datapoint
+
+Usage: lk datapoint [OPTIONS]
+
+Options:
+  -w, --write &lt;WRITE&gt;                  [default: stdout]
+      --data &lt;DATA&gt;                    open a path to read from
+      --data-stdin                     default when stdin is not used for packets
+      --data-str &lt;DATA_STR&gt;            read a static string
+      --private                        enable io of linkpoints in [#:0] [env: LK_PRIVATE=]
+      --no-data                        read nothing
+      --data-repeat                    after finishing jump back to start
+  -D, --data-delim &lt;DATA_DELIM&gt;        set a byte to function as a delimiter
+  -n, --data-bufsize &lt;DATA_BUFSIZE&gt;    maximum amount read per call - defaults to free space in packet
+      --data-reads &lt;DATA_READS&gt;        limit number of 'reads'
+      --data-overflow &lt;DATA_OVERFLOW&gt;  set how to deal when the data ( after eval ) exceeds the free space in a packet [possible values: error, split, carry, trim]
+      --data-eval                      evaluate data as ABE expression
+  -h, --help                           Print help
+</pre>
+
+</div>
+
+<div class="xxd" id="org7ac69a5">
+<div class="org-src-container">
+<pre class="src src-bash">echo -n hello world! | lk data | xxd
+</pre>
+</div>
+
+<pre class="example" id="org8c52ab0">
+00000000: 4c4b 3100 0000 0000 ffff ffff ffff ffff  LK1.............
+00000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000020: 9126 31bc fad3 452b aa42 50e3 9f19 0483  .&amp;1...E+.BP.....
+00000030: cdd0 8941 f57d 9188 38ea db60 9d45 30b7  ...A.}..8..`.E0.
+00000040: 0001 0010 6865 6c6c 6f20 776f 726c 6421  ....hello world!
+</pre>
+
+</div>
+
+</div>
+
+
+<div class="ctabs" id="org47ba047">
+<div class="info" id="org68501f3">
+<p>
+<code>pktf</code>, and many other functions, take <a href="../guide/index.html#ABE">ABE</a> input. A byte templating language.
+</p>
+
+<p>
+<code class="src src-bash">echo -n "hello" | lk d | lk pktf "[hash/?b] =&gt; [data]"</code> <code>rNOc71bpPHAdC_J_4ui0eutcGpDQVcIm3TfWaTLjdMk =&gt; hello</code>
+</p>
+
+<p>
+<code class="src src-bash">echo -n "hello" | lk d | lk pktf "[hash/?b/b/?b] =&gt; [data/b2]"</code> 
+</p>
+
+</div>
+
+</div>
+
+
+<p>
+The max size is <code>2^{16}-512-PointHeader_{4} = 65020</code><sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">python -c 'print("-" * 150000)' | lk data &gt; three_datapoints.lkp
+cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
+</pre>
+</div>
+
+<pre class="example" id="orgbd4a9d4">
+65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
+65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
+NJQ_XcsOTW8NsjzBfVeKKXIHE1JJkyO16k2wpNxztJ0 contains 19961 bytes
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org72e86ba" class="outline-3">
+<h3 id="org72e86ba">linkpoint</h3>
+<div class="outline-text-3" id="text-org72e86ba">
+<p>
+A <code>linkpoint</code> has the additional fields:
+</p>
+
+<ul class="org-ul">
+<li>(domain<sub>16</sub>,group<sub>32</sub>) tuple</li>
+<li>path<sub>&lt;240</sub></li>
+<li>create<sub>8</sub> = microseconds since UNIX epoch - defaults to 'now'.</li>
+<li>links = [ (tag<sub>16</sub>,ptr<sub>32</sub>) ]</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-bash">lk linkpoint imageboard:[#:pub]:/hello/world -- \
+   a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88 \
+   other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ \
+    | lk pktf
+</pre>
+</div>
+
+<pre class="example" id="org5560ec5">
+type	LinkPoint
+hash	S95jjA3BdSJuRDv3nbFEAoAXKDNIYiYNUbiH6ukz5v0
+group	[#:pub]
+domain	imageboard
+path	/hello/world
+pubkey	[@:none]
+create	1687075532808895
+links	2
+	a_link _K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88
+	other_link vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ
+
+data	0
+</pre>
+
+<p>
+also usable as <code>lk link</code> and <code>lk l</code>
+</p>
+
+<p>
+You can use ABE to set the tag or ptr:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">lk link :: -- hello:[#:pub] my_key:[@:me:local] other:[#:0] | lk pktf
+</pre>
+</div>
+
+<pre class="example" id="org8d574e0">
+type	LinkPoint
+hash	UdCJrA_1P0a4gzFg8WeyXBoNQkxWME3c1PUMi6eBoCU
+group	[#:test]
+domain	imageboard
+path	
+pubkey	[@:none]
+create	1687075532840750
+links	3
+	hello RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0
+	my_key b9b7M7vBkPf5E59YBo7uq-0U0CmF98OEvAuea0DDUDw
+	other AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+data	0
+</pre>
+
+<div class="info" id="org75a8fda">
+<p>
+To use <code>[@:me:local]</code> you'll have to generate a key and create a local binding. <code>lk key</code> does this for you.
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">lk --init key --decrypt-cost 0 --password "my secret" # 
+</pre>
+</div>
+
+<pre class="example" id="org6e7a297">
+$argon2d$v=19$m=8,t=1,p=1$b9b7M7vBkPf5E59YBo7uq+0U0CmF98OEvAuea0DDUDw$w9kkvk9akrrgcws8zqCxixUN1aRvZt87PptFOMx82DU
+b9b7M7vBkPf5E59YBo7uq-0U0CmF98OEvAuea0DDUDw
+</pre>
+
+</div>
+
+<p>
+You can use xargs to dynamically set links, but a better tool is <a href="#collect">lk collect</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">cat three_datapoints.lkp | lk pktf "onetag:[hash:str]" | xargs lk link imageboard:[#:pub]:/a/pathname/for/this/point -- | lk pktf
+</pre>
+</div>
+
+<pre class="example" id="org2fe77b8">
+type	LinkPoint
+hash	go0lgf9Itli1YoD_vPHMnyk6IO6aQ6hUUlxYQ1dq6ys
+group	[#:pub]
+domain	imageboard
+path	/a/pathname/for/this/point
+pubkey	[@:none]
+create	1687075532905356
+links	3
+	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
+	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
+	onetag NJQ_XcsOTW8NsjzBfVeKKXIHE1JJkyO16k2wpNxztJ0
+
+data	0
+</pre>
+
+<p>
+Unlike <code>lk datapoint</code> the <code>lk linkpoint</code> command does not read from stdin by default
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">echo hello | lk link ::/a/path --data-stdin | lk pktf [data]
+</pre>
+</div>
+
+<pre class="example" id="org659306b">
+hello
+</pre>
+
+<p>
+Giving no domain implies <code>$LK_DOMAIN || \\0</code>.
+Giving no group implies <code>$LK_GROUP || [#:pub]</code>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">export LK_DOMAIN="imageboard"
+export LK_GROUP="[#:test]"
+lk link ::/a/path --data-str "hello world" | lk pktf 
+</pre>
+</div>
+
+<pre class="example" id="orgecc3ca3">
+org_babel_sh_prompt&gt; type	LinkPoint
+hash	S4OYIVmx5_nz4CRuRxtvG3GtuOn4ASyC3TMftccpRdA
+group	[#:test]
+domain	imageboard
+path	/a/path
+pubkey	[@:none]
+create	1687075532967743
+links	0
+
+data	11
+hello world
+</pre>
+
+<p>
+The max size is still 2<sup>16</sup>-512-PointHeader<sub>4</sub>. Free space is shared between other fields.
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">python -c 'print("-" * 150000)' | lk link :: --multi --create [epoch] --data-stdin -- hello:[#:pub] | lk pktf "[hash/?b] contains [data_size/?u] bytes"
+</pre>
+</div>
+
+<pre class="example" id="org26c262d">
+YI7_U-oAoaoEYLKlNues1PFFQKh6ycIbR68Zh2O2rqw contains 64912 bytes
+YI7_U-oAoaoEYLKlNues1PFFQKh6ycIbR68Zh2O2rqw contains 64912 bytes
+JKohyYpJZp9tiBi1Hdg-nqANiTFv6sIxwfE98APZV1o contains 20177 bytes
+</pre>
+
+<ul class="org-ul">
+<li>64912 = 2<sup>16</sup> - 512 - PointHeader<sub>4</sub> - PathLinkHeader<sub>4</sub>  - group<sub>32</sub> - domain<sub>16</sub> - create<sub>8</sub> -  1 * Link<sub>48</sub></li>
+<li><code>--multi</code> : by default <code>lk link</code> only produces one output - prefer to use <a href="#collect">collect</a> for producing multiple linkpoints</li>
+<li><code>--create [epoch]</code> : For demonstrating 2 packets with the same fields have the same hash</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org2266aaf" class="outline-3">
+<h3 id="org2266aaf">keypoint</h3>
+<div class="outline-text-3" id="text-org2266aaf">
+<p>
+Keypoints are linkpoints with an additional pubkey_32 and signature_64.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">lk keypoint :: --password "my secret" | lk pktf 
+</pre>
+</div>
+
+<pre class="example" id="orga92b5f1">
+type	KeyPoint
+hash	VjAOms6hlKXKlgJxdEtKnHEcVQvBPuvi1Y3gPx6W8cI
+group	[#:test]
+domain	imageboard
+path	
+pubkey	[@:me:local]
+create	1687075533038596
+links	0
+
+data	0
+</pre>
+
+<p>
+Or use <code>--sign</code> on a linkpoint command
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">lk link :: --sign --password "my secret" | lk pktf "[pubkey:str]"
+</pre>
+</div>
+
+<pre class="example" id="org1869c5f">
+b9b7M7vBkPf5E59YBo7uq-0U0CmF98OEvAuea0DDUDw
+</pre>
+</div>
+</div>
+
+<div id="outline-container-collect" class="outline-3">
+<h3 id="collect">collect</h3>
+<div class="outline-text-3" id="text-collect">
+<p>
+Collect creates a linkpoint with links pointing to the incoming pkts. 
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">cat three_datapoints.lkp | \
+    lk collect hello::/world --sign --password "my secret" | \
+    lk pktf "[type:str]\t[pubkey:str] [data_size:str] [links_len:str]"
+</pre>
+</div>
+
+<pre class="example" id="orgb4d819e">
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 19961 0
+KeyPoint	b9b7M7vBkPf5E59YBo7uq-0U0CmF98OEvAuea0DDUDw 0 3
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgffcc204" class="outline-3">
+<h3 id="orgffcc204">rewrite</h3>
+</div>
+</div>
+
+<div id="outline-container-org04a9038" class="outline-2">
+<h2 id="org04a9038">query and filter</h2>
+<div class="outline-text-2" id="text-org04a9038">
+</div>
+<div id="outline-container-orga3ddc45" class="outline-3">
+<h3 id="orga3ddc45">print-query</h3>
+</div>
+
+<div id="outline-container-org4f2ecc7" class="outline-3">
+<h3 id="org4f2ecc7">filter</h3>
+</div>
+</div>
+
+<div id="outline-container-org76f87a4" class="outline-2">
+<h2 id="org76f87a4">database and runtime</h2>
+<div class="outline-text-2" id="text-org76f87a4">
+</div>
+<div id="outline-container-orgcaa2d63" class="outline-3">
+<h3 id="orgcaa2d63">save</h3>
+</div>
+
+<div id="outline-container-org5b074be" class="outline-3">
+<h3 id="org5b074be">watch</h3>
+</div>
+</div>
+
+<div id="outline-container-org37adf98" class="outline-2">
+<h2 id="org37adf98">ABE</h2>
+<div class="outline-text-2" id="text-org37adf98">
+</div>
+<div id="outline-container-orge98bcd1" class="outline-3">
+<h3 id="orge98bcd1">eval</h3>
+<div class="outline-text-3" id="text-orge98bcd1">
+<p>
+You can use <code>lk eval</code> to run a single expression instead of for each packet in a stream.
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[:hello] world"</code> <code>hello world</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[:hello/?b] world"</code> <code>aGVsbG8 world</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[:hello/?b/b] world"</code> <code>hello world</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[now/?u]"</code> <code>1687075533280407</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Sun, 18 Jun 2023 08:05:33 +0000</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[epoch/s:str]"</code> <code>Thu, 01 Jan 1970 00:00:00 +0000</code>
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[epoch/s:delta]"</code> <code>- 53Y 5M</code>
+</p>
+</div>
+
+<div id="outline-container-org1ec69db" class="outline-4">
+<h4 id="org1ec69db">LNS</h4>
+<div class="outline-text-4" id="text-org1ec69db">
+<p>
+<code class="src src-bash">lk eval "[[#:0]/b]"</code> ==
+</p>
+
+<p>
+<code class="src src-bash">lk eval "[[#:pub]/b]"</code> ==
+</p>
+
+
+
+<div class="ctabs" id="org8b74da5">
+<div class="O" id="org0b53cc6">
+
+</div>
+<div class="help" id="orgb87b225">
+<pre class="example" id="orgdec8e8f">
+The context has one or more scopes active
+Each scope has functions and macros
+For each function the option set  ['[' , '/' , '?'] is given
+These refers to its use as:
+ '['  =&gt; Can be used to open   '[func/..]'
+ ':'  =&gt; Can be used in a pipe '[../func]'
+ '?'  =&gt; Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]
+
+# bytes
+Byte padding/trimming
+## Functions
+-                  [/?          1..=16     the '' (empty) fnc can be used to start an expr such as {:12/u8} which is the same as {u8:12}  
+- ?a               [/           1..=1     encode bytes into ascii-bytes format  
+- ?a0              [/           1..=1     encode bytes into ascii-bytes format but strip prefix '0' bytes  
+- a                [/?          1..=3     [bytes,length = 16,pad_byte = \0] - alias for 'lpad'  
+- f                [/           1..=3     same as 'a' but uses \xff as padding   
+- lpad             [/           1..=3     [bytes,length = 16,pad_byte = \0] - left pad input bytes  
+- rpad             [/           1..=3     [bytes,length = 16,pad_byte = \0] - right pad input bytes  
+- ~lpad            [/           1..=3     [bytes,length = 16,pad_byte = \0] - left pad input bytes  
+- ~rpad            [/           1..=3     [bytes,length = 16,pad_byte = \0] - right pad input bytes  
+- lcut             [/           1..=2     [bytes,length = 16] - left cut input bytes  
+- rcut             [/           1..=2     [bytes,length = 16] - right cut input bytes  
+- ~lcut            [/           1..=2     [bytes,length = 16] - lcut without error  
+- ~rcut            [/           1..=2     [bytes,length = 16] - lcut without error  
+- lfixed           [/           1..=3     [bytes,length = 16,pad_byte = \0] - left pad and cut input bytes  
+- rfixed           [/           1..=3     [bytes,length = 16,pad_byte = \0] - right pad and cut input bytes  
+- slice            [/           1..=4     [bytes,start=0,stop=len,step=1] - python like slice indexing  
+- ~utf8            [/           1..=1     lossy encode as utf8  
+
+# UInt
+Unsigned integer functions
+## Functions
+- +                [/           1..=16     Saturating addition. Requires all inputs to be equal size  
+- -                [/           1..=16     Saturating subtraction. Requires all inputs to be equal size  
+- u8               [/?          1..=1     parse 1 byte  
+- u16              [/?          1..=1     parse 2 byte  
+- u32              [/?          1..=1     parse 4 byte  
+- u64              [/?          1..=1     parse 8 byte  
+- u128             [/?          1..=1     parse 16 byte  
+- ?u               [/           1..=1     Print big endian bytes as decimal  
+- lu               [/           1..=1     parse little endian byte (upto 16)  
+- lu8              [/           1..=1     parse 1 little endian byte  
+- lu16             [/           1..=1     parse 2 little endian byte  
+- lu32             [/           1..=1     parse 4 little endian byte  
+- lu64             [/           1..=1     parse 8 little endian byte  
+- lu128            [/           1..=1     parse 16 little endian byte  
+- ?lu              [/           1..=1     print little endian number  
+
+# base-n
+base{2,8,16,32,64} encoding - (b64 is url-safe no-padding)
+## Functions
+- b2               [/?          1..=1     decode binary  
+- b8               [/           1..=1     encode octets  
+- b16              [/?          1..=1     decode hex  
+- ?b               [/           1..=1     encode base64  
+- 2mini            [/           1..=1     encode mini  
+- b                [/?          1..=1     decode base64  
+
+# comment function / void function. evaluates to nothing
+
+## Functions
+- C                [/           1..=16     the comment function. all arguments are ignored. evaluates to ''  
+
+# help
+
+## Functions
+- help             [/           0..=16     help  
+## Macros
+- help             desribe current eval context  
+
+# logic ops
+ops are : &lt; &gt; = 0 1 
+## Functions
+- size?            [/           3..=3     [in,OP,VAL] error unless size passes the test ( UNIMPLEMENTED )  
+- val?             [/           3..=3     [in,OP,VAL] error unless value passes the test ( UNIMPLMENTED)  
+## Macros
+- or               :{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty  
+
+# encode
+attempt an inverse of a set of functions
+## Functions
+- eval             [/           1..=1     parse and evaluate  
+- ?                [/           2..=8     encode  
+## Macros
+- ?                find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]*   
+- ~?               same as '?' but ignores all errors  
+- e                eval inner expression list. Useful to avoid escapes: eg file:{/e:/some/dir:thing}:opts does not require escapes the '/'   
+
+# static-lns
+static lns for local only [#:0] and public [#:pub]
+## Functions
+- #                [ ?          1..=16     resolve #:0 , #:pub, and #:test without a db  
+- @                [ ?          1..=16     resolve @:none  
+
+# stamp
+utilities for stamp values (big endian u64 microsecond since unix epoch)
+arguments consists of ( [+-][YMWDhmslu]usize : )* (str | delta | ticks | val)?
+
+## Functions
+- s                [/           0..=16     if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0  
+- now              [            0..=16     current systemtime  
+- epoch            [            0..=16     unix epoch / zero time  
+- s++              [            0..=16     max stamp  
+
+# path
+path utils. Usually [//some/path] is the most readable
+## Functions
+- ?p               [/           1..=1     decode path  
+- path_idx         [/           2..=3     path idx [start,?end]  
+- p                [/?          1..=8     build path from arguments  
+## Macros
+-                  the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val  
+- ~                similar to '//' but forgiving on empty components  
+
+# lns
+
+## Functions
+- #                [ ? &lt;partial&gt; 1..=7     (namecomp)* - get the associated lns group  
+- ?#               [/           1..=1     find by group# tag  
+- @                [ ? &lt;partial&gt; 1..=7     (namecomp)* - get the associated lns key  
+- ?@               [/           1..=1     find by pubkey@ tag  
+## Macros
+- lns              [:comp]*/expr  
+
+# private-lns
+Only look at the private claims lookup tree. Makes no requests
+## Functions
+- private#         [ ?          1..=7     (namecomp)* - get the associated lns group  
+- ?private#        [/           1..=1     find by group# tag  
+- private@         [ ?          1..=7     (namecomp)* - get the associated lns key  
+- ?private@        [/           1..=1     find by pubkey@ tag  
+## Macros
+- private-lns      [:comp]*/expr  
+
+# filesystem env
+read files from Ok("/tmp/linkspace")/files 
+## Functions
+- files            [/           1..=1     read a file from the LK_DIR/files directory  
+
+# database
+get packets from the local db.
+e-funcs evaluate their args as if in pkt scope.
+funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]] == [readhash:..:group:str])
+## Functions
+- readhash         [/           1..=16     open a pkt by hash and use tail args as if calling in a netpkt scope  
+- read             [/           2..=16     read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx  
+## Macros
+- readhash         HASH ':' expr (':' alt if not found)   
+
+# Unset&lt;abe::eval::EScope&lt;linkspace_common::eval::OSEnv&gt;&gt;
+
+
+# argv
+
+## Functions
+- argv             [/           1..=4     argv slice idx - 'argv:-1'
+</pre>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">The maximum point size is 2<sup>16</sup>-512. The maximum packet size on the network is 2<sup>16</sup>-512+64. This is to avoid fragmentation &amp; slow edge cases whenever sizes approach ~2<sup>16</sup>.</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="date">Created: 2023-06-18 Sun 10:05</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

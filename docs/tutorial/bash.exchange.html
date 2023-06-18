@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-06-18 Sun 10:05 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A bash exchange example</title>
+<meta name="generator" content="Org Mode" />
+<link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script type="text/javascript" src="../utils.js"></script>
+<link rel="icon" type="image/x-icon" href="../../images/logo2.png">
+<link rel="stylesheet" type="text/css" href="./style.css"/>
+<link rel="stylesheet" type="text/css" href="./style.css"/>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">A bash exchange example</h1>
+<p class="subtitle" role="doc-subtitle">A Linkspace Exchange Tutorial</p>
+</header>// Setup clickable tabs
+document.addEventListener('DOMContentLoaded', () =>
+    document.querySelectorAll(".ctabs").forEach((outer, i) => [...outer.children].forEach((el, j) => {
+
+        let forName = `tabs${i}`;
+        let checkedEl = window.localStorage.getItem(forName) || 0;
+        let checkbox = `
+<input
+name="${forName}"
+tabindex="${i}"
+type="radio"
+id="tab${i}x${j}"
+${j == checkedEl ? "checked" : ""}
+/>
+<label for="tab${i}x${j}" class="checkbox-${el.classList[0]}" >${el.className}</label>`;
+
+        el.insertAdjacentHTML(
+            "beforebegin", checkbox
+        );
+        outer.querySelector(`#tab${i}x${j}`).addEventListener("change", () => {
+            window.localStorage.setItem(forName, j);
+        })
+        el.setAttribute("tabindex", i);
+    }))
+);
+
+document.addEventListener('DOMContentLoaded', (_) => {
+    document.querySelectorAll('pre.src').forEach((el) => {
+        let lang = el.classList[1].slice(4);
+        el.classList.add("language-" + lang);
+        hljs && hljs.highlightElement(el);
+    });
+});
+
+<p class="verse">
+Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/<br>
+</p>
+
+<div class="ctabs" id="orged99415">
+<div class="info" id="org3bacb91">
+<p class="verse">
+Available in the repo/examples/<br>
+See repo/dev/exchange.md for some open design issues/notes.<br>
+</p>
+
+<p>
+This is a rather dumb client &amp; host.
+It simply forwards requests.
+It does no pruning before sending or receiving.
+</p>
+
+</div>
+<div class="sh" id="orgce57fab">
+<p>
+
+</p>
+
+<ul class="org-ul">
+<li>anyhost client</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-bash">#!/bin/bash
+set -euo pipefail
+export SERVER=${SERVER:-${1:-"127.0.0.1:5020"}}
+export LK_GROUP_ORIG=$LK_GROUP
+export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
+
+socat /dev/null tcp:$SERVER
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
+
+echo Connecting $LK_GROUP_ORIG $SERVER
+socat tcp:$SERVER,keepalive exec:"anyhost.handshake.sh connect anyhost.client-io.sh",fdout=4
+#websocat -E --binary ws://$SERVER sh-c:"handshake.sh connect client_io.sh"
+</pre>
+</div>
+<div class="org-src-container">
+<pre class="src src-bash">#!/bin/bash -x
+# parent should set out to fd4. otherwise add a exec 4&gt;&amp;1 1&gt;&amp;2
+set -euo pipefail
+function fin (){
+    kill -9 -- -$$ $(jobs -p) 2&gt;/dev/null || true
+    echo Disconnected - $THEIR_KEY 
+}
+trap "fin" EXIT
+
+cd $SESSION
+echo SESSION=$SESSION
+echo THEIR_KEY=$THEIR_KEY
+echo LK_GROUP=$LK_GROUP
+
+LK_GROUP="[b:$LK_GROUP]"
+THEIR_KEY="[b:$THEIR_KEY]"
+
+lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
+lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
+LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk pktf [create:str])
+LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk pktf [create:str])
+lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
+
+lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nSESSION:$SESSION")" --data-repeat &amp;
+
+export LK_SKIP_HASH=true
+
+# save reads from stdin, ie. the server 
+LK_SKIP_HASH=false lk save --new db --new stdout \
+    | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
+    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
+              --min-interval 1m \
+              --forward null \
+              --write db &amp;
+
+# read the pull request made by other apps and place them into the group
+lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
+    | lk --private rewrite \
+                --group $LK_GROUP \
+                --write db --write stdout sign-all \
+    | lk p  "&gt;&gt;&gt;&gt;new request [hash:str]\n[data]\n&lt;&lt;&lt;&lt;" &amp;
+
+
+# The exchange logic is to have every piece of data created locally send to a server
+lk watch --bare --mode log-asc -- "group:=:$LK_GROUP" "hop:=:[u32:0]" "recv:&gt;:[u64:$LAST_TX]" \
+    | lk get-links skip \
+    | lk dedup \
+    | lk pktf --inspect "[now:str] SENDING [hash:str]" \
+    | tee --output-error=exit &gt;( cat &gt;&amp;4 ) \
+    | lk --private collect ":[#:0]:/txlog/$THEIR_KEY" \
+         --min-interval 1m \
+         --forward null \
+         --write db &amp;
+
+echo PIDS $(jobs -p)
+wait -n
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>handshake</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-bash">#!/bin/bash
+set -euo pipefail
+if [[ ${SOCAT_PEERADDR+x} ]]
+   then
+    export THEIR_ADDR=$SOCAT_PEERADDR:$SOCAT_PEERPORT
+else
+    # websocat
+    export THEIR_ADDR=${WEBSOCAT_CLIENT:-$SERVER}
+fi
+export SESSION=$(mktemp -dt $THEIR_ADDR.XXXXX)
+
+MODE=${1:-serve}
+lk handshake --max-diff-secs 6000 \
+          --write stdout --write file:$SESSION/handshake.out \
+          --forward file:$SESSION/handshake.in \
+          $MODE &gt;&amp;4
+
+export THEIR_KEY=$(cat $SESSION/handshake.in | lk filter --bare --signed --max-new 1 | lk pktf "[pubkey:str]")
+echo Connected $THEIR_ADDR - Their Key : $THEIR_KEY 1&gt;&amp;2 
+exec ${@:2} 
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>anyhost server</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-bash">#!/bin/bash
+set -euo pipefail
+
+export PORT=${PORT:-"5020"}
+echo My Key $(lk key)
+export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
+echo Serving $LK_GROUP $PORT 
+export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
+
+function fin (){
+    kill -9 -- -$$
+    kill -9 -- $(jobs -p) 2&gt;/dev/null || true
+    echo Disconnected - $LK_GROUP $PORT
+}
+trap "fin" EXIT
+
+lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nwe're hosting")" --data-repeat &amp;
+
+socat tcp-listen:$PORT,fork exec:"anyhost.handshake.sh serve anyhost.serve-io.sh",fdout=4 &amp;
+
+echo PIDS $(jobs -p)
+wait -n
+
+#websocat -e -E --binary --ping-timeout 15 --ping-interval 10 \
+#         ws-l:0.0.0.0:5020 sh-c:"strace -e 'trace=!all' handshake.sh serve serve_io.sh"
+</pre>
+</div>
+<div class="org-src-container">
+<pre class="src src-bash">#!/bin/bash
+# parent should set out to fd4. otherwise add a exec 4&gt;&amp;1 1&gt;&amp;2
+set -euo pipefail
+PID=$$
+function fin (){
+    kill -9 -- -$$ $(jobs -p) 2&gt;/dev/null || true
+    echo $PID Disconnected - $THEIR_KEY 
+}
+trap "fin" EXIT
+
+cd $SESSION
+echo SESSION=$SESSION 
+echo THEIR_KEY=$THEIR_KEY
+echo LK_GROUP=$LK_GROUP
+echo PID=$PID
+LK_GROUP="[b:$LK_GROUP]"
+THEIR_KEY="[b:$THEIR_KEY]"
+
+lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
+lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
+LAST_RX=$(lk --private watch --max 1 ":[#:0]:/rxlog/$THEIR_KEY" | lk pktf [create:str])
+LAST_TX=$(lk --private watch --max 1 ":[#:0]:/txlog/$THEIR_KEY" | lk pktf [create:str])
+lk eval "last rx [u64:$LAST_RX/s:str]\nlast tx [u64:$LAST_TX/s:str]\n"
+
+export LK_SKIP_HASH=true
+# save reads from std. i.e. what the client is sending
+LK_SKIP_HASH=false lk save --new db --new stdout \
+        --old file:&gt;( lk pktf "$PID Ignored [hash:str] (old)" &gt;&amp;2 ) \
+   | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
+   | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
+        --min-interval 1m \
+        --forward null \
+        --write db  &gt; /dev/null &amp;
+
+# Read new request keypoints and return their content
+lk watch --new "[f:exchange]:$LK_GROUP:/pull/$LK_GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
+    | lk pktf --inspect "&gt;&gt;&gt;&gt;Pull req [hash:str]\n[data]\n&lt;&lt;&lt;&lt;$PID " \
+    | lk multi-watch \
+    | lk dedup \
+    | lk pktf --inspect "$PID Tx [hash:str]" &gt;&amp;4 
+
+
+echo PIDS $(jobs -p)
+wait -n
+</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2023-06-18 Sun 10:05</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
