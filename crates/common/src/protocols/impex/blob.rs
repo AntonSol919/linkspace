@@ -9,8 +9,7 @@ use linkspace_core::{crypto::blake3, prelude::*};
 pub static LK_MMAP_FILE_SIZE : std::sync::OnceLock<u64> = OnceLock::new();
 pub fn should_mmap(file_size:u64) -> bool {
     let min_mmap_size = *LK_MMAP_FILE_SIZE.get_or_init(|| {
-        // This is completely made up. No testing was done.
-        std::env::var("LK_MMAP_FILE_SIZE").ok().and_then(|v|v.parse().ok()).unwrap_or(1<<26)
+        std::env::var("LK_MMAP_FILE_SIZE").ok().and_then(|v|v.parse().ok()).unwrap_or(u64::MAX)
     });
     min_mmap_size <= file_size
 }

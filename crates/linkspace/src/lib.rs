@@ -391,7 +391,7 @@ pub mod abe {
             Empty,
         }
 
-        #[derive(Copy, Clone)]
+        #[derive(Copy, Clone,Default)]
         #[repr(C)]
         /// User config for setting additional context to evaluation.
         pub struct UserData<'o> {
@@ -449,8 +449,8 @@ pub mod abe {
         pub const fn empty_ctx() -> LkCtx<'static> {
             LkCtx(InlineCtx::Empty)
         }
-        pub fn lk_ctx<'o>(lk: Option<&'o Linkspace>, udata: UserData<'o>,enable_env:bool) -> LkResult<LkCtx<'o>> {
-            _ctx(Some(lk), udata,enable_env)
+        pub fn lk_ctx<'o>(lk: Option<&'o crate::Linkspace>, udata: UserData<'o>,enable_env:bool) -> LkResult<LkCtx<'o>> {
+            _ctx(Some(lk.map(|o|&o.0)), udata,enable_env)
         }
         /// lk:None => get threadlocal Lk . Some(None) => no linkspace
         fn _ctx<'o>(lk: Option<Option<&'o Linkspace>>, udata: UserData<'o>,enable_env:bool) -> LkResult<LkCtx<'o>> {
@@ -722,7 +722,7 @@ pub mod runtime {
     pub fn lk_get(lk: &Linkspace, query: &Query) -> LkResult<Option<NetPktBox>> {
         lk_get_ref(lk, query, &mut |v| v.as_netbox())
     }
-    /** read a single packet mmap-ed packet. 
+    /** read a single packet directly without copying. 
     This means that [NetPkt::net_header_mut] is unavailable.
     To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
     **/

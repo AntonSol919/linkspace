@@ -107,7 +107,7 @@ impl<'a> ByteSegments<'a> {
     ///
     /// dest needs to be initialized to fit the entire length;
     #[inline(always)]
-    pub const unsafe fn write_segments_unchecked(self, mut dest: *mut u8) {
+    pub const unsafe fn write_segments_unchecked(self, mut dest: *mut u8)  -> *mut u8{
         let mut i = 0;
         while i < 8 {
             let len = self.0[i].len();
@@ -115,6 +115,7 @@ impl<'a> ByteSegments<'a> {
             dest = dest.add(len);
             i = i.wrapping_add(1);
         }
+        dest
     }
     #[inline(always)]
     pub fn io_slices(self) -> [std::io::IoSlice<'a>; 8] {
@@ -122,6 +123,12 @@ impl<'a> ByteSegments<'a> {
     }
     #[inline(always)]
     pub fn write_into(self, mut dest: impl std::io::Write) -> std::io::Result<()> {
-        dest.write_all_vectored(&mut self.0.map(std::io::IoSlice::new))
+        let mut stack = [std::io::IoSlice::new(&[])];
+        let mut c = 0;
+        for (i,el) in self.0.iter().filter(|v| !v.is_empty()).enumerate(){
+            c = i-1;
+            stack[c] = std::io::IoSlice::new(el);
+        }
+        dest.write_all_vectored(&mut stack[..c])
     }
 }

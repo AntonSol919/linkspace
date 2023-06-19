@@ -73,9 +73,19 @@ macro_rules! fid  {
         }
         impl FieldEnum {
             pub const LIST : [FieldEnum;29]= [$(FieldEnum::$fname,)*];
+            pub fn try_from_name(id:&str) -> Option<Self> {
+                match id {
+                    $( $name => Some(FieldEnum::$fname), )*
+                    _ => None
+               }
+            }
             pub fn try_from_id(id:&[u8]) -> Option<Self> {
-                $( if id == &[$token] || id == $name.as_bytes() { return Some(FieldEnum::$fname);})*
-                    None
+                #![allow(non_upper_case_globals)]
+                $(const $fname: &'static [u8] = $name.as_bytes();)*
+                match id {
+                    $( &[$token] | $fname => Some(FieldEnum::$fname), )*
+                    _ => None
+                }
             }
             pub const fn info(self) -> FieldInfo{
                 match self {
@@ -135,13 +145,13 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum FieldEnumErr {
-    #[error("No Such field")]
+    #[error("no such field")]
     NoSuchField,
 }
 impl FromStr for FieldEnum {
     type Err = FieldEnumErr;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        FieldEnum::try_from_id(s.as_bytes()).ok_or(FieldEnumErr::NoSuchField)
+        FieldEnum::try_from_name(s).ok_or(FieldEnumErr::NoSuchField)
     }
 }
 
@@ -497,6 +507,7 @@ impl FieldEnum {
 
 #[test]
 fn fields(){
+    use abe::scope::*;
     let ipath = ipath_buf(&[b"hello",b"world"]);
     let p = linkpoint([1;32].into(), [2;16].into(), &ipath, &[], &[], now(), ());
     let abe = abe::parse_abe("[path]").unwrap();
@@ -505,4 +516,10 @@ fn fields(){
     let path1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
     assert_eq!(path,ipath.spath_bytes());
     assert_eq!(path,path1)
+}
+
+#[test]
+fn tokens(){
+    assert_eq!(FieldEnum::PubKeyF, "k".parse().unwrap());
+    assert_eq!(FieldEnum::PubKeyF, FieldEnum::try_from_id(b"k").unwrap());
 }
