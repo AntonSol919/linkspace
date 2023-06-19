@@ -72,7 +72,12 @@ pub struct B64<N = [u8; 32]>(pub N);
 
 impl<'o> From<&'o [u8]> for &'o AB<[u8]> {
     fn from(d: &'o [u8]) -> Self {
-        unsafe { *(d.as_ptr().cast()) }
+        AB::from_ref(d)
+    }
+}
+impl<N:?Sized> AB<N>{
+    pub fn from_ref(b: &N) -> &AB<N> {
+        unsafe { std::mem::transmute(b)}
     }
 }
 
@@ -359,7 +364,7 @@ impl<N> AsRef<N> for B64<N> {
 
 impl AsRef<[u8; 32]> for B64<[u128; 2]> {
     fn as_ref(&self) -> &[u8; 32] {
-        unsafe { *std::ptr::from_ref(self).cast()}
+        unsafe { &*std::ptr::from_ref(self).cast()}
     }
 }
 impl<N> ToABE for B64<N>
@@ -384,7 +389,7 @@ impl<N> B64<N> {
         self.0
     }
     pub fn from_ref(b: &N) -> &B64<N> {
-        unsafe { *ptr::from_ref(b).cast() }
+        unsafe { &*ptr::from_ref(b).cast() }
     }
 }
 
@@ -567,4 +572,22 @@ impl From<U512> for B64<[u8; 64]> {
     fn from(val: U512) -> Self {
         B64(val.to_be_bytes())
     }
+}
+
+#[test]
+fn casts(){
+    let s = ab_slice(&[b"abc",b"123"]);
+    assert_eq!(s[0].0 , b"abc");
+    assert_eq!(s[1].0 , b"123");
+    assert_eq!("abc",AB::from_ref(b"abc").to_string());
+    assert_eq!(B64([1;32]) ^ B64([3;32]),B64([2;32]));
+    assert_eq!(B64([1;32]) ^ B64([3;32]),B64([2;32]));
+    assert_eq!(B64([1u8;32]).into_bytes(), [1;32]);
+    assert_eq!(&[32;32],&B64::from_ref(&[32;32]).0);
+
+
+    let o : &[u8;32] = B64([1u128;2]).as_ref();
+    let i = u128::from_ne_bytes(o[0..16].try_into().unwrap());
+    assert_eq!(i,1);
+    panic!("ok")
 }

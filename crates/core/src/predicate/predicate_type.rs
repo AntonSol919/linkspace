@@ -1,3 +1,4 @@
+use anyhow::Context;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -31,9 +32,14 @@ macro_rules! predty {
         }
         impl PredicateType{
             pub const ALL : [PredicateType;24] = [$(PredicateType::$fname),*];
+
             pub fn try_from_id(id:&[u8]) -> Option<Self> {
-                $( if id == $name.as_bytes() { return Some(PredicateType::$fname);})*
-                    None
+                #![allow(non_upper_case_globals)]
+                $(const $fname: &'static [u8] = $name.as_bytes();)*
+                    match id {
+                        $( $fname => Some(PredicateType::$fname), )*
+                            _ => None
+                    }
             }
             pub const fn info(self) -> PredInfo{
                 match self {
@@ -56,6 +62,14 @@ macro_rules! predty {
         }
     };
 }
+impl std::str::FromStr for PredicateType{
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from_id(s.as_bytes()).context("unknown predicate")
+    }
+}
+
 
 predty!( enum PredicateType {
     Hash => ("hash",DATA,r"\[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]","the point hash"),

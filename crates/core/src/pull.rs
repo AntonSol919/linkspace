@@ -23,7 +23,7 @@ pub fn read_pull_pkt(
         let stamp = pkt.create_stamp().copied();
         let subc= ctx.pre_scope(EScope(StampEF{fixed_now:stamp}));
         let subc= pkt_ctx(subc.reref(), &pkt);
-        tracing::debug!(ctx=pkt_fmt(pkt), "set pkt ctx");
+        tracing::debug!(ctx=%PktFmt(pkt), "set pkt ctx");
         
         for l in pkt.get_links() {
             let inner = reader

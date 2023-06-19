@@ -101,7 +101,7 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: im
     lk_get_all(lk, &query, &mut |pkt| {
         if pkt.get_links().is_empty() && pkt.data().is_empty() {
             last_request = *pkt.get_create_stamp();
-            tracing::debug!(pkt=%pkt_fmt(&pkt),"recently requested");
+            tracing::debug!(pkt=%PktFmt(&pkt),"recently requested");
             false
         }else {
             ok =true;

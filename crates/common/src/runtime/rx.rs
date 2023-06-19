@@ -310,7 +310,7 @@ impl Linkspace {
             if pkt.net_header().flags.contains(NetFlags::SILENT) {
                 tracing::trace!("(not) skipping silent pkt - TODO make this a option");
             }
-            let _g = tracing::error_span!("Matching",logptr=?pkt.recv,pkt=%pkt_fmt(&pkt.pkt)).entered();
+            let _g = tracing::error_span!("Matching",logptr=?pkt.recv,pkt=%PktFmt(&pkt.pkt)).entered();
             tracing::debug!("Testing New Pkt");
 
             let pkt = ShareArcPkt {
@@ -440,7 +440,7 @@ impl Linkspace {
                 .query(mode, &q.predicates, &mut counter)?
                 .try_for_each(|dbp| {
                     let _g = local_span.enter();
-                    tracing::debug!(pkt=%pkt_fmt(&dbp.pkt),"Match");
+                    tracing::debug!(pkt=%PktFmt(&dbp.pkt),"Match");
                     onmatch.handle_pkt(&dbp, self)
                 });
             if Rc::strong_count(&reader) > 2 {

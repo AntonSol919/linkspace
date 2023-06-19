@@ -279,6 +279,8 @@ impl<'x> WriteTxn<'x> {
                     new += 1;
                     now = Stamp::new(now.get() + 1);
                     last = Some(now);
+                }else {
+                    tracing::trace!(hash=%pkt.hash(),"Old skipped Written");
                 }
                 match cb(pkt, is_new) {
                     Ok(true) => {}
