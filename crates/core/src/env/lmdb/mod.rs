@@ -1,4 +1,4 @@
-use std::{sync::{Arc, OnceLock}, path::{Path,PathBuf},fmt::Debug, io::{Write, self}};
+use std::{sync::{Arc, OnceLock}, path::{Path,PathBuf},fmt::Debug, io::{Write, self} };
 
 use anyhow::Context;
 pub use ipcbus::ProcBus;
@@ -54,12 +54,11 @@ impl BTreeEnv {
                 let mut bytes = LNS_ROOTS;
                 let roots:Vec<_> = std::iter::from_fn(||{
                     if bytes.is_empty() { return None;}
-                    let pkt = crate::pkt::read::parse_netpkt(bytes, true).unwrap();
-                    let pkt = pkt.as_netbox();
+                    let pkt = crate::pkt::read::read_pkt(bytes, true).unwrap();
                     bytes = &bytes[pkt.size() as usize..];
                     Some(pkt)
                 }).collect();
-                let mut it = roots.iter().map(|p| p as &dyn NetPkt);
+                let mut it = roots.iter().map(|p| p.as_ref() as &dyn NetPkt);
                 let (_i,_) = writer.write_many_state(&mut it, None).unwrap();
             }
         }

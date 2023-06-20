@@ -12,7 +12,7 @@ pub fn datapoint(data: &[u8], netopts: impl Into<NetOpts>) -> NetPktParts<'_> {
 }
 pub fn try_datapoint_ref(data: &[u8], netopts: NetOpts) -> Result<NetPktParts<'_>, Error> {
     let pkt_parts = PointParts {
-        pkt_header: PointHeader::new(PointTypeFlags::DATA_POINT, data.len())?,
+        pkt_header: PointHeader::new_content_len(PointTypeFlags::DATA_POINT, data.len())?,
         fields: PointFields::DataPoint(data),
     };
     let hash = pkt_parts.compute_hash();
@@ -106,7 +106,7 @@ fn linkp<'t>(
     let offset_ipathu = (size_of::<PointHeader>() + size_of::<LinkPointHeader>()).saturating_add(std::mem::size_of_val(links));
     let offset_ipath = U16::new( offset_ipathu.try_into().map_err(|_| Error::ContentLen)?);
     let offset_data = U16::new((offset_ipathu + ipath_size).try_into().map_err(|_| Error::ContentLen)?);
-    let pkt_header = PointHeader::new(
+    let pkt_header = PointHeader::new_content_len(
         PointTypeFlags::LINK_POINT,
         size_of::<LinkPointHeader>() + tail.byte_len(),
     )?;
@@ -158,31 +158,19 @@ pub fn try_keypoint_ref<'t>(
     signkey: &SigningKey,
     netopts: NetOpts,
 ) -> Result<NetPktParts<'t>, Error> {
-    let (linkpoint_pkt_header, sp) = linkp(group, domain, ipath, links, data, stamp)?;
+    let (pkt_header, lp_head) = linkp(group, domain, ipath, links, data, stamp)?;
+    let pkt_header = PointHeader::new_point_size(
+        pkt_header.point_type | PointTypeFlags::SIGNATURE ,
+        pkt_header.uset_bytes.get() as usize + size_of::<Signed>()
+    )?;
     let linkpoint_hash = PointParts {
-        pkt_header: linkpoint_pkt_header,
-        fields: PointFields::LinkPoint(sp),
-    }
-    .compute_hash();
+        pkt_header,
+        fields: PointFields::LinkPoint(lp_head),
+    }.compute_hash();
     let signature = linkspace_cryptography::sign_hash(signkey, &linkpoint_hash.0).into();
     let pkt_parts = PointParts {
-        pkt_header: PointHeader::new(
-            PointTypeFlags::KEY_POINT,
-            size_of::<KeyPointHeader>() + sp.tail.byte_len(),
-        )?,
-        fields: PointFields::KeyPoint(KeyPoint {
-            head: KeyPointHeader {
-                reserved: KeyPointPadding::default(),
-                signed: Signed {
-                    pubkey: signkey.pubkey(),
-                    signature,
-                    linkpoint_hash,
-                },
-                inner_point: linkpoint_pkt_header,
-                linkpoint: sp.head,
-            },
-            tail: sp.tail,
-        }),
+        pkt_header,
+        fields: PointFields::KeyPoint(lp_head,Signed{ pubkey: signkey.pubkey(), signature })
     };
     let hash = pkt_parts.compute_hash();
     Ok(NetPktParts {
@@ -198,7 +186,7 @@ pub fn errorpoint(error: &[u8], netopts: impl Into<NetOpts>) -> NetPktParts<'_> 
 
 fn __error_blk_ref(error: &[u8], netopts: NetOpts) -> NetPktParts<'_> {
     let pkt_parts = PointParts {
-        pkt_header: PointHeader::new(PointTypeFlags::ERROR_POINT, error.len()).unwrap(),
+        pkt_header: PointHeader::new_content_len(PointTypeFlags::ERROR_POINT, error.len()).unwrap(),
         fields: PointFields::Error(error),
     };
     let hash = pkt_parts.compute_hash();

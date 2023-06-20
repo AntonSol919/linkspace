@@ -136,7 +136,7 @@ impl NetPkt for NetPktPtr {
             hash: self.hash,
             point: PointThinPtr(self.point.0)
         };
-        let bytes = self.as_netpkt_bytes();
+        let bytes = &self.as_netpkt_bytes()[size_of::<NetPktPtr>()..];
         unsafe {NetPktArc::from_header_and_copy(header.into(),true,|d:&mut [u8]| d.copy_from_slice(bytes)).unwrap()}
     }
 

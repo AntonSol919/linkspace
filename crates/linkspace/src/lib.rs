@@ -70,7 +70,7 @@ impl PktHandler for Box<dyn PktHandler> {
 
 pub use point::{lk_datapoint, lk_keypoint, lk_linkpoint};
 pub mod point {
-    use std::io;
+    use std::{io, borrow::Cow};
 
     use super::*;
     /**
@@ -182,33 +182,19 @@ pub mod point {
     }
 
     
-    pub fn lk_read(buf: &[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError> {
-        let pkt = super::misc::read::parse_netpkt(buf,false )?;
+    pub fn lk_read(buf: &[u8],allow_private:bool) -> Result<(Cow<NetPktPtr>,&[u8]),PktError> {
+        let pkt = linkspace_common::pkt::read::read_pkt(buf,false )?;
         if !allow_private{pkt.check_private()?};
         let size : usize = pkt.size().into();
         Ok((pkt,&buf[size..]))
     }
-    pub fn lk_read_unchecked(buf:&[u8],allow_private:bool) -> Result<(NetPktBox,&[u8]),PktError>{
-        if cfg!(debug_assertions) { return lk_read(buf,allow_private) };
-
-        let pkt = super::misc::read::parse_netpkt(buf,true)?;
+    pub fn lk_read_unchecked(buf:&[u8],allow_private:bool) -> Result<(Cow<NetPktPtr>,&[u8]),PktError>{
+        let pkt = linkspace_common::pkt::read::read_pkt(buf,cfg!(debug_assertions))?;
         if !allow_private{pkt.check_private()?};
         let size : usize = pkt.size().into();
         Ok((pkt,&buf[size..]))
     }
-    pub fn lk_read_arc_unchecked(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
-        if cfg!(debug_assertions) { return lk_read_arc(buf,allow_private) };
-        let pkt = super::misc::read::parse_netarc(buf, false)?;
-        if !allow_private{pkt.check_private()?};
-        let size : usize = pkt.size().into();
-        Ok((pkt,&buf[size..]))
-    }
-    pub fn lk_read_arc(buf: &[u8],allow_private:bool) -> Result<(NetPktArc,&[u8]),PktError>{
-        let pkt = super::misc::read::parse_netarc(buf, true)?;
-        if !allow_private{pkt.check_private()?};
-        let size = pkt.size() as usize;
-        Ok((pkt,&buf[size..]))
-    }
+    
     pub fn lk_write(p: &dyn NetPkt, allow_private:bool,out: &mut dyn io::Write) -> io::Result<()> {
         if !allow_private{p.check_private().map_err(io::Error::other)?}
         let mut segments = p.byte_segments().io_slices();

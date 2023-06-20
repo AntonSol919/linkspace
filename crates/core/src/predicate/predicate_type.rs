@@ -95,7 +95,7 @@ predty!( enum PredicateType {
     Ubits3 => ("ubits3",EMPTY,r"\[u32:0\]","(mutable) user defined bits"),
     Type => ("type",EMPTY,r"\[b2:00000001\]","the field type bits - implied by other predicates"),
     Netflags => ("netflags",EMPTY,r"\[b2:00000000\]","(mutable) netflags"),
-    PointSize => ("point_size",DATA,r"\[u16:4\]","exact point size - (netpkt_size - 32b header - 32b hash)")
+    Size => ("size",DATA,r"\[u16:4\]","exact size of the netpkt when using lk_write or lk_read - includes netheader and hash ")
 });
 impl From<PredicateType> for RuleType {
     fn from(val: PredicateType) -> Self {

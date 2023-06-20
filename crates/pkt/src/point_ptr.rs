@@ -3,16 +3,13 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::{fmt::{self, Debug}, ptr};
+use std::{
+    fmt::{self, Debug},
+    ptr,
+};
 
 use super::*;
 use crate::utils::none;
-
-// starting from the first pkt_byte, if the type is keypoint, this is the offset for the inner linkpoint pkt
-pub(crate) const LINKPOINT_IN_KEYPOINT_OFFSET: usize = size_of::<PointHeader>()
-    + size_of::<KeyPointHeader>()
-    - size_of::<PointHeader>()
-    - size_of::<LinkPointHeader>();
 
 /// Flat [u8] repr of a [Point]
 #[repr(C, align(4))]
@@ -39,7 +36,7 @@ impl PointThinPtr {
         unsafe {
             &*(std::ptr::from_raw_parts(
                 ptr::from_ref(self).cast::<()>(),
-                usize::from(self.0.padded_content_size()) ,
+                usize::from(self.0.padded_content_size()),
             ))
         }
     }
@@ -58,7 +55,7 @@ impl fmt::Debug for PointPtr {
 impl PointPtr {
     #[inline(always)]
     pub fn thin_point(&self) -> &PointThinPtr {
-        unsafe { &*( ptr::from_ref(&self.pkt_header).cast::<PointThinPtr>()) }
+        unsafe { &*(ptr::from_ref(&self.pkt_header).cast::<PointThinPtr>()) }
     }
     /// # Safety
     ///
@@ -66,7 +63,7 @@ impl PointPtr {
     pub unsafe fn from_bytes_unchecked(b: &[u8]) -> &PointPtr {
         PointThinPtr::from_bytes_unchecked(b).as_sized()
     }
-    pub fn internal_consitent_length(&self) -> Result<u16, Error> {
+    pub fn internal_consitent_length(&self) -> Result<(), Error> {
         self.thin_point().internal_consitent_length()
     }
 }
@@ -76,49 +73,77 @@ impl PointThinPtr {
     /// This is a unchecked cast, meaning accessing fields is dangerous
     /// to validate, first ensure you have enough bytes to read a PktHeader,
     /// Then call internal_consistent_length and compare the lengths
-    /// finally call check_signature to ensure if its an assert pkt that its valid.
+    /// finally call check_signature to ensure if its signed that its valid.
     pub unsafe fn from_bytes_unchecked(b: &[u8]) -> &PointThinPtr {
         assert!(b.len() >= size_of::<PointHeader>(), "Never gone work");
-        assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
-        assert!(b.len() % 4 == 0 ,"missing padding");
+        assert!(b.as_ptr().align_offset(8) == 0, "Unaligned cast");
+        assert!(b.len() % 8 == 0, "missing padding");
         &*(b.as_ptr().cast::<PointThinPtr>())
     }
     #[inline(always)]
-    fn fixed(&self) -> BarePointFields {
-        let mem = &self.content_memory();
+    pub (crate) fn linkpoint_header(&self) -> Option<&LinkPointHeader>{
+        let mut v = None;
+        if self.0.point_type.contains(PointTypeFlags::LINK) {
+            v = Some(unsafe {&*self.pkt_bytes().as_ptr().add(size_of::<PointHeader>()).cast::<LinkPointHeader>()});
+        }
+        v
+    }
+    /// This must be called with a verified point type.
+    #[inline(always)]
+    pub(crate)fn fixed(&self) -> BarePointFields {
+        let (_point, rest) = unsafe {
+            self.pkt_bytes()
+                .split_at_unchecked(size_of::<PointHeader>())
+        };
+        let padding_len: usize = self.0.padding().into();
+
+        if self.0.point_type.contains(PointTypeFlags::LINK) {
+            unsafe {
+                let (lp, mut rest) = rest.split_at_unchecked(size_of::<LinkPointHeader>());
+                let header = &*lp.as_ptr().cast::<LinkPointHeader>();
+                let mut signed: Option<&Signed> = None;
+                if self.0.point_type.contains(PointTypeFlags::SIGNATURE) {
+                    let (tail, signed_b) =
+                        rest.split_at_unchecked(rest.len() - size_of::<Signed>());
+                    rest = tail;
+                    signed = Some(&*signed_b.as_ptr().cast::<Signed>());
+                }
+                let (_tail, padding) =
+                    rest.split_at_unchecked(rest.len() - self.0.padding() as usize);
+
+                return BarePointFields::LinkPoint {
+                    header,
+                    padding,
+                    signed,
+                };
+            }
+        }
+        let (mem, padding) = unsafe { rest.split_at_unchecked(rest.len() - padding_len) };
         match self.0.point_type {
-            PointTypeFlags::DATA_POINT => BarePointFields::DataPoint(mem),
-            PointTypeFlags::LINK_POINT => {
-                let (linkpoint, tail) = unsafe{mem.split_at_unchecked(size_of::<LinkPointHeader>())};
-                let linkpoint = unsafe { &*linkpoint.as_ptr().cast::<LinkPointHeader>()};
-                BarePointFields::LinkPoint {
-                    lp_header: linkpoint,
-                    tail,
-                }
-            }
-            PointTypeFlags::KEY_POINT => {
-                let (assert, tail) = unsafe{mem.split_at_unchecked(size_of::<KeyPointHeader>())};
-                let assert = unsafe { &*assert.as_ptr().cast::<KeyPointHeader>() };
-                BarePointFields::KeyPoint {
-                    a_header: assert,
-                    tail,
-                }
-            }
-            PointTypeFlags::ERROR_POINT => BarePointFields::Error(mem),
-            _ => BarePointFields::Unknown(mem)
+            PointTypeFlags::DATA_POINT => BarePointFields::DataPoint { data: mem, padding },
+            PointTypeFlags::ERROR_POINT => BarePointFields::Error { msg: mem, padding },
+            _ => BarePointFields::Unknown(rest),
         }
     }
 
     /// Check the header length fields and return the point size. This is the length without the hash.
     #[inline(always)]
-    pub fn internal_consitent_length(&self) -> Result<u16, Error> {
+    pub fn internal_consitent_length(&self) -> Result<(), Error> {
         self.point_header().check()?;
-        let point_size = self.point_header().upoint_size();
-        match self.fixed() {
-            BarePointFields::DataPoint(_) => (),
-            BarePointFields::LinkPoint { lp_header, ..} => {
-                let isp_offset = lp_header.info.offset_ipath.get();
-                let data_offset = lp_header.info.offset_data.get();
+        let mut point_size = self.point_header().upoint_size();
+        let padding = match self.fixed() {
+            BarePointFields::DataPoint { padding, .. } => padding,
+            BarePointFields::LinkPoint {
+                padding,
+                header,
+                signed: _,
+            } => {
+                if self.0.point_type.contains(PointTypeFlags::SIGNATURE) {
+                    // signed.is_some(
+                    point_size -= size_of::<Signed>() as u16;
+                }
+                let isp_offset = header.info.offset_ipath.get();
+                let data_offset = header.info.offset_data.get();
                 if data_offset > point_size {
                     return Err(Error::DataOffsetIncompatible);
                 }
@@ -126,60 +151,41 @@ impl PointThinPtr {
                     return Err(Error::DataOffsetIncompatible);
                 }
                 let link_size = isp_offset
-                    .checked_sub(( size_of::<PointHeader>() + size_of::<LinkPointHeader>()).try_into().unwrap())
+                    .checked_sub(
+                        (size_of::<PointHeader>() + size_of::<LinkPointHeader>())
+                            .try_into()
+                            .unwrap(),
+                    )
                     .ok_or(Error::ISPOffsetIncompatible)?;
                 if link_size % u16::try_from(size_of::<Link>()).unwrap() != 0 {
                     return Err(Error::IndivisableLinkbytes);
                 }
-                unsafe { self.unchecked_linkpoint_tail() }
-                    .ipath
-                    .check_components()?;
+                unsafe { self.unchecked_tail() }.ipath.check_components()?;
+                padding
             }
-            BarePointFields::KeyPoint {
-                a_header: assert,
-                ..
-            } => {
-                let inner_linkpoint_size = usize::from(self.point_header().ucontent_size()) 
-                    - size_of::<KeyPointPadding>()
-                    - size_of::<PubKey>()
-                    - size_of::<Signature>();
-                if inner_linkpoint_size < MIN_LINKPOINT_SIZE {
-                    return Err(Error::KeyPointLength);
-                }
-                if assert.inner_point.point_type != PointTypeFlags::LINK_POINT {
-                    return Err(Error::SignedInvalidPkt);
-                }
-                let inner_lp_bytes = &self.pkt_bytes()[LINKPOINT_IN_KEYPOINT_OFFSET..];
-                let linkpoint = unsafe { PointThinPtr::from_bytes_unchecked(inner_lp_bytes) };
-                let lp_size = linkpoint.internal_consitent_length()?;
-                if inner_linkpoint_size != usize::from(lp_size) + size_of::<LkHash>()  {
-                    return Err(Error::KeyPointLength);
-                }
-            }
-            BarePointFields::Error(_) => (),
-            BarePointFields::Unknown(_) => (),
+            BarePointFields::Error { padding, .. } => padding,
+            BarePointFields::Unknown(_) => &[],
         };
-        Ok(point_size)
+        if padding.len() > 7 {return Err(Error::PaddingBitsNotU8Max);}
+        if !padding.iter().all(|o|*o ==255){return Err(Error::PaddingBitsNotU8Max);}
+        Ok(())
     }
 
     pub fn check_signature(&self) -> Result<(), Error> {
-        if let BarePointFields::KeyPoint {
-            a_header: assert,
-            ..
-        } = self.fixed()
-        {
-            if assert.reserved != KeyPointPadding::default() {
-                return Err(Error::ReservedBitsSet);
+        match self.fixed() {
+            BarePointFields::LinkPoint {
+                header: _,
+                padding: _,
+                signed: Some(signed),
+            } => {
+                let pbytes = self.pkt_bytes();
+                let sans_signature = &pbytes[..pbytes.len() - size_of::<Signed>()];
+                let hash = linkspace_cryptography::blake3_hash(sans_signature);
+                signed
+                    .validate(hash.as_bytes())
+                    .map_err(|_| Error::InvalidSignature)?;
             }
-            let inner_linkpoint: &PointThinPtr= unsafe {&*ptr::from_ref(&assert.inner_point).cast::<PointThinPtr>()};
-            let hash = inner_linkpoint.compute_hash();
-            if hash != assert.signed.linkpoint_hash {
-                return Err(Error::HashMismatch);
-            }
-            assert
-                .signed
-                .validate()
-                .map_err(|_| Error::InvalidSignature)?;
+            _ => (),
         };
         Ok(())
     }
@@ -191,17 +197,7 @@ impl PointThinPtr {
         unsafe {
             core::slice::from_raw_parts(
                 ptr::from_ref(self).cast(),
-                usize::from(self.point_header().padded_point_size() ),
-            )
-        }
-    }
-
-    /// exclude padding
-    fn content_memory(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                ptr::from_ref(self).cast::<PointHeader>().add(1).cast(),
-                self.0.ucontent_size() as usize
+                usize::from(self.point_header().padded_point_size()),
             )
         }
     }
@@ -212,38 +208,37 @@ impl PointThinPtr {
         onunknown: impl FnOnce(&'a ()) -> A,
         ondata: impl FnOnce(&'a ()) -> A,
         onlinkpoint: impl FnOnce(&'a LinkPointHeader) -> A,
-        onassert: impl FnOnce(&'a KeyPointHeader) -> A,
+        onkeypoint: impl FnOnce(&'a LinkPointHeader, &'a Signed) -> A,
         onerror: impl FnOnce(&'a ()) -> A,
     ) -> A {
         match self.fixed() {
-            BarePointFields::DataPoint(_) => ondata(&()),
+            BarePointFields::DataPoint { .. } => ondata(&()),
             BarePointFields::LinkPoint {
-                lp_header: linkpoint,
+                header,
+                signed: None,
                 ..
-            } => onlinkpoint(linkpoint),
-            BarePointFields::KeyPoint {
-                a_header: assert,
+            } => onlinkpoint(header),
+            BarePointFields::LinkPoint {
+                header,
+                signed: Some(signed),
                 ..
-            } => onassert(assert),
-            BarePointFields::Error(_) => onerror(&()),
+            } => onkeypoint(header, signed),
+            BarePointFields::Error { .. } => onerror(&()),
             BarePointFields::Unknown(_) => onunknown(&()),
         }
     }
 
     #[inline(always)]
-    unsafe fn unchecked_assert_tail(&self) -> Tail {
-        let inner_linkpoint =
-            self.self_ptr().add(LINKPOINT_IN_KEYPOINT_OFFSET).cast::<PointThinPtr>();
-        (*inner_linkpoint).unchecked_linkpoint_tail()
-    }
-    #[inline(always)]
-    unsafe fn unchecked_linkpoint_tail(&self) -> Tail {
+    unsafe fn unchecked_tail(&self) -> Tail {
         let ptr = self.self_ptr();
-        let p = &*{ ptr.add(size_of::<PointHeader>()).cast::<LinkPointHeader>()};
+        let p = &*{ ptr.add(size_of::<PointHeader>()).cast::<LinkPointHeader>() };
         let start = size_of::<PointHeader>() + size_of::<LinkPointHeader>();
-        let is_offset = usize::from(p.info.offset_ipath.get()) ;
-        let data_offset = usize::from(p.info.offset_data.get()) ;
-        let size = self.point_header().upoint_size();
+        let is_offset = usize::from(p.info.offset_ipath.get());
+        let data_offset = usize::from(p.info.offset_data.get());
+        let mut size = self.point_header().upoint_size();
+        if self.0.point_type.contains(PointTypeFlags::SIGNATURE) {
+            size -= size_of::<Signed>() as u16;
+        }
         //assert!(start <= is_offset && is_offset <= data_offset && data_offset <= size , "bad sizes");
         let start = ptr.add(start).cast::<Link>();
         let end = ptr.add(is_offset).cast::<Link>();
@@ -269,42 +264,50 @@ impl Point for PointThinPtr {
     #[inline(always)]
     fn tail(&self) -> Option<Tail> {
         match self.parts().fields {
-            PointFields::LinkPoint(LinkPoint { tail ,..}) => Some(tail),
-            PointFields::KeyPoint(KeyPoint { tail,.. }) => Some(tail),
+            PointFields::LinkPoint(LinkPoint { tail, .. }) => Some(tail),
+            PointFields::KeyPoint(LinkPoint { tail, .. }, _) => Some(tail),
             _ => None,
         }
     }
     #[inline(always)]
-    fn keypoint_header(&self) -> Option<&KeyPointHeader> {
-        self.map_fixed(none, none, none, Some, none)
+    fn signed(&self) -> Option<&Signed> {
+        self.map_fixed(none, none, none, |_, a| Some(a), none)
     }
     #[inline(always)]
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
-        if true{
-            let mut ptr = None;
-            let point : *const u8 = unsafe { (ptr::from_ref(self).cast::<u8>()).add(size_of::<PointHeader>())};
-            if self.0.point_type.contains(PointTypeFlags::LINK){ ptr = Some(unsafe{&*(point.cast::<LinkPointHeader>())} ) };
-            if self.0.point_type.contains(PointTypeFlags::SIGNATURE){ ptr = Some(&unsafe{&*(point.cast::<KeyPointHeader>())}.linkpoint ) };
-            ptr
-        } else {
-            self.map_fixed(none, none, Some, |a| Some(&a.linkpoint), none)
-        }
+        self.map_fixed(none, none, Some, |a, _| Some(a), none)
     }
     #[inline(always)]
     fn parts(&self) -> PointParts {
-        let fields = match self.point_header().point_type {
-            PointTypeFlags::DATA_POINT => PointFields::DataPoint(self.content_memory()),
-            PointTypeFlags::LINK_POINT => {
-                let head = unsafe { &*self.content_memory().as_ptr().cast::<LinkPointHeader>() };
-                let tail = unsafe { self.unchecked_linkpoint_tail() };
-                PointFields::LinkPoint(LinkPoint { head: *head, tail })
+        let fields = match self.fixed() {
+            BarePointFields::DataPoint { data, padding: _ } => PointFields::DataPoint(data),
+            BarePointFields::LinkPoint {
+                header,
+                signed: None,
+                padding: _,
+            } => {
+                let tail = unsafe { self.unchecked_tail() };
+                PointFields::LinkPoint(LinkPoint {
+                    head: *header,
+                    tail,
+                })
             }
-            PointTypeFlags::KEY_POINT => {
-                let head = unsafe { &*self.content_memory().as_ptr().cast::<KeyPointHeader>() };
-                let tail = unsafe { self.unchecked_assert_tail() };
-                PointFields::KeyPoint(KeyPoint { head: *head, tail })
+            BarePointFields::LinkPoint {
+                header,
+                signed: Some(signed),
+                padding: _,
+            } => {
+                let tail = unsafe { self.unchecked_tail() };
+                PointFields::KeyPoint(
+                    LinkPoint {
+                        head: *header,
+                        tail,
+                    },
+                    *signed,
+                )
             }
-            _ => PointFields::Error(self.content_memory()),
+            BarePointFields::Error { msg, padding: _ } => PointFields::Error(msg),
+            BarePointFields::Unknown(o) => PointFields::Unknown(o),
         };
         PointParts {
             pkt_header: *self.point_header(),
@@ -323,9 +326,13 @@ impl Point for PointThinPtr {
     }
 
     fn padding(&self) -> &[u8] {
-        let start_padding : usize= self.point_header().upoint_size().into();
-        &self.pkt_bytes()[start_padding..]
-    }   
+        match self.fixed() {
+            BarePointFields::DataPoint { padding, .. }
+            | BarePointFields::LinkPoint { padding, .. }
+            | BarePointFields::Error { padding, .. }
+            | BarePointFields::Unknown(padding) => padding,
+        }
+    }
 }
 
 impl Point for PointPtr {
@@ -337,14 +344,10 @@ impl Point for PointPtr {
     fn tail(&self) -> Option<Tail> {
         self.thin_point().tail()
     }
-    fn padding(&self) -> &[u8]{
+    fn padding(&self) -> &[u8] {
         self.thin_point().padding()
     }
 
-    #[inline(always)]
-    fn keypoint_header(&self) -> Option<&KeyPointHeader> {
-        self.thin_point().map_fixed(none, none, none, Some, none)
-    }
     #[inline(always)]
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         self.thin_point().linkpoint_header()
@@ -363,21 +366,31 @@ impl Point for PointPtr {
     fn pkt_segments(&self) -> ByteSegments {
         self.thin_point().pkt_segments()
     }
+
+    fn signed(&self) -> Option<&Signed> {
+        self.thin_point()
+            .map_fixed(none, none, none, |_, o| Some(o), none)
+    }
 }
 
-#[repr(align(4))]
-enum BarePointFields<'o> {
-    DataPoint(&'o [u8]),
+// This layout can produce cmov instructions
+#[derive(Debug)]
+pub(crate) enum BarePointFields<'o> {
+    DataPoint {
+        data: &'o [u8],
+        #[allow(unused)]
+        padding: &'o [u8],
+    },
     LinkPoint {
-        lp_header: &'o LinkPointHeader,
+        header: &'o LinkPointHeader,
+        signed: Option<&'o Signed>,
         #[allow(unused)]
-        tail: &'o [u8],
+        padding: &'o [u8],
     },
-    KeyPoint {
-        a_header: &'o KeyPointHeader,
+    Error {
+        msg: &'o [u8],
         #[allow(unused)]
-        tail: &'o [u8],
+        padding: &'o [u8],
     },
-    Error(&'o [u8]),
     Unknown(&'o [u8]),
 }

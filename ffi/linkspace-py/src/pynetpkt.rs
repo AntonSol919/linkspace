@@ -143,7 +143,7 @@ impl Pkt {
     #[getter]
     /// signature
     fn signature<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.signature().map(|b| PyBytes::new(py, &b.0))
+        self.0.signed().map(|b| PyBytes::new(py, &b.0))
     }
 
     #[getter]

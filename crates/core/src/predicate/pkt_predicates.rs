@@ -32,7 +32,7 @@ pub struct PktPredicates {
     pub group: TestSet<U256>,
     pub pubkey: TestSet<U256>,
     pub hash: TestSet<U256>,
-    pub pkt_size: TestSet<u16>,
+    pub size: TestSet<u16>,
 
     pub data_size: TestSet<u16>,
     pub links_len: TestSet<u16>,
@@ -94,7 +94,7 @@ impl PktPredicates {
         group: TestSet::DEFAULT,
         pubkey: TestSet::DEFAULT,
         hash: TestSet::DEFAULT,
-        pkt_size: TestSet::DEFAULT,
+        size: TestSet::DEFAULT,
         data_size: TestSet::DEFAULT,
         links_len: TestSet::DEFAULT,
         path_len: TestSet::DEFAULT,
@@ -158,7 +158,7 @@ impl PktPredicates {
             group,
             pubkey,
             hash,
-            pkt_size,
+            size,
             path_prefix,
             path_len,
             recv_stamp,
@@ -206,7 +206,7 @@ impl PktPredicates {
                 hash.map(|v| -> LkHash { v.into() }).rules(),
                 id,
             ))
-            .chain(as_rules_it2(PointSizeF, pkt_size.rules(), U16::new))
+            .chain(as_rules_it2(SizeF, size.rules(), U16::new))
             .chain(as_rules_it2(DataSizeF, data_size.rules(), U16::new))
             .chain(as_rules_it2(LinksLenF, links_len.rules(), U16::new))
             .chain(as_rules_it2(PathLenF, path_len.rules(), U8::new))
@@ -247,8 +247,8 @@ impl PktPredicates {
                     .with_context(|| format!("incompatible pkt typs:{rule:?}" ))?;
                 match f {
                     FieldEnum::PktTypeF => self.pkt_types.try_add(op, U8::try_from(val)?.0)?,
-                    FieldEnum::PointSizeF => {
-                        self.pkt_size.try_add(op, U16::try_from(val)?.get())?
+                    FieldEnum::SizeF => {
+                        self.size.try_add(op, U16::try_from(val)?.get())?
                     }
                     FieldEnum::PktHashF => {
                         self.hash.try_add(op, LkHash::try_from(val)?.into())?;

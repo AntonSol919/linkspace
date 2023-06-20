@@ -16,7 +16,7 @@ impl<'a> ExactSizeIterator for ByteSegments<'a> {
     }
     #[inline]
     fn is_empty(&self) -> bool {
-        self.0 == [&[];8]
+        self.0 == [&[] as &[u8];8]
     }
 }
 

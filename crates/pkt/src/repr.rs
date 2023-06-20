@@ -23,7 +23,6 @@ links\\t[links_len:str]\\n\
 data\\t[data_size:str]\\n\
 [data/~utf8]\\n\
 ";
-/// A static equivalent to [pkt_fmt] without using abe.
 
 
 pub static DEFAULT_FMT: LazyLock<Vec<ABE>> = LazyLock::new(|| parse_abe(DEFAULT_PKT).unwrap());
@@ -128,8 +127,8 @@ lk-data-size='{size}' lk-links-len='{links_len}' lk-path-len='{path_len}'>")?;
         fmt_b64(pkt.hash_ref(), "hash", f)?;
 
         if let Some(lh) = point.linkpoint_header(){
-            if let Some(kp) = point.keypoint_header(){
-                fmt_b64(&kp.signed.pubkey, "pubkey", f)?;
+            if let Some(kp) = point.signed(){
+                fmt_b64(&kp.pubkey, "pubkey", f)?;
             }
             let domain64 = B64(lh.domain.0);
             let domain = EscapeHTML(lh.domain.as_str(true));

@@ -103,8 +103,7 @@ impl NetPktArc {
         };
         let byte_size : usize= h.point.point_header().padded_content_size().into() ;
         let arc = triomphe::Arc::from_header_and_fn(
-            h,byte_size,
-            copy_from
+            h,byte_size,copy_from
         );
         let pkt= NetPktArc(arc);
         pkt.check(skip_hash)?;

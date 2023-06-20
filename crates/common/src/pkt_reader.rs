@@ -66,7 +66,7 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
             }
         }
         try_opt!(partial_header.point_header.check());
-        let len = partial_header.point_header.net_pkt_size();
+        let len = partial_header.point_header.size();
         let mut pkt = unsafe { partial_header.alloc() };
         {
             let s: &mut [u8] = unsafe {

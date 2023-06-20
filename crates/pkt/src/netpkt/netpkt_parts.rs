@@ -9,7 +9,7 @@ use crate::*;
 
 
 /// Rust enum repr of a [NetPkt]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug,PartialEq)]
 #[repr(C, align(4))]
 pub struct NetPktParts<'a> {
     pub net_header: NetPktHeader,

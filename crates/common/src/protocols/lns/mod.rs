@@ -96,8 +96,8 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
                     Some(p) => p,
                     None => return Ok(Err(dummy_root(name)))
                 };
-                let pkt = linkspace_pkt::read::parse_netpkt(&pbytes, false)?;
-                Claim::from(pkt)?
+                let pkt = linkspace_pkt::read::read_pkt(&pbytes, false)?;
+                Claim::from(pkt.as_ref())?
             };
             Ok(Ok(LiveClaim{
                 claim: claim.with_context(||anyhow::anyhow!("Reading claim at {}",path.to_string_lossy()))?,

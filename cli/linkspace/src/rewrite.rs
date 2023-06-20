@@ -151,7 +151,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                 let pkt = rewrite_pkt(&s.head, &s.tail, &ropts, key, data, &pctx)?;
                 common.write_multi_dest(&mut write, &**pkt, None)?;
             }
-            PointFields::KeyPoint(s) => {
+            PointFields::KeyPoint(lp,_s) => {
                 match sign_mode {
                     SignMode::Skip => {
                         common.write_multi_dest(&mut write, &**pkt, None)?;
@@ -160,8 +160,8 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                         let key = key.identity(common, false)?;
                         let pctx = pkt_ctx(ctx.reref(), &**pkt);
                         let pkt = rewrite_pkt(
-                            &s.head.linkpoint,
-                            &s.tail,
+                            &lp.head,
+                            &lp.tail,
                             &ropts,
                             Some(key),
                             data,
@@ -172,8 +172,8 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                     SignMode::Unsign => {
                         let pctx = pkt_ctx(ctx.reref(), &**pkt);
                         let pkt = rewrite_pkt(
-                            &s.head.linkpoint,
-                            &s.tail,
+                            &lp.head,
+                            &lp.tail,
                             &ropts,
                             None,
                             data,

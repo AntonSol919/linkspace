@@ -78,7 +78,6 @@ pub use spath_fmt::*;
 pub use stamp::*;
 pub use builder::*;
 
-#[cfg(test)]
 pub mod asm_tests;
 
 
@@ -92,7 +91,7 @@ pub type Domain = AB<[u8; 16]>;
 /// Alias for `AB<[u8;16]>`
 pub type Tag = AB<[u8; 16]>;
 
-/// A [Tag] and [Ptr] 
+/// A [Tag] and [LkHash] 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
 #[repr(C, align(4))]
 pub struct Link {
@@ -147,11 +146,11 @@ pub trait Point: core::fmt::Debug {
     
     fn data(&self) -> &[u8];
     fn tail(&self) -> Option<Tail>;
-    /// Points are padded with [255] to have them always u32 aligned - this is accessible here for completeness sake.
+    /// Points are padded with upto 7 \xFF bytes and are u64 aligned - this is accessible here for completeness sake.
     fn padding(&self) -> &[u8];
     /// Return a LinkPointHeader, works for both key and link points.
     fn linkpoint_header(&self) -> Option<&LinkPointHeader>;
-    fn keypoint_header(&self) -> Option<&KeyPointHeader>;
+    fn signed(&self) -> Option<&Signed> ;
     /// A utility function to translate this format into bytes for hashing & io
     fn pkt_segments(&self) -> ByteSegments;
     fn point_header_ref(&self) -> &PointHeader;
@@ -192,9 +191,9 @@ where
         }
         None
     }
-    fn as_keypoint(&self) -> Option<KeyPoint> {
-        if let PointFields::KeyPoint(a) = self.parts().fields {
-            return Some(a);
+    fn as_keypoint(&self) -> Option<(LinkPoint,Signed)> {
+        if let PointFields::KeyPoint(a,b) = self.parts().fields {
+            return Some((a,b));
         }
         None
     }
@@ -209,7 +208,7 @@ where
         self.linkpoint_header().map(|v| &v.domain)
     }
     fn get_domain(&self) -> &Domain {
-        self.domain().unwrap_or(&AB([0; 16]))
+        unwrap_or(self.domain(), &AB([0;16]))
     }
     fn create_stamp(&self) -> Option<&Stamp> {
         self.linkpoint_header().map(|v| &v.create_stamp)
@@ -218,7 +217,7 @@ where
         self.create_stamp().unwrap_or(&Stamp::ZERO)
     }
     fn signature(&self) -> Option<&Signature> {
-        self.keypoint_header().map(|h| &h.signed.signature)
+        self.signed().map(|h| &h.signature)
     }
 
     fn get_signature(&self) -> &Signature {
@@ -226,7 +225,7 @@ where
     }
 
     fn pubkey(&self) -> Option<&PubKey> {
-        self.keypoint_header().map(|h| &h.signed.pubkey)
+        self.signed().map(|h| &h.pubkey)
     }
 
     fn get_pubkey(&self) -> &PubKey {
@@ -272,7 +271,7 @@ where
         linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
     fn aligned_net_pkt_size(&self) -> u16 {
-        self.point_header_ref().net_pkt_size()
+        self.point_header_ref().size()
     }
 
     fn check_private(&self) -> Result<(),crate::Error>{
@@ -362,6 +361,8 @@ pub enum Error {
     MissingHeader,
     #[error("reserved bits not null")]
     ReservedBitsSet,
+    #[error("The padding bits aren't set right")]
+    PaddingBitsNotU8Max,
     #[error("bad link size")]
     IndivisableLinkbytes,
     #[error("data offset should be between spi_offset and pkt_size")]
@@ -402,6 +403,14 @@ impl SigningExt for SigningKey {
 }
 
 
+// Seems to be better at generating cmov instructions
+#[inline(always)]
+pub const fn unwrap_or<'o,T>(opt:Option<&'o T>, mut default:&'o T) -> &'o T{
+    if let Some(val) = opt {
+        default = val;
+    }
+    default
+}
 
 
 

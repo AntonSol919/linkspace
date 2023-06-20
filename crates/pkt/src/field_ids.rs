@@ -115,7 +115,7 @@ impl FieldEnum {
             FieldEnum::PubKeyF | FieldEnum::GroupIDF | FieldEnum::PktHashF => {
                 LkHash::try_from(abl).ok().map(|v| v.to_abe())
             }
-            FieldEnum::LinksLenF | FieldEnum::DataSizeF | FieldEnum::PointSizeF => {
+            FieldEnum::LinksLenF | FieldEnum::DataSizeF | FieldEnum::SizeF => {
                 U16::try_from(abl).ok().map(|v| v.to_abe())
             }
             FieldEnum::DomainF => Domain::try_from(abl).ok().map(|v| v.to_abe()),
@@ -175,7 +175,7 @@ fid! {[
     (VarUBits3F,b'W',"ubits3" , PointTypeFlags::DATA),
     (PktHashF,b'h',"hash" , PointTypeFlags::DATA),
     (PktTypeF,b'y',"type", PointTypeFlags::DATA),
-    (PointSizeF,b'o',"point_size", PointTypeFlags::DATA ),
+    (SizeF,b'o',"size", PointTypeFlags::DATA ),
     (PubKeyF,b'k',"pubkey",PointTypeFlags::SIGNATURE),
     (SignatureF,b'v',"signature",PointTypeFlags::SIGNATURE),
     (GroupIDF,b'g',"group",PointTypeFlags::LINK),
@@ -264,11 +264,10 @@ field_val!([
         .point_header()
         .point_type
         .bits)),
-    (PointSizeF, u16, |pkt: &'o T| (pkt
+    (SizeF, u16, |pkt: &'o T| (pkt
         .as_point()
-        .point_header()
-        .point_size
-        .get())),
+        .point_header().size()
+        )),
     (DataSizeF, u16, |pkt: &'o T| pkt.as_point().data().len().try_into().expect("bug: impossible tail")),
     (
         LinksLenF,
@@ -341,10 +340,6 @@ field_ptr!([
         .as_point()
         .point_header_ref()
         .point_type),
-    (PointSizeF, U16, |pkt: &'o T| &pkt
-        .as_point()
-        .point_header_ref()
-        .point_size),
     (CreateF, Stamp, |pkt: &'o T| pkt
         .as_point()
         .get_create_stamp()),
@@ -361,7 +356,7 @@ impl FieldEnum {
     pub fn fixed_size(self) -> Option<usize> {
         let v = match self {
             FieldEnum::PathLenF | FieldEnum::PktTypeF | FieldEnum::VarNetFlagsF => 1,
-            FieldEnum::LinksLenF | FieldEnum::DataSizeF | FieldEnum::PointSizeF => 2,
+            FieldEnum::LinksLenF | FieldEnum::DataSizeF | FieldEnum::SizeF => 2,
             FieldEnum::VarHopF
             | FieldEnum::VarUBits0F
             | FieldEnum::VarUBits1F
@@ -401,7 +396,7 @@ impl FieldEnum {
             FieldEnum::PktTypeF => out.write_all(std::slice::from_ref(
                 &pkt.as_point().point_header_ref().point_type.bits,
             )),
-            FieldEnum::PointSizeF => out.write_all(&PointSizeF::get_ptr(pkt).0),
+            FieldEnum::SizeF => out.write_all( &U16::from(pkt.size()).0),
             FieldEnum::DataSizeF => out.write_all(&DataSizeF::get_val(pkt).to_be_bytes()),
             FieldEnum::LinksLenF => out.write_all(&LinksLenF::get_val(pkt).to_be_bytes()),
             FieldEnum::DomainF => out.write_all(&DomainF::get_ptr(pkt).0),
@@ -436,7 +431,7 @@ impl FieldEnum {
             FieldEnum::VarUBits3F => write!(out, "{}", VarUBits3F::get_ptr(pkt)),
             FieldEnum::PktHashF => write!(out, "{}", PktHashF::get_ptr(pkt)),
             FieldEnum::PktTypeF => write!(out, "{}", PktTypeF::get_ptr(pkt)),
-            FieldEnum::PointSizeF => write!(out, "{}", PointSizeF::get_ptr(pkt)),
+            FieldEnum::SizeF => write!(out, "{}", SizeF::get_val(pkt)),
             FieldEnum::DataSizeF => write!(out, "{}", DataSizeF::get_val(pkt)),
             FieldEnum::LinksLenF => write!(out, "{}", LinksLenF::get_val(pkt)),
             FieldEnum::DomainF => write!(out, "{}", DomainF::get_ptr(pkt).as_str(true)),
@@ -480,7 +475,7 @@ impl FieldEnum {
             FieldEnum::VarUBits3F => VarUBits3F::get_ptr(pkt).to_abe_str(),
             FieldEnum::PktHashF => PktHashF::get_ptr(pkt).to_abe_str(),
             FieldEnum::PktTypeF => print_abe(U8::new(PktTypeF::get_val(pkt)).abe_bits()),
-            FieldEnum::PointSizeF => PointSizeF::get_ptr(pkt).to_abe_str(),
+            FieldEnum::SizeF => U16::from(SizeF::get_val(pkt)).to_abe_str(),
             FieldEnum::DomainF => DomainF::get_ptr(pkt).to_abe_str(),
             FieldEnum::IPathF => PathF::get_ptr(pkt).to_abe_str(), // TODO might be the wrong choice
             FieldEnum::PathF => PathF::get_ptr(pkt).to_abe_str(),

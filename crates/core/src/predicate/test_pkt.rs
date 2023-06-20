@@ -110,7 +110,7 @@ pub fn compile_predicates(
         group,
         pubkey,
         hash,
-        pkt_size,
+        size,
         path_prefix,
         path_len,
         create,
@@ -137,7 +137,7 @@ pub fn compile_predicates(
         .chain(into_tests::<PubKeyF, _>(pubkey))
         .chain(into_tests::<DomainF, _>(domain))
         .chain(into_tests::<CreateF, _>(create))
-        .chain(into_tests::<PointSizeF, _>(pkt_size))
+        .chain(into_tests::<SizeF, _>(size))
         .chain(into_tests::<DataSizeF, _>(data_size))
         .chain(into_tests::<LinksLenF, _>(links_len))
         .chain(into_tests::<PathLenF, _>(path_len))

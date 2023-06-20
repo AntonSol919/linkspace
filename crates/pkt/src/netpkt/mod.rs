@@ -72,7 +72,7 @@ pub trait NetPkt: Debug {
             Box::from_raw(ptr)
         };
         if cfg!(debug_assertions) {
-            b.thin_netpkt().check(true).unwrap();
+            b.thin_netpkt().check(false).unwrap();
         }
         b
     }
@@ -143,7 +143,7 @@ where
     }
     /// Padded size 
     fn size(&self) -> u16 {
-        self.as_point().point_header_ref().net_pkt_size()
+        self.as_point().point_header_ref().size()
     }
     fn as_netparts(&self) -> NetPktParts
     where
@@ -175,9 +175,7 @@ impl<T> Point for T where T: NetPktExt{
         self.as_point().linkpoint_header()
     }
 
-    fn keypoint_header(&self) -> Option<&KeyPointHeader> {
-        self.as_point().keypoint_header()
-    }
+
 
     fn pkt_segments(&self) -> ByteSegments {
         self.as_point().pkt_segments()
@@ -185,6 +183,10 @@ impl<T> Point for T where T: NetPktExt{
 
     fn point_header_ref(&self) -> &PointHeader {
         self.as_point().point_header_ref()
+    }
+
+    fn signed(&self) -> Option<&Signed>  {
+        self.as_point().signed()
     }
 }
 
@@ -211,6 +213,6 @@ pub fn calc_len() {
     let upto_header_bytes = sp.as_netpkt_bytes()[0..MIN_NETPKT_SIZE].try_into().unwrap();
     let calculated = PartialNetHeader::from(upto_header_bytes)
         .point_header
-        .net_pkt_size();
+        .size();
     assert_eq!(sp.size(), calculated)
 }

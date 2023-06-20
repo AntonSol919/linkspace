@@ -15,12 +15,32 @@ pub struct PointParts<'a> {
     pub fields: PointFields<'a>,
 }
 
+
+#[derive(Clone, Copy, Eq, PartialEq,Debug)]
+#[repr(C,align(4))]
+pub struct Signed{
+    pub pubkey:PubKey,
+    pub signature:Signature
+}
+impl Signed {
+    fn as_bytes(&self) -> &[u8] {
+        unsafe{&*std::slice::from_raw_parts(std::ptr::from_ref(self).cast(),size_of::<Self>())}
+    }
+    pub(crate) fn validate(&self,hash:&[u8;32]) -> Result<(), linkspace_cryptography::Error> {
+        linkspace_cryptography::validate_signature(
+            &self.pubkey.0,
+            &self.signature.0,
+            &hash,
+        )
+    }
+}
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum PointFields<'a> {
     DataPoint(&'a [u8]),
     LinkPoint(LinkPoint<'a>),
-    KeyPoint(KeyPoint<'a>),
+    KeyPoint(LinkPoint<'a>, Signed),
     Error(&'a [u8]),
     Unknown(&'a [u8]),
 }
@@ -28,8 +48,8 @@ impl<'a> PointFields<'a> {
     pub fn common_idx(&self) -> Option<(&LinkPointHeader, &IPath, Option<&PubKey>)> {
         match self {
             PointFields::LinkPoint(sp) => Some((&sp.head, sp.tail.ipath, None)),
-            PointFields::KeyPoint(a) => {
-                Some((&a.head.linkpoint, a.tail.ipath, Some(&a.head.signed.pubkey)))
+            PointFields::KeyPoint(sp,signed) => {
+                Some((&sp.head, sp.tail.ipath, Some(&signed.pubkey)))
             }
             _ => None,
         }
@@ -48,13 +68,6 @@ pub struct Tail<'a> {
     pub links: &'a [Link],
     pub data: &'a [u8],
     pub ipath: &'a IPath,
-}
-
-/// A signed [[LinkPoint]]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct KeyPoint<'a> {
-    pub head: KeyPointHeader,
-    pub tail: Tail<'a>,
 }
 
 impl<'a> Tail<'a> {
@@ -76,7 +89,7 @@ impl<'tail> PointParts<'tail> {
         match self.fields {
             PointFields::DataPoint(b) => b,
             PointFields::LinkPoint(LinkPoint {  tail, .. }) => tail.data,
-            PointFields::KeyPoint(KeyPoint {  tail,.. }) => tail.data,
+            PointFields::KeyPoint(LinkPoint{tail,..}, _) => tail.data,
             PointFields::Error(b) => b,
             PointFields::Unknown(o) => o,
         }
@@ -105,13 +118,14 @@ impl<'tail> Point for PointParts<'tail> {
                 tail.data,
                 padding
             ]),
-            PointFields::KeyPoint(KeyPoint { head, tail }) => ByteSegments::from_array([
+            PointFields::KeyPoint(LinkPoint{head, tail}, signed) => ByteSegments::from_array([
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
                 tail.ipath.ipath_bytes(),
                 tail.data,
-                padding
+                padding,
+                signed.as_bytes()
             ]),
         }
     }
@@ -130,7 +144,7 @@ impl<'tail> Point for PointParts<'tail> {
     fn tail(&self) -> Option<Tail> {
         match self.fields {
             PointFields::LinkPoint(LinkPoint {  tail ,.. }) => Some(tail),
-            PointFields::KeyPoint(KeyPoint {  tail , .. }) => Some(tail),
+            PointFields::KeyPoint(LinkPoint{  tail , .. },_) => Some(tail),
             _ => None,
         }
     }
@@ -142,14 +156,14 @@ impl<'tail> Point for PointParts<'tail> {
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         match &self.fields {
             PointFields::LinkPoint(LinkPoint { head, ..}) => Some(head),
-            PointFields::KeyPoint(KeyPoint { head, ..}) => Some(&head.linkpoint),
+            PointFields::KeyPoint(LinkPoint{ head, ..},_) => Some(head),
             _ => None,
         }
     }
 
-    fn keypoint_header(&self) -> Option<&KeyPointHeader> {
+    fn signed(&self) -> Option<&Signed> {
         match &self.fields {
-            PointFields::KeyPoint(h) => Some(&h.head),
+            PointFields::KeyPoint(_,t) => Some(&t),
             _ => None,
         }
     }
@@ -170,7 +184,7 @@ impl<'o> core::fmt::Debug for PointFields<'o> {
                     .finish()
             }
             Self::LinkPoint(arg0) => f.debug_tuple("LinkPoint").field(arg0).finish(),
-            Self::KeyPoint(arg0) => f.debug_tuple("KeyPoint").field(arg0).finish(),
+            Self::KeyPoint(arg0,arg1) => f.debug_tuple("NewKeyPoint").field(arg0).field(arg1).finish(),
             Self::Error(arg0) => f.debug_tuple("Error").field(&AB(&arg0)).finish(),
         }
     }
