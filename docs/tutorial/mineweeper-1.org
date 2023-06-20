@@ -341,7 +341,7 @@ Cheating is now impossible.
 
 * A dose of reality
 
-In the [[./02.html][next]] installment Bob will continue his journey to building the best game ever.
+In the [[./mineweeper-2.html][next]] installment Bob will continue his journey to building the best game ever.
 This time by building a lobby system so it's actually playable.
 
 In the meantime, a little expectation management is in order.

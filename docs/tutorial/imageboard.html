@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-06-18 Sun 10:05 -->
+<!-- 2023-06-20 Tue 16:17 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Imageboard</title>
@@ -16,8 +16,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script type="text/javascript" src="../utils.js"></script>
-<link rel="icon" type="image/x-icon" href="../../images/logo2.png">
-<link rel="stylesheet" type="text/css" href="./style.css"/>
 <link rel="stylesheet" type="text/css" href="./style.css"/>
 </head>
 <body>
@@ -25,41 +23,7 @@
 <header>
 <h1 class="title">Imageboard</h1>
 <p class="subtitle" role="doc-subtitle">A Linkspace Application Tutorial</p>
-</header>// Setup clickable tabs
-document.addEventListener('DOMContentLoaded', () =>
-    document.querySelectorAll(".ctabs").forEach((outer, i) => [...outer.children].forEach((el, j) => {
-
-        let forName = `tabs${i}`;
-        let checkedEl = window.localStorage.getItem(forName) || 0;
-        let checkbox = `
-<input
-name="${forName}"
-tabindex="${i}"
-type="radio"
-id="tab${i}x${j}"
-${j == checkedEl ? "checked" : ""}
-/>
-<label for="tab${i}x${j}" class="checkbox-${el.classList[0]}" >${el.className}</label>`;
-
-        el.insertAdjacentHTML(
-            "beforebegin", checkbox
-        );
-        outer.querySelector(`#tab${i}x${j}`).addEventListener("change", () => {
-            window.localStorage.setItem(forName, j);
-        })
-        el.setAttribute("tabindex", i);
-    }))
-);
-
-document.addEventListener('DOMContentLoaded', (_) => {
-    document.querySelectorAll('pre.src').forEach((el) => {
-        let lang = el.classList[1].slice(4);
-        el.classList.add("language-" + lang);
-        hljs && hljs.highlightElement(el);
-    });
-});
-
-<div class="ctabs" id="org47f22ea">
+</header><div class="ctabs" id="org02cdbb8">
 <p class="verse">
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/app<br>
 </p>
@@ -70,7 +34,7 @@ Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg
 Checkout the <a href="./lk.html">./lk.html</a> tutorial
 </p>
 
-<div class="sh" id="org1fc4a74">
+<div class="sh" id="org9a1e4d1">
 <p>
 
 </p>
@@ -78,7 +42,6 @@ Checkout the <a href="./lk.html">./lk.html</a> tutorial
 <ul class="org-ul">
 <li>placing images</li>
 </ul>
-
 <div class="org-src-container">
 <pre class="src src-bash">#!/bin/bash
 set -xeuo pipefail
@@ -165,7 +128,7 @@ lk watch --new "imageboard:$LK_GROUP:/$BOARD" | \
 </div>
 
 
-<div class="py" id="org531dfe2">
+<div class="py" id="orgad0a72d">
 <p>
 This is a straight-up translation of the bash script.
 It works, but it could be done better by having only a single python instance running.
@@ -371,7 +334,7 @@ lk_process_while(lk)
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-06-18 Sun 10:05</p>
+<p class="date">Created: 2023-06-20 Tue 16:17</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

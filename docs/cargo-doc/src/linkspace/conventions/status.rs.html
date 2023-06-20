@@ -179,7 +179,19 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>linkspace_common::prelude::{U16, pkt_fmt, U32 };
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+</pre></div><pre class="rust"><code>
+<span class="kw">use </span>linkspace_common::prelude::{U16, U32 };
 <span class="kw">use </span>tracing::debug_span;
 
 <span class="comment">// Copyright Anton Sol
@@ -282,7 +294,7 @@ This might change
     </span>lk_get_all(lk, <span class="kw-2">&amp;</span>query, <span class="kw-2">&amp;mut </span>|pkt| {
         <span class="kw">if </span>pkt.get_links().is_empty() &amp;&amp; pkt.data().is_empty() {
             last_request = <span class="kw-2">*</span>pkt.get_create_stamp();
-            <span class="macro">tracing::debug!</span>(pkt=%pkt_fmt(<span class="kw-2">&amp;</span>pkt),<span class="string">&quot;recently requested&quot;</span>);
+            <span class="macro">tracing::debug!</span>(pkt=%PktFmt(<span class="kw-2">&amp;</span>pkt),<span class="string">&quot;recently requested&quot;</span>);
             <span class="bool-val">false
         </span>}<span class="kw">else </span>{
             ok =<span class="bool-val">true</span>;
@@ -360,4 +372,14 @@ This might change
 }
 
 
+<span class="kw">pub fn </span>testu32(b:<span class="kw-2">&amp;</span>[u32]) -&gt; u64{
+    <span class="kw">let </span>a = u64::from_ne_bytes(<span class="kw">unsafe</span>{<span class="kw-2">*</span>b.as_ptr().cast()});
+    <span class="kw">let </span>b = u64::from_ne_bytes(<span class="kw">unsafe</span>{<span class="kw-2">*</span>b[<span class="number">2</span>..].as_ptr().cast()});
+    a+b
+}
+<span class="kw">pub fn </span>testu8(b:<span class="kw-2">&amp;</span>[u8]) -&gt; u64{
+    <span class="kw">let </span>a = u64::from_ne_bytes(<span class="kw">unsafe</span>{<span class="kw-2">*</span>b.as_ptr().cast()});
+    <span class="kw">let </span>b = u64::from_ne_bytes(<span class="kw">unsafe</span>{<span class="kw-2">*</span>b[<span class="number">8</span>..].as_ptr().cast()});
+    a+b
+}
 </code></pre></div></section></main></body></html>

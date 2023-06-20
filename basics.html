@@ -398,7 +398,7 @@
       general:</p>
       <h3 id="is-linkspace-a-blockchain">Is linkspace a blockchain?</h3>
       <p>No.</p>
-      <p>Blockchains and supernets share a common dea:</p>
+      <p>Blockchains and supernets share a common idea:</p>
       <p>Using cryptographic hashes and public keys to provide a model
       of data that trancends the connection used to share it.</p>
       <p>Blockchain use the cryptography to batch multiple events into
@@ -410,9 +410,10 @@
       <p>However, consensus on all events isn’t that useful as a
       foundational feature for an overwhelming majority of
       applications.</p>
-      <p>A supernet simply does not require that kind of consensus.</p>
-      <p>With a general purpose supernet like linkspace it is easy to
-      implement similar consensus mechanism in an application.</p>
+      <p>Supernets don’t bother with a global truth. They’re goal is to
+      work with the cryptographic links between packets. Consequently,
+      its not difficult to define a ‘blockchain’ style consensus in a
+      general purpose supernet.</p>
       <h3
       id="wont-a-app-have-a-lot-of-overhead-compared-to-a-basic-web-server">Won’t
       a app have a lot of overhead compared to a basic Web server?</h3>
@@ -423,39 +424,43 @@
       single server, etc.</p>
       <p>Once a full stack is build, linkspace is very small w.r.t. its
       features. Furthermore, it is designed to be fast/low energy, such
-      that you can stream a video on a potato phone. Even single
-      threaded:
-      <code>dd bs=10G count=1 if=/dev/zero | lk data &gt; /dev/null</code></p>
+      that you can stream a video on a potato phone.</p>
       <h3 id="can-you-ask-people-to-deal-with-the-added-complexity">Can
       you ask people to deal with the added complexity?</h3>
       <p>Yes.</p>
       <p>Linkspace lack 3 decades of tooling that made the web
       relatively easy for users, but that can change.</p>
-      <p>The nature of communication over distance is chaotic and
-      asynchronous, so much of the “complexity” is not artificial or
-      accidental. Furthermore, the number of configuration could end up
-      smaller: Passwords, Groups, friends can be setup once and used by
-      every application. Finally, making people responsible isn’t a bad
-      thing, being impotent online is.</p>
+      <p>But is it worth it?</p>
+      <p>Yes.</p>
+      <p>Supernets are a better model of the reality for multi party
+      communication - asynchronous and authenticated. In the long run
+      they end up with less moving parts and with fewer
+      configurations.</p>
+      <p>Most important, the final responsibility sits with the users.
+      It is incredibly dangerous to accept and normalize the paradigm
+      where users give away control, and can’t take it back.</p>
+      <p>This is the era of digital fiefdoms. The next era of the
+      digital supernet will dethrone the host-administrator and have
+      users define what is a ‘real’ copy.</p>
       <h3
-      id="isnt-it-a-good-thing-that-a-host-administrates-what-i-and-others-can-see-online">Isn’t
-      it a good thing that a host administrates what I and others can
-      see online?:</h3>
-      <p>This can be a service that is provided so end users do not have
-      to worry about seeing questionable content. Similar to how it is
-      done today.</p>
-      <p>On the flip side, hosts are currently final and total
-      administrators by virtue of hosting the data. Having this as the
-      foundational ‘truth’ to how billions of people spend hours each
-      day communicating scares the shit out of me.</p>
+      id="isnt-it-a-good-thing-that-a-host-can-administrates-what-i-and-others-see-online">Isn’t
+      it a good thing that a host can administrates what I and others
+      see online?</h3>
+      <p>This can be a service that is provided so you do not have to
+      worry about seeing questionable content. Effectively the same as
+      the current system. But unlike the current system, you can replace
+      them.</p>
       <h3
       id="wont-it-devolve-to-the-same-paradigm-of-centralized-systems">Won’t
-      it devolve to the same paradigm of centralized systems?:</h3>
+      it devolve to the same paradigm of centralized systems?</h3>
       <p>Maybe, maybe not. If a users can walk away from a host platform
-      without losing their history, the host has to give a better deal
-      than they do now.</p>
+      without much trouble, the host has to give a better deal than they
+      do now.</p>
       <h2 id="why-not-alternative">Why not [alternative]?</h2>
-      <p>Some limitations i’ve found are:</p>
+      <p>“Faster email” isn’t a significantly better abstraction.
+      “Global chain of trust” is slow and not useful for the vast
+      majority of users.</p>
+      <p>Some limitations i’ve found in supernet-like systems are:</p>
       <ul>
       <li>It has either hash addresses or custom url addresses, not
       both.</li>
@@ -464,15 +469,10 @@
       <li>No Groups. Consequently there is no or little granularity in
       what you share.</li>
       <li>No domains. Everything becomes one app.</li>
-      <li>Its distracted with facilitating digital signatures and
-      concensus, instead of focusing on the utility without a
-      consensus.</li>
-      <li>A blessed/fixed method of exchanging data, instead of a
-      external/modular system to be filled in per use case.</li>
-      <li>An ever growing set of built in (stream) protocols to
-      negotiate a state. (A consequence of the previous point)</li>
-      <li>A stagnating set of protocols and thus improvements are hard
-      to roll out.</li>
+      <li>Its focused on signatures and consensus instead of the utility
+      when there is none.</li>
+      <li>A blessed/fixed method of exchanging data - either it fits
+      your use-case or you’re out of luck.</li>
       <li>Poor (bash) scripting/piping support</li>
       </ul>
       <p>That does not mean I think alternative are worse or useless.

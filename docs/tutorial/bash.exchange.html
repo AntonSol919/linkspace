@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-06-18 Sun 10:05 -->
+<!-- 2023-06-20 Tue 16:17 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A bash exchange example</title>
@@ -16,8 +16,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script type="text/javascript" src="../utils.js"></script>
-<link rel="icon" type="image/x-icon" href="../../images/logo2.png">
-<link rel="stylesheet" type="text/css" href="./style.css"/>
 <link rel="stylesheet" type="text/css" href="./style.css"/>
 </head>
 <body>
@@ -25,46 +23,12 @@
 <header>
 <h1 class="title">A bash exchange example</h1>
 <p class="subtitle" role="doc-subtitle">A Linkspace Exchange Tutorial</p>
-</header>// Setup clickable tabs
-document.addEventListener('DOMContentLoaded', () =>
-    document.querySelectorAll(".ctabs").forEach((outer, i) => [...outer.children].forEach((el, j) => {
-
-        let forName = `tabs${i}`;
-        let checkedEl = window.localStorage.getItem(forName) || 0;
-        let checkbox = `
-<input
-name="${forName}"
-tabindex="${i}"
-type="radio"
-id="tab${i}x${j}"
-${j == checkedEl ? "checked" : ""}
-/>
-<label for="tab${i}x${j}" class="checkbox-${el.classList[0]}" >${el.className}</label>`;
-
-        el.insertAdjacentHTML(
-            "beforebegin", checkbox
-        );
-        outer.querySelector(`#tab${i}x${j}`).addEventListener("change", () => {
-            window.localStorage.setItem(forName, j);
-        })
-        el.setAttribute("tabindex", i);
-    }))
-);
-
-document.addEventListener('DOMContentLoaded', (_) => {
-    document.querySelectorAll('pre.src').forEach((el) => {
-        let lang = el.classList[1].slice(4);
-        el.classList.add("language-" + lang);
-        hljs && hljs.highlightElement(el);
-    });
-});
-
-<p class="verse">
+</header><p class="verse">
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/<br>
 </p>
 
-<div class="ctabs" id="orged99415">
-<div class="info" id="org3bacb91">
+<div class="ctabs" id="org0b5d31b">
+<div class="info" id="org4daa86a">
 <p class="verse">
 Available in the repo/examples/<br>
 See repo/dev/exchange.md for some open design issues/notes.<br>
@@ -77,7 +41,7 @@ It does no pruning before sending or receiving.
 </p>
 
 </div>
-<div class="sh" id="orgce57fab">
+<div class="sh" id="orgd5ed8b3">
 <p>
 
 </p>
@@ -271,7 +235,7 @@ wait -n
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-06-18 Sun 10:05</p>
+<p class="date">Created: 2023-06-20 Tue 16:17</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -3,11 +3,6 @@
 #+AUTHOR: Anton Sol
 
 #+SETUPFILE: ../utils.org
-#+INCLUDE: "../utils.js" export html 
-
-#+HTML_HEAD: <link rel="icon" type="image/x-icon" href="../../images/logo2.png">
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="./style.css"/>
-
 
 #+BEGIN_VERSE
 Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples/

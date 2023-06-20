@@ -1414,7 +1414,7 @@ See guide#ABE to understand its use and indepth explanation.
             Empty,
         }
 
-        <span class="attr">#[derive(Copy, Clone)]
+        <span class="attr">#[derive(Copy, Clone,Default)]
         #[repr(C)]
         </span><span class="doccomment">/// User config for setting additional context to evaluation.
         </span><span class="kw">pub struct </span>UserData&lt;<span class="lifetime">&#39;o</span>&gt; {
@@ -1472,8 +1472,8 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">pub const fn </span>empty_ctx() -&gt; LkCtx&lt;<span class="lifetime">&#39;static</span>&gt; {
             LkCtx(InlineCtx::Empty)
         }
-        <span class="kw">pub fn </span>lk_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;, udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;,enable_env:bool) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
-            _ctx(<span class="prelude-val">Some</span>(lk), udata,enable_env)
+        <span class="kw">pub fn </span>lk_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span><span class="kw">crate</span>::Linkspace&gt;, udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;,enable_env:bool) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
+            _ctx(<span class="prelude-val">Some</span>(lk.map(|o|<span class="kw-2">&amp;</span>o.<span class="number">0</span>)), udata,enable_env)
         }
         <span class="doccomment">/// lk:None =&gt; get threadlocal Lk . Some(None) =&gt; no linkspace
         </span><span class="kw">fn </span>_ctx&lt;<span class="lifetime">&#39;o</span>&gt;(lk: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>Linkspace&gt;&gt;, udata: UserData&lt;<span class="lifetime">&#39;o</span>&gt;,enable_env:bool) -&gt; LkResult&lt;LkCtx&lt;<span class="lifetime">&#39;o</span>&gt;&gt; {
@@ -1745,7 +1745,7 @@ See guide#ABE to understand its use and indepth explanation.
     </span><span class="kw">pub fn </span>lk_get(lk: <span class="kw-2">&amp;</span>Linkspace, query: <span class="kw-2">&amp;</span>Query) -&gt; LkResult&lt;<span class="prelude-ty">Option</span>&lt;NetPktBox&gt;&gt; {
         lk_get_ref(lk, query, <span class="kw-2">&amp;mut </span>|v| v.as_netbox())
     }
-    <span class="doccomment">/** read a single packet mmap-ed packet. 
+    <span class="doccomment">/** read a single packet directly without copying. 
     This means that [NetPkt::net_header_mut] is unavailable.
     To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
     **/

@@ -311,7 +311,7 @@ Some common questions and answers about the project in general:
 
 No.
 
-Blockchains and supernets share a common dea:
+Blockchains and supernets share a common idea:
 
 Using cryptographic hashes and public keys to provide a model of data that trancends the connection used to share it.
 
@@ -322,10 +322,8 @@ A blockchain's goal is to provide a model and tools to make consensus simple.
 
 However, consensus on all events isn't that useful as a foundational feature for an overwhelming majority of applications.
 
-A supernet simply does not require that kind of consensus.
-
-With a general purpose supernet like linkspace it is easy to implement
-similar consensus mechanism in an application.
+Supernets don't bother with a global truth. They're goal is to work with the cryptographic links between packets.
+Consequently, its not difficult to define a 'blockchain' style consensus in a general purpose supernet.
 
 ### Won't a app have a lot of overhead compared to a basic Web server? 
 
@@ -334,42 +332,47 @@ Few projects stay that simple. Most projects grow in scope to identify users, sa
 
 Once a full stack is build, linkspace is very small w.r.t. its features.
 Furthermore, it is designed to be fast/low energy, such that you can stream a video on a potato phone.
-Even single threaded: `dd bs=10G count=1 if=/dev/zero | lk data > /dev/null`
 
 ### Can you ask people to deal with the added complexity?
 
 Yes.
 
-Linkspace lack 3 decades of tooling that made the web relatively easy for users, but that can change.
+Linkspace lack 3 decades of tooling that made the web relatively easy for users, but that can change. 
 
-The nature of communication over distance is chaotic and asynchronous, so much of the "complexity" is not artificial or accidental.
-Furthermore, the number of configuration could end up smaller: Passwords, Groups, friends can be setup once and used by every application.
-Finally, making people responsible isn't a bad thing, being impotent online is.
+But is it worth it?
 
-### Isn't it a good thing that a host administrates what I and others can see online?:
+Yes.
 
-This can be a service that is provided so end users do not have to worry about seeing questionable content.
-Similar to how it is done today.
+Supernets are a better model of the reality for multi party communication - asynchronous and authenticated.
+In the long run they end up with less moving parts and with fewer configurations.
 
-On the flip side, hosts are currently final and total administrators by virtue of hosting the data.
-Having this as the foundational 'truth' to how billions of people spend hours each day communicating scares the shit out of me.
+Most important, the final responsibility sits with the users.
+It is incredibly dangerous to accept and normalize the paradigm where users give away control, and can't take it back.
 
-### Won't it devolve to the same paradigm of centralized systems?:
+This is the era of digital fiefdoms. The next era of the digital supernet will dethrone the host-administrator and have users define what is a 'real' copy.
 
-Maybe, maybe not. If a users can walk away from a host platform without losing their history, the host has to give a better deal than they do now.
+### Isn't it a good thing that a host can administrates what I and others see online?
 
-## Why not <alternative>?
+This can be a service that is provided so you do not have to worry about seeing questionable content.
+Effectively the same as the current system. But unlike the current system, you can replace them.
 
-Some limitations i've found are:
+### Won't it devolve to the same paradigm of centralized systems?
+
+Maybe, maybe not. If a users can walk away from a host platform without much trouble, the host has to give a better deal than they do now.
+
+## Why not [alternative]?
+
+"Faster email" isn't a significantly better abstraction.
+"Global chain of trust" is slow and not useful for the vast majority of users.
+
+Some limitations i've found in supernet-like systems are:
 
 - It has either hash addresses or custom url addresses, not both.
 - Too slow. It should be doable in hardware and fast enough to stream video as is. Not hand it over to different protocol.
 - No Groups. Consequently there is no or little granularity in what you share.
 - No domains. Everything becomes one app.
-- Its distracted with facilitating digital signatures and concensus, instead of focusing on the utility without a consensus.
-- A blessed/fixed method of exchanging data, instead of a external/modular system to be filled in per use case.
-- An ever growing set of built in (stream) protocols to negotiate a state. (A consequence of the previous point)
-- A stagnating set of protocols and thus improvements are hard to roll out.
+- Its focused on signatures and consensus instead of the utility when there is none.
+- A blessed/fixed method of exchanging data - either it fits your use-case or you're out of luck.
 - Poor (bash) scripting/piping support
 
 That does not mean I think alternative are worse or useless.

@@ -9,9 +9,9 @@ This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
-This is a technical document describing linkspace protocol, library, and how they fit together.
+This is a technical document describing the linkspace protocol, library, and how they fit together.
 You should be familiar with the [[../../basics.html][basics]].
-If you're interested in how linkspace solves your problems checkout the [[../tutorial/index.html][tutorials]].
+If you're better with hands on experience or just want to see it put into practice check out the [[../tutorial/index.html][tutorials]].
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   lk --version
@@ -19,57 +19,19 @@ If you're interested in how linkspace solves your problems checkout the [[../tut
 
 * Introduction
 
-Linkspace is a packet format and processing library.
-Instead of providing an API to consume streams of data, linkspace takes a different path.
-Packets of bytes are hashed, named, saved, and can reference other packets.
-
-This gives us a thin and powerful stack to build multiparty applications.
-[[../cargo-doc/linkspace/index.html][linkspace]] is the authoritative implementation.
-
-Projects such as Git, BitTorrent, Matrix, IPFS, and various blockchains already prove that addressing content by hash is a powerful abstraction.
-This abstraction sidesteps or solves a number of difficulties inherent in organizing data.
-If entries include hashes to other entries I consider it a supernet[fn::
-Blockchains are a subset of supernets.
-They require hashes/entries to be shared, pointing to a previous block, and there are strict rules on what to accept in the chain.].
-
-#+BEGIN_VERSE
-Supernet  [ˈsü-pərˌnet]
-
-A self-referential multi-participant data organization protocol whose primary
-addressing method uses hashes instead of endpoint identifiers.
-A communication protocol where the method of exchange is an extraneous concern.
-e.g. git, bitcoin, linkspace
-#+END_VERSE
-
-The supernet paradigm is a trade-off.
-Instead of processing ordered streams of network data, an application is a function over the partial view of interlinked state.
-This has upsides[fn::
-The homepage contains a list of various properties. However, there is one I lack a word for.
-Both the process of database-to-view-to-database state synchronization, and dealing with (network) IO in general have this in common:
-They're well-designed if they run under the assumption of incomplete, out-of-order, potentially buggy state.
-In linkspace this is a requirement, and the library attempts to make it simple.
-That's not to imply orchestration becomes simple, or the abstraction does not leak. I fear those are facts of life.
-] and downsides.
-
-One issue with supernets built so far is that they are bound to their use-case.
-Linkspace is a general purpose supernet.
-A developer claims a domain name like they would a port number, and their application can run for any group of users.
-Linkspace is designed to be fast and has a small API.
-
-It consists of 4 concepts.
+Linkspace is built on 4 concepts.
 
 - [[Point]] - Bytes that are named and reference other points by hash. Together with its hash and netheader form a packet.
 - [[ABE]] - (Byte) templating for convenience.
 - [[Query]] - A list of predicates and options for selecting packets.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
 
-Common challenges are addressed by a set of [[Conventions]].
+With that foundation, common challenges are addressed by a set of [[Conventions]].
 
 * Setup
 :PROPERTIES:
 :CUSTOM_ID: setup
 :END:
-
 
 This guide uses Python and (Bash) CLI snippets.
 
@@ -213,8 +175,8 @@ This space is shared between the links and data so beware that too much data and
 #+BEGIN_VERSE
 Packet hashes, GroupID's, and public keys are 32 bytes.
 They are usually encoded in URL-safe no-padding base64, e.g. ~RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF~.
-These hashes quickly make things unreadable.
-The ~[...]~ syntax ([[ABE]]) allows us to name and manipulate bytes.
+Such a string makes things unreadable.
+The ~[...]~ syntax ([[ABE]]) allows you to name and manipulate bytes.
 This following example shows that ~[#:pub]~ resolves to the bytes ~RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF~ in both the Group and the second link
 Furthermore, If no group was provided it defaults to ~[#:pub]~
 #+END_VERSE
@@ -344,14 +306,12 @@ Some [[#predicatelist][fields]] we've not seen so far are writable, but they are
 Groups signals the intended set of recipients.
 Domains signal the activity, and practically the application used to present an interface to the user.
 
-The groups bytes are simply chosen and membership is enforced by its members.
-They exist because we say they exist.
-It's up to the user (or some to be build management tool) to pick a method of data exchange.
-Group bytes can be chosen to have a special meaning, such as public key or a pointer to a list of publickeys that act as group administrators.
+The groups bytes can be chosen arbitrarily. Membership is enforced by its members.
+It's up to the user (or some management tool) to pick a method of data exchange.
 
 The following do have a meaning.
 The [0;32] null group ( ~[#:0]~ ), i.e. the local only group, is never transmitted to other devices and is never accepted from outside sources.
-Everything in the ~[#:pub]~ group[fn:: the hash of ~lk_datapoint(b"Hello, Sol")~] is meant for everybody. e.g. the public.
+Everything in the ~[#:pub]~ group[fn:: the hash of ~lk_datapoint(b"Hello, Sol!\n")~] is meant for everybody. e.g. the public.
 
 By convention the group created by pubkey1 XOR pubkey2 forms a group with those keys as its only two members.
 
@@ -371,6 +331,9 @@ A domain application rarely has to deal with this representation.
 |    32 | netheader (routing) |
 |    32 | hash                |
 |   var | point content       |
+|  0..7 | \xFF padding bytes  |
+
+Note, the padding bytes are included in the hash.
 
 #+BEGIN_ctabs
 #+begin_py
@@ -408,9 +371,6 @@ The CLI automatically reads and writes in packet format from the relevant pipes.
 
 
 #+end_ctabs
- 
-
-
 
 Unless you're writing an exchange process, a developer shouldn't have to deal with this level of IO.
 
