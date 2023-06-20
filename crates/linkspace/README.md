@@ -6,10 +6,14 @@
 > A communication protocol where the method of exchange is an extraneous concern.
 > e.g. git, bitcoin, linkspace
 
+
 In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
-This is in contrast to current technologies where users contact a single host which acts as the de facto administrator.
+In multi-party systems: there is no total ordering of events, and messages should stay authenticated when passed along.
+For this, supernets provide a better abstraction then building on top of streams of data such as TCP/IP.
+
+Furthermore, supernets can be an alternative to the status quo in which users communicate through a host that is given total administrative rights over their experience.
 
 [Linkspace](https://www.linkspace.dev) is supernet with the following highlights:
 
