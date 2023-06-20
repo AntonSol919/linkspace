@@ -17,6 +17,7 @@ members = [
 ]
 exclude = [
         "ffi/linkspace-js", # wasm-pack target config is poorly supported - so its done as an individual crate.
+        "libs/",
         "cli/tree",
         "cli/impex",
         "crates/bloomhash",

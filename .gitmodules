@@ -1,3 +1,6 @@
 [submodule "libs/triomphe"]
 	path = libs/triomphe
 	url = https://github.com/AntonSol919/triomphe
+[submodule "libs/heed"]
+	path = libs/heed
+	url = https://github.com/meilisearch/heed

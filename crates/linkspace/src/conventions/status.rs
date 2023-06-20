@@ -1,4 +1,5 @@
-use linkspace_common::prelude::{U16, pkt_fmt, U32 };
+
+use linkspace_common::prelude::{U16, U32 };
 use tracing::debug_span;
 
 // Copyright Anton Sol
@@ -179,3 +180,13 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
 }
 
 
+pub fn testu32(b:&[u32]) -> u64{
+    let a = u64::from_ne_bytes(unsafe{*b.as_ptr().cast()});
+    let b = u64::from_ne_bytes(unsafe{*b[2..].as_ptr().cast()});
+    a+b
+}
+pub fn testu8(b:&[u8]) -> u64{
+    let a = u64::from_ne_bytes(unsafe{*b.as_ptr().cast()});
+    let b = u64::from_ne_bytes(unsafe{*b[8..].as_ptr().cast()});
+    a+b
+}

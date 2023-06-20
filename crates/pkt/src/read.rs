@@ -7,8 +7,7 @@ pub fn parse_netpkt(bytes: &[u8], skip_hash_check: bool) -> Result<NetPktBox, Er
     if bytes.len() < MIN_NETPKT_SIZE {
         return Err(Error::MissingHeader);
     }
-    let partial_header =
-        unsafe { std::ptr::read_unaligned(bytes.as_ptr().cast::<PartialNetHeader>()) };
+    let partial_header = unsafe { std::ptr::read_unaligned(bytes.as_ptr().cast::<PartialNetHeader>()) };
     partial_header.point_header.check()?;
     let netpkt_size = partial_header.point_header.net_pkt_size();
     if usize::from(netpkt_size) > bytes.len() {
@@ -60,8 +59,8 @@ fn parsing() {
     use crate::*;
     let parts = datapoint(b"hello", ());
     let boxed_parts = parts.as_netbox();
-    let arc_box_parts = boxed_parts.as_netarc();
     let arc_parts = parts.as_netarc();
+    let arc_box_parts = boxed_parts.as_netarc();
     let parts_arc_box = arc_box_parts.as_netparts();
     let parts_box_parts = boxed_parts.as_netparts();
     let box_arc_box_parts = arc_box_parts.as_netbox();

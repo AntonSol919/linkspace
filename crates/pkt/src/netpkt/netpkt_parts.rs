@@ -19,6 +19,7 @@ pub struct NetPktParts<'a> {
 }
 impl<'a> NetPktParts<'a> {
     /// The caller must ensure PktHash matches the Pkt
+    #[track_caller]
     pub fn from_unchecked(net_header: NetPktHeader, hash: LkHash, pkt_parts: PointParts<'a>) -> Self {
         debug_assert_eq!(pkt_parts.compute_hash(), hash);
         NetPktParts {

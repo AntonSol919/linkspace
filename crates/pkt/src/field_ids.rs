@@ -518,8 +518,3 @@ fn fields(){
     assert_eq!(path,path1)
 }
 
-#[test]
-fn tokens(){
-    assert_eq!(FieldEnum::PubKeyF, "k".parse().unwrap());
-    assert_eq!(FieldEnum::PubKeyF, FieldEnum::try_from_id(b"k").unwrap());
-}

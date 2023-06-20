@@ -31,7 +31,7 @@ fn sanity() {
     {
         assert_eq!(
             &bytes.as_netpkt_bytes()[size_of::<PartialNetHeader>()..],
-            b"Hello world"
+            concat_bytes!(b"Hello world",[255])
         );
         let tmp = bytes.clone();
         assert_eq!(std::mem::size_of_val(&tmp), std::mem::size_of_val(&bytes));

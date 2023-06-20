@@ -1,3 +1,4 @@
+
 // === size/len constraints. By Convention '_size' is n bytes . '_len' is number of elements
 use super::*;
 use std::{mem::size_of, sync::LazyLock};
@@ -28,7 +29,7 @@ pub static TEST_GROUP_PKT: LazyLock<NetPktBox> =
     LazyLock::new(|| datapoint(b"Test Group", NetPktHeader::EMPTY).as_netbox());
 pub static TEST_GROUP: LazyLock<LkHash> = LazyLock::new(|| TEST_GROUP_PKT.hash());
 pub static PUBLIC_GROUP_PKT: LazyLock<NetPktBox> =
-    LazyLock::new(|| datapoint(b"Hello, Sol", NetPktHeader::EMPTY).as_netbox());
+    LazyLock::new(|| datapoint(b"Hello, Sol!\n", NetPktHeader::EMPTY).as_netbox());
 pub static SINGLE_LINK_PKT: LazyLock<NetPktBox> = LazyLock::new(|| {
     linkpoint(
         PRIVATE,
@@ -46,11 +47,9 @@ pub static SINGLE_LINK_PKT: LazyLock<NetPktBox> = LazyLock::new(|| {
 });
 
 pub const PRIVATE: LkHash = B64([0; 32]);
-pub const PUBLIC_GROUP_B64: &str = "RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0";
-pub const PUBLIC: LkHash = B64([
-    68, 61, 229, 180, 232, 94, 27, 128, 171, 6, 234, 212, 50, 123, 103, 133, 159, 15, 181, 158,
-    178, 1, 129, 127, 11, 91, 171, 40, 102, 116, 4, 29,
-]);
+
+pub const PUBLIC_GROUP_B64: &str = "Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk";
+pub const PUBLIC: LkHash = B64([98, 187, 59, 139, 61, 213, 206, 117, 225, 250, 136, 47, 225, 163, 58, 217, 89, 140, 55, 21, 197, 137, 62, 15, 219, 139, 72, 125, 92, 253, 177, 57]);
 
 //static consistency check
 const _EQ_ASSERT_SIZE: fn() = || {
@@ -59,11 +58,19 @@ const _EQ_ASSERT_SIZE: fn() = || {
 };
 #[test]
 fn correct_public_ids() {
+    use linkspace_cryptography::blake3_hash;
+    let bytes = PUBLIC_GROUP_PKT.as_point().pkt_segments();
+    assert_eq!(&bytes.0[0],&[0,1,0,16,72,101,108,108,111,44,32,83,111,108,33,10]);
+    assert_eq!(blake3_hash(&bytes.0[0]), PUBLIC_GROUP_PKT.hash().0);
+    
+    assert_eq!(PUBLIC, PUBLIC_GROUP_B64.parse().unwrap(),"{:?}",PUBLIC_GROUP_PKT.hash().0);
     assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.hash());
+    assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.as_point().compute_hash());
+    assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.as_point().parts().compute_hash());
     assert_eq!(PUBLIC_GROUP_B64, PUBLIC_GROUP_PKT.hash().b64());
     let p = PUBLIC_GROUP_PKT.as_netparts().fields;
     match p {
-        PointFields::DataPoint(p) => assert_eq!(p.len(), b"Hello, Sol".len()),
+        PointFields::DataPoint(p) => assert_eq!(p.len(), b"Hello, Sol!\n".len()),
         _ => panic!(),
     }
 }

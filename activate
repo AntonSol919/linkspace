@@ -16,6 +16,6 @@ if [[ ! -v LK_PASS ]]; then
     export LK_PASS=$(lk --init key --no-pubkey --no-enckey --display-pass --password "" --decrypt-cost 0 )
 fi
 
-TMP=$(lk key --no-check --no-enckey | lk e --stdin [0/?b/2mini])
+TMP=$(lk e "[0/b/2mini]" argv --data-str $(lk key --no-check --no-enckey))
 export PS1="$TMP - ${PS1:-\$}"
 echo "LK_DIR = $LK_DIR"

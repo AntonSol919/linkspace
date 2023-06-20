@@ -147,9 +147,9 @@ impl Pkt {
     }
 
     #[getter]
-    /// point size
-    fn point_size<'p>(&self, py: Python<'p>) -> &'p PyBytes {
-        PyBytes::new(py, &self.0.point_header_ref().point_size.0)
+    /// the inner point size excluding padding
+    fn upoint_size<'p>(&self) -> u16{
+        self.0.point_header_ref().upoint_size() 
     }
     
     #[getter]

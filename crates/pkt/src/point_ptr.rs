@@ -39,7 +39,7 @@ impl PointThinPtr {
         unsafe {
             &*(std::ptr::from_raw_parts(
                 ptr::from_ref(self).cast::<()>(),
-                usize::from(self.0.content_size()) ,
+                usize::from(self.0.padded_content_size()) ,
             ))
         }
     }
@@ -69,15 +69,6 @@ impl PointPtr {
     pub fn internal_consitent_length(&self) -> Result<u16, Error> {
         self.thin_point().internal_consitent_length()
     }
-    #[inline(always)]
-    pub fn pkt_bytes(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                ptr::from_ref(self).cast::<u8>(),
-                usize::from(self.pkt_header.point_size()),
-            )
-        }
-    }
 }
 impl PointThinPtr {
     /// # Safety
@@ -89,6 +80,7 @@ impl PointThinPtr {
     pub unsafe fn from_bytes_unchecked(b: &[u8]) -> &PointThinPtr {
         assert!(b.len() >= size_of::<PointHeader>(), "Never gone work");
         assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
+        assert!(b.len() % 4 == 0 ,"missing padding");
         &*(b.as_ptr().cast::<PointThinPtr>())
     }
     #[inline(always)]
@@ -121,7 +113,7 @@ impl PointThinPtr {
     #[inline(always)]
     pub fn internal_consitent_length(&self) -> Result<u16, Error> {
         self.point_header().check()?;
-        let point_size = self.point_header().point_size();
+        let point_size = self.point_header().upoint_size();
         match self.fixed() {
             BarePointFields::DataPoint(_) => (),
             BarePointFields::LinkPoint { lp_header, ..} => {
@@ -147,7 +139,7 @@ impl PointThinPtr {
                 a_header: assert,
                 ..
             } => {
-                let inner_linkpoint_size = usize::from(self.point_header().content_size()) 
+                let inner_linkpoint_size = usize::from(self.point_header().ucontent_size()) 
                     - size_of::<KeyPointPadding>()
                     - size_of::<PubKey>()
                     - size_of::<Signature>();
@@ -179,13 +171,7 @@ impl PointThinPtr {
             if assert.reserved != KeyPointPadding::default() {
                 return Err(Error::ReservedBitsSet);
             }
-            let inner_ptr = ptr::from_ref(&assert.inner_point);
-            let inner_linkpoint: &PointPtr = unsafe {
-                &*std::ptr::from_raw_parts(
-                    inner_ptr.cast(),
-                    usize::from(assert.inner_point.content_size()) ,
-                )
-            };
+            let inner_linkpoint: &PointThinPtr= unsafe {&*ptr::from_ref(&assert.inner_point).cast::<PointThinPtr>()};
             let hash = inner_linkpoint.compute_hash();
             if hash != assert.signed.linkpoint_hash {
                 return Err(Error::HashMismatch);
@@ -200,17 +186,24 @@ impl PointThinPtr {
     fn self_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast()
     }
+    /// include padding
     pub fn pkt_bytes(&self) -> &[u8] {
         unsafe {
             core::slice::from_raw_parts(
                 ptr::from_ref(self).cast(),
-                usize::from(self.point_header().point_size()) ,
+                usize::from(self.point_header().padded_point_size() ),
             )
         }
     }
 
+    /// exclude padding
     fn content_memory(&self) -> &[u8] {
-        unsafe{self.pkt_bytes().get_unchecked(size_of::<PointHeader>()..)}
+        unsafe {
+            core::slice::from_raw_parts(
+                ptr::from_ref(self).cast::<PointHeader>().add(1).cast(),
+                self.0.ucontent_size() as usize
+            )
+        }
     }
 
     #[inline(always)]
@@ -250,7 +243,7 @@ impl PointThinPtr {
         let start = size_of::<PointHeader>() + size_of::<LinkPointHeader>();
         let is_offset = usize::from(p.info.offset_ipath.get()) ;
         let data_offset = usize::from(p.info.offset_data.get()) ;
-        let size = self.point_header().point_size();
+        let size = self.point_header().upoint_size();
         //assert!(start <= is_offset && is_offset <= data_offset && data_offset <= size , "bad sizes");
         let start = ptr.add(start).cast::<Link>();
         let end = ptr.add(is_offset).cast::<Link>();
@@ -328,7 +321,11 @@ impl Point for PointThinPtr {
     fn pkt_segments(&self) -> ByteSegments {
         ByteSegments::from_array([self.pkt_bytes()])
     }
-    
+
+    fn padding(&self) -> &[u8] {
+        let start_padding : usize= self.point_header().upoint_size().into();
+        &self.pkt_bytes()[start_padding..]
+    }   
 }
 
 impl Point for PointPtr {
@@ -340,6 +337,10 @@ impl Point for PointPtr {
     fn tail(&self) -> Option<Tail> {
         self.thin_point().tail()
     }
+    fn padding(&self) -> &[u8]{
+        self.thin_point().padding()
+    }
+
     #[inline(always)]
     fn keypoint_header(&self) -> Option<&KeyPointHeader> {
         self.thin_point().map_fixed(none, none, none, Some, none)
@@ -360,7 +361,7 @@ impl Point for PointPtr {
 
     #[inline(always)]
     fn pkt_segments(&self) -> ByteSegments {
-        ByteSegments::from_array([self.pkt_bytes()])
+        self.thin_point().pkt_segments()
     }
 }
 

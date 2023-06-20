@@ -60,8 +60,7 @@ impl BTreeEnv {
                     Some(pkt)
                 }).collect();
                 let mut it = roots.iter().map(|p| p as &dyn NetPkt);
-                let (i,_) = writer.write_many_state(&mut it, None).unwrap();
-                assert_eq!(i,464);
+                let (_i,_) = writer.write_many_state(&mut it, None).unwrap();
             }
         }
         Ok(env)

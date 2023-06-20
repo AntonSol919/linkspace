@@ -86,8 +86,7 @@ impl PointHeader {
         if self.reserved != 0 {
             return Err(Error::HeaderReservedSet(self.reserved));
         }
-
-        let len = self.content_size() as usize ;
+        let len = self.ucontent_size() as usize ;
         if len > MAX_CONTENT_SIZE {
             return Err(Error::ContentLen);
         }
@@ -107,18 +106,25 @@ impl PointHeader {
     pub fn as_bytes(&self) -> &[u8; 4] {
         unsafe {&*std::ptr::from_ref(self).cast()}
     }
-    /// Size of a point (type,length,content). This is without the hash.
-    pub const fn point_size(&self) -> u16{
+    /// Size of a point (type,length,content). This is without the hash or padding.
+    pub const fn upoint_size(&self) -> u16{
         self.point_size.get() 
+    }
+    pub const fn padded_point_size(&self) -> u16 {
+        assert!(std::mem::size_of::<usize>()<= 8, "some code depends on this assumption");
+        self.upoint_size().div_ceil(8)*8
     }
     /// size of a point's content. If it is a datapoint, this is the size of the data.
     #[allow(clippy::as_conversions)]
-    pub const fn content_size(&self) -> u16{
-        self.point_size().saturating_sub( size_of::<PointHeader>() as u16)
+    pub const fn ucontent_size(&self) -> u16{
+        self.upoint_size().saturating_sub( size_of::<PointHeader>() as u16)
     }
-    /// Size of a netpkt. The pointsize plus pointhash and netpktheader
+    pub const fn padded_content_size(&self) -> u16 {
+        self.padded_point_size().saturating_sub( size_of::<PointHeader>() as u16)
+    }
+    /// Size of a netpkt. The pointsize plus pointhash and netpktheader + padding 
     #[allow(clippy::as_conversions)]
     pub const fn net_pkt_size(&self) -> u16{
-        self.point_size() + size_of::<LkHash>() as u16 + size_of::<NetPktHeader>() as u16
+        self.padded_point_size() + size_of::<LkHash>() as u16 + size_of::<NetPktHeader>() as u16
     }
 }

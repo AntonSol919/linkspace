@@ -1,6 +1,8 @@
 # v0.3.0
 ### General
 
+- Change point layout to always include padding up to u64 alignment
+- disable mmap by default
 - include build_info in output
 - pkt-quick and html-quick fmt options
 - default domain/groups (set by LK_DOMAIN/LK_GROUP env)

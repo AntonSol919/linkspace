@@ -54,7 +54,6 @@ class Pkt:
     netflags: bytes
     path_len: bytes
     pkt_type: bytes
-    point_size: bytes
     pubkey: bytes
     recv: bytes
     signature: bytes
@@ -64,10 +63,11 @@ class Pkt:
     ubits3: bytes
     stamp: bytes
 
-
+    """the size of the inner point excluding padding"""
+    upoint_size: int
     
     def size(self) -> int: 
-        """the size of the entire net packet as it would be using lk_write"""
+        """the size of the entire net packet as it would be using lk_write - includes netheader,hash, and padding"""
         ...
 
     def path_list(self) -> list[bytes]: ...

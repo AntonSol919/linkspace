@@ -91,16 +91,19 @@ impl<'tail> Point for PointParts<'tail> {
     #[inline(always)]
     fn pkt_segments(&self) -> ByteSegments {
         let pkt_head = self.pkt_header.as_bytes();
+
+        let padding = self.padding();
         match &self.fields {
-            PointFields::Unknown(b) => ByteSegments::from_array([pkt_head, b]),
-            PointFields::DataPoint(b) => ByteSegments::from_array([pkt_head, b]),
-            PointFields::Error(b) => ByteSegments::from_array([pkt_head, b]),
+            PointFields::Unknown(b) => ByteSegments::from_array([pkt_head, b,padding]),
+            PointFields::DataPoint(b) => ByteSegments::from_array([pkt_head, b,padding]),
+            PointFields::Error(b) => ByteSegments::from_array([pkt_head, b,padding]),
             PointFields::LinkPoint(LinkPoint { head, tail }) => ByteSegments::from_array([
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
                 tail.ipath.ipath_bytes(),
                 tail.data,
+                padding
             ]),
             PointFields::KeyPoint(KeyPoint { head, tail }) => ByteSegments::from_array([
                 pkt_head,
@@ -108,6 +111,7 @@ impl<'tail> Point for PointParts<'tail> {
                 tail.links_as_bytes(),
                 tail.ipath.ipath_bytes(),
                 tail.data,
+                padding
             ]),
         }
     }
@@ -115,6 +119,11 @@ impl<'tail> Point for PointParts<'tail> {
     #[inline(always)]
     fn data(&self) -> &[u8] {
         self.data_ptr()
+    }
+    fn padding(&self) -> &[u8]{
+        let pad_len = self.pkt_header.padded_point_size() - self.pkt_header.upoint_size();
+        static PAD : [u8;8] = [255;8];
+        &PAD[..pad_len as usize]
     }
 
     #[inline(always)]

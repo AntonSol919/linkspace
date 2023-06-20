@@ -500,7 +500,7 @@ impl<'txn> MutPktCursor<'txn> {
     ) -> Result<()> {
         let cur = self.0.cursor();
         use std::ptr;
-        let len = ((len + 3) / 4) * 4; // proper allignment
+        assert!(len%4 == 0, "bad alignment?");
         let key = idx.to_ne_bytes();
         tracing::trace!(idx=?key,"Write new Pkt");
         let mut key_val: ffi::MDB_val = ffi::MDB_val {

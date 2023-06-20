@@ -448,7 +448,6 @@ pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
     linkspace_rs::runtime::lk_stop(&lk.0, id, range)
 }
 #[pyfunction]
-#[pyo3(signature =(lk,qid,objtype,callback,group,domain,instance))]
 pub fn lk_status_set(
     lk: &Linkspace,
     qid: &[u8],
@@ -482,7 +481,6 @@ pub fn lk_status_set(
     })
 }
 #[pyfunction]
-#[pyo3(signature =(lk,qid,objtype,timeout,instance,callback,group,domain))]
 pub fn lk_status_poll(
     lk: &Linkspace,
     qid: &[u8],

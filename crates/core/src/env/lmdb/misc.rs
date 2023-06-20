@@ -43,7 +43,7 @@ impl IterDirection {
 pub fn assert_align(b: &[u8]) -> &[u8] {
     if !b.is_empty() {
         assert!(
-            b.as_ptr().align_offset(4) == 0,
+            b.as_ptr().align_offset(std::mem::size_of::<usize>()) == 0,
             "BTree Bug, unaligned bytes"
         )
     };

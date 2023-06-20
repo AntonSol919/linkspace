@@ -24,4 +24,5 @@ tracing.workspace = true
 
 serde_bytes = "0.11.6"
 ruint = "1.7.0"
+bytemuck = { version = "1.13.1", features = ["derive"] }
 

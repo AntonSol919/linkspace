@@ -6,6 +6,8 @@
 
 #![allow(incomplete_features)]
 #![feature(
+    int_roundings,
+    concat_bytes,
     exact_size_is_empty,
     pointer_is_aligned,
     ptr_from_ref,
@@ -145,6 +147,8 @@ pub trait Point: core::fmt::Debug {
     
     fn data(&self) -> &[u8];
     fn tail(&self) -> Option<Tail>;
+    /// Points are padded with [255] to have them always u32 aligned - this is accessible here for completeness sake.
+    fn padding(&self) -> &[u8];
     /// Return a LinkPointHeader, works for both key and link points.
     fn linkpoint_header(&self) -> Option<&LinkPointHeader>;
     fn keypoint_header(&self) -> Option<&KeyPointHeader>;
@@ -267,7 +271,7 @@ where
     fn compute_hash(&self) -> LkHash {
         linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
-    fn net_pkt_size(&self) -> u16 {
+    fn aligned_net_pkt_size(&self) -> u16 {
         self.point_header_ref().net_pkt_size()
     }
 
@@ -396,6 +400,9 @@ impl SigningExt for SigningKey {
         self.pubkey_bytes().into()
     }
 }
+
+
+
 
 
 

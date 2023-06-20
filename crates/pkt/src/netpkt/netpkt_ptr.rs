@@ -8,7 +8,6 @@ use crate::{netpkt::reroute::ReroutePkt, *};
 use core::fmt;
 use std::{borrow::Borrow, ptr};
 
-
 #[doc(hidden)]
 /// A (fat) pointer to valid netpkt bytes
 /// 
@@ -29,6 +28,7 @@ pub struct NetPktPtr {
     pub(crate) hash: LkHash,
     pub(crate) point: PointThinPtr,
 }
+
 
 impl ToOwned for NetPktPtr {
     type Owned = NetPktBox;
@@ -75,6 +75,7 @@ impl NetPktPtr {
         assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
         let netpkt = &*{ b.as_ptr().cast::<Self>()};
         debug_assert!(netpkt.check(true).is_ok());
+        assert!(netpkt.size() as usize == b.len());
         netpkt
     }
     pub fn reroute(&self, route: NetPktHeader) -> ReroutePkt<&Self> {
@@ -86,7 +87,7 @@ impl NetPktPtr {
 
     pub fn check(&self, skip_hash:bool) -> Result<&[u8], Error> {
         let _ = self.point.internal_consitent_length()?;
-        if skip_hash{
+        if !skip_hash{
             self.point.check_signature()?;
             if self.hash() != self.point.compute_hash() {
                 return Err(Error::HashMismatch);
@@ -136,7 +137,7 @@ impl NetPkt for NetPktPtr {
             point: PointThinPtr(self.point.0)
         };
         let bytes = self.as_netpkt_bytes();
-        NetPktArc(Arc::from_header_and_slice(header, &bytes[std::mem::size_of::<PartialNetHeader>()..]))
+        unsafe {NetPktArc::from_header_and_copy(header.into(),true,|d:&mut [u8]| d.copy_from_slice(bytes)).unwrap()}
     }
 
     #[inline(always)]
@@ -213,15 +214,13 @@ pub fn netpktbox_layout(
     <NetPktFatPtr as ptr::Pointee>::Metadata,
 ) {
     use std::alloc::Layout;
-    let clen : usize = pkt_header.content_size().into();
-    (
-        Layout::new::<PartialNetHeader>()
-            .extend(Layout::new::<u8>().repeat(clen).unwrap().0)
+    let clen : usize = pkt_header.padded_content_size().div_ceil(8).into();
+    let layout =         Layout::new::<PartialNetHeader>()
+            .extend(Layout::new::<u64>().repeat(clen).unwrap().0)
             .unwrap()
             .0
-            .pad_to_align(),
-        clen,
-    )
+            .pad_to_align();
+    (layout,clen)
 }
 
 #[test]
@@ -246,4 +245,11 @@ pub fn build() {
     assert_eq!(h, h2);
     let b = unsafe{NetPktFatPtr::from_raw_box(raw)};
     assert_eq!(h, b.hash())
+}
+
+impl Into<PartialNetHeader> for NetPktPtr{
+    fn into(self) -> PartialNetHeader {
+        let NetPktPtr { net_header, hash, point } = self;
+        PartialNetHeader { net_header, hash, point_header:point.0}
+    }
 }

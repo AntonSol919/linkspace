@@ -19,9 +19,6 @@ pub use netpkt_parts::*;
 pub use netpkt_ptr::*;
 pub use partial::*;
 use std::fmt::Debug;
-use triomphe::Arc;
-
-
 /// Heap allocated repr of a [NetPkt].
 pub type NetPktBox = Box<NetPktFatPtr>;
 impl From<&dyn NetPkt> for NetPktBox {
@@ -57,7 +54,6 @@ pub trait NetPkt: Debug {
     fn recv(&self) -> Option<Stamp>;
 
     fn byte_segments(&self) -> ByteSegments;
-    #[inline(always)]
     fn as_netbox(&self) -> NetPktBox {
         use std::alloc;
         let segm = self.byte_segments();
@@ -86,10 +82,14 @@ pub trait NetPkt: Debug {
             hash: self.hash(),
             point: PointThinPtr(self.as_point().point_header()),
         };
+        
         // TODO. we can avoid this copy
-        let byte_segments = self.byte_segments();
-        let arc = Arc::from_header_and_iter(h, byte_segments.skip(size_of::<NetPktPtr>()));
-        NetPktArc(arc)
+        let mut segments = self.as_point().pkt_segments();
+        segments.0[0] = &segments.0[0][size_of::<PointHeader>()..];
+        let arc = unsafe{NetPktArc::from_header_and_copy(h.into(), false,|o:&mut [u8]| {
+            segments.write_segments_unchecked(o.as_mut_ptr());
+        })}.expect("a copy should be valid");
+        arc
     }
 }
 
@@ -141,6 +141,7 @@ where
     fn net_header(&self) -> NetPktHeader {
         *self.net_header_ref()
     }
+    /// Padded size 
     fn size(&self) -> u16 {
         self.as_point().point_header_ref().net_pkt_size()
     }
@@ -158,6 +159,7 @@ impl<T> Point for T where T: NetPktExt{
     fn parts(&self) -> PointParts {
         self.as_point().parts()
     }
+    
     fn data(&self) -> &[u8] {
         self.as_point().data()
     }
@@ -165,7 +167,10 @@ impl<T> Point for T where T: NetPktExt{
     fn tail(&self) -> Option<Tail> {
         self.as_point().tail()
     }
-
+    fn padding(&self) -> &[u8]{
+        self.as_point().padding()
+    }
+    
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         self.as_point().linkpoint_header()
     }

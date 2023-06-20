@@ -5,7 +5,7 @@
 /**
 Utility to create packets from multiple byte slices without allocating.
 **/
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct ByteSegments<'a>(pub(crate) [&'a [u8]; 8]);
 
 impl<'a> ExactSizeIterator for ByteSegments<'a> {
@@ -123,12 +123,6 @@ impl<'a> ByteSegments<'a> {
     }
     #[inline(always)]
     pub fn write_into(self, mut dest: impl std::io::Write) -> std::io::Result<()> {
-        let mut stack = [std::io::IoSlice::new(&[])];
-        let mut c = 0;
-        for (i,el) in self.0.iter().filter(|v| !v.is_empty()).enumerate(){
-            c = i-1;
-            stack[c] = std::io::IoSlice::new(el);
-        }
-        dest.write_all_vectored(&mut stack[..c])
+        dest.write_all_vectored(&mut self.io_slices())
     }
 }
