@@ -239,8 +239,8 @@ pub fn lk_write<'a>(py: Python<'a>, pkt: &Pkt, allow_private:bool) -> PyResult<&
 #[pyfunction]
 #[pyo3(signature =(buf,allow_private=false))]
 pub fn lk_read(buf: &[u8], allow_private: bool) -> std::io::Result<(Pkt, &[u8])> {
-    let (pkt,rest) = linkspace_rs::point::lk_read_arc(buf, allow_private).map_err(std::io::Error::other)?;
-    Ok((Pkt::from_arc(pkt),rest))
+    let (pkt,rest) = linkspace_rs::point::lk_read(buf, allow_private).map_err(std::io::Error::other)?;
+    Ok((Pkt::from_dyn(pkt.as_ref()),rest))
 }
 
 #[pyfunction]

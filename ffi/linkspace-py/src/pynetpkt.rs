@@ -143,13 +143,7 @@ impl Pkt {
     #[getter]
     /// signature
     fn signature<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.signed().map(|b| PyBytes::new(py, &b.0))
-    }
-
-    #[getter]
-    /// the inner point size excluding padding
-    fn upoint_size<'p>(&self) -> u16{
-        self.0.point_header_ref().upoint_size() 
+        self.0.signed().map(|b| PyBytes::new(py, &b.signature.0))
     }
     
     #[getter]
@@ -227,6 +221,7 @@ impl Pkt {
         })
     }
 
+    #[getter]
     fn size(&self) -> u16{
         self.0.size()
     }
