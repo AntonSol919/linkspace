@@ -59,6 +59,10 @@ pub fn lk_key_encrypt(key: &SigningKey, password: &[u8]) -> String {
 }
 
 #[wasm_bindgen]
+pub fn lk_key_pubkey(id: &str) -> Result<Box<[u8]>> {
+    Ok(identity::pubkey(id)?.into())
+}
+#[wasm_bindgen]
 pub fn lk_key_decrypt(id: &str, password: &[u8]) -> Result<SigningKey> {
     Ok(SigningKey(identity::decrypt(id,password)?))
 }
@@ -199,7 +203,7 @@ pub fn _read(bytes: &Uint8Array,allow_private: bool, skip_hash:bool) ->Result<js
     unsafe { bytes.slice(0,MIN_NETPKT_SIZE as u32 ).raw_copy_to_ptr( ptr::from_mut(&mut partial) as *mut u8)};
     partial.point_header.check()?;
 
-    let pktsize = partial.point_header.net_pkt_size() as usize ;
+    let pktsize = partial.point_header.size() as usize ;
     if pktsize > bufsize { return Err(JsValue::from(pktsize).into());};
     let pktsize = pktsize as u32;
 

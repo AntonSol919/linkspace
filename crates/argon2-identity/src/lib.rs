@@ -8,11 +8,38 @@ Encrypt public and private key with argon2.
 Uses public key as salt, xors private key with the encoded hash.
 **/
 // This is not ideal but both the package argon2 and rust-argon2 are hiding implementation details. 
+#[derive(Copy,Clone,PartialEq)]
+pub struct Costs{
+    pub mem:u32,
+    pub time:u32,
+    pub parallelism:u32
+}
+
+pub const DEFAULT_COST: Costs = Costs{
+    mem:  16384,
+    time: 4,
+    parallelism: 4,
+};
+pub const EXPENSIVE_COST: Costs = Costs{
+    mem:  16384*2,
+    time: 8,
+    parallelism: 8,
+};
+pub const INSECURE_COST: Costs = Costs{
+    mem:  8,
+    time: 1,
+    parallelism: 1,
+};
+
+
+impl Default for Costs{
+    fn default() -> Self {
+        DEFAULT_COST
+    }
+}
 mod params {
     pub struct Decoded {
-        pub mem_cost: u32,
-        pub time_cost: u32,
-        pub parallelism: u32,
+        pub costs:crate::Costs,
         pub salt: Vec<u8>,
         pub hash: [u8;32],
     }
@@ -28,12 +55,10 @@ mod params {
             .zip(["m","t","p"])
             .filter(|((kind,_val),expect)| (kind == expect))
             .filter_map(|((_,val),_)| val.parse::<u32>().ok());
-        let (mem_cost,time_cost,parallelism) = (opt_it.next()?,opt_it.next()?,opt_it.next()?);
+        let (mem,time,parallelism) = (opt_it.next()?,opt_it.next()?,opt_it.next()?);
         if opt_it.next().is_some() { return None}
         Some(Decoded {
-            mem_cost,
-            time_cost,
-            parallelism,
+            costs: crate::Costs { mem, time, parallelism},
             salt,
             hash,
         })
@@ -47,13 +72,6 @@ use linkspace_cryptography::{* };
 pub use linkspace_cryptography::keygen;
 use thiserror::Error;
 
-pub const DEFAULT_MEM_COST: u32 = 16384;
-pub const DEFAULT_TIME_COST: u32 = 4;
-
-pub const DEFAULT_COST: (u32, u32) = (DEFAULT_MEM_COST, DEFAULT_TIME_COST);
-pub const EXPENSIVE_COST: (u32, u32) = (DEFAULT_MEM_COST*2, DEFAULT_TIME_COST*2);
-pub const INSECURE_COST: (u32, u32) = (8, 1);
-
 #[derive(Error, Debug)]
 pub enum KeyError {
     #[error("The data supplied is in an unknown format")]
@@ -62,16 +80,17 @@ pub enum KeyError {
     WrongPassword,
 }
 
-pub fn encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> String{
-    _encrypt(key, password, cost).expect("bug - key encryption errror?")
+pub fn encrypt(key: &SigningKey, password: &[u8], cost:Option<Costs>) -> String{
+    _encrypt(key, password, cost.unwrap_or(DEFAULT_COST)).expect("bug - key encryption errror?")
 }
-fn _encrypt(key: &SigningKey, password: &[u8], cost: Option<(u32, u32)>) -> Option<String>{
+fn _encrypt(key: &SigningKey, password: &[u8], cost: Costs) -> Option<String>{
     use base64::prelude::*;
-    let (mem_cost, time_cost) = cost.unwrap_or(DEFAULT_COST);
+    let Costs { mem, time, parallelism }=cost;
     let config = Config {
         variant: argon2::Variant::Argon2d,
-        mem_cost,
-        time_cost,
+        mem_cost:mem,
+        time_cost:time,
+        lanes:parallelism,
         ..Config::default()
     };
     let encoded = argon2::hash_encoded(password, &key.pubkey_bytes(), &config).ok()?;
@@ -108,12 +127,13 @@ pub fn pubkey(identity: &str) -> Result<PublicKey, KeyError> {
 
 pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
     let argon_param = params::decode_string(enckey).ok_or(KeyError::BadData)?;
+    let Costs { mem, time, parallelism } = argon_param.costs;
     let config = Config {
         variant: argon2::Variant::Argon2d,
         version: argon2::Version::Version13,
-        mem_cost: argon_param.mem_cost,
-        time_cost: argon_param.time_cost,
-        lanes: argon_param.parallelism,
+        mem_cost: mem,
+        time_cost: time,
+        lanes: parallelism,
         thread_mode: argon2::ThreadMode::Sequential,
         secret: &[],
         ad: &[],

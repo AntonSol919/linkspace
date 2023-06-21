@@ -607,6 +607,10 @@ pub mod key {
     pub fn lk_key_decrypt(key: &str, password: &[u8]) -> LkResult<SigningKey> {
         Ok(linkspace_common::identity::decrypt(key, password)?)
     }
+    /// read the public key from a [lk_key_encrypt] string
+    pub fn lk_key_pubkey(key:&str) -> LkResult<PubKey>{
+        Ok(linkspace_common::identity::pubkey(key)?.into())
+    }
     pub fn lk_keygen() -> SigningKey {
         SigningKey::generate()
     }

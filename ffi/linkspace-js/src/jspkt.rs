@@ -149,7 +149,21 @@ impl Pkt {
         Links {idx : 0 , pkt: self.clone()}
     }
     pub fn links_array(&self) -> js_sys::Array{
-        self.0.get_links().iter().copied().map(Link).map(|v| -> JsValue{v.into()} ).collect()
+        use std::mem::size_of;
+        if let Some(b) = self.links_bytes(){
+            (0..self.0.get_links().len() as u32)
+                .map(|i| {
+                    let start = i*size_of::<Link>() as u32;
+                    let start_hash = start + size_of::<Tag>() as u32;
+                    let end = start_hash + size_of::<LkHash>() as u32;
+                    js_sys::Array::of2(
+                        &b.subarray(start,start_hash),
+                        &b.subarray(start_hash,end)
+                    )
+            }).collect()
+        }else {
+            js_sys::Array::new()
+        }
     }
     pub fn links_bytes(&self) -> Option<js_sys::Uint8Array>{
         self.0.tail().map(|t| t.links_as_bytes().into())

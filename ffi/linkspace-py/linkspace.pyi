@@ -33,6 +33,7 @@ class Query: ...
 class LkInfo:
     dir : str
 
+"""An linkspace packet: netheader, hash, and point - all fields are in (big endian) bytes"""
 class Pkt:
     path: bytes
     """The path bytes in spath encoding format. Use path0 up to path7 or path_list() to get each components."""
@@ -60,16 +61,14 @@ class Pkt:
     ubits0: bytes
     ubits1: bytes
     ubits2: bytes
+
     ubits3: bytes
+    """ [u64:0] - microseconds since epoch"""
     stamp: bytes
 
-    """the size of the inner point excluding padding"""
-    upoint_size: int
+    """ [u16:0] - the size of the packet as it would be using lk_write"""
+    size: bytes
     
-    def size(self) -> int: 
-        """the size of the entire net packet as it would be using lk_write - includes netheader,hash, and padding"""
-        ...
-
     def path_list(self) -> list[bytes]: ...
     def __eq__(self, other) -> bool: ...
     def __ge__(self, other) -> bool: ...
