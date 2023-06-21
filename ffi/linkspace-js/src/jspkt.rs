@@ -137,14 +137,10 @@ impl Pkt {
     }
 
     #[wasm_bindgen(getter)]
-    /// unpadded point size
-    pub fn point_size(&self) -> u16{
-        self.0.point_header_ref().upoint_size()
-    }
-    #[wasm_bindgen(getter)]
     pub fn path_len(&self) -> Option<u8> {
         self.0.path_len().copied()
     }
+    #[wasm_bindgen(getter)]
     pub fn size(&self) -> u16 {
         self.0.size()
     }

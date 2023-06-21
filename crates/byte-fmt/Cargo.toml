@@ -1,6 +1,6 @@
 [package]
 name = "byte-fmt"
-version = "0.3.0"
+version = "0.3.0-rc1"
 authors = ["Anton Sol <AntonSol919@gmail.com>"]
 categories = ["encoding","parsing"]
 keywords = ["base64","abe","newtype"]
@@ -16,7 +16,7 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-abe = { path = "../abe" , version = "0.3.0"}
+abe = { path = "../abe" , version = "0.3.0-rc1"}
 
 serde.workspace=true
 base64.workspace=true

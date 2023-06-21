@@ -14,7 +14,7 @@ name = "linkspace"
 crate-type = ["cdylib"]
 
 [dependencies]
-linkspace = { path = "../../crates/linkspace", version ="0.3.0"}
+linkspace = { path = "../../crates/linkspace", version ="0.3.0-rc1"}
 
 anyhow.workspace=true
 tracing.workspace = true

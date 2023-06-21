@@ -11,3 +11,4 @@
 **/cargo-doc
 **/*.html
 homepage/download
+**/Cargo.lock
