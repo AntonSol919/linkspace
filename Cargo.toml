@@ -13,12 +13,11 @@ members = [
     "crates/*",
     "cli/*",
     "ffi/*",
-    "examples/mineweeper-rs"
 ]
 exclude = [
-        "ffi/linkspace-js", # wasm-pack target config is poorly supported - so its done as an individual crate.
-        "libs/",
-        "cli/tree",
+        "ffi/linkspace-js", # wasm-pack target config is poorly supported - so js is build as an individual crate.
+        # some WIP crates
+        "cli/tree", 
         "cli/impex",
         "crates/bloomhash",
         "crates/adota"
