@@ -2,7 +2,7 @@
 R:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 LKB:=$(realpath $(R)/../target/)
 RTOOL:=x86_64-unknown-linux-gnu
-VERSION:=$(shell cat $(R)/../Cargo.toml | grep version | cut -d'"' -f2 )
+VERSION:=$(shell cat $(R)/../Cargo.toml | grep version -m 1 | cut -d'"' -f2 )
 PKG_DIR=$(R)/build/linkspace-$(VERSION)
 
 all: aarch64 x64

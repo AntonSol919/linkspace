@@ -22,9 +22,9 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressing
 - Group/Domain split
 
-[Basics](https://www.linkspace.dev/basics.html) gives a high level introduction.
-The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples. 
-The [Guide](https://www.linkspace.dev/docs/guide/index.html) is a in-depth overview of the API and how it fits together. 
+[Basics](https://www.linkspace.dev/basics.html) gives a high level introduction.  
+The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
+The [Guide](https://www.linkspace.dev/docs/guide/index.html) is a in-depth overview of the API and how it fits together.  
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try.
@@ -39,7 +39,7 @@ There are some features missing:
 - There is no API for deleting yet.
 - The only group exchange program is a bash script.
 - LNS only works 'manually'
-- Other todo's found in the /dev folder
+- Some other TODO's are found in the repo/dev folder
 
 # Quick start
 

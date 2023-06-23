@@ -906,7 +906,7 @@ pub mod misc {
     /**
     Read bytes as a [0,1) float by reading the first 52 bits.
     Panics if fewer than 8 bytes are supplied
-    Primary use is to produces the same 'random' value by using [NetPkt::hash] or [blake3_hash],
+    Primary use is to produces the same 'random' value by using NetPkt::hash or [blake3_hash],
     regardless of language, and without an additional RNG dependencies,
      */
     pub fn bytes2uniform(val:&[u8]) -> f64{

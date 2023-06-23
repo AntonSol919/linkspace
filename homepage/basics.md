@@ -4,7 +4,7 @@
 
 The internet[^2] attempts to provide a model where: for any two connected devices running any application, there exists a connection to transmit data.
 
-[^2]: TCP/IP - I'll be lose on definitions, as i don't expect all readers to know the details. But if you find a real incorrect statement shoot me a message.
+[^2]: TCP/IP - I'll be loose on definitions, as I don't expect all readers to know the details. But if you find a real incorrect statement shoot me a message.
 
 It is a direct line to anyone.
 
@@ -24,14 +24,14 @@ To do this it uses the following types of packets.
 +-----------------+-----------------------+-----------------------------------------------------------------+
 :::
 
-Packets carrying data are sent and will eventually reach a destination `IP address`, i.e. a device such as this one you're reading on.
-On this device an application is listening for packets with a specific `port` to be received.
+Packets carrying data are sent and will eventually reach a destination `IP address`, i.e. a computer such as you're using right now.
+On the computer an application is listening for packets with a specific `port` to be received.
 
 In transit, a packet can get lost or corrupted.
 Consequently, packets don't arrive in the order they were sent.
 By adding a sequence number, we can reorder them at the destination[^telephone].
 
-[^telephone]: I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE ID's are essential complexity for data integrety, and that consequently the physical route each packet takes is actually irrelevant.
+[^telephone]: I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential complexity for data integrety, and that consequently the physical route each packet takes is actually irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
@@ -57,7 +57,8 @@ The reason for building linkspace is this:
 
 <b>We can't progress if we stay in this paradigm.</b>
 
-It think it is better to explain the alternative than argue this point.
+But I think making the arguments why this is the case won't work.
+To really make the point, there needs to be a practical alternative.
 
 ## Linkspace
 
@@ -66,7 +67,7 @@ Linkspace attempts to provide a model where: for any group running any applicati
 If the current internet provides streams for key-value systems, so we can talk _to_ server,  
 then linkspace provides a shared key-value space, so we can talk _about_ data.
 
-This and other ideas in linkspace aren't new. But I believe linkspace offers a simple and powerful synthesis of ideas compared to other attempts (see [alts](#alts)).
+This idea and other ideas used in linkspace aren't new. But I believe linkspace offers a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
 
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
@@ -101,7 +102,7 @@ The rest of the software library implements functions to process and query them.
 
 ### Merging Trees
 
-One of the core ideas behind linkspace is a way to think about digital communication.
+One of the core insights used by linkspace is a way to talk and think about digital communication - merging trees.
 We'll imagine building a message forum.
 
 :::{.container .pkt .pd}
@@ -156,19 +157,22 @@ This is simple, but it has downsides.
 
 A host can get disconnected,
 copies can't be reshared and reused (thus once a host clears its storage the link is invalid),
-and every host has their own strategy to deal with new data at the same path, i.e. an update.
+and every host has their own strategy to deal with new data at the same path.
 
 I would argue they are all accidental complexity.
-Especially the last one: Changing the value at a path.
+Most noticeably the last one: Updating the image found at `www.some_platform.com/thread/BrokenMachine.jpg`
+
 Once the speed of light is measurable in a network, it is unavoidable for two computers to write to the same path without a costly synchronization steps.
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Anyone can read, write, and host (a partial) copy of the tree.
+Anyone can read, write, and host (a partial) copy of a tree.
 Every path refers to multiple values.
 
 The values are distinct because each entry, i.e. **point** is cryptographically hashed.
-i.e. there exists a -for all intents and purposes- unique 32 bytes ( or ~77-digit number) that identifies the entry (which i'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
+i.e. there exists a unique 32 bytes (or ~77-digit number[^uniq]) that identifies the entry (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
+
+[^uniq]: Unique for all intents and purposes (except for the purpose of counting to 2^256).
 
 Therefor it doesn't matter when or where trees are merged - and they only leave a single copy when both have the same message.
 
@@ -186,7 +190,7 @@ Therefor it doesn't matter when or where trees are merged - and they only leave 
 +-----------------------------------+--------------------------------+----------------------------------+
 | /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | [image data]                     |
 +-----------------------------------+--------------------------------+----------------------------------+
-| /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better then vs   |
+| /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better than VS   |
 +-----------------------------------+--------------------------------+----------------------------------+
 | /thread/Emacs or vim?/msg         | <span id="hh3">[HASH_3]</span> | Emacs with vim bindings ofcourse |
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -198,7 +202,7 @@ Therefor it doesn't matter when or where trees are merged - and they only leave 
 +-----------------------------------+--------------------------------+----------------------------------+
 | /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | [image data]                     |
 +-----------------------------------+--------------------------------+----------------------------------+
-| /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better then vs   |
+| /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better than VS   |
 +-----------------------------------+--------------------------------+----------------------------------+
 | /thread/Emacs or vim?/msg         | <span id="hh3">[HASH_3]</span> | Emacs with vim bindings ofcourse |
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -212,10 +216,12 @@ A point also has a creation date and can be signed - such that you can identify 
 As such, we can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
 or multiple entries through a path "/thread/Tabs or spaces/msg".
 
-This might seem more trouble then existing solutions like a filesystem or HTTP.
-However, in practice its trivial to emulate their behavior by adding constraints to the set; 
-such as being the latest or the latest signed by a specific public key.
-Conversely, I would argue both filesystems and HTTP are more trouble as both also return multiple values - a new value depending on when and where you make the query.
+This might seem more trouble than existing solutions like a filesystem or HTTP.
+A single path gets you a single result.
+
+However, in practice it's trivial to emulate this behavior by adding constraints to a requested tree; Such as requesting the latest, or the latest signed by a specific public key.
+Conversely, I would argue both filesystems and HTTP are more trouble over all.
+They hide that they return multiple values - a new value depending on when and where you make the query.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
@@ -247,7 +253,7 @@ Conversely, I would argue both filesystems and HTTP are more trouble as both als
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
 :::
 
-A point has two preceding fields. A **group** that signal who can read/write to the tree, and a **domain** field to indicate the application.
+A point has two preceding fields. A **group** that signal who can read/write to the tree, and a **domain** field to indicate which application should read it.
 Essentially any pair of (domain, group) has its own tree.
 
 For example the `msg_board` application and the `[#:example]` group.
@@ -264,26 +270,24 @@ For example the `msg_board` application and the `[#:example]` group.
 :::
 
 Note that for brevity I used the [LNS](./lns.html) representation for `[@:alice:salesexample]` and `[#:example]`.
-In actually they are 32 bytes - similar to how `www.example.com` resolves to a number like `192.168.0.1`.
+In actually they are 32 bytes. LNS works similar to how `www.example.com` resolves to a number like `192.168.0.1`.
 
-Finally, using the hash directly in the message like we have been doing is not ideal.
-Instead a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
+Finally, using the hash directly in the data of each entry like we have been doing is not ideal.
+Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
-There are a more nuances and advanced topics such as: the path encoding, the [queries](./docs/guide/index.html#Query) syntax, and
+There are more nuances and advanced topics such as: the path encoding, the [queries](./docs/guide/index.html#Query) syntax, and
 specifics on how trees are [pulled](./docs/guide/index.html#lk_pull) from one server to another.
 However, this should give you a good idea of the basics.
 
 ## Want to give it a try?
 
-Check out [Webbit](https://github.com/AntonSol919/webbit) to see an application without installing anything.
-You can [download](https://github.com/AntonSol919/linkspace/releases) a pre-build CLI and python library to follow along with
+Linkspace is currently beta software.
+
+The packet format is stable. Anything you create will stay readable in future versions.
+The library API can still break occasionally - and is missing some features.
+
+[Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python library to follow along with
 the [tutorial](./docs/tutorials/index.html) or the more technical [Guide](./docs/guide/index.html).
-
-The linkspace packet format is stable and any packets you write will stay valid.
-The library API can still break occasionally every now and then.
-
-There are also a couple of parts not yet build:
-The only group exchange process is just a bash script and its not easy to setup a private group exchange.
 
 # Q&A
 
@@ -303,7 +307,7 @@ A blockchain's goal is to provide a model and tools to make consensus simple.
 However, consensus on all events isn't that useful as a foundational feature for an overwhelming majority of applications.
 
 Supernets don't bother with a global truth. They're goal is to work with the cryptographic links between packets.
-Consequently, its not difficult to define a 'blockchain' style consensus in a general purpose supernet.
+Consequently, it's not difficult to define a 'blockchain' style consensus in a general purpose supernet.
 
 ### Won't an app have a lot of overhead compared to a basic Web server? 
 
@@ -334,35 +338,37 @@ It is dangerous to perpetuate a paradigm where users give away control and can't
 
 My hope is to look back at this time as the era of digital fiefdoms. The next era - of the digital supernets - will hopefully balance out the influence of host-administrators. Users will define what a 'real' copy is; a digital space by people for people.
 
-### Isn't it a good thing that a host can administrates what I and others see online?
+### Isn't it a good thing that a host can administrate what I and others see online?
 
 There are a couple of options. You can trust the public key of third party service to whitelist content. Effectively emulating the current system.
 But unlike the current system, you can replace them.
-Furthermore, its trivial to vouch for your friends.
+Furthermore, it's trivial to vouch for your friends.
 
 With AI driving the cost of bullshit to zero, such cross application identities will be critical.
 
 ### Won't it devolve to the same paradigm of centralized systems?
 
-Maybe, maybe not. If a users can walk away from a host platform without much trouble, the host has to give a better deal than they do now.
+Maybe, maybe not. If a user could walk away from a host server without much trouble, the host has to give a better deal than they do now.
 
 ## Why not [alternative]?{#alts}
 
-There are two types I'm sure can't succeed at scale:
+There are two types of systems I'm positive aren't enough to challenge the digital status quo.
 
-- Synchronizing chain of trust : Is slow and not useful for the vast majority of users.
-- Faster email: (like ActivityPub) isn't a better abstraction (and also isn't that fast).
+- Synchronizing chain of trust: Is slow and not useful for the vast majority of users.
+- Faster email: (like ActivityPub) is just faster email - without being very fast.
 
-Other supernet-like systmes are limited in some way or simply made a different design decision:
+Other supernet-like systems are limited in some way or simply choose a different design:
 
 - It has either hash addresses or custom url addresses, not both.
-- Too slow. It should be doable in hardware and fast enough to stream video as is. Not hand it over to different protocol.
-- No Groups. Consequently there is no or little granularity in what you share.
+- Too slow. Packet routing and creation should be doable in as few instructions. It should be fast enough to stream video without using a second protocol - that means no json.
+- No Groups. Limiting who you share with is not supported - apps can't be used in a private group.
 - No domains. Everything becomes one app.
 - Its focused on signatures and consensus.
-- A blessed/fixed method of exchanging data - either it fits your use-case or you're out of luck.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
 - Poor (bash) scripting/piping support
+- A blessed/fixed method of exchanging data - either it fits your use-case or you're out of luck.
+
+Linkspace is first and foremost its packet format, and secondly and a bunch of tools to wrangle them to fit your use-case.
 
 That does not mean I think they are necessarily worse or useless.
 Different systems have different strong points. More than one supernet can co-exist.
