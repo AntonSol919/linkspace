@@ -2,15 +2,18 @@
 <html>
 	<head>
 		<title>Linkspace - a general purpose supernet</title>
-		 <link rel="icon" type="image/x-icon" href="./images/logo2.png">
+		 <link rel="icon" type="image/x-icon" href="./images/logo.png">
 		 <link rel="stylesheet" href="./style.css"/>
-     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Code Pro">
 	<body>
-		 <a id="name" href="./index.html" >Linkspace</a>
+		 <a id="name" href="./index.html"><img id="logo" src="./images/logo.png"/>Linkspace</a>
 		<div id="tagline">a general purpose supernet</div>
-    <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
+    
 
     <nav>
+      <li>
+        <a href="./index.html">Home</a>
+      </li>
       <li>
         <a href="./basics.html">Basics</a>
       </li>
@@ -115,7 +118,7 @@
       Other top level authorities set their own price and how to pay
       it.</p>
       <h2 id="claim">Claim a name</h2>
-      <p>This currently requires a some work. To make a :free claim get
+      <p>This currently requires some work. To make a :free claim get
       download or clone the repo.</p>
       <pre class="terminal"><code>source ./activate
 lk --init key --key &#39;YOUR_NAME:local&#39; | tee enckey

@@ -11,6 +11,7 @@ title:  Tutorials
 - [mineweeper 1](./mineweeper-1.html)
 - [mineweeper 2](./mineweeper-2.html)
 - [imageboard](./imageboard.html)
+- [linkmail](./linkmail.py.html)
 
 # Exchange
 

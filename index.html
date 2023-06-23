@@ -2,15 +2,18 @@
 <html>
 	<head>
 		<title>Linkspace - a general purpose supernet</title>
-		 <link rel="icon" type="image/x-icon" href="./images/logo2.png">
+		 <link rel="icon" type="image/x-icon" href="./images/logo.png">
 		 <link rel="stylesheet" href="./style.css"/>
-     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Code Pro">
 	<body>
-		 <a id="name" href="./index.html" >Linkspace</a>
+		 <a id="name" href="./index.html"><img id="logo" src="./images/logo.png"/>Linkspace</a>
 		<div id="tagline">a general purpose supernet</div>
-    <a id="logo"  href="./index.html"><img  src="./images/logo2.png"/></a>
+    
 
     <nav>
+      <li>
+        <a href="./index.html">Home</a>
+      </li>
       <li>
         <a href="./basics.html">Basics</a>
       </li>
@@ -45,7 +48,7 @@
       hashes instead of endpoint identifiers.<br> A communication
       protocol where the method of exchange is an extraneous
       concern.<br></p>
-      e.g. git, bitcoin, linkspace
+      <p>e.g. git, bitcoin, linkspace</p>
       </div>
       <p>In a supernet anybody can talk <em>about</em> data, instead of
       talking <em>at</em> a server.</p>
@@ -67,24 +70,27 @@
       <li>Group/Domain split</li>
       </ul>
       <p><a href="./basics.html">Basics</a> gives a high level
-      introduction. Check out the <a
-      href="./docs/tutorial/index.html">tutorials</a> to see an example
-      of building an application. For a technical document regarding the
-      API and CLI see the <a
-      href="./docs/guide/index.html">Guide</a>.</p>
+      introduction.<br />
+      The <a href="./docs/tutorial/index.html">tutorials</a> has some
+      practical examples.<br />
+      The <a href="./docs/guide/index.html">Guide</a> is an in-depth
+      overview of the API and how it fits together.</p>
       <p><a
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
       the latest release or clone from <a
       href="https://github.com/AntonSol919/linkspace">GitHub</a> to give
-      it a try and say hi.</p>
-      <p>The packet and database layout are stable, but some things are
-      still in active development so expect the occasional breaking
-      change.</p>
-      <p>Any feedback, questions, and ideas for improvements are
-      welcome!</p>
-      <p>Of course the preferred way is to try and send a message to the
-      test group. For the less adventurous you can open an issue on
-      GitHub.</p>
+      it a try.</p>
+      <p>Linkspace is currently in <strong>beta</strong>.</p>
+      <p>That means the packet format is stable. Points created now will
+      be readable in all future versions.</p>
+      <p>The API is mostly stable but will break now and then. There are
+      some features missing:</p>
+      <ul>
+      <li>There is no API for deleting yet.</li>
+      <li>The only group exchange program is a bash script.</li>
+      <li>LNS only works ‘manually’</li>
+      <li>Some other TODO’s are found in the repo/dev folder</li>
+      </ul>
     </div>
     </body>
 </html>

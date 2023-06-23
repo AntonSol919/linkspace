@@ -1,0 +1,13 @@
+#+TITLE: Linkmail
+#+SUBTITLE: A Linkspace Application 
+#+AUTHOR: Anton Sol
+
+#+SETUPFILE: ../utils.org
+
+#+begin_ctabs
+#+BEGIN_VERSE
+Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples
+#+END_VERSE
+#+end_ctabs
+
+#+INCLUDE: "../../examples/linkmail/linkmail.py" src p

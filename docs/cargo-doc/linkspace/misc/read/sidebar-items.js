@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["parse_netarc","parse_netpkt"]};
+window.SIDEBAR_ITEMS = {"fn":["read_pkt"]};

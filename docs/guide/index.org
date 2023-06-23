@@ -9,7 +9,7 @@ This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
-This is a technical document describing the linkspace protocol, library, and how they fit together.
+This is a technical document describing the linkspace packet format, and software library to create, query, and process those packets.
 You should be familiar with the [[../../basics.html][basics]].
 If you're better with hands on experience or just want to see it put into practice check out the [[../tutorial/index.html][tutorials]].
 
@@ -21,7 +21,7 @@ If you're better with hands on experience or just want to see it put into practi
 
 Linkspace is built on 4 concepts.
 
-- [[Point]] - Bytes that are named and reference other points by hash. Together with its hash and netheader form a packet.
+- [[Point]] - Bytes, potentially with a path and links to other points. A point combined with its hash and netheader form a packet.
 - [[ABE]] - (Byte) templating for convenience.
 - [[Query]] - A list of predicates and options for selecting packets.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
@@ -41,17 +41,19 @@ The [[https://github.com/AntonSol919/linkspace/releases][zip]] contains the CLI 
 
 ** Package manager
 
-~cargo +nightly install linkspace-cli~
-
 ~pip install linkspace~
+
+~cargo +nightly install linkspace-cli --git https://github.com/AntonSol919/linkspace~
 
 ** Build from source
 
-*** User
+~git clone https://github.com/AntonSol919/linkspace~
+
+*** for users
 
  ~make install-lk install-python~
 
-*** Development
+*** for development / debug builds
 
  ~source ./activate~ builds and sets PATH and PYTHONPATH env variables.
 
@@ -110,9 +112,8 @@ They carry data, link to other points, and might contain information about the w
 There are 3 kinds of points. datapoints, linkpoints, and keypoints.
 A point has a maximum size of 2^{16}-512 bytes.
 
-Building a point is always combined with generating a hash and prepending a netheader.
-Together the [netheader, hash, point] form a packet.
-Functions usually deal with packet.
+The functions automatically generate the hash and prepend a netheader when you build a point.
+The result is a packet. For simplicity sake, all functions in the library deal only with packets.
 
 ** lk_datapoint
 :PROPERTIES:
@@ -145,8 +146,7 @@ lk_eval2str("[hash:str] = [data]", datap)
 :CUSTOM_ID: lk_linkpoint
 :END:
 
-
-A linkpoint creates relations between packets by their hash and its location.
+A linkpoint can: hold data, hold links to other points, and can be found with by its path.
 
 It consists of these fields:
 
@@ -163,17 +163,17 @@ It consists of these fields:
 | -Link[...]_{48}   |                                                    |
 | Data_{var<2^{16}} |                                                    |
 
-Each (Domain,Group) is a 'tree', and each (Domain,Group,Path) is a packets 'location'.
+Each (Domain,Group) is a 'tree', and each (Domain,Group,Path) is a points 'location'.
 
 All values, including the Path, contain arbitrary bytes.
 
 An entire point can be 2^{16}-512 bytes in size. The header is always 4 bytes.
 A data point can hold a maximum of 2^{16}-512-4 bytes.
 This space is shared between the links and data so beware that too much data and links won't fit into a single packet
-[fn::To overcome this, create multiple packets and link them in a new linkpoint]
+[fn::To overcome this, create multiple points and link them in a new linkpoint].
 
 #+BEGIN_VERSE
-Packet hashes, GroupID's, and public keys are 32 bytes.
+Point hashes, GroupID's, and public keys are 32 bytes.
 They are usually encoded in URL-safe no-padding base64, e.g. ~RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF~.
 Such a string makes things unreadable.
 The ~[...]~ syntax ([[ABE]]) allows you to name and manipulate bytes.
@@ -183,15 +183,14 @@ Furthermore, If no group was provided it defaults to ~[#:pub]~
 
 Datapoints do not have a 'create' field, so they get the same hash given the same data.
 If we had forced a specific 'create' stamp for both the python and bash example it would have produced the same hash for both.
-Instead, 'create' defaults to the current time ( microseconds since epoch ), and thus the hash is different.
+By default 'create' is set to the current time ( microseconds since epoch ) and thus the hashes are different.
 
 #+begin_ctabs
 #+begin_sh
 
-The command ~lk link~ builds a linkpoint packets and output's it to stdout by default.
-Whenever a cli commands deal with (domain, group, path) tuples, they are set from the first argument: ~DOMAIN:GROUP:PATH~.
+The command ~lk link~ builds one or more linkpoint packets and output's it to stdout by default.
+Whenever a cli commands deal with (domain, group, path) tuples, they are set by the first argument: ~DOMAIN:GROUP:PATH~.
 Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
-
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   lk link "a_domain:[#:pub]:/dir1/dir2/thing" -- \
@@ -228,7 +227,7 @@ In python, we have 4 common ways to get bytes.
   assert(link1.ptr == link2.ptr)
 
   datap = lk_datapoint(b"Hello example");
-  link3 = Link(b"a datapacket",datap.hash)
+  link3 = Link(b"a datapoint",datap.hash)
 
   linkp = lk_linkpoint(
       domain=b"example-domain",
@@ -323,17 +322,11 @@ e.g. ~[#:sales:mycomp:com]~ for groups and ~[@:alicekey:mycomp:com]~ for keys.
 
 
 ** lk_write and lk_read
+:PROPERTIES:
+:CUSTOM_ID: packet_layout
+:END:
 
-Serialize / Deserialize from the byte representation.
-A domain application rarely has to deal with this representation.
-
-| bytes |                     |
-|    32 | netheader (routing) |
-|    32 | hash                |
-|   var | point content       |
-|  0..7 | \xFF padding bytes  |
-
-Note, the padding bytes are included in the hash.
+The point is the content that is hashed, the packet is the a mutable network header, the hash, and the point.
 
 #+BEGIN_ctabs
 #+begin_py
@@ -357,6 +350,8 @@ Note, the padding bytes are included in the hash.
 
 #+end_py
 #+begin_bash
+
+
 The CLI automatically reads and writes in packet format from the relevant pipes.
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
   echo datapoint:
@@ -427,7 +422,7 @@ printf "emoji ⌨" | lk encode -i
 #+end_bash
 
 #+begin_py
-All packet fields are arbitrary bytes, and lk_encode can print them as ab text
+All fields are arbitrary bytes, and lk_encode can print them as ab text
 
 #+begin_src python :session lkpy :exports both :results output verbatim
   multiline = """newline

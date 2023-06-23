@@ -79,7 +79,7 @@ Other top level authorities set their own price and how to pay it.
 
 ## Claim a name{#claim}
 
-This currently requires a some work.
+This currently requires some work.
 To make a :free claim get download or clone the repo.
 
 ```terminal
