@@ -41,17 +41,19 @@ The [[https://github.com/AntonSol919/linkspace/releases][zip]] contains the CLI 
 
 ** Package manager
 
-~cargo +nightly install linkspace-cli~
-
 ~pip install linkspace~
+
+~cargo +nightly install linkspace-cli --git https://github.com/AntonSol919/linkspace~
 
 ** Build from source
 
-*** User
+~git clone https://github.com/AntonSol919/linkspace~
+
+*** for users
 
  ~make install-lk install-python~
 
-*** Development
+*** for development / debug builds
 
  ~source ./activate~ builds and sets PATH and PYTHONPATH env variables.
 
