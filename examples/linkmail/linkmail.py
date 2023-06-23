@@ -1,4 +1,7 @@
 #!/bin/env python3
+
+# This is a bare bone mail TUI to write each other messages with your standard $EDITOR.
+
 import os,sys,logging,tempfile,subprocess,shlex,functools,cmd,argparse,getpass
 from typing import Tuple,List
 from linkspace import *
