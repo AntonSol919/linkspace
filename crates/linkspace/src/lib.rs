@@ -365,7 +365,7 @@ pub mod abe {
         use std::cell::RefCell;
 
         use crate::LkResult;
-        type StdCtx<'o> = impl Scope + 'o;
+        pub(crate) type StdCtx<'o> = impl Scope + 'o;
         /// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         pub struct LkCtx<'o>(pub(crate) InlineCtx<'o>);
         // we optimise for the instance where contains _ctx, but we expose several other context situations

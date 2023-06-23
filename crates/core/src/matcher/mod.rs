@@ -238,7 +238,7 @@ impl<C> Matcher<C> {
         on_drop: impl FnMut(WatchEntry<C>),
     ) {
         self.watch_entries
-            .drain_filter(|e| {
+            .extract_if(|e| {
                 let _g = e.span.clone().entered();
                 let (test_ok, test_finish) = e.test(pkt);
                 let callback_finish =

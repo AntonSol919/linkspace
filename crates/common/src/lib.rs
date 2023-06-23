@@ -12,8 +12,6 @@
     ptr_metadata,
     split_as_slice,
     iterator_try_collect,
-    btree_drain_filter,
-    hash_drain_filter,
     lazy_cell,
     once_cell_try,
     duration_constants,
@@ -23,7 +21,7 @@
     never_type,
     try_trait_v2,
     write_all_vectored,
-    drain_filter
+    extract_if
 )]
 
 pub use anyhow;

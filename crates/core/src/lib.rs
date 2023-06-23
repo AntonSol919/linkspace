@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![feature(
+    extract_if,
     thread_local,
     file_create_new,
     let_chains,
@@ -27,8 +28,6 @@
     duration_constants,
     div_duration,
     never_type,
-    drain_filter,
-    hash_drain_filter,
     lazy_cell
 )]
 pub use parse_display;

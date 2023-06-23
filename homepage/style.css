@@ -21,6 +21,10 @@ nav {
     flex-flow: row wrap;
     justify-content: space-around;
     overflow-x: auto;
+    width: fit-content;
+    gap: 1em;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 nav>hr {
@@ -36,6 +40,7 @@ nav>hr {
 
 
 #main {
+    padding-top:2em;
     grid-area: main;
     overflow-y: scroll;
     padding-left:12vw;

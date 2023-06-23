@@ -338,13 +338,13 @@ impl Linkspace {
         tracing::debug!(npkts = i, "Updated Finished");
         self.drain_pending(&mut lock);
         // We don't do any setup in post_funcs
-        lock.1.drain_filter(|(func, span)| {
+        lock.1.retain_mut(|(func, span)| {
             let _ = span.enter();
             {
                 let cont = func(from, &this);
                 tracing::info!(?cont, "PostTxn");
                 validate();
-                cont.is_break()
+                cont.is_continue()
             }
         });
         self.exec.is_running.set(false);

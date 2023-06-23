@@ -12,6 +12,9 @@
 
     <nav>
       <li>
+        <a href="./index.html">Home</a>
+      </li>
+      <li>
         <a href="./basics.html">Basics</a>
       </li>
 
