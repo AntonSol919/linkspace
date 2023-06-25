@@ -6,7 +6,7 @@
 use anyhow::ensure;
 use linkspace_common::{
     cli::{clap, clap::Parser, opts::{CommonOpts }, tracing, Out, WriteDest, WriteDestSpec, reader::PktReadOpts},
-    prelude::*,
+    prelude::{*, lmdb::save_ptr_one},
 };
 
 #[derive(Parser, Clone)]
@@ -21,6 +21,13 @@ pub struct SaveForward {
     forward_stdout: bool,
     #[clap(flatten)]
     pkt_in: PktReadOpts,
+    /*
+    /// how many packets to read before opening a write transaction
+    #[clap(short,long,default_value_t)]
+    batch: usize,
+    #[clap(short='B',long)]
+    batch_all: bool
+    */
 }
 
 pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
@@ -50,8 +57,7 @@ pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
         let pkt = pkt?;
         // TODO: It might be better to spin a thread that will batch writes in a single transaction.
         // Depends on the speed of writing vs checking
-        let wr = env.get_writer()?;
-        let is_new = save_pkt(wr, &*pkt)?;
+        let is_new = save_ptr_one(env, &*pkt)?.is_new();
         let dest = if is_new { &mut new } else { &mut old };
         common.write_multi_dest(dest, &pkt, None)?;
         tracing::debug!(hash=?pkt.hash(),is_new,"Flush OK");

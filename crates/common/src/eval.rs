@@ -118,7 +118,8 @@ impl<R:LKS> ReadHash<R> {
             .map(|v| PubKey::try_fit_bytes_or_b64(v))
             .transpose()?
             .unwrap_or(B64([0; 32]));
-        let reader =self.0.lk()?.get_reader();
+        let env = self.0.lk()?;
+        let reader = env.get_reader();
 
         let predicates = Query::dgpk(domain, group, path, key).predicates;
         let pkt = reader
@@ -147,7 +148,8 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
             ScopeFunc {
                 apply : |this:&Self,inp:&[&[u8]],_,scope|{
                     let hash = B64::try_fit_slice(inp[0])?;
-                    let reader = this.0.lk()?.get_reader();
+                    let env = this.0.lk()?;
+                    let reader = env.get_reader();
                     let pkt = reader.read(&hash)?.with_context(||format!("could not find pkt {}",hash))?;
                     let (id, args) = inp[1..].split_first().unwrap_or((&{b"pkt" as &[u8]},&[]));
                     let r = pkt_scope(&*pkt).try_apply_func(id, args, true,scope);
@@ -184,7 +186,8 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 let alt = it.next();
                 let hash = eval(&ctx, hash)?.concat();
                 let hash: LkHash = LkHash::try_fit_slice(&hash)?;
-                let reader = this.0.lk()?.get_reader();
+                let env = this.0.lk()?;
+                let reader = env.get_reader();
                 match reader.read(&hash)? {
                     None => {
                         let alt = alt.with_context(|| format!("could not find pkt {}", hash))?;

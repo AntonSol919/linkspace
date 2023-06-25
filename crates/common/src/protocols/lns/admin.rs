@@ -7,7 +7,7 @@
 /// The lns:[#:0] lookup entries.
 
 use crate::{prelude::*, protocols::lns::{GROUP_TAG, LNS, BY_TAG_P, PUBKEY_TAG}};
-use linkspace_core::prelude::{query_mode::Order, RecvPktPtr};
+use linkspace_core::prelude::{query_mode::Order, RecvPktPtr, lmdb::save_dyn_iter};
 use tracing::instrument;
 
 use super::claim::Claim;
@@ -16,7 +16,6 @@ use super::claim::Claim;
 // only call this with a valid claim
 #[instrument(ret,skip(lk),level="debug")]
 pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&SigningKey>,and: &[&dyn NetPkt],priority:bool) -> anyhow::Result<bool>{
-    let wr = lk.get_writer();
     let read = lk.get_reader();
     let admin_k = admin.map(|v| v.pubkey());
     let now = now();
@@ -73,14 +72,13 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         }
     }
 
-    let txn : Vec<&dyn NetPkt>= [&new_claim.pkt as &dyn NetPkt].into_iter()
+    let it = [&new_claim.pkt as &dyn NetPkt].into_iter()
         .chain(as_p(&drop_old_group))
         .chain(as_p(&add_new_group))
         .chain(as_p(&drop_old_pubkey))
         .chain(as_p(&add_new_pubkey))
-        .chain(and.iter().copied())
-        .collect();
-    save_pkts(wr, &txn)?;
+        .chain(and.iter().copied());
+    save_dyn_iter(lk.env(), it)?;
     Ok(true)
 }
 
@@ -90,7 +88,7 @@ pub fn ptr_lookup(reader: &ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) 
     read_claims(reader, ple.into_ok()??.pkt, now()).find_map(|(_,p)| p.ok()?).into()
 }
 #[instrument(ret,skip(reader),level="debug")]
-pub fn ptr_lookup_entry(reader: &ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr> {
+pub fn ptr_lookup_entry<'o>(reader: &'o ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr<'o>> {
     let path = BY_TAG_P.into_spathbuf().push(tag).push(ptr);
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).path(path)?.create_before(now()).unwrap();
     // entries have the form /by-tag/TAG/PTR
@@ -110,7 +108,7 @@ fn read_claims<'o>(reader: &'o ReadTxn,pkt: &'o impl NetPkt,valid_at:Stamp) -> i
         .map(|(rt,p)| (rt,Claim::read(reader,&p)))
 }
 
-pub fn list_ptr_lookups(reader: &ReadTxn, tag: AB<[u8; 16]>,ptr:Option<LkHash>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'_ {
+pub fn list_ptr_lookups<'o>(reader: &'o ReadTxn, tag: AB<[u8; 16]>,ptr:Option<LkHash>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'o {
     let path = BY_TAG_P.into_spathbuf().push(tag);
     let path = if let Some(p) = ptr { path.push(*p)} else { path}; 
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).create_before(now()).unwrap();

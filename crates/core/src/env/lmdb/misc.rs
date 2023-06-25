@@ -1,25 +1,3 @@
-use super::db::{PktLogCursor, TreeCursor, HashCursor};
-
-
-pub trait Cursors {
-    fn pkt_cursor(&self) -> PktLogCursor;
-    fn tree_cursor(&self) -> TreeCursor;
-    fn hash_cursor(&self) -> HashCursor;
-}
-impl<X: Cursors> Cursors for &X {
-    fn pkt_cursor(&self) -> PktLogCursor {
-        (*self).pkt_cursor()
-    }
-    fn tree_cursor(&self) -> TreeCursor {
-        (*self).tree_cursor()
-    }
-    fn hash_cursor(&self) -> HashCursor {
-        (*self).hash_cursor()
-    }
-}
-pub trait Refreshable {
-    fn refresh(&mut self);
-}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum IterDirection {

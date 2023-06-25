@@ -12,7 +12,6 @@ pub use crate::consts::*;
 pub use crate::env::lmdb::queries::*;
 pub use crate::env::tree_key::*;
 pub use crate::env::write_result::*;
-pub use crate::env::write_trait::*;
 pub use crate::env::*;
 pub use crate::eval::*;
 pub use crate::matcher::*;

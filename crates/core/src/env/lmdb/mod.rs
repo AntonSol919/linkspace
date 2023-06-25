@@ -1,31 +1,29 @@
-use std::{sync::{Arc, OnceLock}, path::{Path,PathBuf},fmt::Debug, io::{Write, self} };
+use std::{sync::{Arc }, path::{Path,PathBuf},fmt::Debug, io::{Write, self} };
 
 use anyhow::Context;
 pub use ipcbus::ProcBus;
-use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktExt };
+use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktExt, NetPktPtr };
 use tracing::instrument;
-use crate::{env::write_trait::save_pkt, LNS_ROOTS};
+use crate::{LNS_ROOTS};
 
-use self::{db::RawBTreeEnv, queries::{IReadTxn, ReadTxn}};
-
-use super::write_trait::SWrite;
-
+use self::{queries::{ ReadTxn}, save::SaveState, db::LMDBEnv};
 
 pub mod db;
 pub mod misc;
 pub mod tree_iter;
 pub mod queries;
 pub mod queries2;
+pub mod save;
 
 /// A [NetPktPtr] and a recv stamp
 
 
-pub type BusCall = Arc<dyn Fn(Stamp) + Send + Sync + 'static>;
-pub static BUS: OnceLock<BusCall> = OnceLock::new();
 #[derive(Clone)]
-pub struct BTreeEnv {
-    inner: RawBTreeEnv,
-    location: Arc<PathBuf>,
+pub struct BTreeEnv(pub Arc<Inner>);
+
+pub struct Inner {
+    lmdb: LMDBEnv,
+    location: PathBuf,
     pub log_head: Arc<ipcbus::ProcBus>,
 }
 impl Debug for BTreeEnv {
@@ -34,32 +32,34 @@ impl Debug for BTreeEnv {
     }
 }
 impl BTreeEnv {
+    
     pub fn dir(&self) -> &Path {
-        &self.location
+        &self.0.location
     }
     pub fn open(path: PathBuf, make_dir: bool) -> io::Result<BTreeEnv> {
-        let inner = db::open(&path, make_dir)?;
-        let location = Arc::new(path.canonicalize()?);
+        let lmdb= db::open(&path, make_dir)?;
+        let location = path.canonicalize()?;
         tracing::debug!(?location, "Opening BTreeEnv");
-        let log_head = ipcbus::ProcBus::new(inner.uid());
-        let env = BTreeEnv {
-            inner,
-            log_head: Arc::new(log_head),
+        let log_head = Arc::new(ipcbus::ProcBus::new(lmdb.uid));
+        let env = BTreeEnv(Arc::new(Inner{
+            lmdb,
+            log_head,
             location,
-        };
+        }));
         {
-            let mut writer = env.inner.write_txn()?;
-            let new = save_pkt(&mut writer, &**PUBLIC_GROUP_PKT)?;
+            let new = save_ptr_one(&env, &***PUBLIC_GROUP_PKT)?.is_new();
             if new && std::env::var_os("LK_NO_LNS").is_none(){
                 let mut bytes = LNS_ROOTS;
-                let roots:Vec<_> = std::iter::from_fn(||{
+                let mut roots:Vec<_> = std::iter::from_fn(||{
                     if bytes.is_empty() { return None;}
                     let pkt = crate::pkt::read::read_pkt(bytes, true).unwrap();
                     bytes = &bytes[pkt.size() as usize..];
-                    Some(pkt)
+                    match pkt{
+                        std::borrow::Cow::Borrowed(o) =>Some((o,SaveState::Pending)),
+                        std::borrow::Cow::Owned(_) => panic!(),
+                    }
                 }).collect();
-                let mut it = roots.iter().map(|p| p.as_ref() as &dyn NetPkt);
-                let (_i,_) = writer.write_many_state(&mut it, None).unwrap();
+                save_ptr(&env, &mut roots)?;
             }
         }
         Ok(env)
@@ -67,7 +67,7 @@ impl BTreeEnv {
 
     pub fn local_enckey(&self) -> anyhow::Result<String> {
         // TODO this should prob check for read only access
-        Ok(std::fs::read_to_string(self.location.join("local_auth"))?.lines().next().context("missing enckey")?.to_owned())
+        Ok(std::fs::read_to_string(self.0.location.join("local_auth"))?.lines().next().context("missing enckey")?.to_owned())
     }
     #[instrument(ret,skip(bytes))]
     pub fn set_files_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
@@ -96,67 +96,50 @@ impl BTreeEnv {
         }
     }
     #[track_caller]
-    pub fn get_reader(&self) -> io::Result<ReadTxn> {
-        let btree_txn = self.inner.read_txn()?;
-        Ok(ReadTxn(IReadTxn::new(btree_txn)))
-    }
-    pub fn get_writer(&self) -> io::Result<WriteTxn2> {
-        tracing::trace!("Open write txn");
-        Ok(WriteTxn2 {
-            txn: Some(self.inner.write_txn()?),
-            update: &self.log_head,
-            last: None,
-        })
+    pub fn get_reader(&self) -> anyhow::Result<ReadTxn> {
+        Ok(ReadTxn(self.0.lmdb.read_txn()?))
     }
 
     pub async fn log_head(&self) -> Stamp {
-        let v = self.log_head.next_async().await;
+        let v = self.0.log_head.next_async().await;
         Stamp::new(v)
     }
-}
-/// TODO fix name
-/// Needs to broadcast updates and expose a ReadTxn ref
-pub struct WriteTxn2<'o> {
-    txn: Option<db::WriteTxn<'o>>,
-    update: &'o ipcbus::ProcBus,
-    last: Option<Stamp>,
-}
 
-impl<'o> WriteTxn2<'o> {
-    pub fn reader(&self) -> queries::IReadTxn<&(impl misc::Cursors + '_)> {
-        tracing::debug!("Peek reader of write txn");
-        IReadTxn::new(self.txn.as_ref().unwrap())
-    }
-    fn set_last(
-        &mut self,
-        result: io::Result<(usize, Option<Stamp>)>,
-    ) -> io::Result<(usize, Option<Stamp>)> {
-        if let Ok((_writes, Some(last_writes))) = &result {
-            self.last = Some(*last_writes);
-        }
-        result
-    }
-}
-impl<'txn> Drop for WriteTxn2<'txn> {
-    fn drop(&mut self) {
-        std::mem::drop(self.txn.take());
-        if let Some(last) = self.last {
-            let _ = self.update.emit(last.get());
-        }
+    fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> io::Result<usize>{
+        if pkts.is_empty() { return Ok(0);}
+        let (last_idx, total) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
+        let _ = self.0.log_head.emit(last_idx);
+        Ok(total)
     }
 }
 
-impl<'txn> SWrite for WriteTxn2<'txn> {
-    fn write_many_state<'o>(
-        &mut self,
-        pkts: &'o mut dyn Iterator<Item = &'o dyn NetPkt>,
-        out: Option<&'o mut dyn FnMut(&'o dyn NetPkt, bool) -> Result<bool, ()>>,
-    ) -> io::Result<(usize, Option<Stamp>)> {
-        let r = self.txn.as_mut().unwrap().write_many_state(pkts, out);
-        self.set_last(r)
-    }
-}
 
+pub fn save_ptr(env: &BTreeEnv,pkts:&mut [(&NetPktPtr,SaveState)]) -> io::Result<usize>{
+    env.save(pkts)
+}
+pub fn save_dyn(env: &BTreeEnv,pkts:&mut [(&dyn NetPkt,SaveState)]) -> io::Result<usize>{
+    env.save(pkts)
+}
+pub fn save_ptr_one(env:&BTreeEnv,pkt:&NetPktPtr) -> io::Result<SaveState>{
+    let mut o = [(pkt,SaveState::Pending)];
+    save_ptr(env,&mut o)?;
+    Ok(o[0].1)
+}
+pub fn save_dyn_one(env:&BTreeEnv,pkt:&dyn NetPkt) -> io::Result<SaveState>{
+    let mut o = [(pkt,SaveState::Pending)];
+    save_dyn(env,&mut o)?;
+    Ok(o[0].1)
+}
+pub fn save_ptr_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o NetPktPtr>) -> io::Result<usize>{
+    let mut lst = smallvec::SmallVec::<[(&NetPktPtr,SaveState);8]>::new_const();
+    lst.extend(it.map(|o|(o,SaveState::Pending)));
+    save_ptr(env,&mut lst)
+}
+pub fn save_dyn_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o dyn NetPkt>) -> io::Result<usize>{
+    let mut lst = smallvec::SmallVec::<[(&dyn NetPkt,SaveState);8]>::new_const();
+    lst.extend(it.map(|o|(o,SaveState::Pending)));
+    save_dyn(env,&mut lst)
+}
 fn check_path(path:&std::path::Path) -> anyhow::Result<&std::path::Path>{
     if let Some(c) = path.components().find(|v| !matches!(v,std::path::Component::Normal(_))){
         anyhow::bail!("path can not contain a {c:?} component")

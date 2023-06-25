@@ -6,15 +6,14 @@
 use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopReason};
 use anyhow::{bail, Context};
 pub use async_executors::{Timer, TimerExt};
-use futures::future::Either;
 pub use futures::task::{LocalSpawn, LocalSpawnExt};
-use linkspace_core::prelude::{*, lmdb::{BTreeEnv, WriteTxn2, misc::Refreshable}};
+use linkspace_core::prelude::{*, lmdb::{BTreeEnv  }};
 use linkspace_pkt::reroute::ShareArcPkt;
 use std::{
     borrow::{Borrow, Cow},
     cell::{Cell, OnceCell, RefCell},
     ops::{ ControlFlow},
-    rc::{Rc, Weak},
+    rc::{Rc },
     time::{Duration, Instant},
 };
 use tracing::{warn, Span, debug_span, instrument};
@@ -42,11 +41,6 @@ enum Pending {
     Close { id: QueryID, range: bool },
 }
 
-struct _ExecutorTxn {
-    last: Stamp,
-    txn: Either<Rc<ReadTxn>, Weak<ReadTxn>>,
-}
-
 impl Borrow<BTreeEnv> for Linkspace {
     fn borrow(&self) -> &BTreeEnv {
         self.env()
@@ -58,33 +52,24 @@ pub(crate) struct Executor {
     written: Cell<bool>,
     cbs: RefCell<(Matcher, PostTxnList)>,
     pending: RefCell<Vec<Pending>>,
-    process_txn: RefCell<Rc<ReadTxn>>,
+    process_txn: RefCell<Rc<ReadTxn<'static>>>,
     process_upto: Cell<Stamp>,
     is_running: Cell<bool>,
     pub spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
 
 impl Linkspace {
-    pub fn get_reader(&self) -> Rc<ReadTxn> {
-        //Rc::new(self.exec.env.get_reader().unwrap())
+    pub fn get_reader<'env:'txn,'txn>(&'env self) -> Rc<ReadTxn<'txn>> {
         self.exec.process_txn.borrow().clone()
     }
-    pub fn get_writer(&self) -> WriteTxn2 {
-        if !self.exec.written.get() {
-            tracing::trace!("Set Written true")
-        }
-        self.exec.written.set(true);
-        self.exec.env.get_writer().unwrap()
-    }
+    
     pub fn env(&self) -> &BTreeEnv {
         &self.exec.env
     }
     pub fn spawner(&self) -> &OnceCell<Rc<dyn LocalAsync>> {
         &self.exec.spawner
     }
-}
 
-impl Linkspace {
     fn rt_log_head(&self) -> Stamp {
         self.exec.process_upto.get()
     }
@@ -108,7 +93,8 @@ impl Linkspace {
     }
 
     pub fn new_opt_rt(env: BTreeEnv, spawner: OnceCell<Rc<dyn LocalAsync>>) -> Linkspace {
-        let reader = env.get_reader().unwrap();
+        let reader : ReadTxn<'_>= env.get_reader().unwrap();
+        let reader : ReadTxn<'static> = unsafe { std::mem::transmute(reader)};
         let at = reader.log_head();
         Linkspace {
             exec: Rc::new(Executor {
@@ -158,7 +144,7 @@ impl Linkspace {
         loop {
             self.process();
             let rt_head = self.rt_log_head();
-            let env_head = self.inner().log_head().await;
+            let env_head = self.env().log_head().await;
             if env_head == rt_head {
                 return env_head;
             }
@@ -166,7 +152,7 @@ impl Linkspace {
     }
     pub fn run(&self) -> ! {
         loop {
-            if let Some(v) = self.inner().log_head.next_d(None) {
+            if let Some(v) = self.env().0.log_head.next_d(None) {
                 if self.rt_log_head().get() < v {
                     self.process();
                 }
@@ -263,7 +249,7 @@ impl Linkspace {
             };
 
             tracing::debug!(wakeup=?d(next_check), "waiting for new event");
-            self.inner().log_head.next_d(Some(next_check));
+            self.env().0.log_head.next_d(Some(next_check));
         }
     }
 
@@ -278,11 +264,12 @@ impl Linkspace {
             match Rc::get_mut(&mut txn) {
                 Some(txn) => {
                     tracing::trace!(?rx_last, "refresh txn");
-                    Refreshable::refresh(txn);
+                    txn.refresh();
                 }
                 None => {
-                    tracing::warn!("holding a txn across callbacks!");
-                    *txn = Rc::new(self.exec.env.get_reader().unwrap());
+                    tracing::warn!("holding a read txn across callbacks!");
+                    // the transmute sets the lifetime - but the open txn can eat up memory
+                    *txn = Rc::new(unsafe{std::mem::transmute(self.exec.env.get_reader().unwrap())});
                 }
             }
             let txn_last = txn.log_head();
@@ -474,9 +461,7 @@ impl Linkspace {
                 .push(Pending::PostWatch { cb, span }),
         }
     }
-    pub fn inner(&self) -> &BTreeEnv {
-        &self.exec.env
-    }
+    
     pub fn close(&self, id: impl AsRef<QueryIDRef>) {
         match self.exec.cbs.try_borrow_mut() {
             Ok(mut lk) => {

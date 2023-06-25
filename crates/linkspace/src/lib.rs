@@ -681,10 +681,10 @@ pub mod runtime {
 
     /// save a packet. Returns true if new and false if its old.
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
-        linkspace_common::core::env::write_trait::save_pkt(&mut lk.0.get_writer(), pkt)
+        linkspace_common::core::env::lmdb::save_dyn_one(&mut lk.0.env(), pkt).map(|o|o.is_new())
     }
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
-        linkspace_common::core::env::write_trait::save_pkts(&mut lk.0.get_writer(), pkts).map(|(i,_)|i)
+        linkspace_common::core::env::lmdb::save_dyn_iter(&mut lk.0.env(), pkts.iter().copied())
     }
     
     /// Run callback for every match for the query in the database.

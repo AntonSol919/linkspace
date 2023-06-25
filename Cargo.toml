@@ -47,6 +47,8 @@ libc = "=0.2.142"
 bstr = {version = "1.5.0" ,default-features=false}
 build-info = { version = "=0.0.31"}
 build-info-build = { version = "=0.0.31"}
+smallvec = {version="1.10.0",features=["const_new","const_generics","write"]}
+
 
 [profile.dev.package.linkspace-argon2-identity]
 opt-level = 3

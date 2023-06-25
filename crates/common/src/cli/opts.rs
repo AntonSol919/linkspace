@@ -15,7 +15,7 @@ use crate::{
 };
 use anyhow::Context;
 use clap::Parser;
-use linkspace_core::prelude::lmdb::BTreeEnv;
+use linkspace_core::prelude::lmdb::{BTreeEnv };
 
 use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
 #[derive(Parser, Debug, Clone)]
@@ -189,8 +189,9 @@ impl CommonOpts {
         let pkt = self.check_private(pkt).map_err(linkspace_pkt::Error::io)?;
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
-                return save_pkt(&mut self.linkspace.env_io()?.get_writer()?, pkt).map(|_| ())
-            }
+                lmdb::save_dyn_one(self.linkspace.env_io()?,pkt)?;
+                return Ok(())
+            },
             super::Out::Fd(f) => f,
             super::Out::Buffer => buffer
                 .as_mut()

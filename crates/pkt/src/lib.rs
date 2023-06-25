@@ -270,9 +270,7 @@ where
     fn compute_hash(&self) -> LkHash {
         linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
-    fn aligned_net_pkt_size(&self) -> u16 {
-        self.point_header_ref().size()
-    }
+    
 
     fn check_private(&self) -> Result<(),crate::Error>{
         if self.group().copied() == Some(PRIVATE) { Err(crate::Error::PrivateGroup)}

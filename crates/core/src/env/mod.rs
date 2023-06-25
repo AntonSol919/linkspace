@@ -9,7 +9,6 @@ use linkspace_pkt::{NetPkt, reroute::RecvPkt, NetPktPtr};
 
 pub mod tree_key;
 pub mod write_result;
-pub mod write_trait;
 
 pub mod lmdb;
 pub mod query_mode;

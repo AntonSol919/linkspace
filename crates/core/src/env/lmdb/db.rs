@@ -3,49 +3,20 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/*
-lmdb-rs is broken. All cursor methods have an incorrect lifetime.
-Make sure you capture a cursor on use
-*/
+
 
 use ::lmdb::{self, *};
 use ffi::MDB_NEXT_NODUP;
 use lmdb_sys as ffi;
 use std::io;
 use std::io::{ErrorKind, Result};
-use std::{fmt::Debug, io::Write, marker::PhantomData, mem::size_of, path::Path, sync::Arc};
+use std::{fmt::Debug, io::Write, marker::PhantomData, path::Path };
 
-use crate::{env::write_result::WriteResult, prelude::TreeValueBytes};
+use crate::{ prelude::TreeValueBytes};
 
-#[derive(Clone)]
-pub struct RawBTreeEnv(Arc<LMDBEnv>);
 pub use lmdb::Error;
 
-use super::misc::{ Refreshable, assert_align,  Cursors};
-
-pub type WriteTxn<'o> = LMDBTxn<lmdb::RwTransaction<'o>>;
-pub type MutHashCursor<'o> = UniqCursor<'o, [u8; 32], RwCursor<'o>>;
-pub type MutTreeCursor<'o> = MultiCursor<'o, RwCursor<'o>>;
-pub type MutPktCursor<'o> = UniqCursor<'o, u64, RwCursor<'o>>;
-
-pub type ReadTxn = LMDBTxn<lmdb::RoTransaction<'static>>;
-pub type HashCursor<'o> = UniqCursor<'o, [u8; 32], RoCursor<'o>>;
-pub type PktLogCursor<'o> = UniqCursor<'o, u64, RoCursor<'o>>;
-pub type TreeCursor<'o> = MultiCursor<'o, RoCursor<'o>>;
-
-/*
-impl<'o,A:Cursor<'o>> Drop for MultiCursor<'o, A>{
-    fn drop(&mut self) {
-        tracing::trace!("Dropping multicursor {}",self.0.inspect());
-    }
-}
-impl<'o,K,A:Cursor<'o>> Drop for UniqCursor<'o,K,A>{
-    fn drop(&mut self) {
-        tracing::trace!("Dropping {} Cursor{}",self.2,self.0.inspect());
-    }
-}
-*/
-
+use super::misc::{  assert_align  };
 #[cfg(target_pointer_width = "32")]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) - 4;
 #[cfg(not(target_pointer_width = "32"))]
@@ -103,7 +74,7 @@ pub fn as_io(e: lmdb::Error) -> std::io::Error {
     }
 }
 
-pub fn open(path: &Path, make_dir: bool) -> std::io::Result<RawBTreeEnv> {
+pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
     tracing::trace!(?path,make_dir,"open db");
     path.as_os_str().to_str().ok_or(io::Error::new(
         io::ErrorKind::Other,
@@ -128,12 +99,12 @@ pub fn open(path: &Path, make_dir: bool) -> std::io::Result<RawBTreeEnv> {
     let mapsize = std::env::var("LK_LMDB_MAPSIZE")
         .map(|v| v.parse().expect("LK_LMDB_MAPSIZE to be u32"))
         .unwrap_or(DEFAULT_MAP_SIZE);
-    let env = Arc::new(open_env(
+    let env = open_env(
         path,
         mapsize,
         EnvironmentFlags::empty() | EnvironmentFlags::WRITE_MAP | EnvironmentFlags::NO_TLS,
-    ));
-    let primary = env
+    );
+    let pktlog = env
         .create_db(Some("pktlog"), DatabaseFlags::INTEGER_KEY)
         .unwrap();
     let hash = env.create_db(Some("hash"), DatabaseFlags::empty()).unwrap();
@@ -148,141 +119,77 @@ pub fn open(path: &Path, make_dir: bool) -> std::io::Result<RawBTreeEnv> {
         .try_into()
         .expect("expect 8 bytes");
     let uid = u64::from_be_bytes(uid);
-    Ok(RawBTreeEnv(Arc::new(LMDBEnv {
-        primary,
+    Ok(LMDBEnv {
+        pktlog,
         tree,
         hash,
         env,
         uid,
-    })))
+    })
 }
 
-impl RawBTreeEnv {
-    pub fn uid(&self) -> u64 {
-        self.0.uid
-    }
-    pub(crate) fn write_txn(&self) -> std::io::Result<WriteTxn> {
-        let txn = self.0.env.begin_rw_txn().map_err(as_io)?;
-        Ok(LMDBTxn {
-            txn: Some(txn),
-            env: self.clone(),
-        })
-    }
-
-    pub(crate) fn read_txn(&self) -> Result<ReadTxn> {
-        tracing::debug!("Get reader");
-        let txn = unsafe { std::mem::transmute(Some(self.0.env.begin_ro_txn().map_err(as_io)?)) };
-        Ok(LMDBTxn {
-            txn,
-            env: self.clone(),
-        })
+impl LMDBEnv{
+    pub(crate) fn read_txn(&self) -> Result<LMDBTxn> {
+        let txn = self.env.begin_ro_txn().map_err(as_io)?;
+        Ok(LMDBTxn { txn,env:self})
     }
 }
 
-struct LMDBEnv {
-    env: Arc<lmdb::Environment>,
-    uid: u64,
-    primary: Database,
-    tree: Database,
-    hash: Database,
+pub(crate) struct LMDBEnv {
+    pub(crate) env: lmdb::Environment,
+    pub(crate) uid: u64,
+    pub(crate) pktlog: Database,
+    pub(crate) tree: Database,
+    pub(crate) hash: Database,
 }
-pub struct LMDBTxn<T> {
-    txn: Option<T>,
-    env: RawBTreeEnv,
+pub struct LMDBTxn<'env> {
+    pub(crate) txn: RoTransaction<'env>,
+    pub(crate) env: &'env LMDBEnv
 }
-pub struct MultiCursor<'o, A: Cursor<'o>>(A, PhantomData<&'o ()>);
-impl<'o, A: Cursor<'o>> MultiCursor<'o, A> {
-    fn new(a: A) -> MultiCursor<'o, A> {
-        //tracing::trace!(p=%a.inspect(),"New treecur");
-        MultiCursor(a, PhantomData)
-    }
-}
+pub struct MultiCursor<'o, A>(A, PhantomData<&'o ()>);
+pub struct UniqCursor<'o, K, A>(A, PhantomData<(K, &'o ())>, &'static str);
 
-pub struct UniqCursor<'o, K, A: Cursor<'o>>(A, PhantomData<(K, &'o ())>, &'static str);
-impl<'o, A: Cursor<'o>> UniqCursor<'o, [u8; 32], A> {
-    fn new_hash(a: A) -> UniqCursor<'o, [u8; 32], A> {
-        //tracing::trace!(p=%a.inspect(),"New Hash");
-        UniqCursor(a, PhantomData, "hash")
-    }
-}
-impl<'o, A: Cursor<'o>> UniqCursor<'o, u64, A> {
-    fn new_pkt(a: A) -> UniqCursor<'o, u64, A> {
-        //tracing::trace!(p=%a.inspect(),"New Pkt");
-        UniqCursor(a, PhantomData, "pkt")
-    }
-}
+pub type HashCursor<'o> = UniqCursor<'o, [u8; 32], RoCursor<'o>>;
+pub type PktLogCursor<'o> = UniqCursor<'o, u64, RoCursor<'o>>;
+pub type TreeCursor<'o> = MultiCursor<'o, RoCursor<'o>>;
 
-impl<'e> WriteTxn<'e> {
-    pub(crate) fn mut_cursors<'o>(
-        &'o mut self,
-    ) -> (MutPktCursor<'o>, MutHashCursor<'o>, MutTreeCursor<'o>) {
-        let txn = self.txn.as_mut().unwrap();
-        let [t1, t2, t3]: [&'o mut RwTransaction; 3] = unsafe {
-            [
-                &mut *(txn as *mut RwTransaction),
-                &mut *(txn as *mut RwTransaction),
-                &mut *(txn as *mut RwTransaction),
-            ]
-        };
-        let primary: RwCursor<'o> = t1.open_rw_cursor(self.env.0.primary).unwrap();
-        let hash: RwCursor<'o> = t2.open_rw_cursor(self.env.0.hash).unwrap();
-        let tree: RwCursor<'o> = t3.open_rw_cursor(self.env.0.tree).unwrap();
-        (
-            UniqCursor::new_pkt(primary),
-            UniqCursor::new_hash(hash),
-            MultiCursor::new(tree),
-        )
-    }
 
-    pub(crate) fn commit(&mut self) -> Result<()> {
-        tracing::trace!("commit txn");
-        self.txn.take().unwrap().commit().map_err(as_io)?;
-        self.txn =
-            unsafe { std::mem::transmute(Some(self.env.0.env.begin_rw_txn().map_err(as_io)?)) };
-        Ok(())
+
+impl<'env> LMDBTxn<'env> {
+
+    pub fn pkt_cursor(&self) -> PktLogCursor {
+        let cur = self.txn.open_ro_cursor(self.env.pktlog).unwrap();
+        UniqCursor(cur,PhantomData,"pktlog")
+    }
+    pub fn tree_cursor(&self) -> TreeCursor {
+        let cur = self.txn.open_ro_cursor(self.env.tree).unwrap();
+        MultiCursor(cur,PhantomData)
+    }
+    pub fn hash_cursor(&self) -> HashCursor {
+        let cur = self.txn.open_ro_cursor(self.env.hash).unwrap();
+        UniqCursor(cur,PhantomData,"hash")
     }
 }
-impl<'o, TXN: 'o + lmdb::Transaction> Cursors for LMDBTxn<TXN> {
-    fn pkt_cursor(&self) -> PktLogCursor {
-        UniqCursor::new_pkt(
-            self.txn
-                .as_ref()
-                .unwrap()
-                .open_ro_cursor(self.env.0.primary)
-                .unwrap(),
-        )
-    }
-    fn tree_cursor(&self) -> TreeCursor {
-        MultiCursor::new(
-            self.txn
-                .as_ref()
-                .unwrap()
-                .open_ro_cursor(self.env.0.tree)
-                .unwrap(),
-        )
-    }
-    fn hash_cursor(&self) -> HashCursor {
-        UniqCursor::new_hash(
-            self.txn
-                .as_ref()
-                .unwrap()
-                .open_ro_cursor(self.env.0.hash)
-                .unwrap(),
-        )
-    }
-}
-impl Refreshable for ReadTxn {
-    fn refresh(&mut self) {
+impl<'o> LMDBTxn<'o>{
+    pub fn refresh(self) -> lmdb::Result<LMDBTxn<'o>>{
         tracing::trace!("Refresh");
-        self.txn = Some(self.txn.take().unwrap().reset().renew().unwrap());
+        let LMDBTxn { txn, env } = self;
+        Ok(LMDBTxn{txn: txn.reset().renew()?,env})
+    }
+    pub fn refresh_inplace(&mut self) -> lmdb::Result<()>{
+        let txn = self.txn.txn();
+        let result  = unsafe {
+            lmdb_sys::mdb_txn_reset(txn);
+            lmdb_sys::mdb_txn_renew(txn)
+        };
+        lmdb::lmdb_result(result)
     }
 }
 
 impl<'txn> PktLogCursor<'txn> {
-    pub(crate) fn range_uniq(mut self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
+    pub(crate) fn range_uniq(self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
         let c = self.0.iter_from(start.to_ne_bytes());
         c.map(move |kv| {
-            let _tmp = self.0.cursor(); // We MUST capture self to work around lmdb-rs soundess bug
             let (k, v) = kv.unwrap();
             let k = match k.try_into() {
                 Ok(k) => u64::from_ne_bytes(k),
@@ -293,18 +200,17 @@ impl<'txn> PktLogCursor<'txn> {
         })
     }
     pub(crate) fn range_uniq_rev(self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
+
         let start = *start;
         let it = match self.0.get(Some(&start.to_ne_bytes()), None, ffi::MDB_LAST) {
             Ok(_) | Err(Error::NotFound) => Iter::Ok {
-                cursor: self.0.cursor(),
+                cursor: self.0,
                 op: ffi::MDB_GET_CURRENT,
                 next_op: ffi::MDB_PREV,
-                _marker: PhantomData,
             },
             Err(error) => Iter::Err(error),
         };
-        it.map_while(|kv| kv.ok()).map(move |(k, v)| {
-            let _tmp = self.0.cursor(); // We MUST capture self to work around lmdb-rs soundess bug
+        it.map_while(|kv| kv.ok()).map(|(k, v)| {
             let k = u64::from_ne_bytes(k.try_into().unwrap());
             let v = assert_align(v);
             (k, v)
@@ -329,12 +235,11 @@ impl<'txn> PktLogCursor<'txn> {
 }
 impl<'txn> HashCursor<'txn> {
     pub(crate) fn range_uniq(
-        mut self,
+        self,
         start: &[u8; 32],
     ) -> impl Iterator<Item = (&'txn [u8; 32], u64)> {
         let it = self.0.iter_from(start);
         it.map(move |kv| {
-            let _tmp = self.0.cursor(); // We MUST capture self to work around lmdb-rs soundess bug
             let (k, v) = kv.unwrap();
             let v = u64::from_ne_bytes(v.try_into().unwrap());
             (k.try_into().unwrap(), v)
@@ -406,168 +311,6 @@ impl<'txn> TreeCursor<'txn> {
         IterDup {
             cur: self.0,
             value_asc,
-        }
-    }
-
-    /*
-    pub(crate) fn range_multi(
-        self,
-        start: &[u8],
-        dir: IterDirection,
-        uniq_keys: bool,
-    ) -> impl Iterator<Item = (&'txn [u8], &'txn [u8; size_of::<TreeValueBytes>()])> {
-        let mut op = ffi::MDB_GET_CURRENT;
-        match self.0.get(Some(start), None, ffi::MDB_SET_RANGE) {
-            Ok(_) if dir == IterDirection::Backwards => {
-                // This is prob suboptimal, but we have to check if the cursor is exactly at this key and jump to the back if true.
-                if let Ok((Some(key), _)) = self.0.get(None, None, ffi::MDB_GET_CURRENT) {
-                    if key == start {
-                        let _s = self.0.get(None, None, ffi::MDB_LAST_DUP);
-                    } else if let Err(Error::NotFound) = self.0.get(None, None, ffi::MDB_PREV) {
-                        op = ffi::MDB_PREV; // if at the first key make sure 'next' also returns not found
-                    }
-                }
-            }
-            Ok(_) => {}
-            Err(Error::NotFound) => (),
-            Err(_error) => todo!(),
-        };
-        let next = match (dir, uniq_keys) {
-            (IterDirection::Forwards, true) => ffi::MDB_NEXT_NODUP,
-            (IterDirection::Forwards, false) => ffi::MDB_NEXT,
-            (IterDirection::Backwards, true) => ffi::MDB_PREV_NODUP,
-            (IterDirection::Backwards, false) => ffi::MDB_PREV,
-        };
-        let mut i = 0;
-        std::iter::from_fn(move || {
-            if op == ffi::MDB_GET_CURRENT {
-                let first = self.0.get(None, None, ffi::MDB_GET_CURRENT);
-                tracing::trace!(i,r=?first,"first");
-                op = next;
-                if let Ok((Some(key), val)) = first {
-                    i += 1;
-                    return Some((key, val.try_into().unwrap()));
-                }
-            }
-            let r = self.0.get(None, None, op);
-            i += 1;
-            match r {
-                Err(Error::NotFound) => None,
-                Err(e) => {
-                    tracing::error!("LMDB ERROR!!! {:?}", e);
-                    None
-                }
-                Ok((None, _v)) => panic!(),
-                Ok((Some(key), val)) => {
-                    //tracing::trace!(i,key=?key,"next");
-                    match val.try_into() {
-                        Ok(v) => Some((key, v)),
-                        Err(e) => panic!("Cast error? {val:?} {e:?}"),
-                    }
-                }
-            }
-        })
-    }
-
-    pub(crate) fn read_next(
-        &mut self,
-        start: &[u8],
-    ) -> Result<Option<(&'txn [u8], &'txn [u8; size_of::<TreeValueBytes>()])>> {
-        match self.0.get(Some(start), None, lmdb_sys::MDB_SET_RANGE) {
-            Ok((Some(key), val)) => Ok(Some((key, val.try_into().unwrap()))),
-            Err(Error::NotFound) => Ok(None),
-            e => todo!("{:?}", e),
-        }
-    }
-    */
-}
-
-impl<'txn> MutPktCursor<'txn> {
-    pub(crate) fn last(&mut self) -> (u64, &'txn [u8]) {
-        match self.0.get(None, None, ffi::MDB_LAST) {
-            Ok((Some(v), bytes)) => return (u64::from_ne_bytes(v.try_into().unwrap()), bytes),
-            Ok((None, _)) => tracing::error!("Error getting last idx"),
-            Err(Error::NotFound) => {}
-            Err(e) => tracing::error!(e=?e,"Error getting last idx"),
-        };
-        (0, &[])
-    }
-    pub(crate) fn insert(
-        &mut self,
-        idx: u64,
-        len: usize,
-        insert: impl FnOnce(&mut [u8]),
-    ) -> Result<()> {
-        let cur = self.0.cursor();
-        use std::ptr;
-        assert!(len%4 == 0, "bad alignment?");
-        let key = idx.to_ne_bytes();
-        tracing::trace!(idx=?key,"Write new Pkt");
-        let mut key_val: ffi::MDB_val = ffi::MDB_val {
-            mv_size: key.len() as libc::size_t,
-            mv_data: key.as_ptr() as *mut libc::c_void,
-        };
-        let mut data_val: ffi::MDB_val = ffi::MDB_val {
-            mv_size: len,
-            mv_data: ptr::null_mut::<libc::c_void>(),
-        };
-
-        let r = unsafe {
-            ffi::mdb_cursor_put(
-                cur,
-                &mut key_val,
-                &mut data_val,
-                ffi::MDB_NODUPDATA | ffi::MDB_NOOVERWRITE | ffi::MDB_RESERVE | ffi::MDB_APPEND,
-            )
-        };
-        match r {
-            ffi::MDB_SUCCESS => {
-                let dest = unsafe {
-                    std::slice::from_raw_parts_mut(data_val.mv_data as *mut u8, data_val.mv_size)
-                };
-                insert(dest);
-                Ok(())
-            }
-            ffi::MDB_KEYEXIST => {
-                panic!("insert logic error")
-            }
-            e => Err(as_io(Error::from_err_code(e))),
-        }
-    }
-}
-impl<'txn> MutHashCursor<'txn> {
-    pub(crate) fn try_put_unique(
-        &mut self,
-        key: &[u8; 32],
-        pkt_idx: u64,
-    ) -> Result<WriteResult<()>> {
-        match self.0.put(
-            &key,
-            &pkt_idx.to_ne_bytes(),
-            WriteFlags::NO_DUP_DATA | WriteFlags::NO_OVERWRITE,
-        ) {
-            Ok(_) => {
-                tracing::trace!("New Pkt");
-                Ok(WriteResult::New(()))
-            }
-            Err(Error::KeyExist) => {
-                tracing::trace!("OldPkt");
-                Ok(WriteResult::Old(()))
-            }
-            Err(e) => Err(as_io(e)),
-        }
-    }
-}
-
-impl<'txn> MutTreeCursor<'txn> {
-    pub(crate) fn put_append(
-        &mut self,
-        key: &[u8],
-        val: &[u8; size_of::<TreeValueBytes>()],
-    ) -> Result<()> {
-        match self.0.put(&key, &val, WriteFlags::empty()) {
-            Ok(_v) => Ok(()),
-            Err(e) => Err(as_io(e)),
         }
     }
 }

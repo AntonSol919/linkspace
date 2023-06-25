@@ -18,8 +18,9 @@ lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\n
 
 socat tcp-listen:$PORT,fork exec:"anyhost.handshake.sh serve anyhost.serve-io.sh",fdout=4 &
 
-echo PIDS $(jobs -p)
-wait -n
+PIDS=$(jobs -p)
+echo PIDS $PIDS
+wait -- $PIDS
 
 #websocat -e -E --binary --ping-timeout 15 --ping-interval 10 \
 #         ws-l:0.0.0.0:5020 sh-c:"strace -e 'trace=!all' handshake.sh serve serve_io.sh"

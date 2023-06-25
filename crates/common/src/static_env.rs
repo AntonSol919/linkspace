@@ -15,12 +15,6 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::thread::JoinHandle;
 
-
-
-
-
-
-
 pub static ROOT_PATH: OnceLock<PathBuf> = OnceLock::new();
 static ENV: OnceLock<BTreeEnv> = OnceLock::new();
 static IPC_THREAD: OnceLock<JoinHandle<()>> = OnceLock::new();
@@ -30,7 +24,7 @@ static LINKSPACE: OnceCell<Linkspace> = OnceCell::new();
 pub fn get_env(root: &Path, mkdir: bool) -> io::Result<&'static BTreeEnv> {
     ENV.get_or_try_init(|| -> io::Result<BTreeEnv> {
         let mut env = BTreeEnv::open(root.to_owned(), mkdir)?;
-        env.log_head.init_udp();
+        Arc::get_mut(&mut env.0).unwrap().log_head.init_udp();
         ROOT_PATH.set(root.canonicalize()?).unwrap();
         Ok(env)
     })
@@ -64,7 +58,8 @@ pub fn find_linkspace(root: Option<&Path>) -> io::Result<PathBuf> {
 
 pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspace> {
     let path = find_linkspace(root)?;
-    LINKSPACE.get_or_try_init(|| {
+    LINKSPACE
+        .get_or_try_init(|| {
             // ensure the IPC thread is propery enabled.
             if ENV.get().is_none() != IPC_THREAD.get().is_none() {
                 return Err(io::Error::other(
@@ -73,64 +68,82 @@ pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspac
             };
             let env = get_env(&path, new)?;
             let rt = Linkspace::new_opt_rt(env.clone(), Default::default());
-            IPC_THREAD.get_or_init(|| rt.env().log_head.setup_ipc_thread());
+            IPC_THREAD.get_or_init(|| rt.env().0.log_head.setup_ipc_thread());
             Ok(rt)
         })
         .map(|r| r.clone())
 }
 
-
-
 #[thread_local]
 static GROUP: OnceCell<GroupID> = OnceCell::new();
-pub fn set_group(group:GroupID){
-    assert_eq!(*GROUP.get_or_init(|| group), group, "user bug: the default group can only be set once per thread");
+pub fn set_group(group: GroupID) {
+    assert_eq!(
+        *GROUP.get_or_init(|| group),
+        group,
+        "user bug: the default group can only be set once per thread"
+    );
 }
 /** [Thread Local]: get the 'default' group. from [set_group] || $LK_GROUP || [#:pub]
 
 If the LK_GROUP expression requires LNS evaluation this will use the thread local linkspace or open the default.
 **/
-pub fn group() -> GroupID{
+pub fn group() -> GroupID {
     use std::env::*;
-    *GROUP.get_or_init(|| match std::env::var("LK_GROUP"){
+    *GROUP.get_or_init(|| match std::env::var("LK_GROUP") {
         Err(VarError::NotPresent) => PUBLIC,
         Ok(o) => {
-            let expr : GroupExpr = o.parse().expect("cant parse LK_GROUP");
-            let ctx = std_ctx_v(|| {
-                if let Some(o) = LINKSPACE.get(){ return Ok(o.clone())}
-                tracing::info!("opening default linkspace to read evaluate LK_GROUP variable");
-                Ok(open_linkspace_dir(None, false)?)
-            }, EVAL0_1,true);
+            let expr: GroupExpr = o.parse().expect("cant parse LK_GROUP");
+            let ctx = std_ctx_v(
+                || {
+                    if let Some(o) = LINKSPACE.get() {
+                        return Ok(o.clone());
+                    }
+                    tracing::info!("opening default linkspace to read evaluate LK_GROUP variable");
+                    Ok(open_linkspace_dir(None, false)?)
+                },
+                EVAL0_1,
+                true,
+            );
             expr.eval(&ctx).expect("can't eval LK_GROUP")
-        },
-        _ => panic!("can't read LK_DOMAIN as utf8")
+        }
+        _ => panic!("can't read LK_DOMAIN as utf8"),
     })
 }
 
 #[thread_local]
-static DOMAIN : OnceCell<Domain> = OnceCell::new();
+static DOMAIN: OnceCell<Domain> = OnceCell::new();
 
 /// set the result for [domain]
-pub fn set_domain(domain:Domain) {
-    assert_eq!(*DOMAIN.get_or_init(|| domain), domain, "user bug: the standard domain can only be set once per thread");
+pub fn set_domain(domain: Domain) {
+    assert_eq!(
+        *DOMAIN.get_or_init(|| domain),
+        domain,
+        "user bug: the standard domain can only be set once per thread"
+    );
 }
 /** [Thread Local]: get the 'default' domain. from [set_domain] || $LK_DOMAIN || [0;16]
 
 If the LK_DOMAIN expression requires LNS evaluation this will use the thread local linkspace or open the default.
 **/
-pub fn domain() -> Domain{
+pub fn domain() -> Domain {
     use std::env::*;
-    *DOMAIN.get_or_init(|| match std::env::var("LK_DOMAIN"){
+    *DOMAIN.get_or_init(|| match std::env::var("LK_DOMAIN") {
         Err(VarError::NotPresent) => ab(b""),
         Ok(o) => {
-            let expr : DomainExpr = o.parse().expect("cant parse LK_DOMAIN");
-            let ctx = std_ctx_v(|| {
-                if let Some(o) = LINKSPACE.get(){ return Ok(o.clone())}
-                tracing::info!("opening default linkspace to read evaluate LK_DOMAIN variable");
-                Ok(open_linkspace_dir(None, false)?)
-            }, EVAL0_1,true);
+            let expr: DomainExpr = o.parse().expect("cant parse LK_DOMAIN");
+            let ctx = std_ctx_v(
+                || {
+                    if let Some(o) = LINKSPACE.get() {
+                        return Ok(o.clone());
+                    }
+                    tracing::info!("opening default linkspace to read evaluate LK_DOMAIN variable");
+                    Ok(open_linkspace_dir(None, false)?)
+                },
+                EVAL0_1,
+                true,
+            );
             expr.eval(&ctx).expect("can't eval LK_DOMAIN")
         }
-        _ => panic!("can't read LK_DOMAIN as utf8")
+        _ => panic!("can't read LK_DOMAIN as utf8"),
     })
 }

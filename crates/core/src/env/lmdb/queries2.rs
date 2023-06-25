@@ -36,19 +36,19 @@ use crate::env::query_mode::{Mode, Order, Table};
 use crate::env::tree_key::treekey_checked;
 
 use crate::env::RecvPktPtr;
-use super::queries::IReadTxn;
+use super::queries::ReadTxn;
 use super::tree_iter::TreeKeysIter;
 
 
-impl<C: super::misc::Cursors> IReadTxn<C> {
-    pub fn scope_iter<'o>(
-        &'o self,
+impl<'txn> ReadTxn<'txn> {
+    pub fn scope_iter(
+        &'txn self,
         rules: &PktPredicates,
         order: Order,
-    ) -> Option<(TreeEntryRef<'o>, TreeKeysIter<'o>)> {
+    ) -> Option<(TreeEntryRef<'txn>, TreeKeysIter<'txn>)> {
         let req = rules.compile_tree_keys(order.is_asc()).unwrap();
         let lower_bound = req.lower_bound().unwrap();
-        let iter_dup = self.btree_txn.tree_cursor().iter_dup(order.is_asc());
+        let iter_dup = self.0.tree_cursor().iter_dup(order.is_asc());
         let at = iter_dup.set_range(&lower_bound).map(super::tree_iter::spd)?;
         let mut it = TreeKeysIter {
             req,
@@ -59,10 +59,10 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
         Some((at, it))
     }
     pub fn query_tree_entries(
-        &self,
+        &'txn self,
         rules: &PktPredicates,
         ord: Order,
-    ) -> impl Iterator<Item = TreeEntryRef> {
+    ) -> impl Iterator<Item = TreeEntryRef<'txn>> +'txn {
         let nth_find_set = rules.state.i_branch;
         let mut yields = nth_find_set.iter(0);
         assert!(yields.peek().is_some(), "i_branch is empty");
@@ -125,17 +125,17 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
             None
         })
     }
-    pub fn query_tree<'o>(
-        &'o self,
+    pub fn query_tree(
+        &'txn self,
         ord: Order,
         predicates: &PktPredicates,
-    ) -> impl Iterator<Item = RecvPktPtr<'o>> {
+    ) -> impl Iterator<Item = RecvPktPtr<'txn>> + 'txn{
         let pkt_filter = compile_predicates(predicates)
             .0
             .filter(|(_test, kind)| !treekey_checked(*kind))
             .map(|(test,_)| test)
             .collect::<Vec<_>>();
-        let c1 = self.btree_txn.pkt_cursor();
+        let c1 = self.0.pkt_cursor();
         let it = self
             .query_tree_entries(predicates, ord)
             .map(move |v| {
@@ -155,11 +155,11 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
     }
 
-    pub fn query_log2<'o>(
-        &'o self,
+    pub fn query_log2(
+        &'txn self,
         ord: Order,
-        rules: &'o PktPredicates,
-    ) -> impl Iterator<Item = RecvPktPtr<'o>> {
+        rules: &'txn PktPredicates,
+    ) -> impl Iterator<Item = RecvPktPtr<'txn>> {
         let (it, recv) = compile_predicates(rules);
         let tests = it.map(|(t, _)| t).collect::<Vec<_>>().into_boxed_slice();
         let log_range = recv.stamp_range(ord.is_asc());
@@ -178,7 +178,7 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
     }
 
     pub fn query_hash_entries(
-        &self,
+        &'txn self,
         hashset: TestSet<U256>,
         ord: Order,
     ) -> impl Iterator<Item = Stamp> + '_ {
@@ -197,7 +197,7 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
                     tracing::warn!("todo impl hash mask jumping");
                 }
                 let greater_eq: B64<[u8; 32]> = greater_eq.into();
-                self.btree_txn
+                self.0
                     .hash_cursor()
                     .range_uniq(&greater_eq)
                     .map(|(hash, stamp)| (B64(*hash).into(), stamp))
@@ -210,17 +210,17 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
             }
         }
     }
-    pub fn query_hash<'o>(
-        &'o self,
+    pub fn query_hash(
+        &'txn self,
         ord: Order,
-        rules: &PktPredicates,
-    ) -> impl Iterator<Item = RecvPktPtr<'o>> {
+        rules: &'txn PktPredicates,
+    ) -> impl Iterator<Item = RecvPktPtr<'txn>> {
         let pkt_filter = compile_predicates(rules)
             .0
             .filter(|(_, kind)| *kind != RuleType::Field(FieldEnum::PktHashF))
             .map(|(test, _)| test)
             .collect::<Vec<_>>();
-        let c1 = self.btree_txn.pkt_cursor();
+        let c1 = self.0.pkt_cursor();
         let it = self
             .query_hash_entries(rules.hash, ord)
             .map(move |v| {
@@ -238,12 +238,12 @@ impl<C: super::misc::Cursors> IReadTxn<C> {
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
     }
 
-    pub fn query<'o>(
-        &'o self,
+    pub fn query(
+        &'txn self,
         mode: Mode,
-        pred: &'o PktPredicates,
-        nth_pkt: &'o mut u32,
-    ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'o>>> {
+        pred: &'txn PktPredicates,
+        nth_pkt: &'txn mut u32,
+    ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'txn>>> {
         tracing::debug!(?mode,%pred);
 
         match mode.table {
