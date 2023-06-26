@@ -85,7 +85,7 @@ impl NetPktPtr {
         }
     }
 
-    pub fn check(&self, skip_hash:bool) -> Result<&[u8], Error> {
+    pub fn check(&self, skip_hash:bool) -> Result<(), Error> {
         let _ = self.point.internal_consitent_length()?;
         if !skip_hash{
             self.point.check_signature()?;
@@ -93,7 +93,7 @@ impl NetPktPtr {
                 return Err(Error::HashMismatch);
             }
         }
-        Ok(self.as_netpkt_bytes())
+        Ok(())
     }
     pub fn as_netpkt_bytes(&self) -> &[u8] {
         unsafe { from_raw_parts(ptr::from_ref(self).cast::<u8>(), usize::from(self.size())) }

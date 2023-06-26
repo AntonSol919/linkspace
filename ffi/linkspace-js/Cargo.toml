@@ -7,6 +7,7 @@ license = "MPL-2.0"
 homepage = "https://www.linkspace.dev"
 documentation = "https://www.linkspace.dev/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
+description = "wasm bindings for linkspace"
 
 [lib]
 name = "linkspace"
@@ -20,7 +21,7 @@ default = ["console_error_panic_hook","wee_alloc"]
 abe = []
 
 [dependencies]
-wasm-bindgen = "0.2.86"
+wasm-bindgen = "0.2.87"
 linkspace-pkt = { path = "../../../linkspace/crates/pkt" , default-features = false}
 linkspace-argon2-identity = { path = "../../../linkspace/crates/argon2-identity"}
 web-sys ={ version = "0.3.63",features=["console","TextDecoder"]}

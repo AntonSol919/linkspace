@@ -190,6 +190,8 @@ impl<K: AsRef<[u8]>, V: AsRef<[u8]>> std::fmt::Debug for TreeEntry<K, V> {
         (&self.btree_key, self.val()).fmt(f)
     }
 }
+
+
 impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (g, d, spd, sp, k) = self.fields();
@@ -207,8 +209,17 @@ impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
     }
 }
 
+impl<K: AsRef<[u8]>, V: AsRef<[u8]>> std::fmt::Display for TreeEntry<K, V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (g,d,spd,sp,k) = self.btree_key.fields();
+        let key = if k == PRIVATE { String::new() } else { k.to_string()};
+        let TreeValue { create, hash, logptr, links_len, data_size }= self.val();
+        write!(f,"{g}:{d}:{spd} {sp} {key} => ({create},{hash},{logptr},{links_len},{data_size})")
+    }
+}
 
-/// check if this type can be answered by a treekey - currently conservative to simplify tree query impl
+
+/// check if this type can be answered by a treekey
 pub const fn treekey_checked(r:RuleType) -> bool {
     match r {
         #[allow(clippy::match_like_matches_macro)]

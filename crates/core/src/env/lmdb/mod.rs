@@ -3,10 +3,11 @@ use std::{sync::{Arc }, path::{Path,PathBuf},fmt::Debug, io::{Write, self} };
 use anyhow::Context;
 pub use ipcbus::ProcBus;
 use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktExt, NetPktPtr };
+use lmdb_sys::MDB_envinfo;
 use tracing::instrument;
 use crate::{LNS_ROOTS};
 
-use self::{queries::{ ReadTxn}, save::SaveState, db::LMDBEnv};
+use self::{queries::{ ReadTxn}, save::SaveState, db::LMDBEnv, db_info::{DbInfo, LMDBVersion}};
 
 pub mod db;
 pub mod misc;
@@ -14,6 +15,7 @@ pub mod tree_iter;
 pub mod queries;
 pub mod queries2;
 pub mod save;
+pub mod db_info;
 
 /// A [NetPktPtr] and a recv stamp
 
@@ -110,6 +112,18 @@ impl BTreeEnv {
         let (last_idx, total) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
         let _ = self.0.log_head.emit(last_idx);
         Ok(total)
+    }
+    pub fn real_disk_size(&self) -> io::Result<u64> {
+        self.0.lmdb.real_disk_size()
+    }
+    pub fn env_info(&self) -> MDB_envinfo{
+        self.0.lmdb.env_info()
+    }
+    pub fn db_info(&self) -> DbInfo{
+        self.0.lmdb.db_info().unwrap()
+    }
+    pub fn lmdb_version(&self) -> LMDBVersion{
+        self.0.lmdb.version_info()
     }
 }
 

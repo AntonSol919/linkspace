@@ -267,6 +267,7 @@ enum Command {
         #[clap(short, long, default_value = "null")]
         dropped: Vec<WriteDestSpec>,
     },
+    DbCheck,
     #[cfg(target_family = "unix")]
     #[command(external_subcommand)]
     External(Vec<OsString>),
@@ -456,6 +457,18 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let x = linkspace::runtime::lk_info(&lk);
             println!("{:?}",x);
         },
+        Command::DbCheck => {
+            let lk = common.runtime()?;
+            let env = lk.env();
+            println!("{:#?}",env.lmdb_version());
+            println!("{:#?}",env.env_info());
+            println!("{:#?}",env.db_info());
+            let e = env.linkspace_info();
+            if let Err(e) = &e{
+                eprintln!("{}",e);
+            }
+            return e;
+        }
     }
     Ok(())
 }

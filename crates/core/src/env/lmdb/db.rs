@@ -5,6 +5,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
+
+
 use ::lmdb::{self, *};
 use ffi::MDB_NEXT_NODUP;
 use lmdb_sys as ffi;
@@ -133,8 +135,9 @@ impl LMDBEnv{
         let txn = self.env.begin_ro_txn().map_err(as_io)?;
         Ok(LMDBTxn { txn,env:self})
     }
-}
 
+
+}
 pub(crate) struct LMDBEnv {
     pub(crate) env: lmdb::Environment,
     pub(crate) uid: u64,
