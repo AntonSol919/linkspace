@@ -72,20 +72,20 @@ pub fn lk_key_decrypt(id: &str, password: &[u8]) -> Result<SigningKey> {
     Ok(SigningKey(identity::decrypt(id, password)?))
 }
 
-#[wasm_bindgen(inline_js = "
+#[wasm_bindgen(inline_js = r#"
 export function identity(a) { return a }
 export function set_iter(obj) {
      obj[Symbol.iterator] = function () { return this };
 };
 export function pkt_obj(pkt){
-if (pkt.data == undefined) { throw Error(\"bug: the pkt was deallocated?\");}
+if (pkt.data == undefined) { console.error("BUG: - the packet was deallocated?");}
 return { group: pkt.group, domain:pkt.domain, path:pkt.path, links:pkt.links_bytes(), create:pkt.create}
 };
-")]
+"#)]
 #[wasm_bindgen]
 extern "C" {
     fn set_iter(obj: &js_sys::Object);
-    pub fn pkt_obj(obj: Pkt) -> Result<Object,JsValue>;
+    pub fn pkt_obj(obj: Pkt) -> Object;
 
     pub type Fields;
     #[wasm_bindgen(structural, method, getter)]
