@@ -119,7 +119,7 @@ impl<T: NetPkt + ?Sized> NetPkt for &T {
         None
     }
     fn recv(&self) -> Option<Stamp> {
-        None
+        (**self).recv()
     }
 }
 

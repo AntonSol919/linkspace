@@ -97,8 +97,6 @@ A unit in linkspace is called a **point**. Each point has data, some auxiliary f
 
 All fields are optional except for HASH and DATA. For the full specs see the [guide](./docs/guide/index.html#packet_layout)
 
-Linkspace is primarily this packet format. A minimal application only needs to broadcast/save packets.
-The rest of the software library implements functions to process and query them.
 
 ### Merging Trees
 
@@ -275,19 +273,34 @@ In actually they are 32 bytes. LNS works similar to how `www.example.com` resolv
 Finally, using the hash directly in the data of each entry like we have been doing is not ideal.
 Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
-There are more nuances and advanced topics such as: the path encoding, the [queries](./docs/guide/index.html#Query) syntax, and
-specifics on how trees are [pulled](./docs/guide/index.html#lk_pull) from one server to another.
-However, this should give you a good idea of the basics.
+There are some nuances and advanced topics such as: the path encoding, the [queries](./docs/guide/index.html#Query) syntax, and
+the convention on requesting subsets of data in a group by [pulling](./docs/guide/index.html#lk_pull).
+However, this should be enough to reason about the basics.
+
+<hr>
+
+The internet of streams provides developers with a direct connection between any two applications.
+As with most abstraction, its details leak. Disconnections, bad transfers, servers go offline, server are overloaded, etc.
+In multi party systems these leaks reach further.
+Key-value stores become inconsistent (especially common in caching), database corruption, and expensive synchronization between devices[^sync].
+Furthermore, the key-value stores add their own complexity.
+Each platform needs their own identity, their own groups, and it presents an artificially limited view of what users could do with their data.
+
+[^sync]: Or instead of syncrhonization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - then you build something that fits my definition of a supernet.
+
+In linkspace there is only the local tree and updates to it as packets are received.
+
+The result is that _conceptually_ each application only needs to process the state of the tree.
 
 ## Want to give it a try?
 
-Linkspace is currently beta software.
+Linkspace is beta software.
 
-The packet format is stable. Anything you create will stay readable in future versions.
-The library API can still break occasionally - and is missing some features.
+The packet format is stable. Points you create will stay readable in future versions.
+The library API is missing some features and will have some breaking changes.
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python library to follow along with
-the [tutorial](./docs/tutorials/index.html) or the more technical [Guide](./docs/guide/index.html).
+the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html).
 
 # Q&A
 
@@ -352,15 +365,15 @@ Maybe, maybe not. If a user could walk away from a host server without much trou
 
 ## Why not [alternative]?{#alts}
 
-There are two types of systems I'm positive aren't enough to challenge the digital status quo.
+There are two types of systems I'm positive aren't enough to be a new concept for the digital space.
 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users.
-- Faster email: (like ActivityPub) is just faster email - without being very fast.
+- Faster email: (like ActivityPub) is just faster email - without being very fast - plus most of the list below.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 
 - It has either hash addresses or custom url addresses, not both.
-- Too slow. Packet routing and creation should be doable in as few instructions. It should be fast enough to stream video without using a second protocol - that means no json.
+- Too slow. Packet routing/parsing should be doable as very few instructions - ideally doable in silicon. It should be fast enough to stream video without using a second protocol. That means no json.
 - No Groups. Limiting who you share with is not supported - apps can't be used in a private group.
 - No domains. Everything becomes one app.
 - Its focused on signatures and consensus.
@@ -368,7 +381,8 @@ Other supernet-like systems are limited in some way or simply choose a different
 - Poor (bash) scripting/piping support
 - A blessed/fixed method of exchanging data - either it fits your use-case or you're out of luck.
 
-Linkspace is first and foremost its packet format, and secondly and a bunch of tools to wrangle them to fit your use-case.
+With linkspace I believe I've found a good structure for 'the stack' required to build a general purpose supernet.
+Linkspace is first and foremost its packet format, and secondly a bunch of tools to wrangle them to fit a use-case.
 
-That does not mean I think they are necessarily worse or useless.
-Different systems have different strong points. More than one supernet can co-exist.
+That does not mean I think alternatives are necessarily worse or useless.
+Different systems have different strong points.

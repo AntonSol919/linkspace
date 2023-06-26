@@ -21,8 +21,6 @@ use std::{
     io::{stderr,  stdout, },
 };
 
-
-
 pub type PreProc = Option<TypedABE<Vec<u8>>>;
 pub fn write_pkt2(
     preproc: &PreProc,
@@ -35,10 +33,12 @@ pub fn write_pkt2(
             let bytes = pkt.byte_segments();
             out.write_all_vectored(&mut bytes.io_slices())?;
         }
-        Some(e) => {
-            let v = e
-                .eval(&pkt_ctx(ctx.reref(), &pkt))
-                .map_err(std::io::Error::other)?;
+        Some(expr) => {
+            let v = expr.eval(&pkt_ctx(ctx.reref(), &pkt));
+            if let Err(err) = &v{
+                tracing::warn!(?err,?expr,"error pre-processing with expression");
+            }
+            let v = v.map_err(std::io::Error::other)?;
             out.write_all(&v)?;
         }
     }

@@ -210,6 +210,17 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
     }
 }
 
+fn eval_recv(b: Stamp, args:&[&[u8]]) -> anyhow::Result<Vec<u8>>{
+    let ok = match args.get(0).copied().unwrap_or(b"") {
+        b"abe" => b.to_abe_str().into_bytes(),
+        b"str" => b.to_string().into_bytes(),
+        b"" => b.0.to_vec(),
+        _ => bail!("unexpected fmt expect ?(str|abe)"),
+    };
+    Ok(ok)
+}
+
+
 #[derive(Copy, Clone, Debug)]
 pub struct RecvStamp<'o> {
     pkt: &'o dyn NetPkt,
@@ -226,22 +237,21 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
         fncs!([
             (
                 "recv",
-                0..=0,
+                0..=1,
                 Some(true),
-                "recv stamp - errors if unavailable in context",
-                |t: &Self, _i: &[&[u8]]| Ok(t.pkt.get_recv().0.to_vec())
+                "recv stamp - returns now if unavailable in context",
+                |t: &Self, args: &[&[u8]]| eval_recv(t.pkt.get_recv(),args)
             ),
             (
                 "recv_now",
-                0..=0,
+                0..=1,
                 Some(true),
-                "recv stamp - recv stamp returns now if unavailable in context",
-                |t: &Self, _i: &[&[u8]]| Ok(t
-                    .pkt
-                    .recv()
-                    .context("no recv available in context")?
-                    .0
-                    .to_vec())
+                "recv stamp - returns an error if not available in context",
+                |t: &Self, args: &[&[u8]]|
+                eval_recv(
+                    t.pkt.recv().context("no recv available in context")?,
+                    args
+                )
             )
         ])
     }

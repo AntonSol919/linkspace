@@ -1,9 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 source ./activate
 lk init
-echo "Opening key $LK_KEYNAME"
+
+echo "Opening key ${LK_KEYNAME:-me:local}"
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 export LK_GROUP=[#:test]
 export SERVER=83.172.162.31:5020
 echo "Connecting to $SERVER"
-exec anyhost.connect.sh
+echo Use a different terminal and \'source ./activate\' to try out the examples
+anyhost.connect.sh 2> >(tee /dev/stderr) >> log

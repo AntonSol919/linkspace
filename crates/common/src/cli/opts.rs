@@ -206,7 +206,7 @@ impl CommonOpts {
         pkt: &dyn NetPkt,
         mut buffer: Option<&mut dyn std::io::Write>,
     ) -> std::io::Result<()> {
-        let _ = tracing::debug_span!("Writing",pkt=%PktFmt(pkt)).entered();
+        let _ = tracing::debug_span!("Writing",pkt=%PktFmt(pkt),recv=?pkt.recv() ).entered();
         for dest in mdest.iter_mut() {
             self.write_dest(dest, pkt, &mut buffer)?;
         }
@@ -217,6 +217,7 @@ impl CommonOpts {
     pub fn multi_writer(self, mut mdest: Vec<WriteDest>) -> impl PktStreamHandler {
         let this = self;
         move |p: &dyn NetPkt, _rx: &Linkspace| -> std::io::Result<()> {
+
             this.write_multi_dest(&mut mdest, p, None)?;
             Ok(())
         }

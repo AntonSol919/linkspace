@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # parent should set out to fd4. otherwise add a exec 4>&1 1>&2
 set -euo pipefail
 function fin (){

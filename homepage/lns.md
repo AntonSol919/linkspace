@@ -27,8 +27,7 @@ You can take a look on how it integrates with linkspace in the [guide](./docs/gu
 
 LNS is currently only partially operational.
 
-Registrations for public names are open though.
-Read this page to find out how to claim yours.
+But you can register a public name!
 
 ### What does a registration do?
 
@@ -45,37 +44,27 @@ That registration can set up a binding, such as for the key @:bob:sales:yourcomp
 ### Do I require a registration?
 
 No.
-Nothing in linkspace requires a registration.
-Everything can be done without.
-In fact, \*:~ names you set up for your own use (similarly to /etc/hosts), and \*:local are meant for names you share between peers.
-Registrations allow you to pick an unambiguous name to be known publicly, and they support the project financially.
+Its just a public or private phone-book.
 
 ### Does it require money?
 
-No, not necessarily.
+That depends.
+LNS is run by volunteers. Some top level names can ask for a contribution - others are free.
 
-Names ending with:
+Names currently available are:
 
-- :free - First come, first served. Free of charge.
-- :dev - if you get a pull request accepted.
-- :com - 10 euro per year.
-- :nl - 10 euro per year.
+- example:free - First come, first served.
+- example:dev - Get a pull request accepted.
+- example:com - commercial - 10$ per year and helps fund the project!
 
 ### How do i register?
 
 To do so, see [claim a name](#claim).
 
-### Can I register a top level authority like ':org' or ':sex' etc?
+### Can I be a top level authority like ':org' or ':sex' etc?
 
-Yes. I am looking for people and organizations to do so.
-Contact me at <antonsol919+registar@gmail.com> for more information.
-
-### Can I buy with crypto? Why not use crypto to do X, Y, Z ?
-
-Linkspace is easy to integrate with blockchains (or can be used to create new blockchains).
-You are free to build on it as you wish (MPL-2.0 license).
-In an effort to put food on the table and pay taxes I prefer fiat money and a 1 cent transaction save a lot of trouble w.r.t. identification if you lose the private key.
-Other top level authorities set their own price and how to pay it.
+Yes. I am looking for people willing to do so.
+Shoot me a message at <antonsol919+registar@gmail.com> if you're interested.
 
 ## Claim a name{#claim}
 
@@ -90,9 +79,3 @@ lk lns create-claim 'YOUR_NAME:free' --copy-from YOUR_NAME:local --until [now:+9
 
 Keep the file 'enckey' (and the password you entered) safe.
 Email the lnsreq.lkp file to <antonsol919+lns@gmail.com>.
-I plan to accept :free name requests until it becomes a burden,
- after which I'll probably put up a proof of work fence with some additional constraints on the name.
-
-Get a pull request accepted, and you get a :dev name.
-
-First come, first served.

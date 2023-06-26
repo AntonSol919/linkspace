@@ -85,7 +85,7 @@ return { group: pkt.group, domain:pkt.domain, path:pkt.path, links:pkt.links_byt
 #[wasm_bindgen]
 extern "C" {
     fn set_iter(obj: &js_sys::Object);
-    pub fn pkt_obj(obj: Pkt) -> Object;
+    pub fn pkt_obj(obj: Pkt) -> Result<Object,JsValue>;
 
     pub type Fields;
     #[wasm_bindgen(structural, method, getter)]

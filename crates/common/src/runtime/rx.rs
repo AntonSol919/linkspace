@@ -427,7 +427,7 @@ impl Linkspace {
                 .query(mode, &q.predicates, &mut counter)?
                 .try_for_each(|dbp| {
                     let _g = local_span.enter();
-                    tracing::debug!(pkt=%PktFmt(&dbp.pkt),"Match");
+                    tracing::debug!(pkt=%PktFmt(&dbp.pkt), recv=%dbp.recv().unwrap(),"Match");
                     onmatch.handle_pkt(&dbp, self)
                 });
             if Rc::strong_count(&reader) > 2 {
