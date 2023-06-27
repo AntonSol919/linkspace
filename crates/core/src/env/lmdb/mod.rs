@@ -110,7 +110,9 @@ impl BTreeEnv {
     fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> io::Result<usize>{
         if pkts.is_empty() { return Ok(0);}
         let (last_idx, total) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
-        let _ = self.0.log_head.emit(last_idx);
+        if total > 0 {
+            let _ = self.0.log_head.emit(last_idx);
+        }
         Ok(total)
     }
     pub fn real_disk_size(&self) -> io::Result<u64> {
