@@ -612,6 +612,8 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("TEST_GROUP", PyBytes::new(py, &**consts::TEST_GROUP))?;
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
     m.add("DEFAULT_PKT", abe::DEFAULT_PKT)?;
+    linkspace_pkt::build_info!();
+    m.add("VERSION",BUILD_INFO)?;
 
     Ok(())
 }

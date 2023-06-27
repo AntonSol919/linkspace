@@ -12,6 +12,7 @@ keywords = ["linkspace", "supernet"]
 description = "linkspace - a general purpose supernet"
 
 
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
@@ -25,8 +26,4 @@ anyhow.workspace=true
 backtrace = "0.3.67"
 linkspace-common = { path = "../common", version = "0.3.0-rc1", default-features = false}
 tracing.workspace = true
-build-info.workspace = true
-
-[build-dependencies]
-build-info-build.workspace =true
 

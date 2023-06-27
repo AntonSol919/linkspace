@@ -8,6 +8,7 @@ license.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 repository.workspace = true
+build = "../../build_env.rs"
 
 [lib]
 name = "linkspace"
@@ -15,6 +16,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 linkspace = { path = "../../crates/linkspace", version ="0.3.0-rc1"}
+linkspace-pkt = { path = "../../crates/pkt", version ="0.3.0-rc1"}
 
 smallvec.workspace =true
 anyhow.workspace=true
@@ -22,3 +24,6 @@ tracing.workspace = true
 tracing-subscriber = {workspace=true,features=["env-filter"]}
 
 pyo3 = { version = "0.18.2", features = ["extension-module","anyhow","abi3","serde","abi3-py38"]  }
+[build-dependencies]
+vergen = { workspace = true, features = ["git", "gitcl", "rustc"] }
+

@@ -294,7 +294,8 @@ pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {
     Box::new(*blake3::hash(bytes).as_bytes())
 }
 
+build_info!();
 #[wasm_bindgen]
 pub fn build_info() -> String {
-    build_info::format!("{}", $).to_string()
+    BUILD_INFO.to_string()
 }

@@ -12,6 +12,7 @@ repository.workspace = true
 categories = ["command-line-utilities","database","network-programming","asynchronous"]
 keywords = ["linkspace", "supernet"]
 description = "'lk' - the linkspace cli"
+build = "../../build_env.rs"
 
 [[bin]]
 name = "lk"
@@ -29,8 +30,8 @@ serde_json = "1.0.82"
 memmap2 = "0.6.2"
 crossbeam-channel = "0.5.8"
 either.workspace = true
-build-info.workspace = true
 
 [build-dependencies]
-build-info-build.workspace =true
+vergen = { workspace = true, features = ["git", "gitcl", "rustc"] }
+
 
