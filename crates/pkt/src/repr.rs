@@ -42,40 +42,10 @@ pub static JSON_PKT: &str = "todo";
 /// A static packet formatter similar to DEFAULT_PKT without using ABE expressions.
 pub struct PktFmt<'o>(pub &'o dyn NetPkt);
 
+
 impl<'o> core::fmt::Debug for PktFmt<'o>{
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let pkt = self.0;
-        let ptype = pkt.as_point().point_header_ref().point_type.as_str();
-        let hash = pkt.hash_ref().to_string();
-
-        let group = match *pkt.get_group(){
-            e if e == PRIVATE=> "[#:0]".into(),
-            e if e == PUBLIC=> "[#:pub]".into(),
-            e if e == *TEST_GROUP => "[#:test]".into(),
-            e => e.to_abe_str()
-        };
-        let domain = pkt.get_domain().as_str(true);
-        let path = pkt.get_path().to_string();
-        let pubkey = pkt.get_pubkey().to_abe_str();
-        let create = pkt.get_create_stamp().get();
-
-        let links_len = pkt.get_links().len();
-        
-        write!(f,"type\t{ptype}
-hash\t{hash}
-group\t{group}
-domain\t{domain}
-path\t{path}
-pubkey\t{pubkey}
-create\t{create}
-links\t{links_len}
-")?;
-        for crate::Link{ptr,tag}in pkt.get_links(){
-            write!(f,"\t{} {ptr}\n",tag.as_str(true))?;
-        }
-        let data = BStr::new(pkt.data());
-        let data_size = pkt.data().len();
-        write!(f,"data\t{data_size}\n{data}")
+        self.to_str(f,false,usize::MAX)
     }
 }
 impl<'o> core::fmt::Display for PktFmt<'o> {
@@ -98,6 +68,50 @@ pub fn fmt_b64(bytes:&B64, class:&'static str , f:&mut impl fmt::Write) -> Resul
             if use_mini{bytes.b64_mini()} else {group_abe})
 }
 impl<'o> PktFmt<'o>{
+    pub fn to_str<F: fmt::Write>(&self, f: &mut F,add_recv:bool,data_limit:usize) -> Result{
+        let pkt = self.0;
+        let ptype = pkt.as_point().point_header_ref().point_type.as_str();
+        let hash = pkt.hash_ref().to_string();
+
+        let group = match *pkt.get_group(){
+            e if e == PRIVATE=> "[#:0]".into(),
+            e if e == PUBLIC=> "[#:pub]".into(),
+            e if e == *TEST_GROUP => "[#:test]".into(),
+            e => e.to_abe_str()
+        };
+        let domain = pkt.get_domain().as_str(true);
+        let path = pkt.get_path().to_string();
+        let pubkey = pkt.get_pubkey().to_abe_str();
+        let create = pkt.get_create_stamp().get();
+    
+        let links_len = pkt.get_links().len();
+        if add_recv {
+            match pkt.recv(){
+                Some(r) => write!(f,"recv\t{}\n",r),
+                None => write!(f,"recv\t???\n")
+            }?;
+        }
+        write!(f,"type\t{ptype}
+hash\t{hash}
+group\t{group}
+domain\t{domain}
+path\t{path}
+pubkey\t{pubkey}
+create\t{create}
+links\t{links_len}
+")?;
+        for crate::Link{ptr,tag}in pkt.get_links(){
+            write!(f,"\t{} {ptr}\n",tag.as_str(true))?;
+        }
+    let data = pkt.data();
+    let data = &data[0..data.len().min(data_limit)];
+    
+        let data = BStr::new(data);
+        let data_size = pkt.data().len();
+        write!(f,"data\t{data_size}\n{data}")
+
+    }
+
     /** create a html fragment describing the packet
 
     The format is a bit arbitrary. Its designed to be safe to paste into an html document and usable for most usecases. But it is verbose and somewhat opinionated.
@@ -187,5 +201,13 @@ impl<X:Display>  Display for EscapeHTML<X>{
             }
         }
         Ok(())
+    }
+}
+
+// quick hack 
+pub struct PktFmtDebug<'o>(pub &'o dyn NetPkt);
+impl<'o> core::fmt::Display for PktFmtDebug<'o> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        PktFmt(self.0).to_str(f,true,160)
     }
 }

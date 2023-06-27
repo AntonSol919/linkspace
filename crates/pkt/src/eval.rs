@@ -101,8 +101,12 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
                 let ctx = EvalCtx{scope}.pre_scope(pkt_scope(pkt.0));
                 Ok(abe::eval::eval(&ctx,&DEFAULT_FMT).unwrap().concat())
             }, none),
-            ( @C "pkt-quick",0..=0,Some(true),"same as pkt but without dynamic lookup",|pkt:&Self,_,_,_| {
-                Ok(PktFmt(pkt.0).to_string().into_bytes())
+            ( @C "pkt-quick",0..=2,Some(true),"[add recv? =false , data_limit = max] same as pkt but without dynamic lookup",|pkt:&Self,arg:&[&[u8]],_,_| {
+                let mut buf = String::new();
+                let add_recv_field = !matches!(arg.get(0).copied(), None | Some(b"false") | Some(b""));
+                let data_limit = arg.get(1).map(|o| Ok::<usize,anyhow::Error>(std::str::from_utf8(o)?.parse()?)).transpose()?.unwrap_or(usize::MAX);
+                PktFmt(pkt.0).to_str(&mut buf,add_recv_field,data_limit)?;
+                Ok(buf.into_bytes())
             }, none),
 
 

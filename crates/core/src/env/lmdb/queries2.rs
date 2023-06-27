@@ -21,7 +21,7 @@ Two options come to mind:
 use crate::pkt::field_ids::FieldEnum;
 use crate::predicate::pkt_predicates::PktPredicates;
 use either::Either;
-use linkspace_pkt::{Stamp, B64, U256, PktFmt };
+use linkspace_pkt::{Stamp, B64, U256 };
 
 use crate::prelude::TestSet;
 use crate::{
@@ -147,7 +147,7 @@ impl<'txn> ReadTxn<'txn> {
             })
             .filter(move |pkt| {
                 let ok = pkt_filter.test(pkt);
-                tracing::trace!(ok,pkt=%PktFmt(pkt),"filter tree");
+                tracing::trace!(ok,pkt=%linkspace_pkt::PktFmtDebug(pkt),"filter tree");
                 ok
             });
         let nth_log_set = predicates.state.i_db.iter(0);

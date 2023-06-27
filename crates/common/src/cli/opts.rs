@@ -171,7 +171,7 @@ impl CommonOpts {
     }
     pub fn check_private<S:NetPkt>(&self, pkt:S ) -> Result<S,linkspace_pkt::Error> {
         let write_private = self.write_private().unwrap_or(false);
-        if !write_private { pkt.check_private().map_err(|e| {tracing::warn!(?e,pkt=%PktFmt(&pkt),"enable private writing");e})?}
+        if !write_private { pkt.check_private().map_err(|e| {tracing::warn!(?e,pkt=%PktFmtDebug(&pkt),"enable private writing");e})?}
         Ok(pkt)
     }
     pub fn open(&self, lst: &[WriteDestSpec]) -> std::io::Result<Vec<WriteDest>> {
@@ -206,7 +206,7 @@ impl CommonOpts {
         pkt: &dyn NetPkt,
         mut buffer: Option<&mut dyn std::io::Write>,
     ) -> std::io::Result<()> {
-        let _ = tracing::debug_span!("Writing",pkt=%PktFmt(pkt),recv=?pkt.recv() ).entered();
+        let _ = tracing::debug_span!("Writing",pkt=%PktFmtDebug(pkt),recv=?pkt.recv() ).entered();
         for dest in mdest.iter_mut() {
             self.write_dest(dest, pkt, &mut buffer)?;
         }

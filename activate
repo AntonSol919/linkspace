@@ -5,7 +5,7 @@ REPO=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 make -C "$REPO" build-debug
 
 export PATH="$REPO/target/debug/":$PATH
-export PATH=$(find $REPO/examples -maxdepth 1 -mindepth 1 -type d | sed -z 's/\n/:/g'):$PATH
+export PATH=$(find $REPO/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH
 export PATH="$REPO/emulate":$PATH
 export PYTHONPATH="$REPO/target/python/"
 

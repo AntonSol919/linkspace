@@ -109,7 +109,7 @@ impl LMDBEnv{
             if matches!(state,SaveState::Pending) {
                 *state = SaveState::Written;
                 let entry = TreeEntry::from_pkt(at.into(), &pkt);
-                tracing::trace!(pkt=%linkspace_pkt::PktFmt(&pkt),?entry,"tree entry");
+                tracing::trace!(pkt=%linkspace_pkt::PktFmtDebug(&pkt),?entry,"tree entry");
                 let te = entry.map(|te| (te.btree_key.take(), te.val));
                 if let Some((key,val)) = te{
                     tree.put(&key , &val,WriteFlags::empty())?;
