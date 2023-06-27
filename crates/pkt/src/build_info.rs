@@ -1,6 +1,3 @@
-
-
-
 #[macro_export]
 macro_rules! build_info {
     () => {
@@ -13,5 +10,3 @@ macro_rules! build_info {
         );
     };
 }
-
-build_info!();

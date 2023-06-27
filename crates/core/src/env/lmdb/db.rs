@@ -19,29 +19,37 @@ use crate::{ prelude::TreeValueBytes};
 pub use lmdb::Error;
 
 use super::misc::{  assert_align  };
+
 #[cfg(target_pointer_width = "32")]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) - 4;
 #[cfg(not(target_pointer_width = "32"))]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) * 128;
-fn open_env(path: &Path, mut mapsize: usize, flags: EnvironmentFlags) -> Environment {
+
+
+fn open_env(path: &Path, flags: EnvironmentFlags) -> Environment {
     let mut err = Ok(());
-    if cfg!(target_pointer_width = "32") && mapsize > 2usize.pow(31) - 4 {
-        tracing::warn!("lmdb on 32-bit is capped at {DEFAULT_MAP_SIZE} ( 2^31 )");
-        mapsize = DEFAULT_MAP_SIZE;
+    let mapsize : Option<usize> = std::env::var("LK_LMDB_MAPSIZE").ok().map(|v| v.parse()).transpose().expect("can't parse LK_LMDB_MAPSIZE");
+
+    if mapsize.is_none(){
+        if let Ok(env) = Environment::new().set_max_dbs(4).set_flags(flags).set_map_size(DEFAULT_MAP_SIZE).open(path){
+            return env;
+        }
     }
+
     for i in 0..5 {
-        err = match Environment::new()
-            .set_max_dbs(4)
-            .set_flags(flags)
-            .set_map_size(mapsize)
-            .open(path)
-        {
+        let mut env = Environment::new();
+        env.set_max_dbs(4).set_flags(flags);
+        if let Some(ms) = mapsize {
+            tracing::info!("{path:?} setting mapsize {ms}");
+            env.set_map_size(ms);
+        }
+        match env.open(path){
             Ok(env) => return env,
-            Err(e) => Err(e),
+            Err(e) => { err = Err(e)},
         };
         let os_err = std::io::Error::last_os_error();
         if os_err.kind() == ErrorKind::OutOfMemory {
-            panic!("{os_err:?}\nLK_LMDB_MAPSIZE={mapsize}");
+            panic!("{os_err:?} (maybe set LK_LMDB_MAPSIZE)");
         }
         tracing::warn!(?i, ?err, ?os_err, "DB Open");
         if i == 5 {
@@ -98,12 +106,8 @@ pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
         file.write_all(&id)?;
         file.flush()?;
     }
-    let mapsize = std::env::var("LK_LMDB_MAPSIZE")
-        .map(|v| v.parse().expect("LK_LMDB_MAPSIZE to be u32"))
-        .unwrap_or(DEFAULT_MAP_SIZE);
     let env = open_env(
         path,
-        mapsize,
         EnvironmentFlags::empty() | EnvironmentFlags::WRITE_MAP | EnvironmentFlags::NO_TLS,
     );
     let pktlog = env

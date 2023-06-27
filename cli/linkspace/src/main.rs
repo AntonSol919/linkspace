@@ -460,12 +460,16 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::DbCheck => {
             let lk = common.runtime()?;
             let env = lk.env();
+            println!("{:?}",env.dir());
             println!("{:#?}",env.lmdb_version());
             println!("{:#?}",env.env_info());
             println!("{:#?}",env.db_info());
+            println!("real disk size: {:#?}",env.real_disk_size());
             let e = env.linkspace_info();
             if let Err(e) = &e{
                 eprintln!("{}",e);
+            }else {
+                println!("everything ok");
             }
             return e;
         }

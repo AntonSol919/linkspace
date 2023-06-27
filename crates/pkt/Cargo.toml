@@ -11,7 +11,7 @@ license.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 repository.workspace = true
-build = "../../build_env.rs"
+
 [features]
 default = ["abe"]
 abe = []
