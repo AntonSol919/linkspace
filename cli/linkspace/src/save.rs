@@ -21,13 +21,6 @@ pub struct SaveForward {
     forward_stdout: bool,
     #[clap(flatten)]
     pkt_in: PktReadOpts,
-    /*
-    /// how many packets to read before opening a write transaction
-    #[clap(short,long,default_value_t)]
-    batch: usize,
-    #[clap(short='B',long)]
-    batch_all: bool
-    */
 }
 
 pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {

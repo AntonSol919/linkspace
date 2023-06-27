@@ -18,11 +18,11 @@
 use std::{
     ffi::OsString,
     io::{ Write},
-    process::ExitCode, sync::{ LazyLock}, 
+    process::ExitCode, sync::{ LazyLock}, path::PathBuf, 
 };
 
 use anyhow::{ensure };
-use linkspace::query::PredicateType;
+use linkspace::{query::PredicateType };
 use linkspace_common::{
     cli::{
         clap,
@@ -37,7 +37,7 @@ use linkspace_common::{
     prelude::{
         predicate_type::PredInfo,
         query_mode::{Mode, Order, Table},
-        *, 
+        *, lmdb::{save_ptr, save::SaveState}, 
     }, predicate_aliases::ExtWatchCLIOpts,
 };
 use tracing_subscriber::EnvFilter;
@@ -268,6 +268,9 @@ enum Command {
         dropped: Vec<WriteDestSpec>,
     },
     DbCheck,
+    DbImport {
+        file: PathBuf
+    },
     #[cfg(target_family = "unix")]
     #[command(external_subcommand)]
     External(Vec<OsString>),
@@ -473,6 +476,27 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             return e;
         }
+        Command::DbImport { file } => {
+            let file = std::fs::File::open(file)?;
+            let mmap = unsafe { memmap2::Mmap::map(&file)? };
+            let env = common.env()?;
+            let mut bytes = mmap.as_ref();
+            let mut pkts : Vec<(&NetPktPtr,SaveState)> = vec![];
+            while !bytes.is_empty(){
+                match read::read_pkt(bytes, common.io.inp.skip_hash)?{
+                    std::borrow::Cow::Borrowed(o) => {
+                        bytes =&bytes[o.size() as usize..];
+                        pkts.push((o,SaveState::Pending));
+                    },
+                    std::borrow::Cow::Owned(_) => todo!(),
+                }
+            }
+            let i = save_ptr(env, &mut pkts)?;
+            for (pkt,state) in &pkts {
+                println!("{} {}",pkt.hash_ref(),state)
+            }
+            println!("read {} - new {i}",pkts.len());
+        },
     }
     Ok(())
 }
