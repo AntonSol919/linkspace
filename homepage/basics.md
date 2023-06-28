@@ -2,13 +2,14 @@
 
 ## The internet of streams
 
+The current internet we're using is an internet of streams.
 The internet[^2] attempts to provide a model where: for any two connected devices running any application, there exists a connection to transmit data.
 
-[^2]: TCP/IP - I'll be loose on definitions, as I don't expect all readers to know the details. But if you find a real incorrect statement shoot me a message.
+[^2]: TCP/IP - I'll be loose on definitions and oversimplify a lot. I don't expect readers to know or care for the details. But if you find an incorrect statement shoot me a message.
 
-It is a direct line to anyone.
+It presents a direct line to anyone.
 
-To do this it uses the following types of packets.
+To do this it uses the following types of packets to transmit data between two devices.
 
 :::{.container}
 +-----------------+-----------------------+-----------------------------------------------------------------+
@@ -24,14 +25,14 @@ To do this it uses the following types of packets.
 +-----------------+-----------------------+-----------------------------------------------------------------+
 :::
 
-Packets carrying data are sent and will eventually reach a destination `IP address`, i.e. a computer such as you're using right now.
+Packets carrying data are transmitted, and each hop moves them closer until they reach the destination `IP address`, i.e. a computer such as you're using right now.
 On the computer an application is listening for packets with a specific `port` to be received.
 
 In transit, a packet can get lost or corrupted.
 Consequently, packets don't arrive in the order they were sent.
 By adding a sequence number, we can reorder them at the destination[^telephone].
 
-[^telephone]: I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential complexity for data integrety, and that consequently the physical route each packet takes is actually irrelevant.
+[^telephone]: I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential complexity for data integrety, and that consequently the physical route each packet takes is irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
@@ -55,53 +56,35 @@ A couple of well known protocols that provide a mapping between keys and values 
 
 The reason for building linkspace is this:
 
-<b>We can't progress if we stay in this paradigm.</b>
+<b>We have reached the limit of this paradigm.</b>
 
-But I think making the arguments why this is the case won't work.
-To really make the point, there needs to be a practical alternative.
+As with most abstraction, the details leak.
+Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
+In multi party systems with key-value stores these leaks reach further.
+Key-value stores become inconsistent (especially common in caching), database corruption, and they require expensive synchronization between devices[^sync].
+
+[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just build a supernet.
+
+But I think the best way to make the point for reaching the limit, is from the perspective of an alternative.
 
 ## Linkspace
 
-Linkspace attempts to provide a model where: for any group running any application, there exists a space to address data.
+Linkspace attempts to provide a model where: for any group running any application, there exists a space to address data[^idea].
+
+[^idea]: This idea and other ideas used in linkspace aren't new. But I think linkspace is a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
+
 
 If the current internet provides streams for key-value systems, so we can talk _to_ server,  
 then linkspace provides a shared key-value space, so we can talk _about_ data.
 
-This idea and other ideas used in linkspace aren't new. But I believe linkspace offers a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
-
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
-:::{.container}
-+---------------------+---------------------+-------------------------------+--------------------+
-|                     | Field[^4]           | Purpose                       | IP Packet Analogue |
-+=====================+=====================+===============================+====================+
-| Linkspace Point     | HASH<sub>32</sub>   | A unique ID (Blake3)          |                    |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | GROUP ID            | Set of recipients             | IP ADDRESS         |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | DOMAIN              | Name chosen by App developer  | PORT NUMBER        |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | DATA                | Set by application            | DATA               |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | TIMESTAMP           | Microseconds since 1970-01-01 |                    |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | PATH                | Key to look up                |                    |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | LINKS[]             | list of (Tag, Hash)           |                    |
-+                     +---------------------+-------------------------------+--------------------+
-|                     | PUBKEY & SIGNATURE  | Public key and Signature      |                    |
-+---------------------+---------------------+-------------------------------+--------------------+
-:::
+Before listing each field i'll motivate them with an example.
 
-[^4]: Both TCP/IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
+### Merging sets
 
-All fields are optional except for HASH and DATA. For the full specs see the [guide](./docs/guide/index.html#packet_layout)
+Imagine building a message forum.
 
-
-### Merging Trees
-
-One of the core insights used by linkspace is a way to talk and think about digital communication - merging trees.
-We'll imagine building a message forum.
 
 :::{.container .pkt .pd}
 +-----------------------------------+----------------------------------+
@@ -134,45 +117,51 @@ We'll imagine building a message forum.
 +-----------------------------------+----------------------------------+
 :::
 
+
 The key "image/BrokenMachine.jpg" is called a **path** and maps to [image data].
-A sorted list of multiple key-value pairs we'll call a **tree**.
+This currently looks just like your files and directories.
+I'll refer to each entry as a **point**, and multiple entries as a **set**.
+The example shown has two sets **merging**. The result is a new set with 3 messages.
 
-The example shown has two trees **merging**. The result is a new tree with 3 messages.
+One of the most useful aspects of linkspace is a way to talk and think about digital communication in terms of a set of points instead of connections.
 
-Practically any digital communication can be talked about in terms of merging trees.
+Practically any digital communication can be understood as merging sets of points.
 
-Online platforms have dubbed words for merging trees such as:
+Online platforms have dubbed different words for actions you can take:
 '_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
-Fundamentally they can be understood as a frontend application providing an interface to __merge__ trees.
+Fundamentally they can be understood as a frontend application providing an interface to __merge__ sets of points.
+Either on your computer or on their computer[^device].
+
+[^device]: Your computer immediatly forgetting those data points is a configuration detail.
 
 The internet we use today has a single host design.
-For instance, your browser or app contacts `http://www.some_platform.com`
-for the key `/thread/BrokenMachine.jpg` to get the data.
-
-The address `www.some_platform.com/thread/BrokenMachine.jpg` points to the only 'real' copy.
+For instance, a web-browser or app contacts `http://www.some_platform.com`
+for the key `/image/BrokenMachine.jpg` to get their data.
 
 This is simple, but it has downsides.
 
+There are common misconceptions on what an address is[^address].
 A host can get disconnected,
-copies can't be reshared and reused (thus once a host clears its storage the link is invalid),
-and every host has their own strategy to deal with new data at the same path.
+you can't (re)share and (re)use your copy of the data,
+and every host has to pick a strategy when you merge two sets but they share the same path.
 
-I would argue they are all accidental complexity.
-Most noticeably the last one: Updating the image found at `www.some_platform.com/thread/BrokenMachine.jpg`
+[^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but a consequental difference. Linkspace does not have this discrepency.
 
+I would argue these are all accidental complexity.
+
+Most noticeably the last one: How to merge two sets if both have `thread/BrokenMachine.jpg` but different data.
 Once the speed of light is measurable in a network, it is unavoidable for two computers to write to the same path without a costly synchronization steps.
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Anyone can read, write, and host (a partial) copy of a tree.
 Every path refers to multiple values.
 
-The values are distinct because each entry, i.e. **point** is cryptographically hashed.
-i.e. there exists a unique 32 bytes (or ~77-digit number[^uniq]) that identifies the entry (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
+Each point is hashed.
+i.e. there exists a unique 32 bytes (or ~77-digit number) that uniquely identifies the point[^uniq] (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
 
-[^uniq]: Unique for all intents and purposes (except for the purpose of counting to 2^256).
+[^uniq]: Unique for all intents and purposes - except for the purpose of counting to 2^256+1.
 
-Therefor it doesn't matter when or where trees are merged - and they only leave a single copy when both have the same message.
+Therefor it doesn't matter when or where sets are merged - and they only leave a single copy when both have the same message.
 
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -209,17 +198,18 @@ Therefor it doesn't matter when or where trees are merged - and they only leave 
 
 :::
 
-A point also has a creation date and can be signed - such that you can identify who created it.
+A point also has a creation date and are **optionally** signed - such that you can identify who created it.
 
 As such, we can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
 or multiple entries through a path "/thread/Tabs or spaces/msg".
 
 This might seem more trouble than existing solutions like a filesystem or HTTP.
-A single path gets you a single result.
+In those key-value systems a single path gets you a single result.
 
-However, in practice it's trivial to emulate this behavior by adding constraints to a requested tree; Such as requesting the latest, or the latest signed by a specific public key.
-Conversely, I would argue both filesystems and HTTP are more trouble over all.
-They hide that they return multiple values - a new value depending on when and where you make the query.
+However, in practice it's trivial to behave similarly by adding constraints to a requested set; Such as 'only return the latest', or 'the latest signed by a specific public key'.
+
+Conversely, I would argue both filesystems and HTTP servers are more trouble over all.
+They hide that they return multiple values - a new value depending on when and where you make the request.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
@@ -273,34 +263,52 @@ In actually they are 32 bytes. LNS works similar to how `www.example.com` resolv
 Finally, using the hash directly in the data of each entry like we have been doing is not ideal.
 Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
-There are some nuances and advanced topics such as: the path encoding, the [queries](./docs/guide/index.html#Query) syntax, and
-the convention on requesting subsets of data in a group by [pulling](./docs/guide/index.html#lk_pull).
-However, this should be enough to reason about the basics.
+:::{.container}
++---------------------+----------------------+-------------------------------+--------------------+
+|                     | Field[^4]            | Purpose                       | IP Packet Analogue |
++=====================+======================+===============================+====================+
+| Linkspace Point     | HASH                 | A unique ID (Blake3)          |                    |
++                     +----------------------+-------------------------------+--------------------+
+|                     | GROUPID              | Set of recipients             | IP ADDRESS         |
++                     +----------------------+-------------------------------+--------------------+
+|                     | DOMAIN               | Name chosen by App developer  | PORT NUMBER        |
++                     +----------------------+-------------------------------+--------------------+
+|                     | DATA                 | Set by application            | DATA               |
++                     +----------------------+-------------------------------+--------------------+
+|                     | TIMESTAMP            | Microseconds since 1970-01-01 |                    |
++                     +----------------------+-------------------------------+--------------------+
+|                     | PATH                 | Key to look up                |                    |
++                     +----------------------+-------------------------------+--------------------+
+|                     | LINKS[]              | list of (Tag, Hash)           |                    |
++                     +----------------------+-------------------------------+--------------------+
+|                     | PUBKEY & SIGNATURE   | Optional - identifies creator |                    |
++---------------------+----------------------+-------------------------------+--------------------+
+:::
 
-<hr>
+[^4]: Both TCP/IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
 
-The internet of streams provides developers with a direct connection between any two applications.
-As with most abstraction, its details leak. Disconnections, bad transfers, servers go offline, server are overloaded, etc.
-In multi party systems these leaks reach further.
-Key-value stores become inconsistent (especially common in caching), database corruption, and expensive synchronization between devices[^sync].
-Furthermore, the key-value stores add their own complexity.
-Each platform needs their own identity, their own groups, and it presents an artificially limited view of what users could do with their data.
+For the full layout of packets see the [guide](./docs/guide/index.html#packet_layout)
 
-[^sync]: Or instead of syncrhonization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - then you build something that fits my definition of a supernet.
+There are some nuances and various advanced topics such as: Paths can be any bytes, the [queries](./docs/guide/index.html#Query) syntax for defining sets, and the convention on requesting subsets of data in a group by [pulling](./docs/guide/index.html#lk_pull).
 
-In linkspace there is only the local tree and updates to it as packets are received.
+However, I hope this gives you enough to reason about the basics:
 
-The result is that _conceptually_ each application only needs to process the state of the tree.
+Users generate an identity, groups set up a method to exchange data.
 
-## Want to give it a try?
+The result is that _conceptually_ an application only needs to process the state of the trees.
 
-Linkspace is beta software.
+## Give it a try?
+
+The linkspace library is beta software.
 
 The packet format is stable. Points you create will stay readable in future versions.
 The library API is missing some features and will have some breaking changes.
 
-[Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python library to follow along with
-the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html).
+However, there aren't tools yet to make things simple.
+
+You can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python library to follow along with
+the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html),
+and say hi on the test group.
 
 # Q&A
 
@@ -317,24 +325,25 @@ This creates a consensus of all events that happened.
 
 A blockchain's goal is to provide a model and tools to make consensus simple.
 
-However, consensus on all events isn't that useful as a foundational feature for an overwhelming majority of applications.
+However, consensus on all events isn't that useful as a foundational feature for the vast majority of applications.
 
-Supernets don't bother with a global truth. They're goal is to work with the cryptographic links between packets.
+Supernets don't bother with a global truth. Their goal is to work with the links between packets.
 Consequently, it's not difficult to define a 'blockchain' style consensus in a general purpose supernet.
 
-### Won't an app have a lot of overhead compared to a basic Web server? 
+### Won't an app have a lot of overhead compared to a basic Web server?
 
 If all you want to do is stream one movie from a single host and forget it, then linkspace might be too much overhead.
-Few projects stay that simple. Most projects grow in scope to identify users, save their comments, add them to groups, scale beyond a single server, etc.
+Few projects stay that simple. Most projects grow in scope: to identify users, save their comments, add them to groups, scale beyond a single server, etc.
 
 Once a full stack is build, linkspace is very small w.r.t. its features.
-Furthermore, it is designed to be fast/low energy, such that you can stream a video on a potato phone.
 
-### Can you ask people to deal with the added complexity?
+As far as overhead goes, it is designed to be fast/low energy such that a low-end phone can use it to stream video.
+
+### Can you ask people to deal with the added complexity?{#complexity}
 
 Yes.
 
-Linkspace lack 3 decades of tooling that made the web relatively easy for users, but that can change. 
+Linkspace lack 6 decades of tooling that made the internet and web relatively easy for users, but that can change.
 
 But is it worth it?
 
@@ -342,30 +351,36 @@ Yes.
 
 Supernets better model the reality of multi party communication - asynchronous and authenticated[^auth]
 
-[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless where how you got the message - I call this the reality of multi party communication because a wire-dump of an HTTPS session is proof of autenticity of the host's message. Using that property is just unnecessarily complicated.
+[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the key holder send the message.
 
-In the long run they can end up with less moving parts and with fewer configurations.
+In the long run they could end up with less moving parts and with fewer configurations.
 
-Most important above all, anyone can take responsibility.
-It is dangerous to perpetuate a paradigm where users give away control and can't take it back.
+Also important is that anyone can take responsibility.
+It is not without danger for billions of people to spend hours each day in a paradigm where they can not take back control over systems they consider the 'public square'.
 
-My hope is to look back at this time as the era of digital fiefdoms. The next era - of the digital supernets - will hopefully balance out the influence of host-administrators. Users will define what a 'real' copy is; a digital space by people for people.
+My hope is to look back at this time as the era of digital fiefdoms.
+The next era should balance out the influence of host-administrators,
+and together people can define what a 'real' copy is.
 
 ### Isn't it a good thing that a host can administrate what I and others see online?
 
-There are a couple of options. You can trust the public key of third party service to whitelist content. Effectively emulating the current system.
-But unlike the current system, you can replace them.
-Furthermore, it's trivial to vouch for your friends.
+I agree it is not categorically a bad thing.
 
-With AI driving the cost of bullshit to zero, such cross application identities will be critical.
+To have an administrator that filters the digital space there are a multiple options. To name a two:
 
-### Won't it devolve to the same paradigm of centralized systems?
+An application can have you trust the public key of third party service to whitelist content. Effectively emulating the current system of 'admins', while still having users give the option to replace them.
 
-Maybe, maybe not. If a user could walk away from a host server without much trouble, the host has to give a better deal than they do now.
+Or an application can have you trust only signatures from friends or friends of friends.
+(A system that will become more important as AI drives the cost of bullshit to zero.)
+
+### Won't we end up with the same paradigm of centralized control?
+
+Maybe, maybe not.
+If a user could walk away from a host server without much trouble, the host has to give a better deal than they do now.
 
 ## Why not [alternative]?{#alts}
 
-There are two types of systems I'm positive aren't enough to be a new concept for the digital space.
+There are two types of systems I'm positive aren't the right building blocks for the next digital space.
 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users.
 - Faster email: (like ActivityPub) is just faster email - without being very fast - plus most of the list below.

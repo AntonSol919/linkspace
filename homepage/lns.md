@@ -19,10 +19,10 @@ Both publicly by registering, and privately for your own convenience.
 
 - @:john:lns:org
 - @:alice:my:fancystore:com
-- @:john:nl
+- @:bob:nl
 - @:me:local
 
-The top level names :local, ,:~ (or :file) , :env, and :pub are special.
+The top level names :local, :file , :env, and :pub are special.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
 
 LNS is currently only partially operational.
@@ -48,28 +48,20 @@ Its just a public or private phone-book.
 
 ### Does it require money?
 
-That depends.
-LNS is run by volunteers. Some top level names can ask for a contribution - others are free.
+That depends. The public LNS registries are meant to set their own rules. Some top level names can ask you to pay - others are free.
 
-Names currently available are:
+The current top level registries accepting names are:
 
 - example:free - First come, first served.
 - example:dev - Get a pull request accepted.
 - example:com - commercial - 10$ per year and helps fund the project!
 
-### How do i register?
+### How do I register?
 
-To do so, see [claim a name](#claim).
+This is currently still a manual process as its not a high priority and other parts is still missing.
+However, you can pre-register your name to make sure its yours.
 
-### Can I be a top level authority like ':org' or ':sex' etc?
-
-Yes. I am looking for people willing to do so.
-Shoot me a message at <antonsol919+registar@gmail.com> if you're interested.
-
-## Claim a name{#claim}
-
-This currently requires some work.
-To make a :free claim get download or clone the repo.
+To make a :free claim get the `lk` and `linkspace-lns` utility from the download or build from source.
 
 ```terminal
 source ./activate
@@ -79,3 +71,8 @@ lk lns create-claim 'YOUR_NAME:free' --copy-from YOUR_NAME:local --until [now:+9
 
 Keep the file 'enckey' (and the password you entered) safe.
 Email the lnsreq.lkp file to <antonsol919+lns@gmail.com>.
+
+### Can I be a top level authority like ':nl' or ':org', etc?
+
+Yes. I am looking for people willing to do so.
+Shoot me a message at <antonsol919+registar@gmail.com> if you're interested.
