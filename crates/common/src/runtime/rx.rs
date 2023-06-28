@@ -273,7 +273,7 @@ impl Linkspace {
                 }
             }
             let txn_last = txn.log_head();
-            if rx_last > txn_last {
+            if rx_last >= txn_last {
                 tracing::debug!(?txn_last, ?rx_last, "Already processed");
                 return rx_last;
             }

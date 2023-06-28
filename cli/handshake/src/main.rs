@@ -121,11 +121,10 @@ fn main() -> anyhow::Result<()> {
         }
         Handshake::Serve => {
             tracing::trace!("Init server");
-            let phase0 = Phase0(
-                inp.next()
-                    .context("Missing phase0")?
-                    .context("Reading phase0")?,
-            );
+            let phase0 = match inp.next(){
+                Some(p) => Phase0(p.context("Reading phase0")?),
+                None => anyhow::bail!("client hung up immediately")
+            };
             let phase1 = phase1_server_signs(&phase0, id, max_diff_secs)?;
             writer(&phase1.0)?;
             let phase2 = Phase2(inp.next().context("Missing phase2")??);

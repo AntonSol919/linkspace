@@ -131,7 +131,7 @@ pub fn bind_to_device(socket: &mut Socket) {
         nix::sys::socket::sockopt::BindToDevice,
         &dev,
     ) {
-        tracing::info!(e=?e,"could not bind to loopback device. Nothing bad will happen. ")
+        tracing::info!(e=?e,"could not bind to loopback device. Nothing bad will happen - setcap cap_net_raw=+eip [executable path] might fix this error")
     }
 }
 

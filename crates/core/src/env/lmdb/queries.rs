@@ -86,6 +86,7 @@ impl<'env> ReadTxn<'env> {
     }
 
     pub fn local_pkt_log(&self, from: Stamp) -> impl Iterator<Item = RecvPktPtr> {
+        tracing::trace!(%from,"getting packets after");
         self.0
             .pkt_cursor()
             .range_uniq(&from.get())

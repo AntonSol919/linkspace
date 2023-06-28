@@ -1,6 +1,6 @@
 
 use std::{io, mem};
-use anyhow::ensure;
+use anyhow::{ensure };
 use linkspace_pkt::{Stamp, NetPktExt, LkHash, PRIVATE, B64};
 use lmdb::Transaction;
 use lmdb_sys::{ MDB_stat};
@@ -127,6 +127,19 @@ impl BTreeEnv{
             }
         }
         ensure!( tree_ok && hashes_ok, "Corruption: tree {tree_ok} - hashes : {hashes_ok}");
+
+        let now = linkspace_pkt::now();
+        let it = reader.local_pkt_log(now);
+        for pkt in it {
+            tracing::warn!("host - pkt inserted in the future ? {} {}", now, linkspace_pkt::PktFmtDebug(&pkt))
+        }
+
+        let head = reader.log_head();
+        let it = reader.pkts_after(head);
+        for pkt in it {
+            tracing::warn!("lmdb-rs error - looped around? {} {}", now, linkspace_pkt::PktFmtDebug(&pkt))
+        }
+
         Ok(())
     }
 }
