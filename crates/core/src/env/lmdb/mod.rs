@@ -110,6 +110,7 @@ impl BTreeEnv {
     fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> io::Result<usize>{
         if pkts.is_empty() { return Ok(0);}
         let (last_idx, total) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
+        tracing::trace!(last_idx,total,"save ok");
         if total > 0 {
             let _ = self.0.log_head.emit(last_idx);
         }

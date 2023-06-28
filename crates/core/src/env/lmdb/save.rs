@@ -49,7 +49,7 @@ impl LMDBEnv{
         let mut start = now().get();
         match pktlog.ro().get(None, None, lmdb_sys::MDB_LAST){
             Ok((Some(recv), _)) => {
-                let last : u64=  unsafe{std::ptr::read_unaligned(recv.as_ptr().cast())};
+                let last : u64=  super::db::pktlog::val(recv.try_into().unwrap());
                 if last > start {
                     eprintln!("db log saved entries from the future? - this could become undefined behavior")
                 }
@@ -89,9 +89,10 @@ impl LMDBEnv{
         at = start;
         for (pkt,state) in pkts.iter() {
             if matches!(state,SaveState::Pending){
+                let mut at_val = super::db::pktlog::bytes(at);
                 let mut key_val: MDB_val = MDB_val {
                     mv_size: 8 ,
-                    mv_data: std::ptr::from_mut(&mut at).cast()
+                    mv_data: std::ptr::from_mut(&mut at_val).cast()
                 };
                 let len = pkt.size() as usize;
                 let mut data_val: MDB_val = MDB_val {

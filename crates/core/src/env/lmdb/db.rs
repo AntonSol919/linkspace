@@ -111,7 +111,7 @@ pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
         EnvironmentFlags::empty() | EnvironmentFlags::WRITE_MAP | EnvironmentFlags::NO_TLS,
     );
     let pktlog = env
-        .create_db(Some("pktlog"), DatabaseFlags::INTEGER_KEY)
+        .create_db(Some("pktlog"), pktlog::PKTLOG_FLAGS)
         .unwrap();
     let hash = env.create_db(Some("hash"), DatabaseFlags::empty()).unwrap();
     let tree = env
@@ -193,13 +193,26 @@ impl<'o> LMDBTxn<'o>{
     }
 }
 
+#[cfg(target_pointer_width = "64")]
+pub mod pktlog{
+    pub const PKTLOG_FLAGS : lmdb::DatabaseFlags = lmdb::DatabaseFlags::INTEGER_KEY;
+    pub fn bytes(b:u64) -> [u8;8]{ b.to_ne_bytes()}
+    pub fn val(v:[u8;8]) -> u64 {u64::from_ne_bytes(v)}
+}
+#[cfg(not(target_pointer_width = "64"))]
+pub mod pktlog{
+    pub const PKTLOG_FLAGS : lmdb::DatabaseFlags = lmdb::DatabaseFlags::empty();
+    pub fn bytes(b:u64) -> [u8;8]{ b.to_be_bytes()}
+    pub fn val(v:[u8;8]) -> u64{u64::from_be_bytes(v)}
+}
+
 impl<'txn> PktLogCursor<'txn> {
     pub(crate) fn range_uniq(self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
-        let c = self.0.iter_from(start.to_ne_bytes());
+        let c = self.0.iter_from(pktlog::bytes(*start));
         c.map(move |kv| {
             let (k, v) = kv.unwrap();
             let k = match k.try_into() {
-                Ok(k) => u64::from_ne_bytes(k),
+                Ok(k) => pktlog::val(k),
                 _ => panic!("bug: lmdb dsync? ( cursors outlived iter?)"),
             };
             let v = assert_align(v);
@@ -209,7 +222,7 @@ impl<'txn> PktLogCursor<'txn> {
     pub(crate) fn range_uniq_rev(self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
 
         let start = *start;
-        let it = match self.0.get(Some(&start.to_ne_bytes()), None, ffi::MDB_LAST) {
+        let it = match self.0.get(Some(&pktlog::bytes(start)), None, ffi::MDB_LAST) {
             Ok(_) | Err(Error::NotFound) => Iter::Ok {
                 cursor: self.0,
                 op: ffi::MDB_GET_CURRENT,
@@ -218,13 +231,13 @@ impl<'txn> PktLogCursor<'txn> {
             Err(error) => Iter::Err(error),
         };
         it.map_while(|kv| kv.ok()).map(|(k, v)| {
-            let k = u64::from_ne_bytes(k.try_into().unwrap());
+            let k = pktlog::val(k.try_into().unwrap());
             let v = assert_align(v);
             (k, v)
         })
     }
     pub(crate) fn read_uniq(&self, key: &u64) -> Result<Option<&'txn [u8]>> {
-        match self.0.get(Some(&key.to_ne_bytes()), None, ffi::MDB_SET) {
+        match self.0.get(Some(&pktlog::bytes(*key)), None, ffi::MDB_SET) {
             Err(lmdb::Error::NotFound) => Ok(None),
             Ok((_, v)) => Ok(Some(assert_align(v))),
             Err(e) => Err(as_io(e)),
@@ -232,7 +245,7 @@ impl<'txn> PktLogCursor<'txn> {
     }
     pub fn last(&self) -> (u64, &'txn [u8]) {
         match self.0.get(None, None, ffi::MDB_LAST) {
-            Ok((Some(v), bytes)) => return (u64::from_ne_bytes(v.try_into().unwrap()), bytes),
+            Ok((Some(v), bytes)) => return (pktlog::val(v.try_into().unwrap()), bytes),
             Ok((None, _)) => tracing::trace!("Error getting last idx"),
             Err(Error::NotFound) => {}
             Err(e) => tracing::trace!(e=?e,"Error getting last idx"),
