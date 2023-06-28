@@ -46,7 +46,7 @@ There are some features missing:
 Build and start an exchange process to a public test server:
 
 ```bash
-./connect-test-pub1
+./join-testexchange
 ```
 
 Run an application like linkmail to say hi:

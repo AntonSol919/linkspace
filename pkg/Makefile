@@ -5,9 +5,9 @@ RTOOL:=x86_64-unknown-linux-gnu
 VERSION:=$(shell cat $(R)/../Cargo.toml | grep version -m 1 | cut -d'"' -f2 )
 PKG_DIR=$(R)/build/linkspace-$(VERSION)
 
-all: aarch64 x64
+all: aarch64 x64 
 x64: pkg-x86_64-unknown-linux-gnu
-i686: pkg-x86_64-unknown-linux-musl # doesn't support python
+i686: pkg-i686-unknown-linux-gnu 
 aarch64: pkg-aarch64-unknown-linux-gnu
 
 pkg-%: clean common cli-% py-%
@@ -21,7 +21,7 @@ common:
 	mkdir -p $(PKG_DIR)/bin
 	rsync -rvkP --exclude "*private*" --exclude "_*" $(R)/../examples $(PKG_DIR)
 	cp -r $(R)/../emulate $(PKG_DIR)
-	cp $(R)/../connect-test-pub1 $(PKG_DIR)
+	cp $(R)/../join-testexchange $(PKG_DIR)
 	rsync -rvkP $(R)/common/ $(PKG_DIR)
 
 cli-%:

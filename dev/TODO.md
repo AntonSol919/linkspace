@@ -57,7 +57,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 - Detangle field_ids abe and ruletype
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.
 - make testset its own crate ( required for selectlink interface )
-- core::env cleanup
+- core::env split off into its own crate? Needs support for alternative storage (redb?)
 - common:rx needs a rewrite. Lots of cruft from a time it was a multithreaded dispatch.  
 Probably want a non-borrow-lock solution.
 instead of a cmd queue we could do a 'close' as

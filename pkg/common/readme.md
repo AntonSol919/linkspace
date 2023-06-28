@@ -7,7 +7,7 @@
 ### Public test server
 
 ```bash
-./connect-test-pub1
+./join-testexchange
 ```
 
 ### Emulate locally
@@ -16,4 +16,4 @@ The ./emulate directory has a server and client to emulate multiple parties loca
 
 ## Examples
 
-After starting the connect-test-pub1 exchange process come say hi with linkmail.py
+After starting the join-testexchange exchange process come say hi with linkmail.py
