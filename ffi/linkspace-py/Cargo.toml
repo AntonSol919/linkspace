@@ -15,8 +15,8 @@ name = "linkspace"
 crate-type = ["cdylib"]
 
 [dependencies]
-linkspace = { path = "../../crates/linkspace", version ="0.3.0-rc1"}
-linkspace-pkt = { path = "../../crates/pkt", version ="0.3.0-rc1"}
+linkspace = { path = "../../crates/linkspace", version ="0.3.0-rc2"}
+linkspace-pkt = { path = "../../crates/pkt", version ="0.3.0-rc2"}
 
 smallvec.workspace =true
 anyhow.workspace=true
