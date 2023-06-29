@@ -26,7 +26,7 @@ pub struct BTreeEnv(pub Arc<Inner>);
 pub struct Inner {
     lmdb: LMDBEnv,
     location: PathBuf,
-    pub log_head: Arc<ipcbus::ProcBus>,
+    pub log_head: ProcBus,
 }
 impl Debug for BTreeEnv {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -42,7 +42,7 @@ impl BTreeEnv {
         let lmdb= db::open(&path, make_dir)?;
         let location = path.canonicalize()?;
         tracing::debug!(?location, "Opening BTreeEnv");
-        let log_head = Arc::new(ipcbus::ProcBus::new(lmdb.uid));
+        let log_head = ProcBus::new(&location)?;
         let env = BTreeEnv(Arc::new(Inner{
             lmdb,
             log_head,

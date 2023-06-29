@@ -12,12 +12,13 @@ use linkspace_common::{
 #[derive(Debug, Args, Clone,Default)]
 #[group(skip)]
 pub struct DGPDWatchCLIOpts {
-    #[clap(long, short)]
-    pub bare: bool,
     #[clap(required_unless_present("bare"))]
     pub dgpd: Option<DGPDExpr>,
     #[clap(flatten)]
     pub watch_opts: ExtWatchCLIOpts,
+    /// Do not read any domain:group:path argument - WARNING - this might then include all datapoints depending on mode and filters
+    #[clap(long, short)]
+    pub bare: bool,
 }
 
 impl DGPDWatchCLIOpts {

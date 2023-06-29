@@ -169,10 +169,18 @@ impl CommonOpts {
             self.io.inp.private_read
         }
     }
-    pub fn check_private<S:NetPkt>(&self, pkt:S ) -> Result<S,linkspace_pkt::Error> {
-        let write_private = self.write_private().unwrap_or(false);
-        if !write_private { pkt.check_private().map_err(|e| {tracing::warn!(?e,pkt=%PktFmtDebug(&pkt),"enable private writing");e})?}
-        Ok(pkt)
+    pub fn check_private<S:NetPkt>(&self, pkt:S ) -> Result<Option<S>,linkspace_pkt::Error> {
+        match self.write_private(){
+            Some(false) => pkt.check_private().map_err(|e| {tracing::error!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private");e})?,
+            Some(true) => {},
+            None => {
+                if let Err(e) = pkt.check_private(){
+                    tracing::warn!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private - but no --private or --private-write true/false set - ignoring packet");
+                    return Ok(None)
+                }
+            }
+        }
+        Ok(Some(pkt))
     }
     pub fn open(&self, lst: &[WriteDestSpec]) -> std::io::Result<Vec<WriteDest>> {
         let ctx = self.eval_ctx();
@@ -186,7 +194,10 @@ impl CommonOpts {
         pkt: &dyn NetPkt,
         buffer: &mut Option<&mut dyn std::io::Write>,
     ) -> std::io::Result<()> {
-        let pkt = self.check_private(pkt).map_err(linkspace_pkt::Error::io)?;
+        let pkt = match self.check_private(pkt).map_err(linkspace_pkt::Error::io)?{
+            Some(p) => p,
+            None => return Ok(()),
+        };
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
                 lmdb::save_dyn_one(self.linkspace.env_io()?,pkt)?;
@@ -217,7 +228,6 @@ impl CommonOpts {
     pub fn multi_writer(self, mut mdest: Vec<WriteDest>) -> impl PktStreamHandler {
         let this = self;
         move |p: &dyn NetPkt, _rx: &Linkspace| -> std::io::Result<()> {
-
             this.write_multi_dest(&mut mdest, p, None)?;
             Ok(())
         }

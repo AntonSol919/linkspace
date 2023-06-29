@@ -76,7 +76,7 @@ pub fn setup_socket(port: u16) -> (Socket, (Socket, SockAddr)) {
     recv_socket.set_reuse_address(true).unwrap();
     reuse_port(&mut recv_socket);
 
-    let listen_addr: SocketAddr = ([0, 0, 0, 0], port).into();
+    let listen_addr: SocketAddr = (addr, port).into();
     recv_socket.bind(&listen_addr.into()).unwrap();
     recv_socket.set_reuse_address(true).unwrap();
     recv_socket

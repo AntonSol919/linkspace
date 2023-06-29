@@ -13,18 +13,15 @@ use std::cell::OnceCell;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
-use std::thread::JoinHandle;
-
 pub static ROOT_PATH: OnceLock<PathBuf> = OnceLock::new();
 static ENV: OnceLock<BTreeEnv> = OnceLock::new();
-static IPC_THREAD: OnceLock<JoinHandle<()>> = OnceLock::new();
 
 #[thread_local]
 static LINKSPACE: OnceCell<Linkspace> = OnceCell::new();
 pub fn get_env(root: &Path, mkdir: bool) -> io::Result<&'static BTreeEnv> {
     ENV.get_or_try_init(|| -> io::Result<BTreeEnv> {
         let mut env = BTreeEnv::open(root.to_owned(), mkdir)?;
-        Arc::get_mut(&mut env.0).unwrap().log_head.init_udp();
+        Arc::get_mut(&mut env.0).unwrap().log_head.init();
         ROOT_PATH.set(root.canonicalize()?).unwrap();
         Ok(env)
     })
@@ -60,15 +57,9 @@ pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspac
     let path = find_linkspace(root)?;
     LINKSPACE
         .get_or_try_init(|| {
-            // ensure the IPC thread is propery enabled.
-            if ENV.get().is_none() != IPC_THREAD.get().is_none() {
-                return Err(io::Error::other(
-                    "use get_linkspace before get_env if both are required",
-                ));
-            };
             let env = get_env(&path, new)?;
             let rt = Linkspace::new_opt_rt(env.clone(), Default::default());
-            IPC_THREAD.get_or_init(|| rt.env().0.log_head.setup_ipc_thread());
+            rt.env().0.log_head.init();
             Ok(rt)
         })
         .map(|r| r.clone())

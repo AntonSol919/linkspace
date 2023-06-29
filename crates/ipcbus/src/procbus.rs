@@ -9,13 +9,12 @@ use std::{
         Arc,
     },
     thread::JoinHandle,
-    time::Instant,
+    time::Instant, path::PathBuf,
 };
 
 pub use crate::udp_multicast::UdpIPC;
 pub use event_listener;
 use event_listener::{Event, EventListener};
-use socket2::Socket;
 
 pub fn get_port(bus_id: u64) -> u16 {
     let mut lockfile =
@@ -48,44 +47,46 @@ pub fn get_port(bus_id: u64) -> u16 {
     new_port
 }
 
-pub struct ProcBus {
-    pub val: AtomicU64,
+pub struct ProcBus(Arc<Inner>);
+use std::sync::OnceLock;
+
+struct Inner {
+    val: AtomicU64,
     // Idealy this would be done within memory, but this is the simplest to implement crossplatform for now
-    pub ipc: Option<(u32, UdpIPC)>,
-    pub proc: Event,
-    pub bus_id: u64,
+    pid: u32,
+    udp: UdpIPC,
+    listener: OnceLock<JoinHandle<()>>,
+    proc: Event,
+    bus_id: u64,
 }
 
 impl ProcBus {
-    pub fn new(bus_id: u64) -> ProcBus {
-        ProcBus {
-            bus_id,
-            val: Default::default(),
-            ipc: None,
-            proc: Default::default(),
-        }
-    }
-    pub fn init_udp(self: &mut Arc<Self>) {
-        self.init_udp_port(get_port(self.bus_id))
-    }
-    pub fn init_udp_port(self: &mut Arc<Self>, port: u16) {
-        let this = Arc::get_mut(self).expect("You must init_udp before cloning a env");
-        assert!(this.ipc.is_none());
+    pub fn new(path: &PathBuf) -> std::io::Result<ProcBus> {
+        eprintln!("{:?}",path);
+        let bus_id = u64::from_be_bytes(std::fs::read(path.join("id")).expect("missing id file").try_into().expect("bad id file"));
+        let port = get_port(bus_id);
         let pid = std::process::id();
-        this.ipc = Some((pid, UdpIPC::new(port)));
-        tracing::debug!(port = port, pid = pid, "Init udp")
+        
+        Ok(ProcBus(Arc::new(Inner{
+            bus_id,
+            pid,
+            udp:UdpIPC::new(port),
+            val: Default::default(),
+            listener:OnceLock::new(),
+            proc: Default::default(),
+        })))
     }
-
+    
     pub fn emit(&self, val: u64) -> u64 {
         self._emit::<false>(val)
     }
     pub fn _emit<const SKIP_UDP: bool>(&self, val: u64) -> u64 {
-        let mut old = self.val.load(Ordering::Relaxed);
+        let mut old = self.0.val.load(Ordering::Relaxed);
         loop {
             if old > val {
                 return old;
             }
-            match self
+            match self.0
                 .val
                 .compare_exchange_weak(old, val, Ordering::SeqCst, Ordering::Relaxed)
             {
@@ -94,85 +95,65 @@ impl ProcBus {
             }
         }
         if !SKIP_UDP {
-            if let Some((pid, ipc)) = &self.ipc {
-                let msg = [
-                    &self.bus_id.to_ne_bytes() as &[u8],
-                    &pid.to_ne_bytes(),
-                    &val.to_ne_bytes(),
-                ]
-                .concat();
-                if let Err(e) = ipc.send(&msg) {
-                    tracing::error!(e=?e,"IPC UDP Bus");
-                }
+            let msg = [
+                &self.0.bus_id.to_ne_bytes() as &[u8],
+                &self.0.pid.to_ne_bytes(),
+                &val.to_ne_bytes(),
+            ].concat();
+            if let Err(e) = self.0.udp.send(&msg) {
+                tracing::error!(e=?e,"IPC UDP Bus");
             }
         }
-        tracing::trace!(ptr=%format!("{:p}",&self.val),"Notify");
-        self.proc.notify(usize::MAX);
+        tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Notify");
+        self.0.proc.notify(usize::MAX);
         val
     }
-    pub fn raw_recv_socket(&self) -> Option<&Arc<Socket>> {
-        self.ipc.as_ref().map(|(_, ipc)| &ipc.rx)
-    }
-    /// This does not emit. Depending on your usecase you should do it yourself.
-    pub fn decode_recv(&self, val: &[u8], ignore_pid: bool) -> Result<u64, &'static str> {
-        let (busid, rest) = val.split_at(8);
-        let busid = u64::from_ne_bytes(busid.try_into().unwrap());
-        if busid != self.bus_id {
-            tracing::warn!(expected=?self.bus_id, recv=?busid,"Wrong Busid?");
-            return Err("recv from wrong bus");
-        };
-        let (origin, rest) = rest.split_at(4);
-        if !ignore_pid && origin == self.ipc.as_ref().unwrap().0.to_ne_bytes() {
-            return Err("Same origin");
-        }
-        let evid = u64::from_ne_bytes(rest.try_into().unwrap());
-        Ok(evid)
-    }
-    pub fn setup_ipc_thread(self: &Arc<Self>) -> JoinHandle<()> {
-        let this = self.clone();
-        let ipc = self.ipc.as_ref().unwrap().clone();
-        let pid = ipc.0;
-        ipc.1.rx_thread(move |b| {
-            let (busid, rest) = b.split_at(8);
-            let busid = u64::from_ne_bytes(busid.try_into().unwrap());
-            if busid != this.bus_id {
-                tracing::error!("Wrong bus id !! ( Did you delete the database? )");
-                return;
-            }
-            let (origin, rest) = rest.split_at(4);
-            if origin == pid.to_ne_bytes() {
-                return;
-            }
-            let val = u64::from_ne_bytes(rest.try_into().unwrap());
-            this._emit::<true>(val);
-        })
+    
+    pub fn init(&self){
+        self.0.listener.get_or_init(move || {
+            let this = ProcBus(self.0.clone());
+            self.0.udp.rx_thread(move |b| {
+                let (busid, rest) = b.split_at(8);
+                let busid = u64::from_ne_bytes(busid.try_into().unwrap());
+                if busid != this.0.bus_id {
+                    tracing::error!("Wrong bus id !! ( Did you delete the database? )");
+                    return;
+                }
+                let (origin, rest) = rest.split_at(4);
+                if origin == this.0.pid.to_ne_bytes() {
+                    return;
+                }
+                let val = u64::from_ne_bytes(rest.try_into().unwrap());
+                this._emit::<true>(val);
+            })
+        });
     }
 
     pub fn proc_listener(&self) -> EventListener {
-        self.proc.listen()
+        self.0.proc.listen()
     }
     pub fn val(&self) -> u64 {
-        self.val.load(Ordering::SeqCst)
+        self.0.val.load(Ordering::SeqCst)
     }
     pub fn next_d(&self, deadline: Option<Instant>) -> Option<u64> {
-        tracing::trace!(ptr=%format!("{:p}",&self.val),"Waiting");
+        tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Waiting");
         match deadline {
             Some(d) => {
-                if !self.proc.listen().wait_deadline(d) {
+                if !self.0.proc.listen().wait_deadline(d) {
                     tracing::trace!("Timeout");
                     return None;
                 }
             }
-            None => self.proc.listen().wait(),
+            None => self.0.proc.listen().wait(),
         };
         tracing::trace!("Wakeup");
-        Some(self.val.load(Ordering::SeqCst))
+        Some(self.0.val.load(Ordering::SeqCst))
     }
     pub async fn next_async(&self) -> u64 {
         tracing::trace!("Async Wait");
-        self.proc.listen().await;
+        self.0.proc.listen().await;
         tracing::trace!("Async Ok");
-        self.val.load(Ordering::SeqCst)
+        self.0.val.load(Ordering::SeqCst)
     }
 
     /*

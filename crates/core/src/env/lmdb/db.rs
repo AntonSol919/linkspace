@@ -139,11 +139,10 @@ impl LMDBEnv{
         let txn = self.env.begin_ro_txn().map_err(as_io)?;
         Ok(LMDBTxn { txn,env:self})
     }
-
-
 }
 pub(crate) struct LMDBEnv {
     pub(crate) env: lmdb::Environment,
+    #[allow(dead_code)]
     pub(crate) uid: u64,
     pub(crate) pktlog: Database,
     pub(crate) tree: Database,
