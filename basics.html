@@ -44,12 +44,12 @@
     <div id="main">
       <h1 id="basics">Basics</h1>
       <h2 id="the-internet-of-streams">The internet of streams</h2>
-      <p>The current internet we’re using is an internet of streams. The
-      internet<a href="#fn1" class="footnote-ref" id="fnref1"
-      role="doc-noteref"><sup>1</sup></a> attempts to provide a model
-      where: for any two connected devices running any application,
-      there exists a connection to transmit data.</p>
-      <p>It presents a direct line to anyone.</p>
+      <p>The digital world you know is build on structuring streams of
+      data. At its core the internet<a href="#fn1" class="footnote-ref"
+      id="fnref1" role="doc-noteref"><sup>1</sup></a> attempts to
+      provide a model where:</p>
+      <p>For any two connected devices running any application, there
+      exists a connection to transmit data.</p>
       <p>To do this it uses the following types of packets to transmit
       data between two devices.</p>
       <div class="container">
@@ -88,35 +88,35 @@
       </tbody>
       </table>
       </div>
-      <p>Packets carrying data are transmitted, and each hop moves them
-      closer until they reach the destination <code>IP address</code>,
-      i.e. a computer such as you’re using right now. On the computer an
+      <p>Packets carrying data are transmitted, and using the
+      <code>IP address</code> they eventually reach their destination; a
+      computer such as you’re using right now. On the computer an
       application is listening for packets with a specific
       <code>port</code> to be received.</p>
       <p>In transit, a packet can get lost or corrupted. Consequently,
       packets don’t arrive in the order they were sent. By adding a
-      sequence number, we can reorder them at the destination<a
-      href="#fn2" class="footnote-ref" id="fnref2"
-      role="doc-noteref"><sup>2</sup></a>.</p>
+      sequence number, we can reorder them at the destination.</p>
+      <p>I imagine the prototype internet was first discovered when it
+      was realized that packet SEQUENCE IDs are unavoidable complexity
+      to transmit between two places without losing data, and that
+      consequently the physical route each packet takes is
+      irrelevant.</p>
       <p>The result is that <em>conceptually</em> each application on
       each device can talk to any other application on any other
       device.</p>
       <p>This model is ideal for phone-calls or video streams. To build
       more interesting applications we create protocols to add further
       structure to the data. There are thousands of different protocols,
-      but what most have in common is that they transmit questions and
-      answers. Or in other words: queries and responses, or keys and
-      values<a href="#fn3" class="footnote-ref" id="fnref3"
-      role="doc-noteref"><sup>3</sup></a>.</p>
-      <p>This creates a mapping between input and output.</p>
-      <p>A couple of well known protocols that provide a mapping between
-      keys and values over the internet are:</p>
+      but the most common trait among them is that they define a way to
+      transmit questions and answers.</p>
+      <p>A couple of well known internet protocols that have this
+      property are:</p>
       <table>
       <thead>
       <tr class="header">
       <th>System</th>
-      <th>Query</th>
-      <th>Value</th>
+      <th>Question</th>
+      <th>Answer</th>
       </tr>
       </thead>
       <tbody>
@@ -143,33 +143,37 @@
       </tbody>
       </table>
       <p>The reason for building linkspace is this:</p>
-      <p><b>We have reached the limit of this paradigm.</b></p>
+      <p><b>We have reached the limit of this streaming
+      questions/answers paradigm.</b></p>
+      <p>There are many difficulties with it.</p>
       <p>As with most abstraction, the details leak. Streams get
       disconnected, the other side hangs up, the other side is
-      overloaded, etc. In multi party systems with key-value stores
-      these leaks reach further. Key-value stores become inconsistent
-      (especially common in caching), database corruption, and they
-      require expensive synchronization between devices<a href="#fn4"
-      class="footnote-ref" id="fnref4"
-      role="doc-noteref"><sup>4</sup></a>.</p>
-      <p>But I think the best way to make the point for reaching the
-      limit, is from the perspective of an alternative.</p>
+      overloaded, etc.</p>
+      <p>In multi party systems trying to orchestrate the
+      questions/answers systems these leaks reach further. Answers
+      become invalid, integrety/backup is fixed adhoc, and parties
+      require expensive synchronization to agree on things<a href="#fn2"
+      class="footnote-ref" id="fnref2"
+      role="doc-noteref"><sup>2</sup></a>.</p>
+      <p>Once you start thinking in supernets, it becomes clear that
+      this is accidental and unnecessary complexity when communicating
+      in a group - and that we can do things that are impossible if we
+      keep talking streams.</p>
       <h2 id="linkspace">Linkspace</h2>
       <p>Linkspace attempts to provide a model where: for any group
       running any application, there exists a space to address data<a
-      href="#fn5" class="footnote-ref" id="fnref5"
-      role="doc-noteref"><sup>5</sup></a>.</p>
+      href="#fn3" class="footnote-ref" id="fnref3"
+      role="doc-noteref"><sup>3</sup></a>.</p>
       <p>If the current internet provides streams for key-value systems,
-      so we can talk <em>to</em> server,<br />
-      then linkspace provides a shared key-value space, so we can talk
-      <em>about</em> data.</p>
+      so you can talk <em>to</em> server,<br />
+      then linkspace provides a shared key-value space, so groups can
+      talk <em>about</em> data.</p>
       <p>A unit in linkspace is called a <strong>point</strong>. Each
       point has data, some auxiliary fields, and is uniquely identified
       by its hash.</p>
-      <p>Before listing each field i’ll motivate them with an
-      example.</p>
       <h3 id="merging-sets">Merging sets</h3>
-      <p>Imagine building a message forum.</p>
+      <p>To understand what each field does lets start with a simple
+      example of a message forum.</p>
       <div class="container pkt pd">
       <table style="width:99%;">
       <colgroup>
@@ -253,17 +257,17 @@
       ‘<em>upvote/like a post</em>’, ‘<em>stream a video</em>’, etc.
       Fundamentally they can be understood as a frontend application
       providing an interface to <strong>merge</strong> sets of points.
-      Either on your computer or on their computer<a href="#fn6"
-      class="footnote-ref" id="fnref6"
-      role="doc-noteref"><sup>6</sup></a>.</p>
+      Either on your computer or on their computer<a href="#fn4"
+      class="footnote-ref" id="fnref4"
+      role="doc-noteref"><sup>4</sup></a>.</p>
       <p>The internet we use today has a single host design. For
       instance, a web-browser or app contacts
       <code>http://www.some_platform.com</code> for the key
       <code>/image/BrokenMachine.jpg</code> to get their data.</p>
       <p>This is simple, but it has downsides.</p>
       <p>There are common misconceptions on what an address is<a
-      href="#fn7" class="footnote-ref" id="fnref7"
-      role="doc-noteref"><sup>7</sup></a>. A host can get disconnected,
+      href="#fn5" class="footnote-ref" id="fnref5"
+      role="doc-noteref"><sup>5</sup></a>. A host can get disconnected,
       you can’t (re)share and (re)use your copy of the data, and every
       host has to pick a strategy when you merge two sets but they share
       the same path.</p>
@@ -277,9 +281,9 @@
       single host.</p>
       <p>Every path refers to multiple values.</p>
       <p>Each point is hashed. i.e. there exists a unique 32 bytes (or
-      ~77-digit number) that uniquely identifies the point<a href="#fn8"
-      class="footnote-ref" id="fnref8"
-      role="doc-noteref"><sup>8</sup></a> (which I’ll show as <span
+      ~77-digit number) that uniquely identifies the point<a href="#fn6"
+      class="footnote-ref" id="fnref6"
+      role="doc-noteref"><sup>6</sup></a> (which I’ll show as <span
       id="hh0">[HASH_0]</span> instead of typing out).</p>
       <p>Therefor it doesn’t matter when or where sets are merged - and
       they only leave a single copy when both have the same message.</p>
@@ -367,10 +371,7 @@
       </tbody>
       </table>
       </div>
-      <p>A point also has a creation date and are
-      <strong>optionally</strong> signed - such that you can identify
-      who created it.</p>
-      <p>As such, we can uniquely get a specific point by its <span
+      <p>We can uniquely get a specific point by its <span
       id="hh0">[HASH_0]</span>, or multiple entries through a path
       “/thread/Tabs or spaces/msg”.</p>
       <p>This might seem more trouble than existing solutions like a
@@ -383,6 +384,9 @@
       more trouble over all. They hide that they return multiple values
       - a new value depending on when and where you make the
       request.</p>
+      <p>A point also has a creation date and are
+      <strong>optionally</strong> signed - such that you can identify
+      who created it.</p>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
@@ -545,8 +549,8 @@
       <thead>
       <tr class="header">
       <th></th>
-      <th>Field<a href="#fn9" class="footnote-ref" id="fnref9"
-      role="doc-noteref"><sup>9</sup></a></th>
+      <th>Field<a href="#fn7" class="footnote-ref" id="fnref7"
+      role="doc-noteref"><sup>7</sup></a></th>
       <th>Purpose</th>
       <th>IP Packet Analogue</th>
       </tr>
@@ -660,9 +664,9 @@
       <p>But is it worth it?</p>
       <p>Yes.</p>
       <p>Supernets better model the reality of multi party communication
-      - asynchronous and authenticated<a href="#fn10"
-      class="footnote-ref" id="fnref10"
-      role="doc-noteref"><sup>10</sup></a></p>
+      - asynchronous and authenticated<a href="#fn8"
+      class="footnote-ref" id="fnref8"
+      role="doc-noteref"><sup>8</sup></a></p>
       <p>In the long run they could end up with less moving parts and
       with fewer configurations.</p>
       <p>Also important is that anyone can take responsibility. It is
@@ -694,23 +698,27 @@
       without much trouble, the host has to give a better deal than they
       do now.</p>
       <h2 id="alts">Why not [alternative]?</h2>
-      <p>There are two types of systems I’m positive aren’t the right
-      building blocks for the next digital space.</p>
+      <p>There are two types of systems I’m certain aren’t the right
+      building blocks for the next digital era.</p>
       <ul>
       <li>Synchronizing chain of trust: Is slow and not useful for the
-      vast majority of users.</li>
-      <li>Faster email: (like ActivityPub) is just faster email -
-      without being very fast - plus most of the list below.</li>
+      vast majority of users - (and easy to emulate in a supernet).</li>
+      <li>Faster email/Activity Pub : Its not that fast and its using
+      server defined authenticity<a href="#fn9" class="footnote-ref"
+      id="fnref9" role="doc-noteref"><sup>9</sup></a> - plus most of the
+      list below.</li>
       </ul>
       <p>Other supernet-like systems are limited in some way or simply
       choose a different design:</p>
       <ul>
+      <li>Too specialized. For example, a system like Git has a lot of
+      plumbing for diffing each commit.</li>
       <li>It has either hash addresses or custom url addresses, not
       both.</li>
-      <li>Too slow. Packet routing/parsing should be doable as very few
-      instructions - ideally doable in silicon. It should be fast enough
-      to stream video without using a second protocol. That means no
-      json.</li>
+      <li>Too slow. Packet routing/parsing should be doable in just a
+      few instructions - ideally possible in an integrated circuit. It
+      should be fast enough to stream video without using a second
+      protocol. That means no json or base64.</li>
       <li>No Groups. Limiting who you share with is not supported - apps
       can’t be used in a private group.</li>
       <li>No domains. Everything becomes one app.</li>
@@ -718,16 +726,13 @@
       <li>Large ‘packets’ - a hash might refer to gigabytes. This
       requires multiple levels to deal with fragmentation in multiple
       ways.</li>
-      <li>Poor (bash) scripting/piping support</li>
-      <li>A blessed/fixed method of exchanging data - either it fits
-      your use-case or you’re out of luck.</li>
+      <li>Poor scripting support.</li>
+      <li>Excessively interwoven components. e.g. Transmitting packets
+      require a fully running ‘node’ with a fixed method of exchanging
+      or saving data.</li>
       </ul>
-      <p>With linkspace I believe I’ve found a good structure for ‘the
-      stack’ required to build a general purpose supernet. Linkspace is
-      first and foremost its packet format, and secondly a bunch of
-      tools to wrangle them to fit a use-case.</p>
-      <p>That does not mean I think alternatives are necessarily worse
-      or useless. Different systems have different strong points.</p>
+      <p>That does not mean I think alternatives are necessarily worse.
+      Different systems have different strong points.</p>
       <aside id="footnotes" class="footnotes footnotes-end-of-document"
       role="doc-endnotes">
       <hr />
@@ -737,49 +742,45 @@
       details. But if you find an incorrect statement shoot me a
       message.<a href="#fnref1" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn2"><p>I imagine the prototype internet was first
-      discovered when it was realized that packet SEQUENCE IDs are
-      essential complexity for data integrety, and that consequently the
-      physical route each packet takes is irrelevant.<a href="#fnref2"
-      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn3"><p>In some situations there is a technical difference
-      between “query-response” and “key-value” systems. When describing
-      them in a network (where origin and time are implied) they are
-      indistinguishable.<a href="#fnref3" class="footnote-back"
-      role="doc-backlink">↩︎</a></p></li>
-      <li id="fn4"><p>Or instead of synchronization you add unique ID’s
+      <li id="fn2"><p>Or instead of synchronization you add unique ID’s
       to each event across the network. If you chose a strong hash, and
       each event can reference others by their hash - you’ve just build
-      a supernet.<a href="#fnref4" class="footnote-back"
+      a special purpose supernet.<a href="#fnref2" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn5"><p>This idea and other ideas used in linkspace aren’t
-      new. But I think linkspace is a simple and powerful synthesis
+      <li id="fn3"><p>This idea and other ideas used in linkspace aren’t
+      new. But I believe linkspace is a simple and powerful synthesis
       compared to previous attempts (see <a href="#alts">alts</a>).<a
-      href="#fnref5" class="footnote-back"
+      href="#fnref3" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn6"><p>Your computer immediatly forgetting those data
-      points is a configuration detail.<a href="#fnref6"
+      <li id="fn4"><p>Your computer immediatly forgetting those data
+      points is a configuration detail.<a href="#fnref4"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn7"><p>The perception is created that the address
+      <li id="fn5"><p>The perception is created that the address
       ‘http://www.some_platform.com/image/BrokenMachine.jpg’ is
       addressing ‘[image data]’ - this is wrong. The address is used for
       your request to find where it needs to go, this address then
       usually replies with ‘[image data]’. A subtle but a consequental
       difference. Linkspace does not have this discrepency.<a
-      href="#fnref7" class="footnote-back"
+      href="#fnref5" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn8"><p>Unique for all intents and purposes - except for
-      the purpose of counting to 2^256+1.<a href="#fnref8"
+      <li id="fn6"><p>Unique for all intents and purposes - except for
+      the purpose of counting to 2^256+1.<a href="#fnref6"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn9"><p>Both TCP/IP packets and linkspace packets have
+      <li id="fn7"><p>Both TCP/IP packets and linkspace packets have
       control fields that are irrelevant to a vast majority of
-      developers.<a href="#fnref9" class="footnote-back"
+      developers.<a href="#fnref7" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn10"><p>Authenticated as in: cryptographicaly proven that
+      <li id="fn8"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
       an HTTPS session is also proof that the key holder send the
-      message.<a href="#fnref10" class="footnote-back"
+      message.<a href="#fnref8" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn9"><p>Yes i’m aware content hashing and publickey
+      identities might one-day be the default - but in so far as i’ve
+      read about it its going to be extremely complex to build on, and
+      apps will miss out on much of the benefit of a supernet.<a
+      href="#fnref9" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       </ol>
       </aside>

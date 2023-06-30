@@ -1010,6 +1010,10 @@
 <a href="#1010" id="1010">1010</a>
 <a href="#1011" id="1011">1011</a>
 <a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1549,7 +1553,7 @@ See guide#ABE to understand its use and indepth explanation.
     </span><span class="kw">pub fn </span>lk_query(copy_from: <span class="kw-2">&amp;</span>Query) -&gt; Query {
         Query(copy_from.<span class="number">0</span>.clone())
     }
-    <span class="doccomment">/// Create a new [Query] specifically for a hash. Sets the right mode and &#39;i&#39; count.
+    <span class="doccomment">/// Create a new [Query] specifically for a hash. Sets the right mode and &#39;i&#39; count. See [lk_get_hash] if you don&#39;t care to watch the db.
     </span><span class="kw">pub fn </span>lk_hash_query(hash: LkHash) -&gt; Query {
         Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
@@ -1739,7 +1743,11 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">let </span>opt_pkt = reader.query(mode, <span class="kw-2">&amp;</span>query.<span class="number">0</span>.predicates, <span class="kw-2">&amp;mut </span>i)<span class="question-mark">?</span>.next();
         <span class="prelude-val">Ok</span>(opt_pkt.map(|v| (cb)(v)))
     }
-    <span class="kw">pub fn </span>lk_get_hash&lt;A&gt;(lk:<span class="kw-2">&amp;</span>Linkspace,hash: LkHash,
+    <span class="doccomment">/** read a single packet from the database by its hash without copying. 
+    This means that [NetPkt::net_header_mut] is unavailable.
+    To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
+     **/
+    </span><span class="kw">pub fn </span>lk_get_hash&lt;A&gt;(lk:<span class="kw-2">&amp;</span>Linkspace,hash: LkHash,
                        cb: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(RecvPktPtr) -&gt; A,
     ) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;A&gt;&gt; {
         <span class="kw">let </span>reader = lk.<span class="number">0</span>.get_reader();
