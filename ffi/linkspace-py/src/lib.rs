@@ -394,6 +394,12 @@ pub fn lk_get_all(
     Ok(count)
 }
 #[pyfunction]
+pub fn lk_get_hash(lk: &Linkspace, hash:  &PyAny) -> anyhow::Result<Option<Pkt>> {
+    let hash = LkHash::try_fit_bytes_or_b64(bytelike(hash)?)?;
+    linkspace_rs::runtime::lk_get_hash(&lk.0, hash, &mut |pkt| Pkt::from_dyn(&pkt))
+}
+
+#[pyfunction]
 pub fn lk_watch(
     py: Python,
     lk: &Linkspace,
@@ -582,6 +588,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_save_all, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_get_hash, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_all, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_watch, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process, m)?)?;

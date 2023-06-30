@@ -139,8 +139,17 @@ def lk_get_all(lk:Linkspace, query:Query,cb:Callable[[Pkt],bool|None]) -> int:
     
     """
     ...
+
+def lk_get_hash(lk:Linkspace,hash:str|bytes) -> Pkt | None:
+    """Read a single packet hash from the database"""
+    ...
+
+
 def lk_hash_query(hash:str|bytes) -> Query:
-    """Shorthand for building a query that matches a single hash"""
+    """
+    Shorthand for building a query that matches a single hash
+    Use lk_get_hash if you do not care to watch the database
+    """
     ...
 
 def lk_info(lk:Linkspace) -> LkInfo:
