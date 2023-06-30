@@ -26,17 +26,4 @@ Linkspace is a supernet with the following highlights:
 The [tutorials](./docs/tutorial/index.html) has some practical examples.  
 The [Guide](./docs/guide/index.html) is an in-depth overview of the API and how it fits together.  
 
-[Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
-to give it a try.
-
-Linkspace is currently in **beta**.
-
-That means the packet format is stable. Points created now will be readable in all future versions.
-
-The API is mostly stable but will break now and then.
-There are some features missing:
-
-- There is no API for deleting yet.
-- The only group exchange program is a bash script.
-- LNS only works 'manually'
-- Some other TODO's are found in the repo/dev folder
+[Download](https://github.com/AntonSol919/linkspace/releases) the latest release or build from source by cloning the [git](https://github.com/AntonSol919/linkspace) repo. 
