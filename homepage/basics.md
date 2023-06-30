@@ -2,12 +2,12 @@
 
 ## The internet of streams
 
-The current internet we're using is an internet of streams.
-The internet[^2] attempts to provide a model where: for any two connected devices running any application, there exists a connection to transmit data.
+The digital world you know is build on structuring streams of data.
+At its core the internet[^2] attempts to provide a model where: 
+
+For any two connected devices running any application, there exists a connection to transmit data.
 
 [^2]: TCP/IP - I'll be loose on definitions and oversimplify a lot. I don't expect readers to know or care for the details. But if you find an incorrect statement shoot me a message.
-
-It presents a direct line to anyone.
 
 To do this it uses the following types of packets to transmit data between two devices.
 
@@ -25,29 +25,24 @@ To do this it uses the following types of packets to transmit data between two d
 +-----------------+-----------------------+-----------------------------------------------------------------+
 :::
 
-Packets carrying data are transmitted, and each hop moves them closer until they reach the destination `IP address`, i.e. a computer such as you're using right now.
+Packets carrying data are transmitted, and using the `IP address` they eventually reach their destination; a computer such as you're using right now.
 On the computer an application is listening for packets with a specific `port` to be received.
 
 In transit, a packet can get lost or corrupted.
 Consequently, packets don't arrive in the order they were sent.
-By adding a sequence number, we can reorder them at the destination[^telephone].
+By adding a sequence number, we can reorder them at the destination.
 
-[^telephone]: I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential complexity for data integrety, and that consequently the physical route each packet takes is irrelevant.
+I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are unavoidable complexity to transmit between two places without losing data, and that consequently the physical route each packet takes is irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
 This model is ideal for phone-calls or video streams.
 To build more interesting applications we create protocols to add further structure to the data.
-There are thousands of different protocols, but what most have in common is that they transmit questions and answers.
-Or in other words: queries and responses, or keys and values[^jargon].
+There are thousands of different protocols, but the most common trait among them is that they define a way to transmit questions and answers.
 
-This creates a mapping between input and output.
+A couple of well known internet protocols that have this property are:
 
-[^jargon]: In some situations there is a technical difference between "query-response" and "key-value" systems. When describing them in a network (where origin and time are implied) they are indistinguishable.
-
-A couple of well known protocols that provide a mapping between keys and values over the internet are:
-
-| System | Query                         | Value               |
+| System | Question                      | Answer              |
 |--------+-------------------------------+---------------------|
 | DNS    | archive.org                   | 207.241.224.2       |
 | HTTP   | /forum/index.html             | Hello world!        |
@@ -56,34 +51,34 @@ A couple of well known protocols that provide a mapping between keys and values 
 
 The reason for building linkspace is this:
 
-<b>We have reached the limit of this paradigm.</b>
+<b>We have reached the limit of this streaming questions/answers paradigm.</b>
+
+There are many difficulties with it.
 
 As with most abstraction, the details leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
-In multi party systems with key-value stores these leaks reach further.
-Key-value stores become inconsistent (especially common in caching), database corruption, and they require expensive synchronization between devices[^sync].
 
-[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just build a supernet.
+In multi party systems trying to orchestrate the questions/answers systems these leaks reach further.
+Answers become invalid, integrety/backup is fixed adhoc, and parties require expensive synchronization to agree on things[^sync].
 
-But I think the best way to make the point for reaching the limit, is from the perspective of an alternative.
+[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just build a special purpose supernet.
+
+Once you start thinking in supernets, it becomes clear that this is accidental and unnecessary complexity when communicating in a group - and that we can do things that are impossible if we keep talking streams.
 
 ## Linkspace
 
 Linkspace attempts to provide a model where: for any group running any application, there exists a space to address data[^idea].
 
-[^idea]: This idea and other ideas used in linkspace aren't new. But I think linkspace is a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
+[^idea]: This idea and other ideas used in linkspace aren't new. But I believe linkspace is a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
 
-
-If the current internet provides streams for key-value systems, so we can talk _to_ server,  
-then linkspace provides a shared key-value space, so we can talk _about_ data.
+If the current internet provides streams for key-value systems, so you can talk _to_ server,  
+then linkspace provides a shared key-value space, so groups can talk _about_ data.
 
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
-Before listing each field i'll motivate them with an example.
-
 ### Merging sets
 
-Imagine building a message forum.
+To understand what each field does lets start with a simple example of a message forum. 
 
 
 :::{.container .pkt .pd}
@@ -198,9 +193,7 @@ Therefor it doesn't matter when or where sets are merged - and they only leave a
 
 :::
 
-A point also has a creation date and are **optionally** signed - such that you can identify who created it.
-
-As such, we can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
+We can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
 or multiple entries through a path "/thread/Tabs or spaces/msg".
 
 This might seem more trouble than existing solutions like a filesystem or HTTP.
@@ -210,6 +203,8 @@ However, in practice it's trivial to behave similarly by adding constraints to a
 
 Conversely, I would argue both filesystems and HTTP servers are more trouble over all.
 They hide that they return multiple values - a new value depending on when and where you make the request.
+
+A point also has a creation date and are **optionally** signed - such that you can identify who created it.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
@@ -382,24 +377,24 @@ If a user could walk away from a host server without much trouble, the host has 
 
 ## Why not [alternative]?{#alts}
 
-There are two types of systems I'm positive aren't the right building blocks for the next digital space.
+There are two types of systems I'm certain aren't the right building blocks for the next digital era.
 
-- Synchronizing chain of trust: Is slow and not useful for the vast majority of users.
-- Faster email: (like ActivityPub) is just faster email - without being very fast - plus most of the list below.
+- Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
+- Faster email/Activity Pub : Its not that fast and its using server defined authenticity[^i] - plus most of the list below.
+
+[^i]: Yes i'm aware content hashing and publickey identities might one-day be the default - but in so far as i've read about it its going to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 
+- Too specialized. For example, a system like Git has a lot of plumbing for diffing each commit.
 - It has either hash addresses or custom url addresses, not both.
-- Too slow. Packet routing/parsing should be doable as very few instructions - ideally doable in silicon. It should be fast enough to stream video without using a second protocol. That means no json.
+- Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a second protocol. That means no json or base64.
 - No Groups. Limiting who you share with is not supported - apps can't be used in a private group.
 - No domains. Everything becomes one app.
 - Its focused on signatures and consensus.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
-- Poor (bash) scripting/piping support
-- A blessed/fixed method of exchanging data - either it fits your use-case or you're out of luck.
+- Poor scripting support. 
+- Excessively interwoven components. e.g. Transmitting packets require a fully running 'node' with a fixed method of exchanging or saving data. 
 
-With linkspace I believe I've found a good structure for 'the stack' required to build a general purpose supernet.
-Linkspace is first and foremost its packet format, and secondly a bunch of tools to wrangle them to fit a use-case.
-
-That does not mean I think alternatives are necessarily worse or useless.
+That does not mean I think alternatives are necessarily worse.
 Different systems have different strong points.
