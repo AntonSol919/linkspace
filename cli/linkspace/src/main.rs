@@ -241,6 +241,9 @@ enum Command {
 
     /// filter a stream of packets based on a query
     Filter(filter::Filter) ,
+    /// alias to 'filter' with the --write and --write-false argument swapped.
+    Ignore(filter::Filter) ,
+
     /// deduplicate packets based on hash
     Dedup {
         #[clap(long, default_value_t = 256)]
@@ -410,6 +413,10 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         )?,
         Command::Watch { watch, write } => watch::watch(common, watch,write)?,
         Command::Filter(filter) => filter::select(common, filter)?,
+        Command::Ignore(mut filter) => {
+            std::mem::swap(&mut filter.write_false, &mut filter.write);
+            filter::select(common, filter)?
+        },
         Command::Eval(eval_opts) => eval::eval_cmd(common, eval_opts)?,
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
         Command::Route { field_mut , pkt_in} => {

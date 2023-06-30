@@ -17,13 +17,16 @@ pub struct Filter {
     #[clap(flatten)]
     query: DGPDWatchCLIOpts,
     #[clap(long, short, default_value = "stdout")]
-    write: Vec<WriteDestSpec>,
+    pub write: Vec<WriteDestSpec>,
     /// destination for filtered packets
     #[clap(short = 'f', long, default_value = "null")]
-    write_false: Vec<WriteDestSpec>,
+    pub write_false: Vec<WriteDestSpec>,
     #[clap(flatten)]
     pkt_in: PktReadOpts,
-    /// re-evaluate the query after every packet.
+    /// Do not warn on using recv predicate
+    #[clap(long)]
+    recv_now: bool,
+    /// re-evaluate the ABE expressions in the query after every packet.
     #[clap(short,long)]
     live: bool,
 }
@@ -31,11 +34,15 @@ pub fn select(
     common: CommonOpts,
     filter:Filter
 ) -> anyhow::Result<()> {
-    let Filter { allow_datapoint, query, write, write_false, pkt_in, live } = filter;
+    let Filter { allow_datapoint, query, write, write_false, pkt_in, live,recv_now } = filter;
     let mut write = common.open(&write)?;
     let mut write_false = common.open(&write_false)?;
     let stmnts :Vec<_> = query.iter_statments()?;
     let query= statements2query(&stmnts, &common.eval_ctx())?;
+    tracing::debug!(recv_now, ?query.predicates.recv_stamp);
+    if !recv_now && query.predicates.recv_stamp != Default::default(){
+        anyhow::bail!("Usign the 'recv' predicate in this context refers to the date of reading this packet - not the date it was saved to a database - to suppress this error add --recv-now");
+    }
     tracing::trace!(?query, "Query");
     let mut e = WatchEntry::new(Default::default(), query, 0, (), debug_span!("Select"))?;
     tracing::trace!(?e, "Watching");

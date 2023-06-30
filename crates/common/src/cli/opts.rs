@@ -175,7 +175,7 @@ impl CommonOpts {
             Some(true) => {},
             None => {
                 if let Err(e) = pkt.check_private(){
-                    tracing::warn!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private - but no --private or --private-write true/false set - ignoring packet");
+                    tracing::info!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private - but no --private or --private-write true/false set - ignoring packet");
                     return Ok(None)
                 }
             }

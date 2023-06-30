@@ -29,14 +29,6 @@ rewrite --create "[create:+1D]"
 // TODO add Vec<linkmut { filter, add, map, }>
 #[derive(Parser)]
 pub struct Rewrite {
-    #[clap(flatten)]
-    pkt_in: PktReadOpts,
-
-    #[clap(long, default_value = "stdout")]
-    pub write: Vec<WriteDestSpec>,
-    #[clap(long, default_value = "null")]
-    pub forward: Vec<WriteDestSpec>,
-
     #[clap(short, long)]
     pub group: Option<HashExpr>,
     #[clap(short, long)]
@@ -45,15 +37,26 @@ pub struct Rewrite {
     pub path: Option<IPathExpr>,
     #[clap(long, alias = "u")]
     pub create: Option<StampExpr>,
+    #[clap(short,long)]
+    /// rewrite the data field using the --data* options - note that --data-eval has the current packet in scope - e.g. combine with --data-str [data]
+    pub interpret_data: bool,
 
     /// Sign all spoints/asserts or only sign already signed
     #[clap(value_enum)]
     pub sign_mode: SignMode,
+
+    #[clap(long, default_value = "stdout")]
+    pub write: Vec<WriteDestSpec>,
+    #[clap(long, default_value = "null")]
+    pub forward: Vec<WriteDestSpec>,
+
+    #[clap(flatten)]
+    pkt_in: PktReadOpts,
+
+
     #[clap(flatten)]
     pub key: KeyOpts,
-    #[clap(short,long)]
-    /// If set, use --data* options - --data-eval has pkt is in scope
-    pub interpret: bool,
+    
     #[clap(flatten)]
     pub data_read: DataReadOpts
 }
@@ -116,7 +119,7 @@ pub enum SignMode {
 }
 pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
     check_stdin(&ropts.pkt_in, &ropts.data_read, false)?;
-    ensure!( ropts.interpret || ropts.data_read == Default::default(),"read options are ignored if --interpret is not set");
+    ensure!( ropts.interpret_data || ropts.data_read == Default::default(),"read options are ignored if --interpret-data is not set");
     let Rewrite {
         write,
         forward,
@@ -124,7 +127,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
         key,
         data_read,
         pkt_in,
-        interpret,
+        interpret_data,
         ..
     } = &ropts;
     let ctx = common.eval_ctx();
@@ -137,7 +140,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
     let mut forward = common.open(forward)?;
     for p in inp {
         let pkt = p?;
-        let data = if *interpret { Either::Right(&mut reader)} else { Either::Left(pkt.data())};
+        let data = if *interpret_data { Either::Right(&mut reader)} else { Either::Left(pkt.data())};
         match pkt.parts().fields {
             PointFields::Unknown(_) => todo!(),
             PointFields::DataPoint(_) => common.write_multi_dest(&mut write, &**pkt, None)?,
