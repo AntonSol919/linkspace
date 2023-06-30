@@ -522,15 +522,18 @@
       </tbody>
       </table>
       </div>
-      <p>Note that for brevity I used the <a href="./lns.html">LNS</a>
-      representation for <code>[@:alice:salesexample]</code> and
-      <code>[#:example]</code>. In actually they are 32 bytes. LNS works
-      similar to how <code>www.example.com</code> resolves to a number
-      like <code>192.168.0.1</code>.</p>
-      <p>Finally, using the hash directly in the data of each entry like
-      we have been doing is not ideal. Instead, a point in linkspace has
-      a list of <a href="./docs/guide/index.html#lk_linkpoint">links</a>
-      adjacent to the data.</p>
+      <p>Note that the group and public keys are actually 32 bytes. For
+      brevity I used the <a href="./lns.html">LNS</a> representation for
+      <code>[@:alice:salesexample]</code> and <code>[#:example]</code>.
+      LNS solves a similar problem as DNS, i.e. turning a name like
+      <code>www.example.com</code> into a number like
+      <code>192.168.0.1</code>.</p>
+      <p>Finally, the messages we used as an example have a <span
+      id="hh1">[HASH]</span> directly in their data field. This would
+      not work well for most use-cases. Instead, a point in linkspace
+      has a list of <a
+      href="./docs/guide/index.html#lk_linkpoint">links</a> adjacent to
+      the data.</p>
       <div class="container">
       <table style="width:98%;">
       <colgroup>

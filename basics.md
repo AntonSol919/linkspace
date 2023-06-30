@@ -257,10 +257,12 @@ For example the `msg_board` application and the `[#:example]` group.
 +----------+-------------+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
 :::
 
-Note that for brevity I used the [LNS](./lns.html) representation for `[@:alice:salesexample]` and `[#:example]`.
-In actually they are 32 bytes. LNS works similar to how `www.example.com` resolves to a number like `192.168.0.1`.
+Note that the group and public keys are actually 32 bytes. 
+For brevity I used the [LNS](./lns.html) representation for `[@:alice:salesexample]` and `[#:example]`.
+LNS solves a similar problem as DNS, i.e. turning a name like `www.example.com` into a number like `192.168.0.1`.
 
-Finally, using the hash directly in the data of each entry like we have been doing is not ideal.
+Finally, the messages we used as an example have a <span id="hh1">[HASH]</span> directly in their data field.
+This would not work well for most use-cases.
 Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
 :::{.container}
