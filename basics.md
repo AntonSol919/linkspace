@@ -58,12 +58,12 @@ There are many difficulties with it.
 As with most abstraction, the details leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
 
-The leaks compound when multi party systems trying to build their questions/answers system.
-Answers become invalid, integrity and backup are build ad-hoc, and parties require expensive synchronization to agree on things[^sync].
+The leaks compound when more than two computers are involved.
+Answers become invalid, integrity is build ad-hoc, backups require additional logic, and a shared state requires expensive synchronization[^sync].
 
-[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just built a special purpose supernet.
+[^sync]: Or instead of some form of locking you add unique ID's to all your event in the network. If you chose a strong hash, and each event can reference others by their hash - then you've essentially built a special purpose supernet.
 
-Once you start thinking in terms of supernets, it becomes clear that this is accidental and unnecessary complexity when communicating in a group - and that we can do things that are practically impossible if we keep talking streams.
+Once you start thinking in terms of supernets, it becomes clear that this is accidental and unnecessary complexity when two or more parties are communicating - and that we can do things that are practically impossible if we keep talking streams.
 
 ## Linkspace
 

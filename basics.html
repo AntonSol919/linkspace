@@ -150,16 +150,15 @@
       <p>As with most abstraction, the details leak. Streams get
       disconnected, the other side hangs up, the other side is
       overloaded, etc.</p>
-      <p>The leaks compound when multi party systems trying to build
-      their questions/answers system. Answers become invalid, integrity
-      and backup are build ad-hoc, and parties require expensive
-      synchronization to agree on things<a href="#fn2"
-      class="footnote-ref" id="fnref2"
+      <p>The leaks compound when more than two computers are involved.
+      Answers become invalid, integrity is build ad-hoc, backups require
+      additional logic, and a shared state requires expensive
+      synchronization<a href="#fn2" class="footnote-ref" id="fnref2"
       role="doc-noteref"><sup>2</sup></a>.</p>
       <p>Once you start thinking in terms of supernets, it becomes clear
-      that this is accidental and unnecessary complexity when
-      communicating in a group - and that we can do things that are
-      practically impossible if we keep talking streams.</p>
+      that this is accidental and unnecessary complexity when two or
+      more parties are communicating - and that we can do things that
+      are practically impossible if we keep talking streams.</p>
       <h2 id="linkspace">Linkspace</h2>
       <p>Linkspace attempts to provide a model where: for any group
       running any application, there exists a space to address data<a
@@ -755,11 +754,11 @@
       details. But if you find an incorrect statement shoot me a
       message.<a href="#fnref1" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn2"><p>Or instead of synchronization you add unique ID’s
-      to each event across the network. If you chose a strong hash, and
-      each event can reference others by their hash - you’ve just built
-      a special purpose supernet.<a href="#fnref2" class="footnote-back"
-      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn2"><p>Or instead of some form of locking you add unique
+      ID’s to all your event in the network. If you chose a strong hash,
+      and each event can reference others by their hash - then you’ve
+      essentially built a special purpose supernet.<a href="#fnref2"
+      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <li id="fn3"><p>This idea and other ideas used in linkspace aren’t
       new. But I believe linkspace is a simple and powerful synthesis
       compared to previous attempts (see <a href="#alts">alts</a>).<a
