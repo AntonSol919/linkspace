@@ -96,7 +96,7 @@
       <p>In transit, a packet can get lost or corrupted. The result is
       that packets don’t arrive in the order they were sent. By adding a
       sequence number, the destination can verify all packets have
-      arrived and reorder them to fit the order they were sent at.</p>
+      arrived and reorder them to the order they were sent in.</p>
       <p>I imagine the prototype internet was first discovered when it
       was realized that packet SEQUENCE IDs are unavoidable complexity
       to transmit between two places without losing data, and that
@@ -266,12 +266,12 @@
       <code>http://www.some_platform.com</code> for the key
       <code>/image/BrokenMachine.jpg</code> to get their data.</p>
       <p>This is simple, but it has downsides.</p>
-      <p>There are common misconceptions on what an address is<a
-      href="#fn5" class="footnote-ref" id="fnref5"
-      role="doc-noteref"><sup>5</sup></a>. A host can get disconnected,
+      <p>There is a misconception on what an address is<a href="#fn5"
+      class="footnote-ref" id="fnref5"
+      role="doc-noteref"><sup>5</sup></a>, a host can get disconnected,
       you can’t (re)share and (re)use your copy of the data, and every
-      host has to pick a strategy when you merge two sets but they share
-      the same path.</p>
+      host has to pick a strategy when merging data but two entries
+      share the same path.</p>
       <p>I would argue these are all accidental complexity.</p>
       <p>Most noticeably the last one: How to merge two sets if both
       have <code>thread/BrokenMachine.jpg</code> but different data.
@@ -697,10 +697,11 @@
       party service to whitelist content. Effectively emulating the
       current system of ‘admins’, while still having users give the
       option to replace them.</p></li>
-      <li><p>You can require signatures from friends &amp; friends of
-      friends (Which i suspect will become more important as AI drives
-      the cost of bullshit to zero.)</p></li>
+      <li><p>An application can require content to be signed or be
+      vouched for by friends, or friends of friends.</p></li>
       </ul>
+      <p>I suspect the latter to become more important as AI drives the
+      cost of bullshit to zero and platforms can’t keep up.</p>
       <h3
       id="wont-we-end-up-with-the-same-paradigm-of-centralized-control">Won’t
       we end up with the same paradigm of centralized control?</h3>
@@ -756,7 +757,7 @@
       role="doc-backlink">↩︎</a></p></li>
       <li id="fn2"><p>Or instead of synchronization you add unique ID’s
       to each event across the network. If you chose a strong hash, and
-      each event can reference others by their hash - you’ve just build
+      each event can reference others by their hash - you’ve just built
       a special purpose supernet.<a href="#fnref2" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       <li id="fn3"><p>This idea and other ideas used in linkspace aren’t
@@ -790,7 +791,7 @@
       <li id="fn9"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
-      an HTTPS session is also proof that the key holder send the
+      an HTTPS session is also proof that the keyholder send the
       message.<a href="#fnref9" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       <li id="fn10"><p>AFAIK content hashing and publickey identities

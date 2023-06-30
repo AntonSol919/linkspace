@@ -30,7 +30,7 @@ On the computer an application is running that looks for packets with a specific
 
 In transit, a packet can get lost or corrupted.
 The result is that packets don't arrive in the order they were sent.
-By adding a sequence number, the destination can verify all packets have arrived and reorder them to fit the order they were sent at.
+By adding a sequence number, the destination can verify all packets have arrived and reorder them to the order they were sent in.
 
 I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are unavoidable complexity to transmit between two places without losing data, and that consequently the physical route each packet takes is irrelevant.
 
@@ -61,7 +61,7 @@ Streams get disconnected, the other side hangs up, the other side is overloaded,
 The leaks compound when multi party systems trying to build their questions/answers system.
 Answers become invalid, integrity and backup are build ad-hoc, and parties require expensive synchronization to agree on things[^sync].
 
-[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just build a special purpose supernet.
+[^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just built a special purpose supernet.
 
 Once you start thinking in terms of supernets, it becomes clear that this is accidental and unnecessary complexity when communicating in a group - and that we can do things that are practically impossible if we keep talking streams.
 
@@ -135,10 +135,10 @@ for the key `/image/BrokenMachine.jpg` to get their data.
 
 This is simple, but it has downsides.
 
-There are common misconceptions on what an address is[^address].
-A host can get disconnected,
+There is a misconception on what an address is[^address],
+a host can get disconnected,
 you can't (re)share and (re)use your copy of the data,
-and every host has to pick a strategy when you merge two sets but they share the same path.
+and every host has to pick a strategy when merging data but two entries share the same path.
 
 [^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
 
@@ -353,7 +353,7 @@ Yes.
 
 Supernets better model the reality of multi party communication - asynchronous and authenticated[^auth]
 
-[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the key holder send the message.
+[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the keyholder send the message.
 
 In the long run they could end up with less moving parts and with fewer configurations.
 
@@ -372,8 +372,9 @@ There are different ways to do so, the simplest are:
 
 - An application can have you trust the public key of third party service to whitelist content. Effectively emulating the current system of 'admins', while still having users give the option to replace them.
 
-- You can require signatures from friends & friends of friends 
-(Which i suspect will become more important as AI drives the cost of bullshit to zero.)
+- An application can require content to be signed or be vouched for by friends, or friends of friends.
+
+I suspect the latter to become more important as AI drives the cost of bullshit to zero and platforms can't keep up.
 
 ### Won't we end up with the same paradigm of centralized control?
 
