@@ -1010,7 +1010,6 @@
 <a href="#1010" id="1010">1010</a>
 <a href="#1011" id="1011">1011</a>
 <a href="#1012" id="1012">1012</a>
-<a href="#1013" id="1013">1013</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1694,10 +1693,10 @@ See guide#ABE to understand its use and indepth explanation.
 
     </span><span class="doccomment">/// save a packet. Returns true if new and false if its old.
     </span><span class="kw">pub fn </span>lk_save(lk: <span class="kw-2">&amp;</span>Linkspace, pkt: <span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt) -&gt; std::io::Result&lt;bool&gt; {
-        linkspace_common::core::env::write_trait::save_pkt(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.get_writer(), pkt)
+        linkspace_common::core::env::lmdb::save_dyn_one(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.env(), pkt).map(|o|o.is_new())
     }
     <span class="kw">pub fn </span>lk_save_all(lk: <span class="kw-2">&amp;</span>Linkspace, pkts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>NetPkt]) -&gt; std::io::Result&lt;usize&gt; {
-        linkspace_common::core::env::write_trait::save_pkts(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.get_writer(), pkts).map(|(i,<span class="kw">_</span>)|i)
+        linkspace_common::core::env::lmdb::save_dyn_iter(<span class="kw-2">&amp;mut </span>lk.<span class="number">0</span>.env(), pkts.iter().copied())
     }
     
     <span class="doccomment">/// Run callback for every match for the query in the database.
@@ -2023,5 +2022,4 @@ See guide#ABE to understand its use and indepth explanation.
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub mod </span>interop;
 
-<span class="kw">pub static </span>BUILD_INFO : <span class="kw-2">&amp;</span>str = <span class="macro">build_info::format!</span>(<span class="string">&quot;{}&quot;</span>, $);
 </code></pre></div></section></main></body></html>

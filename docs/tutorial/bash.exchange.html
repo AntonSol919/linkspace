@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-06-23 Fri 11:24 -->
+<!-- 2023-06-28 Wed 15:25 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A bash exchange example</title>
@@ -27,8 +27,8 @@
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/<br>
 </p>
 
-<div class="ctabs" id="org343b485">
-<div class="info" id="org4ef15c1">
+<div class="ctabs" id="org8bd090d">
+<div class="info" id="orgbaa19ed">
 <p class="verse">
 Available in the repo/examples/<br>
 See repo/dev/exchange.md for some open design issues/notes.<br>
@@ -41,7 +41,7 @@ It does no pruning before sending or receiving.
 </p>
 
 </div>
-<div class="sh" id="org11e9719">
+<div class="sh" id="org9d4ea66">
 <p>
 
 </p>
@@ -65,7 +65,7 @@ socat tcp:$SERVER,keepalive exec:"anyhost.handshake.sh connect anyhost.client-io
 </pre>
 </div>
 <div class="org-src-container">
-<pre class="src src-bash">#!/bin/bash -x
+<pre class="src src-bash">#!/bin/bash
 # parent should set out to fd4. otherwise add a exec 4&gt;&amp;1 1&gt;&amp;2
 set -euo pipefail
 function fin (){
@@ -175,8 +175,9 @@ lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\n
 
 socat tcp-listen:$PORT,fork exec:"anyhost.handshake.sh serve anyhost.serve-io.sh",fdout=4 &amp;
 
-echo PIDS $(jobs -p)
-wait -n
+PIDS=$(jobs -p)
+echo PIDS $PIDS
+wait -- $PIDS
 
 #websocat -e -E --binary --ping-timeout 15 --ping-interval 10 \
 #         ws-l:0.0.0.0:5020 sh-c:"strace -e 'trace=!all' handshake.sh serve serve_io.sh"
@@ -235,7 +236,7 @@ wait -n
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-06-23 Fri 11:24</p>
+<p class="date">Created: 2023-06-28 Wed 15:25</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

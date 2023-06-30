@@ -60,15 +60,14 @@
       <ul>
       <li>@:john:lns:org</li>
       <li>@:alice:my:fancystore:com</li>
-      <li>@:john:nl</li>
+      <li>@:bob:nl</li>
       <li>@:me:local</li>
       </ul>
-      <p>The top level names :local, ,:~ (or :file) , :env, and :pub are
-      special. You can take a look on how it integrates with linkspace
-      in the <a href="./docs/guide/index.html#ABELNS">guide</a>.</p>
+      <p>The top level names :local, :file , :env, and :pub are special.
+      You can take a look on how it integrates with linkspace in the <a
+      href="./docs/guide/index.html#ABELNS">guide</a>.</p>
       <p>LNS is currently only partially operational.</p>
-      <p>Registrations for public names are open though. Read this page
-      to find out how to claim yours.</p>
+      <p>But you can register a public name!</p>
       <h3 id="what-does-a-registration-do">What does a registration
       do?</h3>
       <p>It gives you binding right for all sub registration. That means
@@ -84,54 +83,38 @@
       binding, such as for the key @:bob:sales:yourcompany:com.</p>
       <h3 id="do-i-require-a-registration">Do I require a
       registration?</h3>
-      <p>No. Nothing in linkspace requires a registration. Everything
-      can be done without. In fact, *:~ names you set up for your own
-      use (similarly to /etc/hosts), and *:local are meant for names you
-      share between peers. Registrations allow you to pick an
-      unambiguous name to be known publicly, and they support the
-      project financially.</p>
+      <p>No. Its just a public or private phone-book.</p>
       <h3 id="does-it-require-money">Does it require money?</h3>
-      <p>No, not necessarily.</p>
-      <p>Names ending with:</p>
+      <p>That depends. The public LNS registries are meant to set their
+      own rules. Some top level names can ask you to pay - others are
+      free.</p>
+      <p>The current top level registries accepting names are:</p>
       <ul>
-      <li>:free - First come, first served. Free of charge.</li>
-      <li>:dev - if you get a pull request accepted.</li>
-      <li>:com - 10 euro per year.</li>
-      <li>:nl - 10 euro per year.</li>
+      <li>example:free - First come, first served.</li>
+      <li>example:dev - Get a pull request accepted.</li>
+      <li>example:com - commercial - 10$ per year and helps fund the
+      project!</li>
       </ul>
-      <h3 id="how-do-i-register">How do i register?</h3>
-      <p>To do so, see <a href="#claim">claim a name</a>.</p>
-      <h3
-      id="can-i-register-a-top-level-authority-like-org-or-sex-etc">Can
-      I register a top level authority like ‘:org’ or ‘:sex’ etc?</h3>
-      <p>Yes. I am looking for people and organizations to do so.
-      Contact me at <a href="mailto:antonsol919+registar@gmail.com"
-      class="email">antonsol919+registar@gmail.com</a> for more
-      information.</p>
-      <h3 id="can-i-buy-with-crypto-why-not-use-crypto-to-do-x-y-z">Can
-      I buy with crypto? Why not use crypto to do X, Y, Z ?</h3>
-      <p>Linkspace is easy to integrate with blockchains (or can be used
-      to create new blockchains). You are free to build on it as you
-      wish (MPL-2.0 license). In an effort to put food on the table and
-      pay taxes I prefer fiat money and a 1 cent transaction save a lot
-      of trouble w.r.t. identification if you lose the private key.
-      Other top level authorities set their own price and how to pay
-      it.</p>
-      <h2 id="claim">Claim a name</h2>
-      <p>This currently requires some work. To make a :free claim get
-      download or clone the repo.</p>
+      <h3 id="how-do-i-register">How do I register?</h3>
+      <p>This is currently still a manual process as its not a high
+      priority and other parts is still missing. However, you can
+      pre-register your name to make sure its yours.</p>
+      <p>To make a :free claim get the <code>lk</code> and
+      <code>linkspace-lns</code> utility from the download or build from
+      source.</p>
       <pre class="terminal"><code>source ./activate
 lk --init key --key &#39;YOUR_NAME:local&#39; | tee enckey
 lk lns create-claim &#39;YOUR_NAME:free&#39; --copy-from YOUR_NAME:local --until [now:+99Y] | tee lnsreq.lkp | lk p</code></pre>
       <p>Keep the file ‘enckey’ (and the password you entered) safe.
       Email the lnsreq.lkp file to <a
       href="mailto:antonsol919+lns@gmail.com"
-      class="email">antonsol919+lns@gmail.com</a>. I plan to accept
-      :free name requests until it becomes a burden, after which I’ll
-      probably put up a proof of work fence with some additional
-      constraints on the name.</p>
-      <p>Get a pull request accepted, and you get a :dev name.</p>
-      <p>First come, first served.</p>
+      class="email">antonsol919+lns@gmail.com</a>.</p>
+      <h3 id="can-i-be-a-top-level-authority-like-nl-or-org-etc">Can I
+      be a top level authority like ‘:nl’ or ‘:org’, etc?</h3>
+      <p>Yes. I am looking for people willing to do so. Shoot me a
+      message at <a href="mailto:antonsol919+registar@gmail.com"
+      class="email">antonsol919+registar@gmail.com</a> if you’re
+      interested.</p>
     </div>
     </body>
 </html>
