@@ -124,7 +124,7 @@ The result is a packet. For simplicity sake, all functions in the library deal o
 #+begin_sh
 
 #+BEGIN_SRC bash :session cli2 :exports both :results output verbatim
-echo -n "Hello, Sol" | lk data | lk pktf "[hash:str]\n[data]"
+echo "Hello, Sol!" | lk data | lk pktf "[hash:str]\n[data]"
 #+END_SRC
 
 #+end_sh
@@ -133,7 +133,7 @@ echo -n "Hello, Sol" | lk data | lk pktf "[hash:str]\n[data]"
 
 #+begin_src python :session lkpy :exports both :results value verbatim
 from linkspace import *
-datap = lk_datapoint(b"Hello, Sol")
+datap = lk_datapoint(b"Hello, Sol!\n")
 lk_eval2str("[hash:str] = [data]", datap)
 #+END_SRC
 

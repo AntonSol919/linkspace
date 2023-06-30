@@ -33,6 +33,7 @@ pub mod multi {
     }
     impl ProcBus {
         pub fn new(path: &Path) -> io::Result<ProcBus> {
+            tracing::debug!("using inotify for IPC signals");
             let path = path.join("ipc.inotify");
             let file = std::fs::OpenOptions::new()
                 .create(true)

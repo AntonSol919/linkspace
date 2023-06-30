@@ -62,7 +62,7 @@ struct Inner {
 
 impl ProcBus {
     pub fn new(path: &PathBuf) -> std::io::Result<ProcBus> {
-        eprintln!("{:?}",path);
+        tracing::debug!("using UDP for IPC signals");
         let bus_id = u64::from_be_bytes(std::fs::read(path.join("id")).expect("missing id file").try_into().expect("bad id file"));
         let port = get_port(bus_id);
         let pid = std::process::id();

@@ -12,11 +12,11 @@ pub use inotify::ProcBus;
 pub mod inotify;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod procbus;
+pub mod udp_procbus;
 #[cfg(not(target_arch = "wasm32"))]
 mod udp_multicast;
 #[cfg(not(target_arch = "wasm32"))]
-pub use procbus::*;
+pub use udp_procbus::*;
 
 
 #[cfg(target_arch = "wasm32")]
