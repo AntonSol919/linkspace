@@ -294,18 +294,18 @@ Users generate an identity, groups set up a method to exchange data.
 
 The result is that _conceptually_ an application only needs to process the state of the trees.
 
-## Give it a try?
+## Ready to give it a try?
 
-The linkspace library is beta software.
+Linkspace is not an end-user application. 
+It is a software library and command line tools.
+A GUI frontend to manage groups/domains/keys is outside its scope.
 
-The packet format is stable. Points you create will stay readable in future versions.
-The library API is missing some features and will have some breaking changes.
-
-However, there aren't tools yet to make things simple.
-
-You can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python library to follow along with
+To give it a try you can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python bindings to follow along with
 the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html),
 and say hi on the test group.
+
+The packet format is stable. Points created will stay readable in future versions.
+The API is mostly stable but will have some breaking changes and additional conventions.
 
 # Q&A
 
