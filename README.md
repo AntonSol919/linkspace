@@ -23,27 +23,39 @@ Linkspace is a supernet with the following highlights:
 - Group/Domain split
 
 [Basics](https://www.linkspace.dev/basics.html) gives a high level introduction.  
-The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
+The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) document some practical examples.  
 The [Guide](https://www.linkspace.dev/docs/guide/index.html) is a in-depth overview of the API and how it fits together.  
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try.
 
+
+Linkspace is not an end-user application. It is a software library(and command line tools) to make more powerful end-users applications.
+A GUI frontend to manage groups/domains/keys is outside its scope.
+
 Linkspace is currently in **beta**.
 
-That means the packet format is stable. Points created now will be readable in all future versions.
+The packet format is stable. Packets created now will be readable in all future versions.
 
-The API is mostly stable but will break now and then.
-There are some features missing:
+The API is mostly stable but can break now and then.
+There are some big features missing:
 
-- There is no API for deleting yet.
-- The only group exchange program is a bash script.
+- No API for deleting.
+- The only group exchange process is a bash script.
 - LNS only works 'manually'
-- Some other TODO's are found in the repo/dev folder
 
-# Quick start
+### Using linkspace
 
-Build and start an exchange process to a public test server:
+The 3 primary ways of using linkspace are:
+
+- The `lk` CLI [cli/linkspace](./cli/linkspace)
+- The Rust library with `linkspace = {git = "https://github.com/AntonSol919/linkspace"}`
+- The python [bindings](https://pypi.org/project/linkspace/) with `pip install linkspace`. 
+
+Initial bindings for wasm can be found in [ffi/linkspace-js](./ffi/linkspace-js).
+For building from source see [Guide#setup](https://www.linkspace.dev/docs/guide/index.html#setup) or the various README.md's.
+
+You can try out some examples by cloning / downloading and using:
 
 ```bash
 ./join-testexchange
@@ -56,15 +68,11 @@ source ./activate
 linkmail.py
 ```
 
-# Building
-
-The 3 primary ways of using linkspace are:
-The `lk` CLI [cli/linkspace](./cli/linkspace), the Rust library [crates/linkspace](./crates/linkspace), and the python library [ffi/linkspace-py](./ffi/linkspace-py)
-The [Guide#setup](https://www.linkspace.dev/docs/guide/index.html#setup) has more details.
-
 ## Development
 
-Checkout the ./dev folder for missing features and what's currently on the TODO.
+For a list of todo's and other notes see the dev folder. 
 
-Linkspace currently has no financial backing.
-Development depends on available free time.
+Feel free to send me feedback or ideas!
+
+You open an issue or can contact me directly at <AntonSol919@gmail.com>.
+
