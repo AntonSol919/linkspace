@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-06-30 Fri 14:05 -->
+<!-- 2023-06-30 Fri 14:51 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MineWeeper</title>
@@ -27,21 +27,21 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org117095d">Bob's Hotseat MineWeeper</a></li>
-<li><a href="#orgf98cd53">Game on</a></li>
-<li><a href="#org78fadb8">Multiplayer</a></li>
-<li><a href="#orgf46cd6a">Cheating</a>
+<li><a href="#org95ec2e2">Bob's Hotseat MineWeeper</a></li>
+<li><a href="#orgde09729">Game on</a></li>
+<li><a href="#orgef652c2">Multiplayer</a></li>
+<li><a href="#org45d9954">Cheating</a>
 <ul>
 <li>
 <ul>
-<li><a href="#orgf0eb1e5">Who cares?</a></li>
-<li><a href="#orgb0a4a8e">Emulate host/client</a></li>
-<li><a href="#orgff83c7b">Rng-esus died for your sins</a></li>
+<li><a href="#org1859f9d">Who cares?</a></li>
+<li><a href="#org9ef65b1">Emulate host/client</a></li>
+<li><a href="#orge782828">Rng-esus died for your sins</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org8de239e">A dose of reality</a></li>
+<li><a href="#org96574cc">A dose of reality</a></li>
 </ul>
 </div>
 </nav>
@@ -54,7 +54,7 @@ We'll follow Bob in his journey.
 </p>
 
 
-<figure id="org70a3b67">
+<figure id="org7ae580c">
 <img src="./images/bob-hi.png" alt="bob-hi.png">
 
 </figure>
@@ -113,9 +113,9 @@ Before you continue, please check this consent form to not hold Bob accountable 
 </div>
 
 
-<div id="outline-container-org117095d" class="outline-2">
-<h2 id="org117095d">Bob's Hotseat MineWeeper</h2>
-<div class="outline-text-2" id="text-org117095d">
+<div id="outline-container-org95ec2e2" class="outline-2">
+<h2 id="org95ec2e2">Bob's Hotseat MineWeeper</h2>
+<div class="outline-text-2" id="text-org95ec2e2">
 <p>
 Bob's game is perfect, but there is a teeny-tiny, little, detail missing.
 </p>
@@ -143,7 +143,7 @@ It asks the user for a list of player names.
 Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
 </p>
 
-<div class="py" id="orgfe97690">
+<div class="py" id="org1219773">
 <div class="org-src-container">
 <pre class="src src-python">from mineweeper import MineWeeper, clear_screen, NoSuchCell,AlreadyRevealed
 import re,random
@@ -184,8 +184,8 @@ Maybe someday he'll make it a 3D VR experience.
 <img src="./images/bob-doubt.png" alt="bob-doubt.png">
 </p>
 
-<div class="ctabs" id="org4548e04">
-<div class="info" id="org9a51736">
+<div class="ctabs" id="orgdfb1387">
+<div class="info" id="orgd80e513">
 <p>
 Contrary to Bob, we don't care much for the details of MineWeeper.
 In case you're interested checkout the tab or open the code in ./app/mineweeper-py/mineweeper.py
@@ -193,7 +193,7 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 
 </div>
 
-<div class="py" id="org9e828bf">
+<div class="py" id="orge7b3529">
 <div class="org-src-container">
 <pre class="src src-python">import linkspace
 import itertools
@@ -313,15 +313,15 @@ class MineWeeper():
 </div>
 </div>
 
-<div id="outline-container-orgf98cd53" class="outline-2">
-<h2 id="orgf98cd53">Game on</h2>
-<div class="outline-text-2" id="text-orgf98cd53">
+<div id="outline-container-orgde09729" class="outline-2">
+<h2 id="orgde09729">Game on</h2>
+<div class="outline-text-2" id="text-orgde09729">
 <p>
 After searching high and low for a method to share it with the world, our friend Bob reaches for enlightenment.
 </p>
 
 
-<figure id="orgf71a042">
+<figure id="org719c00b">
 <img src="./images/bob-enlightend.png" alt="bob-enlightend.png">
 
 </figure>
@@ -351,24 +351,24 @@ Made worse by selling one of his livers to pay the AWS bill.
 </p>
 
 <p>
-Developing linkspace system boils down to:
+Developing linkspace application boils down to:
 </p>
 
 <ul class="org-ul">
-<li>Gather some bytes you want sent around in a packet.</li>
-<li>Optionally: set a path, add links to other packets, sign it.</li>
-<li>Save that packet.</li>
-<li>Build a query; a list of predicates for a packet (e.g. pubkey, hash, path).</li>
-<li>Use the query to react to packets matching it - either from the local db or as they become available.</li>
+<li>Gather some bytes you want into a <b><b>point</b></b>.</li>
+<li>Optionally: set a path, add one or more links to other bytes/packets, sign your point.</li>
+<li>Save the point.</li>
+<li>Build a query (i.e. a list of predicates) defining the set of packets you want to process.</li>
+<li>React to packets matching your query - either from your disk or as a background process gathers them from a group of peers.</li>
 </ul>
 
 <p>
-For Bob, the linkspace library is an abstraction such that all the players share a common tree where he can read from, and write into.
+For Bob building linkspace application, it offers him the abstraction that all players can address a shared space of points.
 </p>
 
 <p>
 For a user of linkspace, Bob's game is just another domain application.
-It provides friendly interface reading/writing the bytes that the developer wants to be shared around.
+It provides a friendly interface reading/writing the bytes that the developer wants to be shared around.
 </p>
 
 <p>
@@ -396,7 +396,7 @@ He's not set on the details, but every game starts with at least the players kno
 </ul>
 
 <p class="verse">
-In this setup everybody knows the board, but we'll touch on <a href="#orgf46cd6a">Cheating</a> later.<br>
+In this setup everybody knows the board, but we'll touch on <a href="#org45d9954">Cheating</a> later.<br>
 </p>
 
 <p>
@@ -407,7 +407,7 @@ The hash of the packet can fill the role.
 He ends up with a packet to start the game with that looks as follows:
 </p>
 
-<pre class="example" id="orgb75b0a4">
+<pre class="example" id="orgda0450f">
 type	LinkPoint
 hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
 group	[#:test]
@@ -430,8 +430,8 @@ data	278
 }
 </pre>
 
-<div class="ctabs" id="org2871807">
-<div class="info" id="org9ee80c1">
+<div class="ctabs" id="org4051706">
+<div class="info" id="org8340b6e">
 <p>
 
 </p>
@@ -444,7 +444,7 @@ It requires tmux to be installed (available in most package managers)
 
 </div>
 
-<div class="setup" id="org538921f">
+<div class="setup" id="org8967e38">
 <p>
 
 </p>
@@ -511,9 +511,9 @@ Finally, in each session we can use the upper panel to run:
 </div>
 
 
-<div id="outline-container-org78fadb8" class="outline-2">
-<h2 id="org78fadb8">Multiplayer</h2>
-<div class="outline-text-2" id="text-org78fadb8">
+<div id="outline-container-orgef652c2" class="outline-2">
+<h2 id="orgef652c2">Multiplayer</h2>
+<div class="outline-text-2" id="text-orgef652c2">
 <p>
 The outline is as follows:
 </p>
@@ -537,7 +537,7 @@ In linkspace ordering some packets is actually trivial.
 Adding a link to another packet is proof that one was created before the other.
 </p>
 
-<div class="py" id="orgb22a69c">
+<div class="py" id="org1d13d4d">
 <div class="org-src-container">
 <pre class="src src-python">#!/bin/env python3
 
@@ -715,8 +715,8 @@ print("Fin")
 
 </div>
 
-<div class="ctabs" id="orgb14cad2">
-<div class="info" id="org876b717">
+<div class="ctabs" id="orge815f3f">
+<div class="info" id="org246e289">
 <p>
 
 </p>
@@ -724,7 +724,7 @@ print("Fin")
 <p>
 To start the mineweeper-multiplayer.py manually, we run the following in each session
 </p>
-<div class="bash" id="org08f2a41">
+<div class="bash" id="org30fa7cf">
 <p>
 mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
 </p>
@@ -737,9 +737,9 @@ mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
 </div>
 </div>
 
-<div id="outline-container-orgf46cd6a" class="outline-2">
-<h2 id="orgf46cd6a">Cheating</h2>
-<div class="outline-text-2" id="text-orgf46cd6a">
+<div id="outline-container-org45d9954" class="outline-2">
+<h2 id="org45d9954">Cheating</h2>
+<div class="outline-text-2" id="text-org45d9954">
 <p>
 There are three ways to deal with cheating.
 </p>
@@ -749,7 +749,7 @@ Four if you count Bobs disapproval as an option.
 </p>
 
 
-<figure id="orgaff78cd">
+<figure id="orgdf6182a">
 <img src="./images/bob-angry.png" alt="bob-angry.png">
 
 </figure>
@@ -766,9 +766,9 @@ On the other hand, only the host can cheat and nobody would know about it.
 </p>
 </div>
 
-<div id="outline-container-orgf0eb1e5" class="outline-4">
-<h4 id="orgf0eb1e5">Who cares?</h4>
-<div class="outline-text-4" id="text-orgf0eb1e5">
+<div id="outline-container-org1859f9d" class="outline-4">
+<h4 id="org1859f9d">Who cares?</h4>
+<div class="outline-text-4" id="text-org1859f9d">
 <p>
 The option you should take by default.
 Most games <span class="underline">can</span> be cheated, so the upside of making it more difficult has its limits.
@@ -787,9 +787,9 @@ For a game like MineWeeper that is usually enough.
 </div>
 </div>
 
-<div id="outline-container-orgb0a4a8e" class="outline-4">
-<h4 id="orgb0a4a8e">Emulate host/client</h4>
-<div class="outline-text-4" id="text-orgb0a4a8e">
+<div id="outline-container-org9ef65b1" class="outline-4">
+<h4 id="org9ef65b1">Emulate host/client</h4>
+<div class="outline-text-4" id="text-org9ef65b1">
 <p>
 One option is to emulate a host/client setup.
 The first player could act as host and watch for turns and reply with the result.
@@ -803,9 +803,9 @@ Once the game is done, the host can release the packet and players could check i
 </div>
 </div>
 
-<div id="outline-container-orgff83c7b" class="outline-4">
-<h4 id="orgff83c7b">Rng-esus died for your sins</h4>
-<div class="outline-text-4" id="text-orgff83c7b">
+<div id="outline-container-orge782828" class="outline-4">
+<h4 id="orge782828">Rng-esus died for your sins</h4>
+<div class="outline-text-4" id="text-orge782828">
 <p>
 There are a number of ways to define a set of rules that make MineWeeper random without anyone knowing the full mine map.
 </p>
@@ -863,9 +863,9 @@ Cheating is now impossible.
 </div>
 </div>
 
-<div id="outline-container-org8de239e" class="outline-2">
-<h2 id="org8de239e">A dose of reality</h2>
-<div class="outline-text-2" id="text-org8de239e">
+<div id="outline-container-org96574cc" class="outline-2">
+<h2 id="org96574cc">A dose of reality</h2>
+<div class="outline-text-2" id="text-org96574cc">
 <p>
 In the <a href="./mineweeper-2.html">next</a> installment Bob will continue his journey to building the best game ever.
 This time by building a lobby system so it's actually playable.
@@ -896,7 +896,7 @@ And every improvement to other systems improves the experience of using a linksp
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-06-30 Fri 14:05</p>
+<p class="date">Created: 2023-06-30 Fri 14:51</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
