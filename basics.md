@@ -382,7 +382,7 @@ There are two types of systems I'm certain aren't the right building blocks for 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
 - Faster email/Activity Pub : Its not that fast and its using server defined authenticity[^i] - plus most of the list below.
 
-[^i]: Yes i'm aware content hashing and publickey identities might one-day be the default - but in so far as i've read about it its going to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet.
+[^i]: Yes i'm aware content hashing and publickey identities might one day be the default - but in so far as i've read about it its going to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 

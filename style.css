@@ -41,6 +41,7 @@ nav>hr {
 
 #main {
     padding-top:2em;
+    padding-bottom:4em;
     grid-area: main;
     overflow-y: scroll;
     padding-left:12vw;
