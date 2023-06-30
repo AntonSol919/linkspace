@@ -114,18 +114,18 @@ With linkspace:
 Bob might be a little biased. He suffers from PCSSD, or Post Customer Support Stress Disorder.
 Made worse by selling one of his livers to pay the AWS bill.
 
-Developing linkspace system boils down to:
+Developing linkspace application boils down to:
 
-- Gather some bytes you want sent around in a packet.
-- Optionally: set a path, add links to other packets, sign it.
-- Save that packet.
-- Build a query; a list of predicates for a packet (e.g. pubkey, hash, path). 
-- Use the query to react to packets matching it - either from the local db or as they become available.
+- Gather some bytes you want into a **point**.
+- Optionally: set a path, add one or more links to other bytes/packets, sign your point.
+- Save the point.
+- Build a query (i.e. a list of predicates) defining the set of packets you want to process.
+- React to packets matching your query - either from your disk or as a background process gathers them from a group of peers.
 
-For Bob, the linkspace library is an abstraction such that all the players share a common tree where he can read from, and write into.
+For Bob building linkspace application, it offers him the abstraction that all players can address a shared space of points.
 
 For a user of linkspace, Bob's game is just another domain application.
-It provides friendly interface reading/writing the bytes that the developer wants to be shared around.
+It provides a friendly interface reading/writing the bytes that the developer wants to be shared around.
 
 Bob recognizes that his game has two distinct phases.
 

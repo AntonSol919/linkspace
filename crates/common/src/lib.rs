@@ -5,6 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![recursion_limit = "64"]
 #![feature(
+    cell_update,
     trait_alias,
     thread_local,
     array_windows,

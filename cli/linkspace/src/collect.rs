@@ -18,9 +18,7 @@ use linkspace_common::{
 
 #[derive(Parser)]
 /**
-WARNING: ensure the final packet does not exceed packet size with max-links depending on other fields.
-
-Create a linkpoint or keypoint with links to the packets on stdin.
+Create a linkpoint or keypoint with links to the packets received.
 A result is produced after a set interval or a max number of links have been made.
 
 By default the resulting link packet is appended to the stream of packets.
@@ -41,10 +39,24 @@ does nothing
 --forward stdout --write null
 **/
 pub struct Collect {
-    #[clap(flatten)]
-    pkt_in: PktReadOpts,
-    #[clap(flatten)]
-    build: PointOpts,
+    /// tag for each link - this can be an ABE expr with the pkt in scope
+    #[clap(alias = "ctag", long, value_enum, default_value = "[now]")]
+    collect_tag: TagExpr,
+    /// If set - adds a link to the previously created packet - also an ABE expr
+    #[clap(long)]
+    chain_tag: Option<TagExpr>,
+    #[clap(long)]
+    allow_empty: bool,
+    /// Link used for the first collect
+    #[clap(alias = "il", long)]
+    pub init_link: Vec<LinkExpr>,
+
+    /// Create packet after collecting max_links from incoming packets
+    #[clap(long,default_value_t=MAX_LINKS_LEN-16)]
+    max_links: usize,
+    /// Create a packet after
+    #[clap(long)]
+    min_interval: Option<DurationStr>,
 
     /// destination for incoming packets
     #[clap(short, long, default_value = "stdout")]
@@ -53,22 +65,10 @@ pub struct Collect {
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
 
-    #[clap(alias = "ctag", long, value_enum, default_value = "[now]")]
-    collect_tag: TagExpr,
-    /// Create packet after collecting max_links from incoming packets
-    #[clap(long,default_value_t=MAX_LINKS_LEN-16)]
-    max_links: usize,
-    /// Create a packet after
-    #[clap(long)]
-    min_interval: Option<DurationStr>,
-    #[clap(long)]
-    allow_empty: bool,
-    /// Link used for the first collect
-    #[clap(alias = "il", long)]
-    pub init_link: Vec<LinkExpr>,
-    /// Add a link pointing to a previous created packet with the tag
-    #[clap(long)]
-    chain_tag: Option<Tag>,
+    #[clap(flatten)]
+    pkt_in: PktReadOpts,
+    #[clap(flatten)]
+    build: PointOpts,
 }
 
 pub struct Collector {
@@ -109,6 +109,8 @@ impl Collector {
         self.links.extend(
             self.c_opts
                 .chain_tag
+                .as_ref()
+                .map(|tag| tag.eval(&ctx)).transpose()?
                 .map(|tag| Link { tag, ptr: hash }),
         );
         for l in self.c_opts.build.link.iter() {

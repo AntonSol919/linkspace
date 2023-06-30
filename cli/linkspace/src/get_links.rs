@@ -10,17 +10,17 @@ use crate::*;
 pub struct GetLinks{
     #[clap(flatten)]
     pkt_in: PktReadOpts,
-    /// writedest of linked packets
+    /// write dest of incoming packets
     #[clap(short, long, default_value = "stdout")]
     forward: Vec<WriteDestSpec>,
-    /// writedest of linked packets
+    /// write dest of linked packets
     #[clap(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
     /// recurse N times
     #[clap(short,long)]
     recursive: Option<usize>,
     /// recurse forever. Can be expensive!
-    #[clap(long,alias="rr",default_value_t,conflicts_with("recursive"))]
+    #[clap(short='R',long,default_value_t,conflicts_with("recursive"))]
     rrecursive: bool,
 
     #[clap(subcommand)]
@@ -38,9 +38,12 @@ pub enum GetLinksMode{
 
 #[allow(clippy::type_complexity)]
 pub fn get_links(lk: &linkspace::Linkspace, pkt:&dyn NetPkt, level: usize, mode:GetLinksMode, out:Rc<RefCell<dyn FnMut(&dyn NetPkt)-> std::io::Result<()>>> )-> anyhow::Result<()>{
+    let mut count = 0u64;
     for link in pkt.get_links()
     {
-        let q = lk_query_push(lk_hash_query(link.ptr), "", "qid", &*link.ptr)?;
+        let qid = [&count.to_be_bytes() as &[u8],&*link.ptr].concat();
+        count +=1;
+        let q = lk_query_push(lk_hash_query(link.ptr), "", "qid", &qid)?;
         let print_fnc = out.clone();
         let res = lk_watch(lk, &q, try_cb(move |p,lk| -> anyhow::Result<()>{
             print_fnc.borrow_mut()(p)?;   
@@ -54,12 +57,12 @@ pub fn get_links(lk: &linkspace::Linkspace, pkt:&dyn NetPkt, level: usize, mode:
         match mode {
             GetLinksMode::Skip => {
                 tracing::debug!("link {link} in {} not found",pkt.hash());
-                lk_stop(lk, &*link.ptr, false);
+                lk_stop(lk, &qid, false);
             },
             GetLinksMode::Watch => {lk_process(lk);},
             GetLinksMode::Pause => {
                 tracing::debug!("Pause on {link} in {} not found",pkt.hash());
-                if lk_process_while(lk, Some(&*link.ptr), Stamp::ZERO)? == 0 {
+                if lk_process_while(lk, Some(&*qid), Stamp::ZERO)? == 0 {
                     bail!("link {link} not found (from {})",pkt.hash())
                 }
             },

@@ -54,6 +54,7 @@ pub(crate) struct Executor {
     pending: RefCell<Vec<Pending>>,
     process_txn: RefCell<Rc<ReadTxn<'static>>>,
     process_upto: Cell<Stamp>,
+    is_reading: Cell<usize>,
     is_running: Cell<bool>,
     pub spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
@@ -105,6 +106,7 @@ impl Linkspace {
                 process_txn: RefCell::new(Rc::new(reader)),
                 process_upto: at.into(),
                 is_running: Cell::new(false),
+                is_reading: Cell::new(0),
                 spawner,
                 //subroutines:RefCell::new(Registry::new())
             }),
@@ -179,6 +181,9 @@ impl Linkspace {
     ) -> anyhow::Result<isize> {
         if self.exec.is_running.get() {
             bail!("already running")
+        }
+        if self.exec.is_reading.get() > 0  {
+            tracing::warn!("Using a process_while nested in read txn can eat up memory. it might become an error in the future");
         }
         tracing::trace!(
             last_step_in=?last_step.map(|i| i-Instant::now()),
@@ -268,7 +273,8 @@ impl Linkspace {
                 }
                 None => {
                     tracing::warn!("holding a read txn across callbacks!");
-                    // the transmute sets the lifetime - but the open txn can eat up memory
+                    // the transmute sets the lifetime which is correct. 
+                    // the real danger is that the open txn eats up memory
                     *txn = Rc::new(unsafe{std::mem::transmute(self.exec.env.get_reader().unwrap())});
                 }
             }
@@ -337,12 +343,10 @@ impl Linkspace {
         self.exec.is_running.set(false);
         self.exec.process_upto.set(upto);
         std::mem::drop((txn, lock));
-        if self.exec.written.get() {
-            tracing::trace!("Written true");
-            self.process()
-        } else {
-            upto
-        }
+        if !self.exec.written.get() { return upto};
+
+        tracing::trace!("Written true");
+        self.process()
     }
 
     pub fn read<F>(&self, hash: LkHash, rx: F, watchid: QueryID, span: Span) -> anyhow::Result<()>
@@ -423,6 +427,7 @@ impl Linkspace {
             let local_span = tracing::debug_span!(parent: &span, "DB Callback").entered();
             tracing::trace!(?mode);
             let reader = self.get_reader();
+            self.exec.is_reading.update(|i| i+1);
             let r = reader
                 .query(mode, &q.predicates, &mut counter)?
                 .try_for_each(|dbp| {
@@ -430,9 +435,13 @@ impl Linkspace {
                     tracing::debug!(pkt=%PktFmtDebug(&dbp.pkt), recv=%dbp.recv().unwrap(),"Match");
                     onmatch.handle_pkt(&dbp, self)
                 });
-            if Rc::strong_count(&reader) > 2 {
-                warn!("Holding txn open");
+
+            let strong_count = Rc::strong_count(&reader);
+            if strong_count > 2{
+                if self.exec.is_reading.get() > 0 || self.exec.is_running.get(){ tracing::debug!("Assuming open txn is on purpose")}
+                else {warn!(strong_count,"Holding txn open")};
             }
+            self.exec.is_reading.update(|i|i-1);
             tracing::debug!(?r,"Done with DB");
             if matches!(r, ControlFlow::Break(_)) {
                 return Ok(crate::saturating_cast(counter))
