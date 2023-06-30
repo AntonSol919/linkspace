@@ -91,11 +91,12 @@
       <p>Packets carrying data are transmitted, and using the
       <code>IP address</code> they eventually reach their destination; a
       computer such as you’re using right now. On the computer an
-      application is listening for packets with a specific
-      <code>port</code> to be received.</p>
-      <p>In transit, a packet can get lost or corrupted. Consequently,
-      packets don’t arrive in the order they were sent. By adding a
-      sequence number, we can reorder them at the destination.</p>
+      application is running that looks for packets with a specific
+      <code>port</code> to arrive.</p>
+      <p>In transit, a packet can get lost or corrupted. The result is
+      that packets don’t arrive in the order they were sent. By adding a
+      sequence number, the destination can verify all packets have
+      arrived and reorder them to fit the order they were sent at.</p>
       <p>I imagine the prototype internet was first discovered when it
       was realized that packet SEQUENCE IDs are unavoidable complexity
       to transmit between two places without losing data, and that
@@ -107,8 +108,8 @@
       <p>This model is ideal for phone-calls or video streams. To build
       more interesting applications we create protocols to add further
       structure to the data. There are thousands of different protocols,
-      but the most common trait among them is that they define a way to
-      transmit questions and answers.</p>
+      but what most of them have in common is a way to transmit
+      questions and answers.</p>
       <p>A couple of well known internet protocols that have this
       property are:</p>
       <table>
@@ -149,16 +150,16 @@
       <p>As with most abstraction, the details leak. Streams get
       disconnected, the other side hangs up, the other side is
       overloaded, etc.</p>
-      <p>In multi party systems trying to orchestrate the
-      questions/answers systems these leaks reach further. Answers
-      become invalid, integrety/backup is fixed adhoc, and parties
-      require expensive synchronization to agree on things<a href="#fn2"
+      <p>The leaks compound when multi party systems trying to build
+      their questions/answers system. Answers become invalid, integrity
+      and backup are build ad-hoc, and parties require expensive
+      synchronization to agree on things<a href="#fn2"
       class="footnote-ref" id="fnref2"
       role="doc-noteref"><sup>2</sup></a>.</p>
-      <p>Once you start thinking in supernets, it becomes clear that
-      this is accidental and unnecessary complexity when communicating
-      in a group - and that we can do things that are impossible if we
-      keep talking streams.</p>
+      <p>Once you start thinking in terms of supernets, it becomes clear
+      that this is accidental and unnecessary complexity when
+      communicating in a group - and that we can do things that are
+      practically impossible if we keep talking streams.</p>
       <h2 id="linkspace">Linkspace</h2>
       <p>Linkspace attempts to provide a model where: for any group
       running any application, there exists a space to address data<a
@@ -241,10 +242,10 @@
       </table>
       </div>
       <p>The key “image/BrokenMachine.jpg” is called a
-      <strong>path</strong> and maps to [image data]. This currently
-      looks just like your files and directories. I’ll refer to each
-      entry as a <strong>point</strong>, and multiple entries as a
-      <strong>set</strong>. The example shown has two sets
+      <strong>path</strong> and maps to [image data]. So far this should
+      look familiar as it is similar to files in directories. I’ll refer
+      to each entry as a <strong>point</strong>, and multiple entries as
+      a <strong>set</strong>. The example shown has two sets
       <strong>merging</strong>. The result is a new set with 3
       messages.</p>
       <p>One of the most useful aspects of linkspace is a way to talk
@@ -285,8 +286,8 @@
       class="footnote-ref" id="fnref6"
       role="doc-noteref"><sup>6</sup></a> (which I’ll show as <span
       id="hh0">[HASH_0]</span> instead of typing out).</p>
-      <p>Therefor it doesn’t matter when or where sets are merged - and
-      they only leave a single copy when both have the same message.</p>
+      <p>It doesn’t matter when or where sets are merged - the result
+      only has a single copy per message.</p>
       <div class="container pkt phd">
       <table style="width:99%;">
       <colgroup>
@@ -379,14 +380,16 @@
       you a single result.</p>
       <p>However, in practice it’s trivial to behave similarly by adding
       constraints to a requested set; Such as ‘only return the latest’,
-      or ‘the latest signed by a specific public key’.</p>
+      or ‘the latest signed by a specific public key’<a href="#fn7"
+      class="footnote-ref" id="fnref7"
+      role="doc-noteref"><sup>7</sup></a>.</p>
       <p>Conversely, I would argue both filesystems and HTTP servers are
       more trouble over all. They hide that they return multiple values
       - a new value depending on when and where you make the
       request.</p>
       <p>A point also has a creation date and are
-      <strong>optionally</strong> signed - such that you can identify
-      who created it.</p>
+      <strong>optionally</strong> signed so you can identify who created
+      it.</p>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
@@ -549,8 +552,8 @@
       <thead>
       <tr class="header">
       <th></th>
-      <th>Field<a href="#fn7" class="footnote-ref" id="fnref7"
-      role="doc-noteref"><sup>7</sup></a></th>
+      <th>Field<a href="#fn8" class="footnote-ref" id="fnref8"
+      role="doc-noteref"><sup>8</sup></a></th>
       <th>Purpose</th>
       <th>IP Packet Analogue</th>
       </tr>
@@ -600,39 +603,43 @@
       </tbody>
       </table>
       </div>
-      <p>For the full layout of packets see the <a
-      href="./docs/guide/index.html#packet_layout">guide</a></p>
+      <p>For the full specification of creating and writing points see
+      the <a href="./docs/guide/index.html#packet_layout">guide</a></p>
       <p>There are some nuances and various advanced topics such as:
       Paths can be any bytes, the <a
       href="./docs/guide/index.html#Query">queries</a> syntax for
       defining sets, and the convention on requesting subsets of data in
       a group by <a
       href="./docs/guide/index.html#lk_pull">pulling</a>.</p>
-      <p>However, I hope this gives you enough to reason about the
-      basics:</p>
-      <p>Users generate an identity, groups set up a method to exchange
-      data.</p>
+      <p>However, this should be enough to reason about the basics:</p>
+      <p>Users generate their identity, together they form groups and
+      set up a method to exchange data.</p>
       <p>The result is that <em>conceptually</em> an application only
       needs to process the state of the trees.</p>
       <h2 id="ready-to-give-it-a-try">Ready to give it a try?</h2>
       <p>Linkspace is not an end-user application. It is a software
       library and command line tools. A GUI frontend to manage
       groups/domains/keys is outside its scope.</p>
+      <p>The packet format is stable. Points created will stay readable
+      in future versions. The API is mostly stable but will have some
+      breaking changes and additional conventions.</p>
       <p>To give it a try you can <a
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
       the pre-build CLI and python bindings to follow along with the <a
       href="./docs/tutorial/index.html">tutorial</a> or the more
       technical <a href="./docs/guide/index.html">Guide</a>, and say hi
       on the test group.</p>
-      <p>The packet format is stable. Points created will stay readable
-      in future versions. The API is mostly stable but will have some
-      breaking changes and additional conventions.</p>
+      <p>For the adventurous there is initial support for wasm, and a
+      POC HTTP bridge called <a
+      href="https://github.com/AntonSol919/webbit">Webbit</a> that works
+      similar to WebDAV.</p>
       <h1 id="qa">Q&amp;A</h1>
       <h3 id="is-linkspace-a-blockchain">Is linkspace a blockchain?</h3>
       <p>No.</p>
       <p>Blockchains and supernets share a common idea:</p>
       <p>Using cryptographic hashes and public keys to provide a model
-      of data that trancends the connection used to share it.</p>
+      for communication data that transcends the connection used to
+      share it.</p>
       <p>Blockchain use the cryptography to batch multiple events into
       ‘blocks’. As new blocks are made they are linked or ‘chained’ to
       the previous block. This creates a consensus of all events that
@@ -665,15 +672,15 @@
       <p>But is it worth it?</p>
       <p>Yes.</p>
       <p>Supernets better model the reality of multi party communication
-      - asynchronous and authenticated<a href="#fn8"
-      class="footnote-ref" id="fnref8"
-      role="doc-noteref"><sup>8</sup></a></p>
+      - asynchronous and authenticated<a href="#fn9"
+      class="footnote-ref" id="fnref9"
+      role="doc-noteref"><sup>9</sup></a></p>
       <p>In the long run they could end up with less moving parts and
       with fewer configurations.</p>
-      <p>Also important is that anyone can take responsibility. It is
-      not without danger for billions of people to spend hours each day
-      in a paradigm where they can not take back control over systems
-      they consider the ‘public square’.</p>
+      <p>Also, it is important that anyone can take responsibility if
+      they want. It is not without danger for billions of people to
+      spend hours each day in a paradigm where they can not take back
+      control over systems they consider the ‘public square’.</p>
       <p>My hope is to look back at this time as the era of digital
       fiefdoms. The next era should balance out the influence of
       host-administrators, and together people can define what a ‘real’
@@ -682,32 +689,34 @@
       id="isnt-it-a-good-thing-that-a-host-can-administrate-what-i-and-others-see-online">Isn’t
       it a good thing that a host can administrate what I and others see
       online?</h3>
-      <p>I agree it is not categorically a bad thing.</p>
-      <p>To have an administrator that filters the digital space there
-      are a multiple options. To name a two:</p>
-      <p>An application can have you trust the public key of third party
-      service to whitelist content. Effectively emulating the current
-      system of ‘admins’, while still having users give the option to
-      replace them.</p>
-      <p>Or an application can have you trust only signatures from
-      friends or friends of friends. (A system that will become more
-      important as AI drives the cost of bullshit to zero.)</p>
+      <p>I agree it is not categorically a bad thing, especially in the
+      ‘public square’.</p>
+      <p>There are different ways to do so, the simplest are:</p>
+      <ul>
+      <li><p>An application can have you trust the public key of third
+      party service to whitelist content. Effectively emulating the
+      current system of ‘admins’, while still having users give the
+      option to replace them.</p></li>
+      <li><p>You can require signatures from friends &amp; friends of
+      friends (Which i suspect will become more important as AI drives
+      the cost of bullshit to zero.)</p></li>
+      </ul>
       <h3
       id="wont-we-end-up-with-the-same-paradigm-of-centralized-control">Won’t
       we end up with the same paradigm of centralized control?</h3>
-      <p>Maybe, maybe not. If a user could walk away from a host server
-      without much trouble, the host has to give a better deal than they
-      do now.</p>
+      <p>Maybe, maybe not. If a user could walk away from a ‘platform’
+      run by a host-administrator without much trouble, the ‘platforms’
+      have to provide a better deal than they do now.</p>
       <h2 id="alts">Why not [alternative]?</h2>
       <p>There are two types of systems I’m certain aren’t the right
       building blocks for the next digital era.</p>
       <ul>
       <li>Synchronizing chain of trust: Is slow and not useful for the
       vast majority of users - (and easy to emulate in a supernet).</li>
-      <li>Faster email/Activity Pub : Its not that fast and its using
-      server defined authenticity<a href="#fn9" class="footnote-ref"
-      id="fnref9" role="doc-noteref"><sup>9</sup></a> - plus most of the
-      list below.</li>
+      <li>Faster email/Activity Pub : It’s not that fast and its using
+      server defined authenticity<a href="#fn10" class="footnote-ref"
+      id="fnref10" role="doc-noteref"><sup>10</sup></a> - plus most of
+      the list below.</li>
       </ul>
       <p>Other supernet-like systems are limited in some way or simply
       choose a different design:</p>
@@ -720,9 +729,11 @@
       few instructions - ideally possible in an integrated circuit. It
       should be fast enough to stream video without using a second
       protocol. That means no json or base64.</li>
-      <li>No Groups. Limiting who you share with is not supported - apps
-      can’t be used in a private group.</li>
-      <li>No domains. Everything becomes one app.</li>
+      <li>No Groups. Setting who you share with and how, is not
+      supported or only supports ‘run multiple instances’.</li>
+      <li>No domains. Everything becomes one app with
+      premature-bureaucracy that can grind development/experiments to a
+      halt.</li>
       <li>Its focused on signatures and consensus.</li>
       <li>Large ‘packets’ - a hash might refer to gigabytes. This
       requires multiple levels to deal with fragmentation in multiple
@@ -760,29 +771,33 @@
       ‘http://www.some_platform.com/image/BrokenMachine.jpg’ is
       addressing ‘[image data]’ - this is wrong. The address is used for
       your request to find where it needs to go, this address then
-      usually replies with ‘[image data]’. A subtle but a consequental
+      usually replies with ‘[image data]’. A subtle but consequental
       difference. Linkspace does not have this discrepency.<a
       href="#fnref5" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       <li id="fn6"><p>Unique for all intents and purposes - except for
       the purpose of counting to 2^256+1.<a href="#fnref6"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn7"><p>Both TCP/IP packets and linkspace packets have
-      control fields that are irrelevant to a vast majority of
-      developers.<a href="#fnref7" class="footnote-back"
+      <li id="fn7"><p>This is similar to how the single-host design
+      works. With the added benefit that ‘content administration’ and
+      ‘server hosting’ are split up and can be done independent of each
+      other.<a href="#fnref7" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn8"><p>Authenticated as in: cryptographicaly proven that
+      <li id="fn8"><p>Both TCP/IP packets and linkspace packets have
+      control fields that are irrelevant to a vast majority of
+      developers.<a href="#fnref8" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn9"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
       an HTTPS session is also proof that the key holder send the
-      message.<a href="#fnref8" class="footnote-back"
+      message.<a href="#fnref9" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn9"><p>Yes i’m aware content hashing and publickey
-      identities might one day be the default - but in so far as i’ve
-      read about it its going to be extremely complex to build on, and
-      apps will miss out on much of the benefit of a supernet.<a
-      href="#fnref9" class="footnote-back"
-      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn10"><p>AFAIK content hashing and publickey identities
+      could one day be the default - but it seems to be extremely
+      complex to build on, and apps will miss out on much of the benefit
+      of a supernet with it being overly generic.<a href="#fnref10"
+      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       </ol>
       </aside>
     </div>

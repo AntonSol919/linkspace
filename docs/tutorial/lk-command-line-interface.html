@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-06-30 Fri 14:05 -->
+<!-- 2023-06-30 Fri 16:00 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>lk - The Linkspace CLI</title>
@@ -27,32 +27,32 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org5612149">creating points</a>
+<li><a href="#orgbb4dfd9">creating points</a>
 <ul>
-<li><a href="#org09a231a">datapoint</a></li>
-<li><a href="#orga5046f2">linkpoint</a></li>
-<li><a href="#org0663e10">keypoint</a></li>
+<li><a href="#org33414a2">datapoint</a></li>
+<li><a href="#org7556334">linkpoint</a></li>
+<li><a href="#org7c0cf0c">keypoint</a></li>
 <li><a href="#collect">collect</a></li>
-<li><a href="#org605eb45">rewrite</a></li>
+<li><a href="#orgc3b949f">rewrite</a></li>
 </ul>
 </li>
-<li><a href="#org19ba381">query and filter</a>
+<li><a href="#org1357ffd">query and filter</a>
 <ul>
-<li><a href="#org395bdad">print-query</a></li>
-<li><a href="#org95180e8">filter</a></li>
+<li><a href="#org161c0fd">print-query</a></li>
+<li><a href="#orgd75f1a9">filter</a></li>
 </ul>
 </li>
-<li><a href="#org523b604">database and runtime</a>
+<li><a href="#orgc609da2">database and runtime</a>
 <ul>
-<li><a href="#org443175d">save</a></li>
-<li><a href="#org2a4fb35">watch</a></li>
+<li><a href="#org125898e">save</a></li>
+<li><a href="#orgb221b0d">watch</a></li>
 </ul>
 </li>
-<li><a href="#org25120c7">ABE</a>
+<li><a href="#orged4d725">ABE</a>
 <ul>
-<li><a href="#org461fdd1">eval</a>
+<li><a href="#org5522e18">eval</a>
 <ul>
-<li><a href="#org9d51f6e">LNS</a></li>
+<li><a href="#org847a615">LNS</a></li>
 </ul>
 </li>
 </ul>
@@ -65,23 +65,23 @@
 </pre>
 </div>
 
-<pre class="example" id="org3c3d1bb">
-linkspace-cli linkspace-cli - 0.3.0-rc2 - main - c5f058e - 1.72.0-nightly
+<pre class="example" id="org7415989">
+linkspace-cli linkspace-cli - 0.3.0-rc2 - main - 02092f9 - 1.72.0-nightly
 </pre>
 
-<div id="outline-container-org5612149" class="outline-2">
-<h2 id="org5612149">creating points</h2>
-<div class="outline-text-2" id="text-org5612149">
+<div id="outline-container-orgbb4dfd9" class="outline-2">
+<h2 id="orgbb4dfd9">creating points</h2>
+<div class="outline-text-2" id="text-orgbb4dfd9">
 </div>
-<div id="outline-container-org09a231a" class="outline-3">
-<h3 id="org09a231a">datapoint</h3>
-<div class="outline-text-3" id="text-org09a231a">
+<div id="outline-container-org33414a2" class="outline-3">
+<h3 id="org33414a2">datapoint</h3>
+<div class="outline-text-3" id="text-org33414a2">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk datapoint | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="org8ec7838">
+<pre class="example" id="org13fd571">
 type	DataPoint
 hash	kSYxvPrTRSuqQlDjnxkEg83QiUH1fZGIOOrbYJ1FMLc
 group	[#:0]
@@ -99,12 +99,12 @@ hello world!
 also usable as <code>lk data</code> and <code>lk d</code>
 </p>
 
-<div class="ctabs" id="org677948b">
-<div class="O" id="org4549331">
+<div class="ctabs" id="org2b07274">
+<div class="O" id="org5f1f024">
 
 </div>
-<div class="help" id="org9b3f0ae">
-<pre class="example" id="orge6f3d6b">
+<div class="help" id="org60554f4">
+<pre class="example" id="org920c836">
 points - create a new datapoint
 
 Usage: lk datapoint [OPTIONS]
@@ -127,13 +127,13 @@ Options:
 
 </div>
 
-<div class="xxd" id="orgd2baca1">
+<div class="xxd" id="orge4d3c3c">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk data | xxd
 </pre>
 </div>
 
-<pre class="example" id="org4c8387e">
+<pre class="example" id="orge7d8995">
 00000000: 4c4b 3100 0000 0000 ffff ffff ffff ffff  LK1.............
 00000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................
 00000020: 9126 31bc fad3 452b aa42 50e3 9f19 0483  .&amp;1...E+.BP.....
@@ -146,8 +146,8 @@ Options:
 </div>
 
 
-<div class="ctabs" id="org1a1dd25">
-<div class="info" id="orgb7b7d0f">
+<div class="ctabs" id="org9dc3627">
+<div class="info" id="org1202c30">
 <p>
 <code>pktf</code>, and many other functions, take <a href="../guide/index.html#ABE">ABE</a> input. A byte templating language.
 </p>
@@ -175,7 +175,7 @@ cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
 </pre>
 </div>
 
-<pre class="example" id="org7468d8c">
+<pre class="example" id="org3ae0090">
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
@@ -183,9 +183,9 @@ FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
 </div>
 </div>
 
-<div id="outline-container-orga5046f2" class="outline-3">
-<h3 id="orga5046f2">linkpoint</h3>
-<div class="outline-text-3" id="text-orga5046f2">
+<div id="outline-container-org7556334" class="outline-3">
+<h3 id="org7556334">linkpoint</h3>
+<div class="outline-text-3" id="text-org7556334">
 <p>
 A <code>linkpoint</code> has the additional fields:
 </p>
@@ -205,14 +205,14 @@ A <code>linkpoint</code> has the additional fields:
 </pre>
 </div>
 
-<pre class="example" id="orgaca84bb">
+<pre class="example" id="org04ab4ee">
 type	LinkPoint
-hash	2bmqbJCxDmuwPsOOkBJS4SmAcwy9em5arVRBpNrnrJQ
+hash	zdpCHbBqwa8bczwvMhRVG8fLos_hl2c7dBuXExAwOWc
 group	[#:pub]
 domain	imageboard
 path	/hello/world
 pubkey	[@:none]
-create	1688126717763701
+create	1688133627616321
 links	2
 	a_link _K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88
 	other_link vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ
@@ -233,14 +233,14 @@ You can use ABE to set the tag or ptr:
 </pre>
 </div>
 
-<pre class="example" id="orgf2d0a16">
+<pre class="example" id="orgd07f450">
 type	LinkPoint
-hash	GVYl4opzIzRb_gegSp4u_tOFFv4q2mNfPvwroMbFMHs
+hash	MJwW-QrfJ-LF3-YtkujOaC2-iHB2Dmkh0lH0lFZPVKs
 group	[#:test]
 domain	imageboard
 path	
 pubkey	[@:none]
-create	1688126717786092
+create	1688133627631234
 links	3
 	hello Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk
 	my_key u-Ozv7WkgZwg5mHTQxsgLsaJmJvznWhCAkAWilLpMNs
@@ -249,7 +249,7 @@ links	3
 data	0
 </pre>
 
-<div class="info" id="org761c531">
+<div class="info" id="orga3c83f4">
 <p>
 To use <code>[@:me:local]</code> you'll have to generate a key and create a local binding. <code>lk key</code> does this for you.
 </p>
@@ -258,7 +258,7 @@ To use <code>[@:me:local]</code> you'll have to generate a key and create a loca
 </pre>
 </div>
 
-<pre class="example" id="org68d644b">
+<pre class="example" id="orgf67f336">
 $argon2d$v=19$m=8,t=1,p=1$u+Ozv7WkgZwg5mHTQxsgLsaJmJvznWhCAkAWilLpMNs$3qnXpi2VpgJLrhbGCYIhOOHLIG4fFFLUnrhKdjUaQvE
 u-Ozv7WkgZwg5mHTQxsgLsaJmJvznWhCAkAWilLpMNs
 </pre>
@@ -274,14 +274,14 @@ You can use xargs to dynamically set links, but a better tool is <a href="#colle
 </pre>
 </div>
 
-<pre class="example" id="org2fcd67f">
+<pre class="example" id="org8a68a58">
 type	LinkPoint
-hash	Hq4cZrFg6Xf4J5K-TCSLelFgWNMlqPLAdm_HcHnPX3o
+hash	-VXhwAgOuCKDtMoaED8gEfYfaUuyoNyVFE0bBygW6MQ
 group	[#:pub]
 domain	imageboard
 path	/a/pathname/for/this/point
 pubkey	[@:none]
-create	1688126717833542
+create	1688133627687625
 links	3
 	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
 	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
@@ -299,7 +299,7 @@ Unlike <code>lk datapoint</code> the <code>lk linkpoint</code> command does not 
 </pre>
 </div>
 
-<pre class="example" id="org08ef079">
+<pre class="example" id="orgb2dc46e">
 d
 </pre>
 
@@ -315,14 +315,14 @@ lk link ::/a/path --data-str "hello world" | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="org309a9a9">
+<pre class="example" id="org18de92f">
 type	LinkPoint
-hash	pOfJQpdzTV0_lXGfp_ykJi6O83Wb9XeUuRSNmSiHaBI
+hash	oKtxIgGwCHiJuhLAZ_p5t1dji1M-bmqSm-7PcRIkiqM
 group	[#:test]
 domain	imageboard
 path	/a/path
 pubkey	[@:none]
-create	1688126717875697
+create	1688133627723288
 links	0
 
 data	11
@@ -337,7 +337,7 @@ The max size is still 2<sup>16</sup>-512-PointHeader<sub>4</sub>. Free space is 
 </pre>
 </div>
 
-<pre class="example" id="org535e9eb">
+<pre class="example" id="org23a09b6">
 xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
 xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
 i3Erj6uDTzxluzPOVlBxY_yG7Q9-H7b0iX3s0i-4fQQ contains 20177 bytes
@@ -352,9 +352,9 @@ i3Erj6uDTzxluzPOVlBxY_yG7Q9-H7b0iX3s0i-4fQQ contains 20177 bytes
 </div>
 
 
-<div id="outline-container-org0663e10" class="outline-3">
-<h3 id="org0663e10">keypoint</h3>
-<div class="outline-text-3" id="text-org0663e10">
+<div id="outline-container-org7c0cf0c" class="outline-3">
+<h3 id="org7c0cf0c">keypoint</h3>
+<div class="outline-text-3" id="text-org7c0cf0c">
 <p>
 Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </p>
@@ -364,14 +364,14 @@ Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </pre>
 </div>
 
-<pre class="example" id="org0cee93e">
+<pre class="example" id="orgcd1d7b2">
 type	KeyPoint
-hash	5Mg0nMk-SHRNJks5AmvN-tlnog4L4uNQA5E_L_t5Ysw
+hash	QiYz4itFgpVjp7jB9wvPLvvJzIYqAVkDgbRH7zswPS4
 group	[#:test]
 domain	imageboard
 path	
 pubkey	[@:me:local]
-create	1688126717928520
+create	1688133627794307
 links	0
 
 data	0
@@ -386,7 +386,7 @@ Or use <code>--sign</code> on a linkpoint command
 </pre>
 </div>
 
-<pre class="example" id="org44b59c3">
+<pre class="example" id="org552726e">
 u-Ozv7WkgZwg5mHTQxsgLsaJmJvznWhCAkAWilLpMNs
 </pre>
 </div>
@@ -405,7 +405,7 @@ Collect creates a linkpoint with links pointing to the incoming pkts.
 </pre>
 </div>
 
-<pre class="example" id="org4ccfa62">
+<pre class="example" id="orgcce0b02">
 DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
 DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
 DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 19961 0
@@ -414,44 +414,44 @@ KeyPoint	u-Ozv7WkgZwg5mHTQxsgLsaJmJvznWhCAkAWilLpMNs 0 3
 </div>
 </div>
 
-<div id="outline-container-org605eb45" class="outline-3">
-<h3 id="org605eb45">rewrite</h3>
+<div id="outline-container-orgc3b949f" class="outline-3">
+<h3 id="orgc3b949f">rewrite</h3>
 </div>
 </div>
 
-<div id="outline-container-org19ba381" class="outline-2">
-<h2 id="org19ba381">query and filter</h2>
-<div class="outline-text-2" id="text-org19ba381">
+<div id="outline-container-org1357ffd" class="outline-2">
+<h2 id="org1357ffd">query and filter</h2>
+<div class="outline-text-2" id="text-org1357ffd">
 </div>
-<div id="outline-container-org395bdad" class="outline-3">
-<h3 id="org395bdad">print-query</h3>
-</div>
-
-<div id="outline-container-org95180e8" class="outline-3">
-<h3 id="org95180e8">filter</h3>
-</div>
+<div id="outline-container-org161c0fd" class="outline-3">
+<h3 id="org161c0fd">print-query</h3>
 </div>
 
-<div id="outline-container-org523b604" class="outline-2">
-<h2 id="org523b604">database and runtime</h2>
-<div class="outline-text-2" id="text-org523b604">
-</div>
-<div id="outline-container-org443175d" class="outline-3">
-<h3 id="org443175d">save</h3>
-</div>
-
-<div id="outline-container-org2a4fb35" class="outline-3">
-<h3 id="org2a4fb35">watch</h3>
+<div id="outline-container-orgd75f1a9" class="outline-3">
+<h3 id="orgd75f1a9">filter</h3>
 </div>
 </div>
 
-<div id="outline-container-org25120c7" class="outline-2">
-<h2 id="org25120c7">ABE</h2>
-<div class="outline-text-2" id="text-org25120c7">
+<div id="outline-container-orgc609da2" class="outline-2">
+<h2 id="orgc609da2">database and runtime</h2>
+<div class="outline-text-2" id="text-orgc609da2">
 </div>
-<div id="outline-container-org461fdd1" class="outline-3">
-<h3 id="org461fdd1">eval</h3>
-<div class="outline-text-3" id="text-org461fdd1">
+<div id="outline-container-org125898e" class="outline-3">
+<h3 id="org125898e">save</h3>
+</div>
+
+<div id="outline-container-orgb221b0d" class="outline-3">
+<h3 id="orgb221b0d">watch</h3>
+</div>
+</div>
+
+<div id="outline-container-orged4d725" class="outline-2">
+<h2 id="orged4d725">ABE</h2>
+<div class="outline-text-2" id="text-orged4d725">
+</div>
+<div id="outline-container-org5522e18" class="outline-3">
+<h3 id="org5522e18">eval</h3>
+<div class="outline-text-3" id="text-org5522e18">
 <p>
 You can use <code>lk eval</code> to run a single expression instead of for each packet in a stream.
 </p>
@@ -469,11 +469,11 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688126718161061</code>
+<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688133627965451</code>
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Fri, 30 Jun 2023 12:05:18 +0000</code>
+<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Fri, 30 Jun 2023 14:00:28 +0000</code>
 </p>
 
 <p>
@@ -485,9 +485,9 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 </p>
 </div>
 
-<div id="outline-container-org9d51f6e" class="outline-4">
-<h4 id="org9d51f6e">LNS</h4>
-<div class="outline-text-4" id="text-org9d51f6e">
+<div id="outline-container-org847a615" class="outline-4">
+<h4 id="org847a615">LNS</h4>
+<div class="outline-text-4" id="text-org847a615">
 <p>
 <code class="src src-bash">lk eval "[[#:0]/b]"</code> ==
 </p>
@@ -498,12 +498,12 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 
 
 
-<div class="ctabs" id="org5270abe">
-<div class="O" id="org2a3369a">
+<div class="ctabs" id="org4bef137">
+<div class="O" id="org4595b5e">
 
 </div>
-<div class="help" id="org1336d7e">
-<pre class="example" id="orge243347">
+<div class="help" id="orgf0884b1">
+<pre class="example" id="org3f477c5">
 The context has one or more scopes active
 Each scope has functions and macros
 For each function the option set  ['[' , '/' , '?'] is given
@@ -679,7 +679,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
 </div>
 </div></div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-06-30 Fri 14:05</p>
+<p class="date">Created: 2023-06-30 Fri 16:00</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

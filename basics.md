@@ -26,11 +26,11 @@ To do this it uses the following types of packets to transmit data between two d
 :::
 
 Packets carrying data are transmitted, and using the `IP address` they eventually reach their destination; a computer such as you're using right now.
-On the computer an application is listening for packets with a specific `port` to be received.
+On the computer an application is running that looks for packets with a specific `port` to arrive.
 
 In transit, a packet can get lost or corrupted.
-Consequently, packets don't arrive in the order they were sent.
-By adding a sequence number, we can reorder them at the destination.
+The result is that packets don't arrive in the order they were sent.
+By adding a sequence number, the destination can verify all packets have arrived and reorder them to fit the order they were sent at.
 
 I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are unavoidable complexity to transmit between two places without losing data, and that consequently the physical route each packet takes is irrelevant.
 
@@ -38,7 +38,7 @@ The result is that _conceptually_ each application on each device can talk to an
 
 This model is ideal for phone-calls or video streams.
 To build more interesting applications we create protocols to add further structure to the data.
-There are thousands of different protocols, but the most common trait among them is that they define a way to transmit questions and answers.
+There are thousands of different protocols, but what most of them have in common is a way to transmit questions and answers.
 
 A couple of well known internet protocols that have this property are:
 
@@ -58,12 +58,12 @@ There are many difficulties with it.
 As with most abstraction, the details leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
 
-In multi party systems trying to orchestrate the questions/answers systems these leaks reach further.
-Answers become invalid, integrety/backup is fixed adhoc, and parties require expensive synchronization to agree on things[^sync].
+The leaks compound when multi party systems trying to build their questions/answers system.
+Answers become invalid, integrity and backup are build ad-hoc, and parties require expensive synchronization to agree on things[^sync].
 
 [^sync]: Or instead of synchronization you add unique ID's to each event across the network. If you chose a strong hash, and each event can reference others by their hash - you've just build a special purpose supernet.
 
-Once you start thinking in supernets, it becomes clear that this is accidental and unnecessary complexity when communicating in a group - and that we can do things that are impossible if we keep talking streams.
+Once you start thinking in terms of supernets, it becomes clear that this is accidental and unnecessary complexity when communicating in a group - and that we can do things that are practically impossible if we keep talking streams.
 
 ## Linkspace
 
@@ -114,7 +114,7 @@ To understand what each field does lets start with a simple example of a message
 
 
 The key "image/BrokenMachine.jpg" is called a **path** and maps to [image data].
-This currently looks just like your files and directories.
+So far this should look familiar as it is similar to files in directories.
 I'll refer to each entry as a **point**, and multiple entries as a **set**.
 The example shown has two sets **merging**. The result is a new set with 3 messages.
 
@@ -140,7 +140,7 @@ A host can get disconnected,
 you can't (re)share and (re)use your copy of the data,
 and every host has to pick a strategy when you merge two sets but they share the same path.
 
-[^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but a consequental difference. Linkspace does not have this discrepency.
+[^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
 
 I would argue these are all accidental complexity.
 
@@ -156,7 +156,7 @@ i.e. there exists a unique 32 bytes (or ~77-digit number) that uniquely identifi
 
 [^uniq]: Unique for all intents and purposes - except for the purpose of counting to 2^256+1.
 
-Therefor it doesn't matter when or where sets are merged - and they only leave a single copy when both have the same message.
+It doesn't matter when or where sets are merged - the result only has a single copy per message.
 
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -199,12 +199,14 @@ or multiple entries through a path "/thread/Tabs or spaces/msg".
 This might seem more trouble than existing solutions like a filesystem or HTTP.
 In those key-value systems a single path gets you a single result.
 
-However, in practice it's trivial to behave similarly by adding constraints to a requested set; Such as 'only return the latest', or 'the latest signed by a specific public key'.
+However, in practice it's trivial to behave similarly by adding constraints to a requested set; Such as 'only return the latest', or 'the latest signed by a specific public key'[^lastpubkey].
+
+[^lastpubkey]: This is similar to how the single-host design works. With the added benefit that 'content administration' and 'server hosting' are split up and can be done independent of each other.
 
 Conversely, I would argue both filesystems and HTTP servers are more trouble over all.
 They hide that they return multiple values - a new value depending on when and where you make the request.
 
-A point also has a creation date and are **optionally** signed - such that you can identify who created it.
+A point also has a creation date and are **optionally** signed so you can identify who created it.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
@@ -284,28 +286,31 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 
 [^4]: Both TCP/IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
 
-For the full layout of packets see the [guide](./docs/guide/index.html#packet_layout)
+For the full specification of creating and writing points see the [guide](./docs/guide/index.html#packet_layout)
 
 There are some nuances and various advanced topics such as: Paths can be any bytes, the [queries](./docs/guide/index.html#Query) syntax for defining sets, and the convention on requesting subsets of data in a group by [pulling](./docs/guide/index.html#lk_pull).
 
-However, I hope this gives you enough to reason about the basics:
+However, this should be enough to reason about the basics:
 
-Users generate an identity, groups set up a method to exchange data.
+Users generate their identity, together they form groups and set up a method to exchange data.
 
 The result is that _conceptually_ an application only needs to process the state of the trees.
 
 ## Ready to give it a try?
 
-Linkspace is not an end-user application. 
+Linkspace is not an end-user application.
 It is a software library and command line tools.
 A GUI frontend to manage groups/domains/keys is outside its scope.
+
+The packet format is stable. Points created will stay readable in future versions.
+The API is mostly stable but will have some breaking changes and additional conventions.
 
 To give it a try you can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python bindings to follow along with
 the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html),
 and say hi on the test group.
 
-The packet format is stable. Points created will stay readable in future versions.
-The API is mostly stable but will have some breaking changes and additional conventions.
+For the adventurous there is initial support for wasm, and a POC HTTP bridge called [Webbit]( https://github.com/AntonSol919/webbit) that works similar to WebDAV.
+
 
 # Q&A
 
@@ -315,7 +320,7 @@ No.
 
 Blockchains and supernets share a common idea:
 
-Using cryptographic hashes and public keys to provide a model of data that trancends the connection used to share it.
+Using cryptographic hashes and public keys to provide a model for communication data that transcends the connection used to share it.
 
 Blockchain use the cryptography to batch multiple events into 'blocks'. As new blocks are made they are linked or 'chained' to the previous block.
 This creates a consensus of all events that happened.
@@ -352,7 +357,7 @@ Supernets better model the reality of multi party communication - asynchronous a
 
 In the long run they could end up with less moving parts and with fewer configurations.
 
-Also important is that anyone can take responsibility.
+Also, it is important that anyone can take responsibility if they want.
 It is not without danger for billions of people to spend hours each day in a paradigm where they can not take back control over systems they consider the 'public square'.
 
 My hope is to look back at this time as the era of digital fiefdoms.
@@ -361,36 +366,37 @@ and together people can define what a 'real' copy is.
 
 ### Isn't it a good thing that a host can administrate what I and others see online?
 
-I agree it is not categorically a bad thing.
+I agree it is not categorically a bad thing, especially in the 'public square'.
 
-To have an administrator that filters the digital space there are a multiple options. To name a two:
+There are different ways to do so, the simplest are:
 
-An application can have you trust the public key of third party service to whitelist content. Effectively emulating the current system of 'admins', while still having users give the option to replace them.
+- An application can have you trust the public key of third party service to whitelist content. Effectively emulating the current system of 'admins', while still having users give the option to replace them.
 
-Or an application can have you trust only signatures from friends or friends of friends.
-(A system that will become more important as AI drives the cost of bullshit to zero.)
+- You can require signatures from friends & friends of friends 
+(Which i suspect will become more important as AI drives the cost of bullshit to zero.)
 
 ### Won't we end up with the same paradigm of centralized control?
 
 Maybe, maybe not.
-If a user could walk away from a host server without much trouble, the host has to give a better deal than they do now.
+If a user could walk away from a 'platform' run by a host-administrator without much trouble, 
+the 'platforms' have to provide a better deal than they do now.
 
 ## Why not [alternative]?{#alts}
 
 There are two types of systems I'm certain aren't the right building blocks for the next digital era.
 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
-- Faster email/Activity Pub : Its not that fast and its using server defined authenticity[^i] - plus most of the list below.
+- Faster email/Activity Pub : It's not that fast and its using server defined authenticity[^i] - plus most of the list below.
 
-[^i]: Yes i'm aware content hashing and publickey identities might one day be the default - but in so far as i've read about it its going to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet.
+[^i]: AFAIK content hashing and publickey identities could one day be the default - but it seems to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet with it being overly generic.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 
 - Too specialized. For example, a system like Git has a lot of plumbing for diffing each commit.
 - It has either hash addresses or custom url addresses, not both.
 - Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a second protocol. That means no json or base64.
-- No Groups. Limiting who you share with is not supported - apps can't be used in a private group.
-- No domains. Everything becomes one app.
+- No Groups. Setting who you share with and how, is not supported or only supports 'run multiple instances'.
+- No domains. Everything becomes one app with premature-bureaucracy that can grind development/experiments to a halt.
 - Its focused on signatures and consensus.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
 - Poor scripting support. 
@@ -398,3 +404,4 @@ Other supernet-like systems are limited in some way or simply choose a different
 
 That does not mean I think alternatives are necessarily worse.
 Different systems have different strong points.
+
