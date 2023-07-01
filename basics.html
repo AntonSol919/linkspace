@@ -98,18 +98,18 @@
       sequence number, the destination can verify all packets have
       arrived and reorder them to the order they were sent in.</p>
       <p>I imagine the prototype internet was first discovered when it
-      was realized that packet SEQUENCE IDs are unavoidable complexity
-      to transmit between two places without losing data, and that
-      consequently the physical route each packet takes is
-      irrelevant.</p>
+      was realized that packet SEQUENCE IDs are essential
+      (i.e. unavoidable) complexity. When transmitting data something
+      must define the order of packets. Consequently the physical route
+      each packet takes is irrelevant.</p>
       <p>The result is that <em>conceptually</em> each application on
       each device can talk to any other application on any other
       device.</p>
       <p>This model is ideal for phone-calls or video streams. To build
       more interesting applications we create protocols to add further
-      structure to the data. There are thousands of different protocols,
-      but what most of them have in common is a way to transmit
-      questions and answers.</p>
+      structure to the stream of data. There are thousands of different
+      protocols, but what most of them have in common is a way to
+      transmit questions and answers.</p>
       <p>A couple of well known internet protocols that have this
       property are:</p>
       <table>
@@ -152,13 +152,14 @@
       overloaded, etc.</p>
       <p>The leaks compound when more than two computers are involved.
       Answers become invalid, integrity is build ad-hoc, backups require
-      additional logic, and a shared state requires expensive
+      additional logic, a shared state requires expensive
       synchronization<a href="#fn2" class="footnote-ref" id="fnref2"
-      role="doc-noteref"><sup>2</sup></a>.</p>
+      role="doc-noteref"><sup>2</sup></a>, etc.</p>
       <p>Once you start thinking in terms of supernets, it becomes clear
-      that this is accidental and unnecessary complexity when two or
-      more parties are communicating - and that we can do things that
-      are practically impossible if we keep talking streams.</p>
+      that this is accidental complexity. If we take a different
+      approach to two or more computers communicate, these concerns
+      become irrelevant or trivial - and we can do things that are
+      practically impossible if we keep talking streams.</p>
       <h2 id="linkspace">Linkspace</h2>
       <p>Linkspace attempts to provide a model where: for any group
       running any application, there exists a space to address data<a
@@ -268,18 +269,25 @@
       <p>There is a misconception on what an address is<a href="#fn5"
       class="footnote-ref" id="fnref5"
       role="doc-noteref"><sup>5</sup></a>, a host can get disconnected,
-      you can’t (re)share and (re)use your copy of the data, and every
-      host has to pick a strategy when merging data but two entries
-      share the same path.</p>
-      <p>I would argue these are all accidental complexity.</p>
-      <p>Most noticeably the last one: How to merge two sets if both
-      have <code>thread/BrokenMachine.jpg</code> but different data.
-      Once the speed of light is measurable in a network, it is
-      unavoidable for two computers to write to the same path without a
-      costly synchronization steps.</p>
+      you can’t (re)share and (re)use your copy of the data, and there
+      is no agreement on what to do when two sets have entries with the
+      same path but different data.</p>
+      <p>I would argue these fall under accidental complexity.</p>
+      <p>The last one is perhaps the most surprising. What would be the
+      correct way to merge two sets with overlapping paths? Which is
+      correct when two different <code>thread/BrokenMachine.jpg</code>
+      pictures are uploaded?</p>
+      <p>The reason I call it accidental complexity for each system to
+      work around this problem differently is because there is only one
+      solution that always works. Once the speed of light is measurable
+      in a network, it is unavoidable for two or more computers to write
+      to the same path. Our current norm to contact a single host that
+      administrates what the ‘real’ copy is doesn’t, and it should be
+      obvious by now that a single-host setup has profound (social)
+      consequences.</p>
       <p>In linkspace there is no such thing as a ‘real’ copy on a
       single host.</p>
-      <p>Every path refers to multiple values.</p>
+      <p>Every path refers to multiple entries.</p>
       <p>Each point is hashed. i.e. there exists a unique 32 bytes (or
       ~77-digit number) that uniquely identifies the point<a href="#fn6"
       class="footnote-ref" id="fnref6"
@@ -604,13 +612,8 @@
       </div>
       <p>For the full specification of creating and writing points see
       the <a href="./docs/guide/index.html#packet_layout">guide</a></p>
-      <p>There are some nuances and various advanced topics such as:
-      Paths can be any bytes, the <a
-      href="./docs/guide/index.html#Query">queries</a> syntax for
-      defining sets, and the convention on requesting subsets of data in
-      a group by <a
-      href="./docs/guide/index.html#lk_pull">pulling</a>.</p>
-      <p>However, this should be enough to reason about the basics:</p>
+      <p>There are some nuances and various advanced topics. However,
+      this should be enough to reason about the basics:</p>
       <p>Users generate their identity, together they form groups and
       set up a method to exchange data.</p>
       <p>The result is that <em>conceptually</em> an application only
@@ -626,8 +629,7 @@
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
       the pre-build CLI and python bindings to follow along with the <a
       href="./docs/tutorial/index.html">tutorial</a> or the more
-      technical <a href="./docs/guide/index.html">Guide</a>, and say hi
-      on the test group.</p>
+      technical <a href="./docs/guide/index.html">Guide</a>,</p>
       <p>For the adventurous there is initial support for wasm, and a
       POC HTTP bridge called <a
       href="https://github.com/AntonSol919/webbit">Webbit</a> that works

@@ -284,6 +284,8 @@ The CLI also accepts ~lk link --sign~ instead of ~lk keypoint~
 #+END_py
 #+END_ctabs
 
+
+
 ** Fields
 
 In python you can access these fields directly as bytes.
@@ -1258,6 +1260,55 @@ An authority has the right to vote for all subclaims. For example the claim ~lns
 
 ~$Claim1~ becomes 'live' when a single authority of ~claim/test/example~ creates a vote by creating a keypoint ~lns:[#:pub]:/claim/test/example/john~ with
 the link ~vote:$Claim1.hash~. The first claim to get a majority of votes wins.
+
+* Advanced topics
+
+** Big data
+:PROPERTIES:
+:CUSTOM_ID: bigdata
+:END:
+
+One way of reading/writing data larger than aprx 2^{16} is to create a linkpoint with multiple ~("data",datap_hash)~.
+That would give you space for ~85mb~. You can go infinitely large by adding ~("continue",next_linkpoint)~.
+
+#+begin_ctabs
+#+begin_sh
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  python -c 'print("-" * 200000000,end="")' \
+      | lk data \
+      | lk collect example:: --create [epoch] --collect-tag 'data' --chain-tag 'continue'\
+      | lk save -f \
+      | lk filter example:: \
+      | lk pktf "[hash:str] [links_len:str]"
+#+END_SRC
+
+#+BEGIN_VERSE
+Advanced tip: we could have made this shorter with ~collect --forward db --write db --write stdout-expr "[hash:str] [links_len]"~
+#+END_VERSE
+
+#+END_sh
+#+END_ctabs
+
+Note that to recreate the data you have to do a 'depth first' search starting from the last result
+
+#+begin_ctabs
+#+begin_sh
+
+#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+  lk watch-hash 1FAKPrMTY8nBQ4zeoXVvgn_ESQJcjJQ8l9fJDSmDEgA | lk get-links -R pause | lk pktf -d '' [data] > /tmp/bytes
+  python -c 'print("-"*200000000,end="")' > /tmp/bytes2
+  diff /tmp/bytes /tmp/bytes2 && echo ok
+#+END_SRC
+
+
+#+BEGIN_VERSE
+Note the pktf -d '' to remove the delimiter between packets.
+An alternative approach would be to use ~lk get-links --write file-expr:[/:/tmp/bytes]:[data] --forward null~
+#+END_VERSE
+
+#+END_sh
+#+END_ctabs
 
 
 

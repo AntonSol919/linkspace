@@ -32,12 +32,12 @@ In transit, a packet can get lost or corrupted.
 The result is that packets don't arrive in the order they were sent.
 By adding a sequence number, the destination can verify all packets have arrived and reorder them to the order they were sent in.
 
-I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are unavoidable complexity to transmit between two places without losing data, and that consequently the physical route each packet takes is irrelevant.
+I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential (i.e. unavoidable) complexity. When transmitting data something must define the order of packets. Consequently the physical route each packet takes is irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
 This model is ideal for phone-calls or video streams.
-To build more interesting applications we create protocols to add further structure to the data.
+To build more interesting applications we create protocols to add further structure to the stream of data.
 There are thousands of different protocols, but what most of them have in common is a way to transmit questions and answers.
 
 A couple of well known internet protocols that have this property are:
@@ -59,11 +59,12 @@ As with most abstraction, the details leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
 
 The leaks compound when more than two computers are involved.
-Answers become invalid, integrity is build ad-hoc, backups require additional logic, and a shared state requires expensive synchronization[^sync].
+Answers become invalid, integrity is build ad-hoc, backups require additional logic, a shared state requires expensive synchronization[^sync], etc.
 
 [^sync]: Or instead of some form of locking you add unique ID's to all your event in the network. If you chose a strong hash, and each event can reference others by their hash - then you've essentially built a special purpose supernet.
 
-Once you start thinking in terms of supernets, it becomes clear that this is accidental and unnecessary complexity when two or more parties are communicating - and that we can do things that are practically impossible if we keep talking streams.
+Once you start thinking in terms of supernets, it becomes clear that this is accidental complexity.
+If we take a different approach to two or more computers communicate, these concerns become irrelevant or trivial - and we can do things that are practically impossible if we keep talking streams.
 
 ## Linkspace
 
@@ -138,18 +139,21 @@ This is simple, but it has downsides.
 There is a misconception on what an address is[^address],
 a host can get disconnected,
 you can't (re)share and (re)use your copy of the data,
-and every host has to pick a strategy when merging data but two entries share the same path.
+and there is no agreement on what to do when two sets have entries with the same path but different data.
 
 [^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
 
-I would argue these are all accidental complexity.
+I would argue these fall under accidental complexity.
 
-Most noticeably the last one: How to merge two sets if both have `thread/BrokenMachine.jpg` but different data.
-Once the speed of light is measurable in a network, it is unavoidable for two computers to write to the same path without a costly synchronization steps.
+The last one is perhaps the most surprising. What would be the correct way to merge two sets with overlapping paths?
+Which is correct when two different `thread/BrokenMachine.jpg` pictures are uploaded?
+
+The reason I call it accidental complexity for each system to work around this problem differently is because there is only one solution that always works. Once the speed of light is measurable in a network, it is unavoidable for two or more computers to write to the same path.
+Our current norm to contact a single host that administrates what the 'real' copy is doesn't, and it should be obvious by now that a single-host setup has profound (social) consequences.
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Every path refers to multiple values.
+Every path refers to multiple entries.
 
 Each point is hashed.
 i.e. there exists a unique 32 bytes (or ~77-digit number) that uniquely identifies the point[^uniq] (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
@@ -288,8 +292,7 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 
 For the full specification of creating and writing points see the [guide](./docs/guide/index.html#packet_layout)
 
-There are some nuances and various advanced topics such as: Paths can be any bytes, the [queries](./docs/guide/index.html#Query) syntax for defining sets, and the convention on requesting subsets of data in a group by [pulling](./docs/guide/index.html#lk_pull).
-
+There are some nuances and various advanced topics.
 However, this should be enough to reason about the basics:
 
 Users generate their identity, together they form groups and set up a method to exchange data.
@@ -307,10 +310,8 @@ The API is mostly stable but will have some breaking changes and additional conv
 
 To give it a try you can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python bindings to follow along with
 the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html),
-and say hi on the test group.
 
 For the adventurous there is initial support for wasm, and a POC HTTP bridge called [Webbit]( https://github.com/AntonSol919/webbit) that works similar to WebDAV.
-
 
 # Q&A
 
