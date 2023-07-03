@@ -77,8 +77,6 @@ then linkspace is essentially a shared key-value space, so groups can talk _abou
 
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
-### Merging sets
-
 To understand what each field does lets start with a simple example of a message forum. 
 
 
@@ -142,6 +140,7 @@ you can't (re)share and (re)use your copy of the data,
 and there is no standard on what happens when two people create two different `image/BrokenMachine.jpg` but with different pictures.
 
 [^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
+
 I would argue these fall under accidental complexity.
 
 Especially the last one. Once the speed of light is measurable in a network, it requires a specific design to avoid two or more computers to write to the same path.
@@ -226,7 +225,7 @@ i.e. in linkspace 'hosting data' and 'content administration' can be decoupled.
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
 :::
 
-<div class="op">+</div>
+<div class="op">=</div>
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
