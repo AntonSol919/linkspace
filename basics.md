@@ -72,8 +72,8 @@ Linkspace attempts to provide a model where: for any group running any applicati
 
 [^idea]: This idea and other ideas used in linkspace aren't new. But I believe linkspace is a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
 
-If the current internet provides streams for key-value systems, so you can talk _to_ server,  
-then linkspace provides a shared key-value space, so groups can talk _about_ data.
+If the current internet is essentially streams for key-value systems, so you can talk _to_ server, 
+then linkspace is essentially a shared key-value space, so groups can talk _about_ data.
 
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
@@ -130,30 +130,27 @@ Either on your computer or on their computer[^device].
 
 [^device]: Your computer immediatly forgetting those data points is a configuration detail.
 
-The internet we use today has a single host design.
+The internet we use today has a single host design. 
 For instance, a web-browser or app contacts `http://www.some_platform.com`
-for the key `/image/BrokenMachine.jpg` to get their data.
+for the key `/image/BrokenMachine.jpg` to get an image.
 
 This is simple, but it has downsides.
 
 There is a misconception on what an address is[^address],
 a host can get disconnected,
 you can't (re)share and (re)use your copy of the data,
-and there is no agreement on what to do when two sets have entries with the same path but different data.
+and there is no standard on what happens when two people create two different `image/BrokenMachine.jpg` but with different pictures.
 
 [^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
-
 I would argue these fall under accidental complexity.
 
-The last one is perhaps the most surprising. What would be the correct way to merge two sets with overlapping paths?
-Which is correct when two different `thread/BrokenMachine.jpg` pictures are uploaded?
+Especially the last one. Once the speed of light is measurable in a network, it requires a specific design to avoid two or more computers to write to the same path.
 
-The reason I call it accidental complexity for each system to work around this problem differently is because there is only one solution that always works. Once the speed of light is measurable in a network, it is unavoidable for two or more computers to write to the same path.
-Our current norm to contact a single host that administrates what the 'real' copy is doesn't, and it should be obvious by now that a single-host setup has profound (social) consequences.
+In our single host design, the data is hosted on a server and the person who has administrative access to that server can then administrate which one is the 'real' copy, and which one should be forgotten. 
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Every path refers to multiple entries.
+Every path can refer to multiple points.
 
 Each point is hashed.
 i.e. there exists a unique 32 bytes (or ~77-digit number) that uniquely identifies the point[^uniq] (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
@@ -201,16 +198,16 @@ We can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
 or multiple entries through a path "/thread/Tabs or spaces/msg".
 
 This might seem more trouble than existing solutions like a filesystem or HTTP.
-In those key-value systems a single path gets you a single result.
+In those, one request by name gets you a single result. 
 
-However, in practice it's trivial to behave similarly by adding constraints to a requested set; Such as 'only return the latest', or 'the latest signed by a specific public key'[^lastpubkey].
+However, this is not a real issue for two reasons. 
 
-[^lastpubkey]: This is similar to how the single-host design works. With the added benefit that 'content administration' and 'server hosting' are split up and can be done independent of each other.
+In practice it is trivial to only request 'the latest value' or 'the latest value signed by someone you trust'.
 
-Conversely, I would argue both filesystems and HTTP servers are more trouble over all.
-They hide that they return multiple values - a new value depending on when and where you make the request.
-
-A point also has a creation date and are **optionally** signed so you can identify who created it.
+The later is especially interesting. 
+If an application only requests points signed by a specific key, it effectivly administrates similar to how it is done in our current single host-administrator design.
+However, it has the additional property that it can be independent from hosting the data. 
+i.e. in linkspace 'hosting data' and 'content administration' can be decoupled.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
