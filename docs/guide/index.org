@@ -1103,6 +1103,18 @@ Options:
 #+end_sh
 #+end_ctabs
 
+** lk_hash_query
+:PROPERTIES:
+:CUSTOM_ID: lk_hash_query
+:END:
+
+[This function might be removed]
+
+A shorthand for getting a packet by hash.
+Can be used with [[lk_watch]].
+If you expect the value to be known locally [[lk_get_hash]] is faster.
+
+
 
 * Linkspace
 :PROPERTIES:
@@ -1112,34 +1124,61 @@ Options:
 [[../cargo-doc/linkspace/linkspace/index.html][Rust docs]]
 #+END_VERSE
 
-The linkspace runtime opens a multi-reader, single-writer database.
-One or more processes connect to it.
+You can open/create a instance with [[lk_open]].
+If given no directory it opens $LK_DIR or $HOME/linkspace.
+
+An instance is a handle to a multi-reader, single-writer database. 
+The instance is thread local, for each new thread or process you want to use it in
+use [[lk_open]]
 
 An application can save to the database ([[lk_save]]).
-Using queries an application can get the set of matching packets ([[lk_get]], [[lk_get_all]]).
-The application can registering a query and callback ([[lk_watch]]).
-You can update the read transaction of your thread manually ([[lk_process]]),
-or by listening for new packets and waiting for some condition ([[lk_process_while]]).
-The callbacks of the watched queries are triggered whenever this update process sees a matching packet.
+To read from the database you can directly get a packet by hash ([[lk_get_hash]]) or using a query ([[lk_get]], [[lk_get_all]]).
+
+A thread can register a watch ([[lk_watch]]).
+A watch is a query & function that is called for each new packet matching the query.
+By default the function is immediatly called for each match in the database.
+
+Whenever any thread saves a new packet all other threads receive a signal.
+
+By default nothing happens.
+A thread does not see the new packets untill its read transaction is updated.
+#+BEING_VERSE
+This includes all ~lk_get*~ and ~lk_watch~.  
+#+END_VERSE
+
+To do so you tell the instance to process all the new packets ([[lk_process]],[[lk_process_while]]).
+This runs all functions registered as a watch. 
+Only after that is the thread's view of the database updated to the latest state.
+
+The [[../cargo-doc/linkspace/linkspace/index.html][Rust docs]] are currently the most up to date, but the python package has most functions typed and commented as well.
 
 ** lk_open
 :PROPERTIES:
 :CUSTOM_ID: lk_open
 :END:
 
+
 ** lk_save
 :PROPERTIES:
 :CUSTOM_ID: lk_save
 :END:
 
+
 ** lk_get
 :PROPERTIES:
 :CUSTOM_ID: lk_get
 :END:
+
 ** lk_get_all
 :PROPERTIES:
 :CUSTOM_ID: lk_get_all
 :END:
+
+** lk_get_hash
+:PROPERTIES:
+:CUSTOM_ID: lk_get
+:END:
+
 
 
 ** lk_watch
@@ -1174,11 +1213,11 @@ The callbacks of the watched queries are triggered whenever this update process 
 #+END_VERSE
 
 Conventions are functions built on top of the other linkspace functions.
-They provide interop for processes by encoding data into linkspace packets.
+They provide a standard way for unrelated processes to loosly couple/interface with each other by encoding data into linkspace packets.
 
 Generally they require the caller to also run [[lk_process]] or [[lk_process_while]]
 
-One general conventions is that domains and paths starting with \xff are for meta stuff, such as status queries and packet exchange.
+One general conventions is that domains and paths starting with \xff are for meta things such as status queries and packet exchange.
 
 ** lk_status_set
 :PROPERTIES:
@@ -1221,15 +1260,15 @@ The function takes the query and saves it as:
 
 #+BEGIN_VERSE
 Note that from a domain's perspective, there is no such thing as 'fully synchronized'.
-The most straight forwards way to emulate such a thing is to create 'log' packets that link to
-known packets from a single device's perspective.
+It is entirely up to the developer to structure their points such that it provides the right level of sync.
+For example, a 'log' packets that link to known packets from a single device's perspective.
 #+END_VERSE
 
-Pull queries must have the predicates ~domain:=:..~ and ~group:=:..~, and ~:qid~
+Pull queries must have the predicates ~domain:=:..~ and ~group:=:..~, and ~:qid~.
 
-An exchange process (such as in the [[../tutorial/index.html][tutorial]]) watches these packets and attempts to fulfill it.
+An exchange process (such as in the [[../tutorial/index.html][tutorial]]) watches these packets and attempts to gather them.
 The exchange is only responsible for pull requests received when it is running.
-The exchange can drop requests when you reuse the 'qid'.
+The exchange drops requests when you reuse the 'qid'.
 The function returns the hash of the request.
 
 A domain application should be conservative with its query.
@@ -1240,8 +1279,7 @@ Requesting too much can add overhead.
 :CUSTOM_ID: lk_key
 :END:
 
-Read ( or creates ) an encrypted private key from lns:[#:0]:/local/NAME.
-Also writes into the local LNS lookup table such that the public key can be requested with ~[@:NAME:local]~
+Read ( or creates ) an encrypted private key using the local LNS. It can then be referenced with ~[@:NAME:local]~.
 
 * LNS
 :PROPERTIES:
@@ -1256,7 +1294,7 @@ A claim can have 3 types of special links.
 The first link with the tag pubkey@ has as ptr the ~pubkey~ bytes to use when referring to ~@:john:example:test~.
 The first link with the tag group# has as ptr the ~group~ bytes to use when referring to ~#:john:example:test~.
 Every tag ending with '~^~' e.g. ~root_00^~ is an authority public key.
-An authority has the right to vote for all subclaims. For example the claim ~lns:[#:pub]:/claim/test/example/john/home/~
+An authority has the right to vote for its direct subclaims. For example the claim ~lns:[#:pub]:/claim/test/example/john/home/~
 
 ~$Claim1~ becomes 'live' when a single authority of ~claim/test/example~ creates a vote by creating a keypoint ~lns:[#:pub]:/claim/test/example/john~ with
 the link ~vote:$Claim1.hash~. The first claim to get a majority of votes wins.
