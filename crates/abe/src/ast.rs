@@ -460,10 +460,10 @@ pub fn split_abe(
     st: &str,
     plain_cset: u32,
     err_cset: u32,
-) -> Result<Vec<(&str, u8)>, ASTParseError> {
+) -> Result<Vec<(u8,&str)>, ASTParseError> {
     Ok(split_abe_b(st.as_bytes(), plain_cset, err_cset)?
         .into_iter()
-        .map(|(b, c)| (unsafe { std::str::from_utf8_unchecked(b) }, c))
+        .map(|(c, b)| (c,unsafe { std::str::from_utf8_unchecked(b) }))
         .collect())
 }
 /// Split abe into top level components
@@ -471,9 +471,9 @@ pub fn split_abe_b(
     st: &[u8],
     plain_cset: u32,
     err_cset: u32,
-) -> Result<Vec<(&[u8], u8)>, ASTParseError> {
+) -> Result<Vec<( u8,&[u8])>, ASTParseError> {
     let mut depth = 0;
-    let mut r: Vec<(&[u8], u8)> = vec![(&[], 0)];
+    let mut r: Vec<(u8,&[u8] )> = vec![(0,&[])];
     let mut todo = st;
     let mut start_comp = 0;
     let len = todo.len();
@@ -483,13 +483,15 @@ pub fn split_abe_b(
                 if depth != 0 {
                     return Err(ASTParseError::UnmatchedOpen);
                 }
+                let at = len - todo.len();
+                r.last_mut().unwrap().1 = &st[start_comp..at];
                 return Ok(r);
             }
             Byte::Ctr { kind, rest } => {
                 if depth == 0 && !kind.is_bracket() {
                     let at = len - todo.len();
-                    *r.last_mut().unwrap() = (&st[start_comp..at], kind.as_char());
-                    r.push((&[], 0));
+                    r.last_mut().unwrap().1 = &st[start_comp..at];
+                    r.push((kind.as_char(),&[]));
                     todo = rest;
                     start_comp = len - todo.len();
                 } else {
@@ -506,8 +508,6 @@ pub fn split_abe_b(
             }
             Byte::Byte { rest, .. } => {
                 todo = rest;
-                let at = len - todo.len();
-                r.last_mut().unwrap().0 = &st[start_comp..at];
             }
         }
     }

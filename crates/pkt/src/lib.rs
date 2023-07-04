@@ -6,6 +6,7 @@
 
 #![allow(incomplete_features)]
 #![feature(
+    iterator_try_collect,
     int_roundings,
     concat_bytes,
     exact_size_is_empty,

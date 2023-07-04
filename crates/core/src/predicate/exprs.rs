@@ -37,29 +37,23 @@ pub enum TestEvalErr {
 
 impl TryFrom<ABList> for ExtPredicate {
     type Error = TestEvalErr;
-    fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        tracing::trace!(?value, "As predicate");
-        let mut it = value.lst.into_iter();
-        let (kind, c) = it.next().ok_or("missing kind").map_err(TestEvalErr::Err)?;
-        if c != Some(Ctr::Colon) {
-            return Err("unexepcted delim").map_err(TestEvalErr::Err);
-        };
+    fn try_from(mut val: ABList) -> Result<Self, Self::Error> {
+        tracing::trace!(?val, "As predicate");
+        let (c0,kind) = val.pop_front().ok_or("missing kind").map_err(TestEvalErr::Err)?;
+        let (c1,op) = val.pop_front().ok_or("missing op").map_err(TestEvalErr::Err)?;
+        if c0.is_some()
+            || c1 != Some(Ctr::Colon)
+            || val.is_empty()
+            || val.first().unwrap().0 != Some(Ctr::Colon){ return Err(TestEvalErr::Err("unexpected delim"));}
+        val.get_mut().first_mut().unwrap().0 = None;
         let kind = match PredicateType::try_from_id(&kind) {
             Some(s) => s.into(),
             None => return Err(TestEvalErr::ParseKind(AB(kind))),
-        };
-        let (op, c) = it.next().ok_or("Missing op").map_err(TestEvalErr::Err)?;
-        if c != Some(Ctr::Colon) {
-            return Err("unexepcted delim").map_err(TestEvalErr::Err);
         };
         let op: ExtendedTestOp = std::str::from_utf8(&op)
             .ok()
             .and_then(|v| v.parse().ok())
             .ok_or(TestEvalErr::Err("Cant parse op"))?;
-        let val = ABList { lst: it.collect() };
-        if val.lst.is_empty() {
-            return Err("Mising value").map_err(TestEvalErr::Err);
-        }
         let predicate = ExtPredicate { kind, val, op };
         Ok(predicate)
     }
@@ -102,21 +96,18 @@ impl ExtPredicate {
     pub fn try_iter(self) -> Result<impl Iterator<Item = Predicate>, TestEvalErr> {
         let ExtPredicate { kind, op, mut val } = self;
         let once_op: Option<TestOp> = match op {
-            ExtendedTestOp::GreaterEq if val.lst.len() != 1 => {
-                return Err(TestEvalErr::Err("Can't >= this value"))
-            }
-            ExtendedTestOp::LessEq if val.lst.len() != 1 => {
-                return Err(TestEvalErr::Err("Can't <= this value"))
-            }
+            
             ExtendedTestOp::GreaterEq => {
-                if super::uint::u8_be::sub_one(&mut val.lst[0].0).is_some() {
+                if val.len() != 1 {return Err(TestEvalErr::Err("Can't >= this value"))}
+                if super::uint::u8_be::sub_one(&mut val.get_mut()[0].1).is_some() {
                     Some(TestOp::Greater)
                 } else {
                     None
                 }
             }
             ExtendedTestOp::LessEq => {
-                if super::uint::u8_be::add_one(&mut val.lst[0].0).is_some() {
+                if val.len() != 1 {return Err(TestEvalErr::Err("Can't <= this value"))}
+                if super::uint::u8_be::add_one(&mut val.get_mut()[0].1).is_some() {
                     Some(TestOp::Less)
                 } else {
                     None

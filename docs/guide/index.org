@@ -453,13 +453,13 @@ The byte 99 equals the character 'c'.
 lk eval "ab[u8:99]" | xxd
 #+END_SRC
 
-The result of an ABE is a list of (bytes, ?delimiter). 
+The result of an ABE is a list of (?delimiter,bytes). 
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk eval --json "h[u8:101]ll[u8:111] / world:etc" 
 #+END_SRC
 
-Note that bytes are joined after evaluating. In the example this results in the component ~('hello ', /)~.
+Note that bytes are joined after evaluating. In the example this results in the byte component ~'hello '~.
 The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
 In the top level of the template given to ~lk eval~ they are printed as is.
 
@@ -467,12 +467,16 @@ In other words: ~eval "hello/:[u8:99]\n"~ == ~hello/:c\n~ ,
 but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
 
 #+Begin_VERSE
-The rest of this chapter goes further in depth.
-Knowing ABE is extremely powerful, but is not requirement to use the linkspace library.
+The rest of this chapter explains ABE further in depth.
 
-In python you can stick to using bytes objects, and where possible the cli accepts a base64 string, etc. 
+The ABE functions can shorten your code, and almost every CLI argument is an ABE expression.
+These expressions can directly refer to the context, such as a [[pkt-scope][packet]].
+This makes ABE a powerful tool.
 
-ABE a language of convenience, but not trivial to learn.
+But knowing all of ABE's features it not required to use linkspace.
+
+ABE a language of convenience.
+
 With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters,
 the rest of the guide (starting at [[Query]]) can be read while you return here for reference in case something is unclear.
 #+end_VERSE
@@ -538,6 +542,9 @@ The ~/a_macro~ macro operates on ~:[fn:arg0]:arg1/hello~ without it being evalua
 
 
 *** Scope & Context
+:PROPERTIES:
+:CUSTOM_ID: scope
+:END:
 
 Functions and Macros are defined in a scope.
 Scopes can be chained, so that if no matching function is found it looks in the next scope. 
@@ -562,6 +569,10 @@ A scope containing functions resolving to an argument vector.
 #+end_ctabs
 
 **** Packet
+:PROPERTIES:
+:CUSTOM_ID: pkt-scope
+:END:
+
 
 By providing a packet, the packet scope is added to the chain.
 This adds functions such as ~hash~, ~group~, ~path~ etc.

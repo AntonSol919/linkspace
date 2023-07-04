@@ -35,8 +35,8 @@ impl SPath {
 use crate::*;
 #[derive(Error, Debug)]
 pub enum SPathExprErr {
-    #[error("Spath expr cant contain ':' or '\\n' ")]
-    BadCtr(Ctr),
+    #[error("spath expr must start with '/' and can't contain ':', '\\n', or '\\t' ")]
+    BadCtr(Option<Ctr>),
     #[error("SPath error {0}")]
     SPath(#[from] PathError),
     #[error("{}",.0)]
@@ -67,21 +67,10 @@ impl SPathBuf {
         if let Ok(b) = ablist.as_exact_bytes() {
             return Ok(SPath::from_slice(b)?.into_spathbuf());
         }
-        let mut it = ablist.inner().iter().map(|(bytes, ctr)| match ctr {
-            None | Some(Ctr::FSlash) => Ok(bytes),
-            Some(e) => Err(SPathExprErr::BadCtr(*e)),
-        });
-        if let Some(v) = it.next() {
-            if !v?.is_empty() {
-                return Err(SPathExprErr::Custom(format!(
-                    "SPath starts with '/' got {ablist}"
-                )));
-            }
-            let lst = it.collect::<Result<Vec<_>, _>>()?;
-            if lst.len() == 1 && lst[0].is_empty() { return Ok(SPathBuf::new())}
-            return Ok(SPathBuf::try_from_iter(lst)?);
-        }
-        Ok(SPathBuf::new())
+        let v : Vec<_> = ablist.unwrap().into_iter()
+            .map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Err(SPathExprErr::BadCtr(ctr))} else { Ok(b)})
+            .try_collect()?;
+        return Ok(SPathBuf::try_from_iter(v)?);
     }
 }
 impl TryFrom<ABList> for SPathBuf {
@@ -378,8 +367,7 @@ impl EvalScopeImpl for PathFE {
             ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let mut lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
-                    let mut skip_first = true;
-                    lst.lst.retain(|v| std::mem::take(&mut skip_first) ||  !v.0.is_empty());
+                    lst.get_mut().retain(|v|  !v.1.is_empty());
                     let p = SPathBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },

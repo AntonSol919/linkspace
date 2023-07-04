@@ -54,14 +54,13 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
     if json {
         use serde_json::{to_value, value::Value};
         let mut lst = val
-            .inner()
             .iter()
-            .map(|(b, v)| {
+            .map(|(c, b)| {
                 (
+                    c,
                     String::from_utf8(b.clone())
                         .map(Value::String)
                         .unwrap_or_else(|_| to_value(b).unwrap()),
-                    v,
                 )
             })
             .map(to_value);

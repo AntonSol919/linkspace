@@ -73,10 +73,11 @@ impl Name {
         }
     }
     pub fn from_spath(path:&SPath) -> Result<Name,NameError>{
+        tracing::debug!(%path,"name from");
         let rcomps = path.collect();
-        if rcomps.is_empty(){ return Err(NameError::MinLen)}
         if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        let special = SpecialName::from(rcomps.first().unwrap());
+        //if rcomps.is_empty(){ return Err(NameError::MinLen)}
+        let special = None; //SpecialName::from(rcomps.first().unwrap());
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
         Ok(Name { spath: path.into_spathbuf() ,special})
     }
@@ -100,10 +101,10 @@ impl Name {
 impl TryFrom<ABList> for Name {
     type Error = NameError;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        if value.lst.iter().any(|v| v.1 == Some(Ctr::FSlash)){
+        if value.iter().any(|v| v.0 == Some(Ctr::FSlash)){
             return Err(NameError::ContainsFSlash);
         }
-        let lst :Vec<_>= value.lst.iter().map(|v| v.0.as_slice()).collect();
+        let lst :Vec<_>= value.iter_bytes().collect();
         Name::from(&lst)
     }
 }

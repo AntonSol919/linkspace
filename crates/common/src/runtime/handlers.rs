@@ -6,7 +6,7 @@
 use super::Linkspace;
 pub use linkspace_core::matcher::BareWatch;
 use linkspace_core::{
-    pkt::NetPkt, query::Query,
+    pkt::NetPkt, query::{Query, KnownOptions},
 };
 use linkspace_pkt::{
     reroute::{ReroutePkt},
@@ -72,7 +72,7 @@ pub struct NotifyClose<F> {
 }
 impl<F> NotifyClose<F> {
     pub fn new(inner: F, q:&Query, origin: &dyn NetPkt) -> Self {
-        let origin = if q.get_known_opt(linkspace_core::query::KnownOptions::NotifyClose).is_some(){
+        let origin = if matches!(q.get_known_opt(KnownOptions::NotifyClose), Ok(Some(_))){
             Some(origin.as_netbox())
         } else { None};
         NotifyClose {

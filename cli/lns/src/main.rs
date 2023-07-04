@@ -9,7 +9,7 @@ use anyhow::*;
 use linkspace_common::{
     anyhow::{self},
     cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
-    prelude::*, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, auth_tag, GROUP_TAG, public_claim::Issue }, identity,  };
+    prelude::{*, convert::AnyABE}, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, auth_tag, GROUP_TAG, public_claim::Issue }, identity,  };
 use tracing_subscriber::EnvFilter;
 
 
@@ -43,13 +43,14 @@ pub enum Cmd {
         name:NameExpr
     },
     Vote{
-        name: NameExpr,
+        name:String,
         claim: HashExpr,
         #[clap(flatten)]
         key: KeyOpts,
         #[clap(long,default_value="stdout")]
         write: Vec<WriteDestSpec>,
-
+        #[clap(last=true)]
+        additional_data: Vec<AnyABE>
     },
     CreateClaim{
         /// name of claim
@@ -58,7 +59,7 @@ pub enum Cmd {
         /// the group id value for [#:NAME]
         group: Option<GroupExpr>,
         #[clap(long)]
-        /// the public key to find with [@:NAME] - becomes an authority as well (see --pubkey_noauth)
+        /// the public key to find with [@:NAME] - becomes an authority as well unless --no-auth was set
         pubkey: Option<PubKeyExpr>,
         /// do not give the pubkey/enckey authority status
         #[clap(long)]
@@ -95,21 +96,25 @@ fn main() -> anyhow::Result<()> {
     let Opts { mut common, cmd } = Opts::parse();
     common.mut_write_private().get_or_insert(true);
     match cmd {
-        Cmd::Vote { name, claim, key ,write} => {
+        Cmd::Vote { name, claim, key ,write, additional_data } => {
             let lk= common.runtime()?;
             let ctx = common.eval_ctx();
-            let name = name.eval(&ctx)?;
+            //let name = name.eval(&ctx)?;
             let mut write = common.open(&write)?;
+            let additional_data : Vec<_> = additional_data.
+                into_iter()
+                .map(|e| e.eval(&ctx))
+                .try_collect()?;
 
             let reader =lk.get_reader();
             let hash = claim.eval(&ctx)?;
             let claim_pkt = reader.read(&hash)?.context("cant find claim")?;
             let claim = Claim::from(claim_pkt)?;
-            ensure!(claim.name == name);
+            //ensure!(claim.name == name);
             let signing = key.identity(&common, true)?;
-            let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
-            ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
-            let pkt = lns::claim::vote(&claim, signing)?;
+            //let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
+            //ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
+            let pkt = lns::claim::vote(&claim, signing,additional_data)?;
             common.write_multi_dest(&mut write, &pkt, None)?;
         }
         Cmd::Get{name, write, write_signatures,chain } => {

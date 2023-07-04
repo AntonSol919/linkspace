@@ -42,6 +42,7 @@ pub fn statements2query(it: &[TypedABE<ABList>], ctx: &EvalCtx<impl Scope>) -> a
     for e in it{
         tracing::trace!(?e, "add expr");
         let e = e.eval(ctx)?;
+        tracing::trace!(?e, "val");
         query.add_stmt(e)?;
     }
     Ok(query)
@@ -85,7 +86,7 @@ impl CLIQuery {
     pub fn into_query(self, common: &CommonOpts) -> anyhow::Result<Option<Query>> {
         let ctx = common.eval_ctx();
         let mut select = self.opts.into_query(&ctx)?;
-        let inner_mode = select.mode().transpose()?;
+        let inner_mode = select.mode()?;
         if inner_mode.is_none() || inner_mode != self.mode {
             let st = self.mode.unwrap_or_default().to_string();
             select.add_option(&KnownOptions::Mode.to_string(), &[st.as_bytes()]);
@@ -109,6 +110,8 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
     }
     if let Some(mut query) = cli_query.into_query(&common)? {
         query.add_option("qid", &[b"<cli>"]);
+        tracing::debug!(%query,"query");
+
         let rt = common.runtime()?;
         let span = debug_span!("linkspace-cli watch");
         let out = common.multi_writer(write);

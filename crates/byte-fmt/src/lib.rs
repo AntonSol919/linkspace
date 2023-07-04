@@ -398,8 +398,12 @@ impl<const L: usize> TryFrom<ABList> for B64<[u8; L]> {
     type Error = DecodeError;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
         let bytes = value.as_exact_bytes().map_err(|_| {
-            let (l, b) = value.lst.first().unwrap();
-            DecodeError::InvalidByte(l.len() + 1, b.unwrap() as u8)
+            let (c,b) =value.first().unwrap();
+            if let Some(c) = c{
+                DecodeError::InvalidByte(0, *c as u8)
+            }else {
+                DecodeError::InvalidByte(b.len(), value[1].0.unwrap() as u8)
+            }
         })?;
         Self::try_fit_bytes_or_b64(bytes)
     }

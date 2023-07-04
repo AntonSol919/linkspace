@@ -198,24 +198,3 @@ pub trait ToABE {
         self.to_abe().into_iter().for_each(out)
     }
 }
-
-/// colon seperated list
-#[derive(Clone)]
-pub struct CList(pub Vec<Vec<u8>>);
-impl ABEValidator for CList {
-    fn check(b: &[ABE]) -> Result<(), MatchError> {
-        for i in b{
-            if matches!(i,ABE::Ctr(_)) { is_fslash(i)?;}
-        }
-        Ok(())
-    }
-}
-impl TryFrom<ABList> for CList{
-    type Error = MatchErrorKind;
-    fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        value.lst.into_iter()
-            .map(|(b,c)| if !matches!(c,None | Some(Ctr::Colon)) {Err(MatchErrorKind::ExpectedColon)}else {Ok(b)})
-            .try_collect()
-            .map(CList)
-    }
-}

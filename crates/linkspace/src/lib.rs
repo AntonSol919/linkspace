@@ -281,18 +281,18 @@ pub mod abe {
     }
     /**
     Exec callback for each expr between control characters (':', '/', '\n', '\t').
-    The last delimiter can be '\0'.
+    The first delimiter can be '\0'.
     ```
     # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
-    lk_split_abe("this:is/the:example\nnewline",b"/",|expr,ctr| { v.push((expr,ctr)); true} );
-    assert_eq!(v,&[("this",b':'), ("is/the",b':'), ("example",b'\n'),("newline",0)])
+    lk_split_abe("this:is/the:example[::]\n[::]newline[:/]",b"/",|expr,ctr| { v.push((expr,ctr)); true} );
+    assert_eq!(v,&[(0,"this"), (b':',"is/the"), (b':',"example[::]"),(b'\n',"[::]newline[:/]")])
     ```
      **/
     pub fn lk_split_abe<'o>(
         expr: &'o str,
         exclude_ctr: &[u8],
-        mut per_comp: impl FnMut(&'o str, u8) -> bool,
+        mut per_comp: impl FnMut(u8,&'o str) -> bool,
     ) -> LkResult<()> {
         let plain = exclude_ctr
             .iter()
@@ -571,7 +571,7 @@ pub mod query {
     pub fn lk_query_clear(query: &mut Query) {
         //if fields.is_some() || keep_options { todo!()}
         query.0.predicates = PktPredicates::DEFAULT;
-        query.0.options.clear();
+        query.0.conf.0.clear();
     }
     /// Get the string representation of a [Query]
     pub fn lk_query_print(query: &Query, as_expr: bool) -> String {

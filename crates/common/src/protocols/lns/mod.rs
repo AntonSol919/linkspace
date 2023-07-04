@@ -6,11 +6,11 @@
 
 /**
 LNS is quite a bit complex because it supports 3 modes.
-A mode defines when a claim is 'live'.
+Each with a different idea of when a claim is 'live'.
 
 The modes are :
 - the public roots (:com , :dev, :free etc) - authorities vote and claims have fast path based lookup.
-- a :local admin, creates keypoints to other 'roots' creating a chain of names. 
+- a :local admin - creates keypoints to other 'roots' creating a chain of names.
 - the :files claims are claims stored as files in the LK_DIR/files/ directory
 
 an admin key/process creates a local lookup & reverse-lookup table such that each can quickly be resolved.

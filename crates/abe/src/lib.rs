@@ -20,6 +20,7 @@ pub mod ast;
 pub mod convert;
 pub mod eval;
 pub mod scope;
+pub mod abconf;
 pub use thiserror;
 
 use std::error::Error;

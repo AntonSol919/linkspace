@@ -1,7 +1,7 @@
 
 use std::fmt::{Display, Debug};
 
-use abe::ast::{Ctr, parse_ablist_b};
+use abe::{ast::{Ctr}, abconf::ABConf};
 use anyhow::{ensure, Context};
 use either::Either;
 use crate::{prelude::*};
@@ -92,9 +92,9 @@ impl Claim {
     }
     
     pub fn enckey(&self) -> anyhow::Result<Option<Either<&str,LkHash>>>{
-        match self.data.get_value(b"enckey").transpose()?{
-            Some(val) => Ok(Some(Either::Left(std::str::from_utf8(val)?))),
-            None => match self.links().first_eq(ENCKEY_TAG){
+        match self.data.0.has_optional_value(&[b"enckey"]){
+            Some(Ok(Some(val))) => Ok(Some(Either::Left(std::str::from_utf8(val)?))),
+            _ => match self.links().first_eq(ENCKEY_TAG){
                 Some(lnk) => Ok(Some(Either::Right(lnk.ptr))),
                 None => Ok(None),
             },
@@ -114,7 +114,7 @@ impl Claim {
         let data = ClaimData::try_from(pkt.data())?;
         Ok(Claim{pkt:RecvPkt::from_dyn(&pkt),data,name})
     }
-    pub fn until(&self) -> Stamp {self.data.try_until().unwrap()}
+    pub fn until(&self) -> Stamp {self.data.until()}
     pub fn pubkey(&self) -> Option<&PubKey>{ self.links().first_eq(PUBKEY_TAG).map(lptr)}
     pub fn group(&self) -> Option<&GroupID>{ self.links().first_eq(GROUP_TAG).map(lptr)}
     pub fn authorities(&self) -> impl Iterator<Item=PubKey>+'_{ self.pkt.get_links().iter().filter(|v| v.tag[15] == b'^').map(|v| v.ptr)}
@@ -134,56 +134,52 @@ pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetP
     Ok((links,pkt))
 }
 
-pub fn vote(claim: &Claim,key: &SigningKey)-> anyhow::Result<NetPktBox>{
+// TODO abdata should be a newtype
+pub fn vote(claim: &Claim,key: &SigningKey,abc:ABConf)-> anyhow::Result<NetPktBox>{
     let vote_link = [Link::new("vote",claim.pkt.hash())];
-    Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_ipath(), &vote_link, &[], now(), key, ()).as_netbox())
+    let data = abc.to_string().into_bytes();
+    Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_ipath(), &vote_link, &data, now(), key, ()).as_netbox())
 }
 
-
-pub struct ClaimData(Vec<ABList>);
+pub struct ClaimData(ABConf);
 impl ClaimData {
     pub fn new(until:Stamp,mut values:Vec<ABList>) -> Self {
         values.splice(0..0, [clist([b"until" as &[u8],&until.0])]);
-        ClaimData(values)
+        ClaimData(ABConf::new(values))
     }
-    pub fn get_value(&self,b:&[u8]) -> Option<anyhow::Result<&[u8]>>{
-        let abl = self.get(b)?;
-        match abl.lst.as_slice() {
-            [(_,Some(Ctr::Colon)),(b,None)] => Some(Ok(b)),
-            _ => Some(Err(anyhow::anyhow!("expected key:val , got {}",abl)))
-        }
-    }
-    pub fn get(&self,b:&[u8]) -> Option<&ABList>{
-        self.0.iter().find(|a| a.lst[0].0 == b)
+
+    pub fn conf_data(&self) -> &ABConf{
+        &self.0
     }
     pub fn try_from(b:&[u8]) -> anyhow::Result<Self>{
-        let mut it = b.split(|c|*c==b'\n');
-        ensure!(it.next() == Some(b"#abtxt"),"missing format header");
-        let lst = it
-            .map(|v|
-                 parse_ablist_b(v).map_err(|v| anyhow::anyhow!("data contains expr {v:?}"))
-            ).try_collect()?;
-        let cd = ClaimData(lst);
-        cd.try_until()?;
+        let abc = ABConf::try_from(b, true, Some(abconf::ABConfFmt::ABCTxt))?;
+        let cd = ClaimData(abc);
+        cd.try_until().context("expected valid 'until:STAMP' as first item")?;
         Ok(cd)
     }
     pub fn to_vec(&self) -> Vec<u8>{
         self.to_string().into_bytes()
     }
 
-    fn try_until(&self) -> anyhow::Result<Stamp>{
-        let first = &self.0[0].lst;
-        ensure!(first[0].0 == b"until","expected until");
-        ensure!(first[0].1 == Some(Ctr::Colon),"expected until");
-        ensure!(first[1].1.is_none(),"to much data");
-        first[1].0.as_slice().try_into().context("cant parse until bytes")
+    fn until(&self) -> Stamp{
+        self.try_until().unwrap()
+    }
+    // the newtype should ensure this always succeeds.
+    fn try_until(&self) -> Option<Stamp>{
+        let abl=  self.0.first()?;
+        match abl.as_slice(){
+            [(None,until),(Some(Ctr::Colon),b)]  if until == b"until"=> {
+                Some(U64(b.as_slice().try_into().ok()?))
+            }
+            _ => None
+        }
     }
 }
 impl Display for ClaimData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let _ = writeln!(f,"#abtxt");
-        for abl in &self.0{
-            let _ = writeln!(f,"{abl}");
+        writeln!(f,"#abtxt")?;
+        for abl in self.0.iter(){
+             writeln!(f,"{abl}")?;
         }
         Ok(())
     }

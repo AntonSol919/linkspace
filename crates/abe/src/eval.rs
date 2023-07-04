@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::ops::{Try, ControlFlow};
+use std::ops::{Try, ControlFlow, Deref};
 
 use anyhow::{ anyhow};
 use bstr::BStr;
@@ -41,13 +41,14 @@ macro_rules! dbgprintln {
     }};
 }
 
-/** a list of (bytes,ctr) components.
-It is an error for the lst to be empty.
+/** a list of (ctr,bytes) components.
+It is an error for the lst to be empty - and for a Option<Ctr> to be None except for the first entry.
 **/
 #[derive(Clone, PartialEq)]
-pub struct ABList {
-    pub lst: Vec<(Vec<u8>, Option<Ctr>)>,
-}
+pub struct ABList(Vec<ABLV>);
+pub type ABLV = (Option<Ctr>, Vec<u8>);
+
+
 impl From<ABList> for Vec<u8> {
     fn from(v: ABList) -> Self {
         v.concat()
@@ -55,9 +56,7 @@ impl From<ABList> for Vec<u8> {
 }
 impl From<Vec<u8>> for ABList {
     fn from(value: Vec<u8>) -> Self {
-        ABList {
-            lst: vec![(value, None)],
-        }
+        ABList(vec![(None,value)])
     }
 }
 impl From<ABList> for Vec<ABE> {
@@ -71,6 +70,13 @@ impl IntoIterator for ABList {
     type IntoIter = ABLIter;
     fn into_iter(self) -> Self::IntoIter {
         self.items().map(|i| i.into())
+    }
+}
+impl Deref for ABList{
+    type Target = [ABLV];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
     }
 }
 
@@ -93,19 +99,19 @@ pub fn flist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I) -> ABList {
 pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I, delimiter: Ctr) -> ABList {
     let mut lst: Vec<_> = elements
         .into_iter()
-        .map(|b| (b.as_ref().to_vec(), Some(delimiter)))
+        .map(|b| (Some(delimiter),b.as_ref().to_vec()))
         .collect();
-    match lst.last_mut(){
-        Some(v) => {v.1 = None; ABList{lst}},
-        None => ABList::default(),
+    if let Some(v) = lst.first_mut(){
+        v.0 = None;
     }
+    ABList(lst)
 }
 
 impl Display for ABList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (bytes, ctr) in &self.lst {
-            f.write_str(&as_abtxt(bytes))?;
+        for (ctr,bytes) in &self.0 {
             f.write_str(as_str(*ctr))?;
+            f.write_str(&as_abtxt(bytes))?;
         }
         Ok(())
     }
@@ -113,52 +119,44 @@ impl Display for ABList {
 
 impl Debug for ABList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        struct ABDebug<I>(I, Option<Ctr>);
+        struct ABDebug<I>(Option<Ctr>,I);
         impl<I: AsRef<[u8]>> Debug for ABDebug<I> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str(&as_abtxt(self.0.as_ref()))
+                f.write_str( as_str(self.0))?;
+                f.write_str(&as_abtxt(self.1.as_ref()))
             }
         }
         f.debug_list()
-            .entries(self.lst.iter().map(|(v, c)| (ABDebug(v, *c), c)))
+            .entries(self.iter().map(|(c, v)| ABDebug(*c, v)))
             .finish()
     }
 }
 impl Default for ABList {
     fn default() -> Self {
-        Self {
-            lst: vec![(vec![], None)],
-        }
+        ABList::DEFAULT
     }
 }
 
 impl ABList {
     
-    pub fn inner(&self) -> &[(Vec<u8>, Option<Ctr>)] {
-        &self.lst
-    }
+    pub const DEFAULT : Self = ABList(vec![]);
 
     pub fn items(self) -> impl Iterator<Item = ABItem> {
-        self.lst.into_iter().flat_map(|(a, b)| {
-            if a.is_empty() {
-                None
-            } else {
-                Some(ABItem::Bytes(a))
-            }
-            .into_iter()
-            .chain(b.map(ABItem::Ctr))
+        self.0.into_iter().flat_map(|(ctr, b)| {
+            ctr.map(ABItem::Ctr)
+                .into_iter()
+                .chain(if b.is_empty() { None} else { Some(ABItem::Bytes(b))})
         })
     }
     pub fn item_refs(&self) -> impl Iterator<Item = ABItem<&[u8]>> {
-        self.lst.iter().flat_map(|(a, b)| {
-            if a.is_empty() {
-                None
-            } else {
-                Some(ABItem::Bytes(a.as_slice()))
-            }
-            .into_iter()
-            .chain(b.map(ABItem::Ctr))
+        self.0.iter().flat_map(|(ctr, b)| {
+            ctr.map(ABItem::Ctr)
+                .into_iter()
+                .chain(if b.is_empty() { None} else { Some(ABItem::Bytes(b.as_slice()))})
         })
+    }
+    pub fn push_v(&mut self, item: ABLV){
+        self.0.push(item)
     }
     pub fn push(self, item: ABItem) -> Self {
         match item {
@@ -166,60 +164,91 @@ impl ABList {
             ABItem::Bytes(b) => self.push_bytes(b.as_ref()),
         }
     }
-    pub fn push_bytes(mut self, b: &[u8]) -> Self {
-        self.lst.last_mut().unwrap().0.extend_from_slice(b);
+    pub fn push_bytes(mut self, bytes: &[u8]) -> Self {
+        match self.0.last_mut(){
+            Some((_c,b)) => b.extend_from_slice(bytes),
+            None => self.0.push((None,bytes.to_vec())),
+        }
         self
     }
     pub fn push_ctr(mut self, ctr: Ctr) -> Self {
-        self.lst.last_mut().unwrap().1 = Some(ctr);
-        self.lst.push((vec![], None));
+        self.0.push((Some(ctr),vec![]));
         self
     }
     pub fn into_exact_bytes(mut self) -> Result<Vec<u8>, Self> {
-        if self.lst.len() == 1 {
-            Ok(self.lst.pop().unwrap().0)
+        if self.0.len() == 1 && self.0[0].0.is_none(){
+            Ok(self.0.pop().unwrap().1)
         } else {
             Err(self)
         }
     }
     pub fn as_exact_bytes(&self) -> Result<&[u8], &Self> {
-        if self.lst.len() == 1 {
-            Ok(&self.lst[0].0)
+        if self.0.len() == 1 && self.0[0].0.is_none(){
+            Ok(&self.0[0].1)
         } else {
             Err(self)
         }
     }
-    pub fn take_prefix_bytes(&mut self, v: usize) -> Vec<u8> {
-        let (a, _) = self.lst.first_mut().unwrap();
-        let v = a.split_off(v);
-        std::mem::replace(a, v)
-    }
 
+    pub fn as_slice(&self) -> &[ABLV]{
+        &self.0
+    }
     /// Merges (bytes, ctr) into a sequence of bytes.
     /// this destroys ctr byte information. i.e.  [("/",:)] becomes /: and reparsing becomes [("",/),("",:)]
     /// Use display to print propery escaped values.
-    pub fn concat(mut self) -> Vec<u8> {
-        if let ([(bytes, ctr)], rest) = self.lst.split_at_mut(1) {
-            bytes.extend_from_slice(as_str(*ctr).as_bytes());
-            for (b, c) in rest {
-                bytes.extend_from_slice(b);
-                bytes.extend_from_slice(as_str(*c).as_bytes());
-            }
-        } else {
-            unreachable!()
+    pub fn concat(self) -> Vec<u8> {
+        let mut it = self.0.into_iter();
+        let (ctr,mut bytes) = match it.next(){
+            Some(v) => v,
+            None => return vec![]
+        };
+        if ctr.is_some(){
+            bytes.insert(0,as_str(ctr).as_bytes()[0]);
         }
-        self.lst.into_iter().next().unwrap().0
-    }
-
-    pub fn bytes_2(&self) -> impl Iterator<Item = &[u8]> {
-        self.lst
-            .iter()
-            .flat_map(|(b, ctr)| [b.as_slice(), as_str(*ctr).as_bytes()])
-            .filter(|v| !v.is_empty())
+        for (c, b) in it {
+            bytes.extend_from_slice(as_str(c).as_bytes());
+            bytes.extend_from_slice(b.as_slice());
+        }
+        bytes
     }
 
     pub fn is_empty(&self) -> bool {
-        self.lst.is_empty() || self.as_exact_bytes().map(|v| v.is_empty()).unwrap_or(false)
+        self.0.is_empty() || self.as_exact_bytes().map(|v| v.is_empty()).unwrap_or(false)
+    }
+    /**
+    a/b:c => [(_,a)] , [(/,b),(:,c)]
+    /a/b:c => Dont care - handled by eval already
+    
+    */
+    fn split_fslash(&self) -> impl Iterator<Item=&[ABLV]>{
+        let mut slice = self.0.as_slice();
+        std::iter::from_fn(move ||{
+            if slice.len() ==  0 { return None}
+            let i = slice[1..].iter().position(|v| v.0 == Some(Ctr::FSlash)).unwrap_or(slice.len()-1) + 1;
+            let (r,rest) = slice.split_at(i);
+            slice = rest;
+            Some(r)
+        })
+    }
+
+    /// iterate over logical bytes instead of tuples. i.e. a:b/c => [a,b,c] :a/b:c: => ['',a,b,c,'']
+    pub fn iter_bytes(&self) -> impl Iterator<Item=&[u8]>{
+        let head :Option<&[u8]>= self.0.first().map(|o| o.0.map(|_|&[] as &[u8])).flatten();
+        head.into_iter().chain(self.0.iter().map(|o| o.1.as_slice()))
+    }
+    pub fn into_iter_bytes(self) -> impl Iterator<Item=Vec<u8>>{
+        let head :Option<Vec<u8>>= self.0.first().map(|o| o.0.map(|_|vec![])).flatten();
+        head.into_iter().chain(self.0.into_iter().map(|o| o.1))
+    }
+    /// Warning: depending on the context it can be invalid to leave an empty vec behind.
+    pub fn get_mut(&mut self) -> &mut Vec<ABLV>{
+        &mut self.0
+    }
+    pub fn unwrap(self) -> Vec<ABLV>{
+        self.0
+    }
+    pub fn pop_front(&mut self) -> Option<ABLV>{
+        self.0.splice(0..1,None).next()
     }
     
 }
@@ -714,10 +743,8 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     ApplyResult::Err(e) => Err(EvalError::Func(id.to_vec(), e)),
                 }
             }
-            let it = inner_abl
-                .lst
-                .split_inclusive(|(_, c)| *c == Some(Ctr::FSlash));
-            let mut calls = it.map(|ls| ls.iter().map(|(b, _c)| b.as_slice()));
+            let it = inner_abl.split_fslash();
+            let mut calls = it.map(|ls| ls.iter().map(|(_c, b)| b.as_slice()));
             let mut stack = [&[] as &[u8]; 16];
             let mut init_id_args = match calls.next() {
                 None => return Err(EvalError::Other(anyhow!("empty {{}} not enabled"))),

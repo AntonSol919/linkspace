@@ -54,18 +54,13 @@ impl ABEValidator for Link {
 }
 impl TryFrom<ABList> for Link {
     type Error = ABELinkErr;
-    fn try_from(mut value: ABList) -> Result<Self, Self::Error> {
+    fn try_from(value: ABList) -> Result<Self, Self::Error> {
         use ABELinkErr::*;
-        let pointer = value.lst.pop().ok_or(MissingTagOrPointer)?;
-        let tag = value.lst.pop().ok_or(MissingTagOrPointer)?;
-        if !value.is_empty() {
-            return Err(ToManyItems);
-        }
-        if tag.1 != Some(Ctr::Colon) {
-            return Err(ExpectedColon);
-        }
-        let tag = AB::<[u8; 16]>::try_fit_byte_slice(&tag.0).map_err(Tag)?;
-        let pointer = B64::try_fit_bytes_or_b64(&pointer.0).map_err(Pointer)?;
+        if value.len() > 2 { return Err(ToManyItems)}
+        if value.len() < 2 { return Err(MissingTagOrPointer)}
+        if value[0].0.is_some() || value[1].0 != Some(Ctr::Colon) {return Err(ExpectedColon)}
+        let tag = AB::<[u8; 16]>::try_fit_byte_slice(&value[0].1).map_err(Tag)?;
+        let pointer = B64::try_fit_bytes_or_b64(&value[1].1).map_err(Pointer)?;
         Ok(Link { tag, ptr: pointer })
     }
 }

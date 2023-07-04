@@ -371,7 +371,7 @@ impl Linkspace {
         }
         Ok(())
     }
-    /// automatically handle the options 'follow', 'start', 'mode', and 'id'
+    /// automatically handle the options 'follow', 'start', 'mode', and 'qid'
     pub fn watch_query(
         &self,
         query: &Query,
@@ -379,13 +379,13 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<i32> {
         let mode = query.get_mode()?;
-        let id = query.qid().transpose()?.context("watch always requires the :id option")?;
-        let follow = query.get_known_opt(KnownOptions::Follow);
+        let id :&[u8]= query.qid()?.flatten().expect("watch always requires a :qid:...  option");
+        let follow = query.get_known_opt(KnownOptions::Follow)?;
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.
         let span = tracing::debug_span!(parent: &span, "with_opts", id=?AB(id), ?follow, ?mode, ?start);
-        match follow {
-            Some(_p) => {
+        match follow.is_some() {
+            true => {
                 let onmatch = FollowHandler { inner: onmatch };
                 Ok(self.watch(
                     id,
@@ -396,7 +396,7 @@ impl Linkspace {
                     span,
                 )?)
             }
-            None => Ok(self.watch(
+            false => Ok(self.watch(
                 id,
                 mode,
                 Cow::Borrowed(query),

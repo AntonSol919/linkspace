@@ -35,6 +35,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 ### ABE
 - Add a syntax to :follow a subset of links. (useful lk_pull and lns in general)
 - Add custom ABE callback for a user defined scope
+- '#ab' length-delimited binary format for abtext
 
 ## LNS 
 - LNS : reinit roots
