@@ -446,14 +446,13 @@ All fields are arbitrary bytes, and lk_encode can print them as ab text
 ** lk_eval
 
 ABE is evaluated by substituting an expressions ( ~[..]~ ) with its result.
-For example in ~[u8:97]~, the function 'u8' parses "97" and prints it.
-The byte 99 equals the character 'c'.
+For example in ~[u8:97]~, the function 'u8' is called with the arguments ["97"].
+The function 'u8' turns a decimal repr of a byte into the byte.
+The byte 97 equals the character 'a'. The byte 99 equals the byte 'c'
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
 lk eval "ab[u8:99]" | xxd
 #+END_SRC
-
-The result of an ABE is a list of (?delimiter,bytes). 
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk eval --json "h[u8:101]ll[u8:111] / world:etc" 
@@ -461,23 +460,23 @@ lk eval --json "h[u8:101]ll[u8:111] / world:etc"
 
 Note that bytes are joined after evaluating. In the example this results in the byte component ~'hello '~.
 The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
-In the top level of the template given to ~lk eval~ they are printed as is.
+For instance, ~lk eval~ prints them 'as is' when seen outside of ~[...]~
 
 In other words: ~eval "hello/:[u8:99]\n"~ == ~hello/:c\n~ ,
-but within brackets they have a special meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
+but within brackets they have another meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
 
 #+Begin_VERSE
 The rest of this chapter explains ABE further in depth.
 
 The ABE functions can shorten your code, and almost every CLI argument is an ABE expression.
-These expressions can directly refer to the context, such as a [[pkt-scope][packet]].
+These expressions can directly refer to the context, such as a [[#pkt-scope][packet]].
 This makes ABE a powerful tool.
 
 But knowing all of ABE's features it not required to use linkspace.
 
 ABE a language of convenience.
 
-With basic knowledge of its purpose, expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters,
+With basic knowledge of its purpose to read and write separated bytes (i.e. ~[ [u8] ]~), expression substitution (~[..]~), and the ~':'~, ~'/'~ delimiters,
 the rest of the guide (starting at [[Query]]) can be read while you return here for reference in case something is unclear.
 #+end_VERSE
 

@@ -2,7 +2,6 @@
 Supernet  [ˈsü-pərˌnet]<br>
 A self-referential multi-participant data organization protocol whose primary
 addressing method uses hashes instead of endpoint identifiers.<br>
-A communication protocol where the method of exchange is an extraneous concern.<br>
 
 e.g. git, bitcoin, linkspace
 :::
@@ -11,9 +10,9 @@ In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
 
 A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
 In multi-party systems: there is no total ordering of events, and messages should stay authenticated when passed along.
-For this, supernets provide a better abstraction then building on top of streams of data such as TCP/IP.
+For this, a supernet is a better tool then our current systems.
 
-Furthermore, supernets can be an alternative to the status quo in which users communicate through a host that is given total administrative rights over their experience.
+Furthermore, supernets can be an alternative to the status quo in which users communicate through a host that has final administrative say over the user's experience.
 
 Linkspace is a supernet with the following highlights:
 

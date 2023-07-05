@@ -3,7 +3,6 @@
 > Supernet  [ˈsü-pərˌnet]
 > A self-referential multi-participant data organization protocol whose primary
 > addressing method uses hashes instead of endpoint identifiers.
-> A communication protocol where the method of exchange is an extraneous concern.
 > e.g. git, bitcoin, linkspace
 
 

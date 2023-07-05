@@ -23,6 +23,11 @@ impl std::ops::Deref for ABConf{
         self.0.as_slice()
     }
 }
+impl From<Vec<ABList>> for ABConf {
+    fn from(value: Vec<ABList>) -> Self {
+        ABConf::new(value)
+    }
+}
 impl ABConf{
     pub const DEFAULT :Self= ABConf(vec![]);
     
