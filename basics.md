@@ -2,12 +2,12 @@
 
 ## The internet of streams
 
-The digital world you know is build on structuring streams of data.
+The digital world you know is built on structuring streams of data.
 At its core the internet[^2] attempts to provide a model where: 
 
 For any two connected devices running any application, there exists a connection to transmit data.
 
-[^2]: TCP/IP - I'll be loose on definitions and oversimplify a lot. I don't expect readers to know or care for the details. But if you find an incorrect statement shoot me a message.
+[^2]: TCP/IP. I'll be loose on definitions and oversimplify a lot - even use 'internet' instead of 'web'. I don't expect readers to know or care for the details. But if you find a false statement shoot me a message.
 
 To do this it uses the following types of packets to transmit data between two devices.
 
@@ -25,14 +25,16 @@ To do this it uses the following types of packets to transmit data between two d
 +-----------------+-----------------------+-----------------------------------------------------------------+
 :::
 
-Packets carrying data are transmitted, and using the `IP address` they eventually reach their destination; a computer such as you're using right now.
-On the computer an application is running that looks for packets with a specific `port` to arrive.
+Packets are transmitted and - using the `IP address` - they reach their destination: a device such as the one you're using right now.
+On the device an application is running that looks for packets with a specific `port` to arrive.
 
 In transit, a packet can get lost or corrupted.
 The result is that packets don't arrive in the order they were sent.
 By adding a sequence number, the destination can verify all packets have arrived and reorder them to the order they were sent in.
 
-I imagine the prototype internet was first discovered when it was realized that packet SEQUENCE IDs are essential (i.e. unavoidable) complexity. When transmitting data something must define the order of packets. Consequently the physical route each packet takes is irrelevant.
+I imagine the proto-internet was first discovered when people realized that packet SEQUENCE IDs are essential complexity.
+When transmitting data, something must define the order of packets.
+Consequently the physical route each packet takes is irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
@@ -49,22 +51,31 @@ A couple of well known internet protocols that have this property are:
 | FTP    | /Projects/linkspace/readme.md | In a supernet [...] |
 | SQL    | SELECT * from MSG where ID=1; | A message in a db   |
 
-The reason for building linkspace is this:
 
-<b>We have reached the limit of this streaming questions/answers paradigm.</b>
+With these tools various 'platforms' exists so that people have a model for two or more devices to communicate.
 
-There are many difficulties with it.
+<b>We have reached the limit of using this model of streaming questions/answers paradigm for multi-party communication.</b>
 
-As with most abstraction, the details leak.
+First, the stream abstraction can leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
+Then, when more than two devices are involved the leaks compound.
+Two devices go out of sync.
+Either somewhere in the system an answer becomes stale or wrong,
+or doesn't scaling and have everyone contact a single source of truth.
 
-The leaks compound when more than two computers are involved.
-Answers become invalid, integrity is build ad-hoc, backups require additional logic, a shared state requires expensive synchronization[^sync], etc.
+Alternatively you use something like a supernet.
 
-[^sync]: Or instead of some form of locking you add unique ID's to all your event in the network. If you chose a strong hash, and each event can reference others by their hash - then you've essentially built a special purpose supernet.
+:::{.definition}
+Supernet  [ˈsü-pərˌnet]<br>
+A self-referential multi-participant data organization protocol whose primary
+addressing method uses hashes instead of endpoint identifiers.
 
-Once you start thinking in terms of supernets, it becomes clear that this is accidental complexity.
-If we take a different approach to two or more computers communicate, these concerns become irrelevant or trivial - and we can do things that are practically impossible if we keep talking streams.
+e.g. git, bitcoin, linkspace
+:::
+
+Once you start thinking in terms of supernets, it becomes clear that many problems with streaming questions/answers are accidental complexity. When a supernet is used to build an application those problems become irrelevant or trivial[^trivial] - and we can do things that are practically impossible if we keep talking streams.
+
+[^trivial]: Trivial is perhaps overstating it, but take for example a stream getting disconnected - A supernet with a good API should guide a developer to take the most extreme cases of asynchronicity into account. i.e. slow or disconnected server should not break a system as it does to the majority of 'platforms'. Well designed supernet applications can be truely offline-first and 'serverless'.
 
 ## Linkspace
 
@@ -124,9 +135,9 @@ Practically any digital communication can be understood as merging sets of point
 Online platforms have dubbed different words for actions you can take:
 '_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
 Fundamentally they can be understood as a frontend application providing an interface to __merge__ sets of points.
-Either on your computer or on their computer[^device].
+Either on your device or on theirs[^device].
 
-[^device]: Your computer immediatly forgetting those data points is a configuration detail.
+[^device]: Your device immediatly forgetting those data points is a configuration detail.
 
 The internet we use today has a single host design. 
 For instance, a web-browser or app contacts `http://www.some_platform.com`
@@ -311,6 +322,47 @@ For the adventurous there is initial support for wasm, and a POC HTTP bridge cal
 
 # Q&A
 
+### Who is linkspace for?
+
+Me from 10 years ago, me today, the next generation that wants their internet to be better, and everyone else. In that order.
+
+#### The tool
+
+If you're just interested in the tool; linkspace can shrink a 'stack' significantly.
+
+Data formats change and grow as projects goes on.
+Using linkspace to carry the data many potentially-critical features are built in at the basics.
+Instead of risking a costly and complex upgrade when you need a feature yesterday, you get a lot of properties by default such as:
+uniquely addressable/cross referencing events, security against tampering, logging, secure user identities, low effort backups, etc.
+
+It is scaleable decoupled data creation, routing, storing, and processing; with data authenticity and user authentication to control access, wire up business logic, or log 'who' did 'what' and 'when'. Take the parts you want and leave the rest out.
+
+It even runs in the browser[^browser], meaning you can reuse more code logic and tools.
+
+[^browser]: Currently only the reading, processing and writing packets API is supported. With the rest put on the TODO list.
+
+Finally, by talking _about_ data there is a lot of potential for a 'network effect'. e.g. a support-ticket references the exact IoT event, a sale can references the your exact history of the object, etc.
+
+#### The idea
+
+I build linkspace so I (and hopefully others) can:
+
+- define, prototype, build, and run real-serverless offline-first apps quickly.
+- build an application without having to decide how to administrate for everyone that uses it - that responsibility sits with the (group of) users.
+
+I hope it might solve some of the worst problems with the current internet.
+
+Perhaps the greatest insanity of this time (and I believe its defining feature) is a few for-profit advertisement / propaganda services are the host-administrators of the digital 'public squares' for more than 2<sup>32</sup> people alive.
+
+It is questionable for people (and the groups they organize in) to be subjected to the interests of an unaccountable administrator.
+But I think the real impact is the medium as the message: You are not in control, surrender your minds for profit and submit to apathy.
+
+It is a staggering amount of wasted potential for people to not experience and learn to building something for, and with, a group outside the limits and interest of a higher-authority-incorporated.
+
+We are all lesser for it.
+
+The message of linkspace should be: You are in control, and you should build the best places you can.
+
 ### Is linkspace a blockchain?
 
 No.
@@ -348,58 +400,51 @@ But is it worth it?
 
 Yes.
 
-Supernets better model the reality of multi party communication - asynchronous and authenticated[^auth]
+Technically supernets better model the reality of multi party communication - asynchronous and authenticated[^auth]
+In the long run they could end up with less moving parts and with fewer configurations.
 
 [^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the keyholder send the message.
 
-In the long run they could end up with less moving parts and with fewer configurations.
+For society it is important that anyone can take responsibility if they want.
 
-Also, it is important that anyone can take responsibility if they want.
-It is not without danger for billions of people to spend hours each day in a paradigm where they can not take back control over systems they consider the 'public square'.
+### Isn't it a good thing that a host administrates what I and others see online?
 
-My hope is to look back at this time as the era of digital fiefdoms.
-The next era should balance out the influence of host-administrators,
-and together people can define what a 'real' copy is.
+Sure.
 
-### Isn't it a good thing that a host can administrate what I and others see online?
+There are different ways to do so.
+The straight forward approach is to have the application or user trust the public key of someone to scan and whitelist content. 
+This emulates the current system of 'admins', while still having users give the option to replace them.
 
-I agree it is not categorically a bad thing, especially in the 'public square'.
+Alternatively can be more dynamic.
+You could have friends or friends-of-friends vouch for content.
 
-There are different ways to do so, the simplest are:
+I suspect the latter to become more important as AI drives the cost of bullshit to zero and
+while platforms have no incentive to identify the engagement and content from chatbots.
 
-- An application can have you trust the public key of third party service to whitelist content. Effectively emulating the current system of 'admins', while still having users give the option to replace them.
-
-- An application can require content to be signed or be vouched for by friends, or friends of friends.
-
-I suspect the latter to become more important as AI drives the cost of bullshit to zero and platforms can't keep up.
-
-### Won't we end up with the same paradigm of centralized control?
+### Won't we end up with the same paradigm of highly centralized control?
 
 Maybe, maybe not.
-If a user could walk away from a 'platform' run by a host-administrator without much trouble, 
-the 'platforms' have to provide a better deal than they do now.
+If user today could walk away from a host-administrator without losing their history, identity, and links to others; 
+then they would get a better deal then they do now.
 
 ## Why not [alternative]?{#alts}
 
-There are two types of systems I'm certain aren't the right building blocks for the next digital era.
+There are two similar types of systems that can't do what I want.
 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
-- Faster email/Activity Pub : It's not that fast and its using server defined authenticity[^i] - plus most of the list below.
-
-[^i]: AFAIK content hashing and publickey identities could one day be the default - but it seems to be extremely complex to build on, and apps will miss out on much of the benefit of a supernet with it being overly generic.
+- Faster email: It's not that fast and it is using server-defined authenticity - plus most of the list below.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 
-- Too specialized. For example, a system like Git has a lot of plumbing for diffing each commit.
-- It has either hash addresses or custom url addresses, not both.
-- Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a second protocol. That means no json or base64.
-- No Groups. Setting who you share with and how, is not supported or only supports 'run multiple instances'.
-- No domains. Everything becomes one app with premature-bureaucracy that can grind development/experiments to a halt.
-- Its focused on signatures and consensus.
+- Too specialized. E.g. Git has a lot of plumbing for diffing text.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
-- Poor scripting support. 
-- Excessively interwoven components. e.g. Transmitting packets require a fully running 'node' with a fixed method of exchanging or saving data. 
+- Either its primarily hashes, or its primarily path names. Linkspace has both as first class addresses.
+- Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a second protocol. That means no json or base64.
+- No Groups. Setting who you share with and how is not supported or its little more than 'run multiple instances'.
+- No domains. Everything becomes one app with premature-bureaucracy and an ever expanding set of compatibility requirements that grinds development/experiments to a halt.
+- Its focused on signatures and consensus.
+- Poor scripting support.
+- Excessively interwoven components. e.g. Transmitting packets require a fully running 'node' with a fixed method of exchanging or saving data.
 
 That does not mean I think alternatives are necessarily worse.
 Different systems have different strong points.
-

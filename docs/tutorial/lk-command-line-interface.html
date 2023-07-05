@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-03 Mon 15:36 -->
+<!-- 2023-07-05 Wed 11:56 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>lk - The Linkspace CLI</title>
@@ -27,32 +27,32 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orga0be5e8">creating points</a>
+<li><a href="#orgc4efac5">creating points</a>
 <ul>
-<li><a href="#org0c7daa5">datapoint</a></li>
-<li><a href="#org4281c49">linkpoint</a></li>
-<li><a href="#org3f21b59">keypoint</a></li>
+<li><a href="#org593174a">datapoint</a></li>
+<li><a href="#orgd86146b">linkpoint</a></li>
+<li><a href="#org7c72aa5">keypoint</a></li>
 <li><a href="#collect">collect</a></li>
-<li><a href="#org11bd6be">rewrite</a></li>
+<li><a href="#org4cec01e">rewrite</a></li>
 </ul>
 </li>
-<li><a href="#org1a29319">query and filter</a>
+<li><a href="#orga71e913">query and filter</a>
 <ul>
-<li><a href="#org14132e1">print-query</a></li>
-<li><a href="#orgdb41c2b">filter</a></li>
+<li><a href="#org5ebb5c7">print-query</a></li>
+<li><a href="#org4557f9f">filter</a></li>
 </ul>
 </li>
-<li><a href="#org085e175">database and runtime</a>
+<li><a href="#org9ad66d4">database and runtime</a>
 <ul>
-<li><a href="#org6cd1dd4">save</a></li>
-<li><a href="#org50f2acb">watch</a></li>
+<li><a href="#orgcc30a8e">save</a></li>
+<li><a href="#orge5490d3">watch</a></li>
 </ul>
 </li>
-<li><a href="#org1628877">ABE</a>
+<li><a href="#org29c79d1">ABE</a>
 <ul>
-<li><a href="#org83e33cd">eval</a>
+<li><a href="#orgc92390f">eval</a>
 <ul>
-<li><a href="#org4c13e14">LNS</a></li>
+<li><a href="#org06b4e74">LNS</a></li>
 </ul>
 </li>
 </ul>
@@ -65,23 +65,23 @@
 </pre>
 </div>
 
-<pre class="example" id="org4f52c92">
-linkspace-cli linkspace-cli - 0.3.0-rc2 - main - b91289e - 1.72.0-nightly
+<pre class="example" id="org417b4e3">
+linkspace-cli linkspace-cli - 0.3.0-rc2 - main - 624dcf1 - 1.72.0-nightly
 </pre>
 
-<div id="outline-container-orga0be5e8" class="outline-2">
-<h2 id="orga0be5e8">creating points</h2>
-<div class="outline-text-2" id="text-orga0be5e8">
+<div id="outline-container-orgc4efac5" class="outline-2">
+<h2 id="orgc4efac5">creating points</h2>
+<div class="outline-text-2" id="text-orgc4efac5">
 </div>
-<div id="outline-container-org0c7daa5" class="outline-3">
-<h3 id="org0c7daa5">datapoint</h3>
-<div class="outline-text-3" id="text-org0c7daa5">
+<div id="outline-container-org593174a" class="outline-3">
+<h3 id="org593174a">datapoint</h3>
+<div class="outline-text-3" id="text-org593174a">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk datapoint | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="org96f012b">
+<pre class="example" id="org491daa1">
 type	DataPoint
 hash	kSYxvPrTRSuqQlDjnxkEg83QiUH1fZGIOOrbYJ1FMLc
 group	[#:0]
@@ -99,12 +99,12 @@ hello world!
 also usable as <code>lk data</code> and <code>lk d</code>
 </p>
 
-<div class="ctabs" id="org11f191a">
-<div class="O" id="orgafb8a32">
+<div class="ctabs" id="orgbdcdeb6">
+<div class="O" id="org3881593">
 
 </div>
-<div class="help" id="org3be7afb">
-<pre class="example" id="org18610ae">
+<div class="help" id="org8d94389">
+<pre class="example" id="orgbfdbc94">
 points - create a new datapoint
 
 Usage: lk datapoint [OPTIONS]
@@ -127,13 +127,13 @@ Options:
 
 </div>
 
-<div class="xxd" id="org62b43cc">
+<div class="xxd" id="org49da3ce">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk data | xxd
 </pre>
 </div>
 
-<pre class="example" id="org8e00860">
+<pre class="example" id="orga428d6d">
 00000000: 4c4b 3100 0000 0000 ffff ffff ffff ffff  LK1.............
 00000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................
 00000020: 9126 31bc fad3 452b aa42 50e3 9f19 0483  .&amp;1...E+.BP.....
@@ -146,8 +146,8 @@ Options:
 </div>
 
 
-<div class="ctabs" id="org8848006">
-<div class="info" id="orgece9619">
+<div class="ctabs" id="orgea9ccf0">
+<div class="info" id="org5bdfb67">
 <p>
 <code>pktf</code>, and many other functions, take <a href="../guide/index.html#ABE">ABE</a> input. A byte templating language.
 </p>
@@ -175,7 +175,7 @@ cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
 </pre>
 </div>
 
-<pre class="example" id="orgd972ee2">
+<pre class="example" id="orgb96f864">
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
@@ -183,9 +183,9 @@ FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
 </div>
 </div>
 
-<div id="outline-container-org4281c49" class="outline-3">
-<h3 id="org4281c49">linkpoint</h3>
-<div class="outline-text-3" id="text-org4281c49">
+<div id="outline-container-orgd86146b" class="outline-3">
+<h3 id="orgd86146b">linkpoint</h3>
+<div class="outline-text-3" id="text-orgd86146b">
 <p>
 A <code>linkpoint</code> has the additional fields:
 </p>
@@ -205,14 +205,14 @@ A <code>linkpoint</code> has the additional fields:
 </pre>
 </div>
 
-<pre class="example" id="org511676c">
+<pre class="example" id="orgbb3c5b0">
 type	LinkPoint
-hash	qsSv3e6Mi5Y9OxORX3I4JBeMsqwgrwhZvhg9wQHLdRY
+hash	x4eLkaxLbv88Hoirwx3evqlBTpsWtHB2oM0JQouBRDE
 group	[#:pub]
 domain	imageboard
 path	/hello/world
 pubkey	[@:none]
-create	1688391390915390
+create	1688551000264024
 links	2
 	a_link _K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88
 	other_link vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ
@@ -233,23 +233,23 @@ You can use ABE to set the tag or ptr:
 </pre>
 </div>
 
-<pre class="example" id="org10cb649">
-type	LinkPoint
-hash	pxUFCNeIicgH7ewFBM_qwxa_8w4GlO4ZnhK6d4DD1rQ
-group	[#:test]
-domain	imageboard
-path	
-pubkey	[@:none]
-create	1688391390932202
-links	3
-	hello Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk
-	my_key agQfV9uZzffoW4NwSw9qezQNrYi293DY1q1Hh9S03oo
-	other AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
-data	0
+<pre class="example" id="orga7c31e7">
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:82:63
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Panic! :Original Args {
+    inner: [
+        "/home/rs/Projects/linkspace/target/debug/lk",
+        "link",
+        "::",
+        "--",
+        "hello:[#:pub]",
+        "my_key:[@:me:local]",
+        "other:[#:0]",
+    ],
+}
 </pre>
 
-<div class="info" id="orgca6887e">
+<div class="info" id="orgf6b1984">
 <p>
 To use <code>[@:me:local]</code> you'll have to generate a key and create a local binding. <code>lk key</code> does this for you.
 </p>
@@ -258,9 +258,20 @@ To use <code>[@:me:local]</code> you'll have to generate a key and create a loca
 </pre>
 </div>
 
-<pre class="example" id="orge280092">
-$argon2d$v=19$m=8,t=1,p=1$agQfV9uZzffoW4NwSw9qezQNrYi293DY1q1Hh9S03oo$ASH1WoKOIrgrJIFv0AnjAl6FZiGZ7es5Kt5Unm+JSIs
-agQfV9uZzffoW4NwSw9qezQNrYi293DY1q1Hh9S03oo
+<pre class="example" id="org735acbf">
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:82:63
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Panic! :Original Args {
+    inner: [
+        "/home/rs/Projects/linkspace/target/debug/lk",
+        "--init",
+        "key",
+        "--decrypt-cost",
+        "0",
+        "--password",
+        "my secret",
+    ],
+}
 </pre>
 
 </div>
@@ -274,14 +285,14 @@ You can use xargs to dynamically set links, but a better tool is <a href="#colle
 </pre>
 </div>
 
-<pre class="example" id="orga1a7ab3">
+<pre class="example" id="org9edfa85">
 type	LinkPoint
-hash	h2iCwGIjVS_7gZUiRcj_ujWikYB7yyppwmmdUgrAIkg
+hash	gHN_F0tFu5IqraYD8pBS12P_kowt0JChktcVKIqjDuU
 group	[#:pub]
 domain	imageboard
 path	/a/pathname/for/this/point
 pubkey	[@:none]
-create	1688391390976248
+create	1688551000322887
 links	3
 	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
 	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
@@ -299,7 +310,7 @@ Unlike <code>lk datapoint</code> the <code>lk linkpoint</code> command does not 
 </pre>
 </div>
 
-<pre class="example" id="org0c763d6">
+<pre class="example" id="orgd555b63">
 hello
 </pre>
 
@@ -315,14 +326,14 @@ lk link ::/a/path --data-str "hello world" | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="orgbba561c">
+<pre class="example" id="org62b5c24">
 type	LinkPoint
-hash	Be5vMzOkwiBYhxkRev1Bb8i9zSPjmE1PyKBtt3jI-og
+hash	9KrdbqzXHb78Q3m7zElJ9Qwu0iMVX-Ad-LaJcmNiGqc
 group	[#:test]
 domain	imageboard
 path	/a/path
 pubkey	[@:none]
-create	1688391391013627
+create	1688551000359050
 links	0
 
 data	11
@@ -337,7 +348,7 @@ The max size is still 2<sup>16</sup>-512-PointHeader<sub>4</sub>. Free space is 
 </pre>
 </div>
 
-<pre class="example" id="orgd99eb67">
+<pre class="example" id="orgcfee4cb">
 xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
 xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
 i3Erj6uDTzxluzPOVlBxY_yG7Q9-H7b0iX3s0i-4fQQ contains 20177 bytes
@@ -352,9 +363,9 @@ i3Erj6uDTzxluzPOVlBxY_yG7Q9-H7b0iX3s0i-4fQQ contains 20177 bytes
 </div>
 
 
-<div id="outline-container-org3f21b59" class="outline-3">
-<h3 id="org3f21b59">keypoint</h3>
-<div class="outline-text-3" id="text-org3f21b59">
+<div id="outline-container-org7c72aa5" class="outline-3">
+<h3 id="org7c72aa5">keypoint</h3>
+<div class="outline-text-3" id="text-org7c72aa5">
 <p>
 Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </p>
@@ -364,17 +375,18 @@ Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </pre>
 </div>
 
-<pre class="example" id="orga41eb97">
-type	KeyPoint
-hash	QNGISbvP6e5aOtVbURoxJyYg0IsT3fMK3I8h-UTPnwE
-group	[#:test]
-domain	imageboard
-path	
-pubkey	[@:me:local]
-create	1688391391063435
-links	0
-
-data	0
+<pre class="example" id="orga0afa1d">
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:82:63
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Panic! :Original Args {
+    inner: [
+        "/home/rs/Projects/linkspace/target/debug/lk",
+        "keypoint",
+        "::",
+        "--password",
+        "my secret",
+    ],
+}
 </pre>
 
 <p>
@@ -386,8 +398,19 @@ Or use <code>--sign</code> on a linkpoint command
 </pre>
 </div>
 
-<pre class="example" id="org7244529">
-agQfV9uZzffoW4NwSw9qezQNrYi293DY1q1Hh9S03oo
+<pre class="example" id="org573e5b6">
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:82:63
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Panic! :Original Args {
+    inner: [
+        "/home/rs/Projects/linkspace/target/debug/lk",
+        "link",
+        "::",
+        "--sign",
+        "--password",
+        "my secret",
+    ],
+}
 </pre>
 </div>
 </div>
@@ -405,75 +428,83 @@ Collect creates a linkpoint with links pointing to the incoming pkts.
 </pre>
 </div>
 
-<pre class="example" id="orgf4163c2">
-DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
-DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
-DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 19961 0
-KeyPoint	agQfV9uZzffoW4NwSw9qezQNrYi293DY1q1Hh9S03oo 0 3
+<pre class="example" id="orgc926a81">
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:82:63
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Panic! :Original Args {
+    inner: [
+        "/home/rs/Projects/linkspace/target/debug/lk",
+        "collect",
+        "hello::/world",
+        "--sign",
+        "--password",
+        "my secret",
+    ],
+}
 </pre>
 </div>
 </div>
 
-<div id="outline-container-org11bd6be" class="outline-3">
-<h3 id="org11bd6be">rewrite</h3>
+<div id="outline-container-org4cec01e" class="outline-3">
+<h3 id="org4cec01e">rewrite</h3>
 </div>
 </div>
 
-<div id="outline-container-org1a29319" class="outline-2">
-<h2 id="org1a29319">query and filter</h2>
-<div class="outline-text-2" id="text-org1a29319">
+<div id="outline-container-orga71e913" class="outline-2">
+<h2 id="orga71e913">query and filter</h2>
+<div class="outline-text-2" id="text-orga71e913">
 </div>
-<div id="outline-container-org14132e1" class="outline-3">
-<h3 id="org14132e1">print-query</h3>
-</div>
-
-<div id="outline-container-orgdb41c2b" class="outline-3">
-<h3 id="orgdb41c2b">filter</h3>
-</div>
+<div id="outline-container-org5ebb5c7" class="outline-3">
+<h3 id="org5ebb5c7">print-query</h3>
 </div>
 
-<div id="outline-container-org085e175" class="outline-2">
-<h2 id="org085e175">database and runtime</h2>
-<div class="outline-text-2" id="text-org085e175">
-</div>
-<div id="outline-container-org6cd1dd4" class="outline-3">
-<h3 id="org6cd1dd4">save</h3>
-</div>
-
-<div id="outline-container-org50f2acb" class="outline-3">
-<h3 id="org50f2acb">watch</h3>
+<div id="outline-container-org4557f9f" class="outline-3">
+<h3 id="org4557f9f">filter</h3>
 </div>
 </div>
 
-<div id="outline-container-org1628877" class="outline-2">
-<h2 id="org1628877">ABE</h2>
-<div class="outline-text-2" id="text-org1628877">
+<div id="outline-container-org9ad66d4" class="outline-2">
+<h2 id="org9ad66d4">database and runtime</h2>
+<div class="outline-text-2" id="text-org9ad66d4">
 </div>
-<div id="outline-container-org83e33cd" class="outline-3">
-<h3 id="org83e33cd">eval</h3>
-<div class="outline-text-3" id="text-org83e33cd">
+<div id="outline-container-orgcc30a8e" class="outline-3">
+<h3 id="orgcc30a8e">save</h3>
+</div>
+
+<div id="outline-container-orge5490d3" class="outline-3">
+<h3 id="orge5490d3">watch</h3>
+</div>
+</div>
+
+<div id="outline-container-org29c79d1" class="outline-2">
+<h2 id="org29c79d1">ABE</h2>
+<div class="outline-text-2" id="text-org29c79d1">
+</div>
+<div id="outline-container-orgc92390f" class="outline-3">
+<h3 id="orgc92390f">eval</h3>
+<div class="outline-text-3" id="text-orgc92390f">
 <p>
 You can use <code>lk eval</code> to run a single expression instead of for each packet in a stream.
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[:hello] world"</code> <code>hello world</code>
+<code class="src src-bash">lk eval "[:hello] world"</code> 
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[:hello/?b] world"</code> <code>aGVsbG8 world</code>
+<code class="src src-bash">lk eval "[:hello/?b] world"</code> 
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[:hello/?b/b] world"</code> <code>hello world</code>
+<code class="src src-bash">lk eval "[:hello/?b/b] world"</code> 
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688391391260823</code>
+<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688551000526619</code>
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Mon, 03 Jul 2023 13:36:31 +0000</code>
+<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Wed, 05 Jul 2023 09:56:40 +0000</code>
 </p>
 
 <p>
@@ -485,9 +516,9 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 </p>
 </div>
 
-<div id="outline-container-org4c13e14" class="outline-4">
-<h4 id="org4c13e14">LNS</h4>
-<div class="outline-text-4" id="text-org4c13e14">
+<div id="outline-container-org06b4e74" class="outline-4">
+<h4 id="org06b4e74">LNS</h4>
+<div class="outline-text-4" id="text-org06b4e74">
 <p>
 <code class="src src-bash">lk eval "[[#:0]/b]"</code> ==
 </p>
@@ -498,12 +529,12 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 
 
 
-<div class="ctabs" id="org404029e">
-<div class="O" id="org637adca">
+<div class="ctabs" id="org3f755fb">
+<div class="O" id="org050d2f5">
 
 </div>
-<div class="help" id="orgee4943b">
-<pre class="example" id="org73a2642">
+<div class="help" id="org72d7de6">
+<pre class="example" id="org3086494">
 The context has one or more scopes active
 Each scope has functions and macros
 For each function the option set  ['[' , '/' , '?'] is given
@@ -679,7 +710,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
 </div>
 </div></div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-03 Mon 15:36</p>
+<p class="date">Created: 2023-07-05 Wed 11:56</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
