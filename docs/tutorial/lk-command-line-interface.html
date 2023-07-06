@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-06 Thu 13:56 -->
+<!-- 2023-07-06 Thu 17:24 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>lk - The Linkspace CLI</title>
@@ -27,32 +27,32 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org6e8301b">creating points</a>
+<li><a href="#org6012b7a">creating points</a>
 <ul>
-<li><a href="#org16cbfdd">datapoint</a></li>
-<li><a href="#orgb691b5d">linkpoint</a></li>
-<li><a href="#org73a3409">keypoint</a></li>
+<li><a href="#org17bbb79">datapoint</a></li>
+<li><a href="#org5e129a6">linkpoint</a></li>
+<li><a href="#org2f187e1">keypoint</a></li>
 <li><a href="#collect">collect</a></li>
-<li><a href="#org4e3e319">rewrite</a></li>
+<li><a href="#orgc3dc3ea">rewrite</a></li>
 </ul>
 </li>
-<li><a href="#org0d3b898">query and filter</a>
+<li><a href="#orgc0d8fd9">query and filter</a>
 <ul>
-<li><a href="#orgb283c31">print-query</a></li>
-<li><a href="#org696d0be">filter</a></li>
+<li><a href="#orgfce30df">print-query</a></li>
+<li><a href="#org7fef06c">filter</a></li>
 </ul>
 </li>
-<li><a href="#org9a78ef6">database and runtime</a>
+<li><a href="#org459e1ab">database and runtime</a>
 <ul>
-<li><a href="#orge201ec0">save</a></li>
-<li><a href="#org83c8209">watch</a></li>
+<li><a href="#org51f8262">save</a></li>
+<li><a href="#orgcbacd21">watch</a></li>
 </ul>
 </li>
-<li><a href="#org1c8ad3f">ABE</a>
+<li><a href="#orgc6e89d5">ABE</a>
 <ul>
-<li><a href="#org2ece0d1">eval</a>
+<li><a href="#org91a551f">eval</a>
 <ul>
-<li><a href="#orgf6ece31">LNS</a></li>
+<li><a href="#orga7930a9">LNS</a></li>
 </ul>
 </li>
 </ul>
@@ -65,41 +65,46 @@
 </pre>
 </div>
 
-<pre class="example" id="org6fcf69e">
-linkspace-cli linkspace-cli - 0.3.0-rc2 - main - 4fc66af - 1.72.0-nightly
+<pre class="example" id="orgef62d9e">
+linkspace-cli linkspace-cli - 0.3.0-rc2 - main - 34d84bd - 1.72.0-nightly
 </pre>
 
-<div id="outline-container-org6e8301b" class="outline-2">
-<h2 id="org6e8301b">creating points</h2>
-<div class="outline-text-2" id="text-org6e8301b">
+<div id="outline-container-org6012b7a" class="outline-2">
+<h2 id="org6012b7a">creating points</h2>
+<div class="outline-text-2" id="text-org6012b7a">
 </div>
-<div id="outline-container-org16cbfdd" class="outline-3">
-<h3 id="org16cbfdd">datapoint</h3>
-<div class="outline-text-3" id="text-org16cbfdd">
+<div id="outline-container-org17bbb79" class="outline-3">
+<h3 id="org17bbb79">datapoint</h3>
+<div class="outline-text-3" id="text-org17bbb79">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk datapoint | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="org173b067">
-2023-07-06T11:56:43.598753Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-error: Args { inner: ["/home/rs/Projects/linkspace/target/debug/lk", "pktf"] }
-Error {
-    context: "type\\t[type:str]\\nhash\\t[hash:str]\\ngroup\\t[/~?:[group]/#/b]\\ndomain\\t[domain:str]\\npath\\t[path:str]\\npubkey\\t[/~?:[pubkey]/@/b]\\ncreate\\t[create:str]\\nlinks\\t[links_len:str]\\n[/links:\\t[tag:str] [ptr:str]\\n]\\ndata\\t[data_size:str]\\n[data/~utf8]\\n",
-    source: func error : 'type' : expect between 0..=1 but got [, :str],
-}
+<pre class="example" id="orgf91185c">
+type	DataPoint
+hash	kSYxvPrTRSuqQlDjnxkEg83QiUH1fZGIOOrbYJ1FMLc
+group	[#:0]
+domain	
+path	
+pubkey	[@:none]
+create	0
+links	0
+
+data	12
+hello world!
 </pre>
 
 <p>
 also usable as <code>lk data</code> and <code>lk d</code>
 </p>
 
-<div class="ctabs" id="org98efb94">
-<div class="O" id="orgbe2a32f">
+<div class="ctabs" id="org665f134">
+<div class="O" id="org6166d68">
 
 </div>
-<div class="help" id="org0170b5d">
-<pre class="example" id="orgfe1eafc">
+<div class="help" id="orgdb8415f">
+<pre class="example" id="org6088bd9">
 points - create a new datapoint
 
 Usage: lk datapoint [OPTIONS]
@@ -122,13 +127,13 @@ Options:
 
 </div>
 
-<div class="xxd" id="org980bfdc">
+<div class="xxd" id="org11a1246">
 <div class="org-src-container">
 <pre class="src src-bash">echo -n hello world! | lk data | xxd
 </pre>
 </div>
 
-<pre class="example" id="org16f4f1d">
+<pre class="example" id="orgced3b24">
 00000000: 4c4b 3100 0000 0000 ffff ffff ffff ffff  LK1.............
 00000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................
 00000020: 9126 31bc fad3 452b aa42 50e3 9f19 0483  .&amp;1...E+.BP.....
@@ -141,8 +146,8 @@ Options:
 </div>
 
 
-<div class="ctabs" id="orgc7f69c5">
-<div class="info" id="orgc110cbb">
+<div class="ctabs" id="org8d3dec3">
+<div class="info" id="orgdd45a5b">
 <p>
 <code>pktf</code>, and many other functions, take <a href="../guide/index.html#ABE">ABE</a> input. A byte templating language.
 </p>
@@ -170,7 +175,7 @@ cat three_datapoints.lkp | lk pktf "[hash/?b] contains [data_size/?u] bytes"
 </pre>
 </div>
 
-<pre class="example" id="orgc27bc22">
+<pre class="example" id="org1d26e59">
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ contains 65020 bytes
 FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
@@ -178,9 +183,9 @@ FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8 contains 19961 bytes
 </div>
 </div>
 
-<div id="outline-container-orgb691b5d" class="outline-3">
-<h3 id="orgb691b5d">linkpoint</h3>
-<div class="outline-text-3" id="text-orgb691b5d">
+<div id="outline-container-org5e129a6" class="outline-3">
+<h3 id="org5e129a6">linkpoint</h3>
+<div class="outline-text-3" id="text-org5e129a6">
 <p>
 A <code>linkpoint</code> has the additional fields:
 </p>
@@ -200,21 +205,19 @@ A <code>linkpoint</code> has the additional fields:
 </pre>
 </div>
 
-<pre class="example" id="org9fd3106">
-2023-07-06T11:56:43.806396Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-error: Args { inner: ["/home/rs/Projects/linkspace/target/debug/lk", "linkpoint", "imageboard:[#:pub]:/hello/world", "--", "a_link:_K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88", "other_link:vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ"] }
-Error {
-    context: "Ok(\"[a:imageboard]\") : Err(Eval(func error : \'#\' : LNS names are reversed spaths - component cant be of size 0)) : Ok(\"/hello/world\") ",
-    source: Error {
-        context: "eval group",
-        source: Error {
-            context: "[#:pub]",
-            source: Eval(
-                func error : '#' : LNS names are reversed spaths - component cant be of size 0,
-            ),
-        },
-    },
-}
+<pre class="example" id="org3a1e8f8">
+type	LinkPoint
+hash	0lY_hcldCb973Yct0JB-wTlcqgmMjlPGpBDd5_9iwbk
+group	[#:pub]
+domain	imageboard
+path	/hello/world
+pubkey	[@:none]
+create	1688657089888047
+links	2
+	a_link _K7me35u0a52_pk-wt6e-60MI-wmGHKlj7V9sp39r88
+	other_link vrQ7INX24wxbIOjqrdPLXhDlf9E16tk-cntuNltnpxQ
+
+data	0
 </pre>
 
 <p>
@@ -230,24 +233,23 @@ You can use ABE to set the tag or ptr:
 </pre>
 </div>
 
-<pre class="example" id="orgc2fd7c8">
-2023-07-06T11:56:43.828961Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "link",
-        "::",
-        "--",
-        "hello:[#:pub]",
-        "my_key:[@:me:local]",
-        "other:[#:0]",
-    ],
-}
+<pre class="example" id="org7e5e091">
+type	LinkPoint
+hash	4DiJDLjjZSIgijlINxymBTM7AQZfocA6uyocgAsj7H0
+group	[#:test]
+domain	imageboard
+path	
+pubkey	[@:none]
+create	1688657089922031
+links	3
+	hello Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk
+	my_key 8PvKh_IUq_Pb1UqNo5XKcCmF9doZ4p-Yr2yVkRfXOj8
+	other AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+data	0
 </pre>
 
-<div class="info" id="orgcd04944">
+<div class="info" id="orga514a94">
 <p>
 To use <code>[@:me:local]</code> you'll have to generate a key and create a local binding. <code>lk key</code> does this for you.
 </p>
@@ -256,20 +258,9 @@ To use <code>[@:me:local]</code> you'll have to generate a key and create a loca
 </pre>
 </div>
 
-<pre class="example" id="org3928016">
-thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: claim point in the wrong group', crates/common/src/protocols/lns/mod.rs:99:107
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "--init",
-        "key",
-        "--decrypt-cost",
-        "0",
-        "--password",
-        "my secret",
-    ],
-}
+<pre class="example" id="org9976065">
+$argon2d$v=19$m=8,t=1,p=1$8PvKh/IUq/Pb1UqNo5XKcCmF9doZ4p+Yr2yVkRfXOj8$XU7JKdDRbyNX9oA/ANSH7VCQImV5yOPgm+mJCCJF0Dw
+8PvKh_IUq_Pb1UqNo5XKcCmF9doZ4p-Yr2yVkRfXOj8
 </pre>
 
 </div>
@@ -283,27 +274,20 @@ You can use xargs to dynamically set links, but a better tool is <a href="#colle
 </pre>
 </div>
 
-<pre class="example" id="org815d633">
-2023-07-06T11:56:43.871831Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'hash' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'hash' : expect between 0..=1 but got [, :str])
-error: Args { inner: ["/home/rs/Projects/linkspace/target/debug/lk", "pktf", "onetag:[hash:str]"] }
-Error {
-    context: "onetag:[hash:str]",
-    source: func error : 'hash' : expect between 0..=1 but got [, :str],
-}
-2023-07-06T11:56:43.876258Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-error: Args { inner: ["/home/rs/Projects/linkspace/target/debug/lk", "link", "imageboard:[#:pub]:/a/pathname/for/this/point", "--"] }
-Error {
-    context: "Ok(\"[a:imageboard]\") : Err(Eval(func error : \'#\' : LNS names are reversed spaths - component cant be of size 0)) : Ok(\"/a/pathname/for/this/point\") ",
-    source: Error {
-        context: "eval group",
-        source: Error {
-            context: "[#:pub]",
-            source: Eval(
-                func error : '#' : LNS names are reversed spaths - component cant be of size 0,
-            ),
-        },
-    },
-}
+<pre class="example" id="org808b571">
+type	LinkPoint
+hash	RLiN6JTRDWmrwwWc-wlsXWERrjlRDvDiepuFilsvA9g
+group	[#:pub]
+domain	imageboard
+path	/a/pathname/for/this/point
+pubkey	[@:none]
+create	1688657089994931
+links	3
+	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
+	onetag 65-OiaoBlf1fQ2o4TmL8P7TqyI84UKi2-ngh-F4MTJQ
+	onetag FnCpAI2EEZ9dkA0MtlOhjGePFjuxUKd1VlP3XxjuUe8
+
+data	0
 </pre>
 
 <p>
@@ -315,17 +299,8 @@ Unlike <code>lk datapoint</code> the <code>lk linkpoint</code> command does not 
 </pre>
 </div>
 
-<pre class="example" id="org000354e">
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "link",
-        "::/a/path",
-        "--data-stdin",
-    ],
-}
+<pre class="example" id="org7924fd5">
+hello
 </pre>
 
 <p>
@@ -340,19 +315,18 @@ lk link ::/a/path --data-str "hello world" | lk pktf
 </pre>
 </div>
 
-<pre class="example" id="org0f1ab2d">
-2023-07-06T11:56:43.910840Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "link",
-        "::/a/path",
-        "--data-str",
-        "hello world",
-    ],
-}
+<pre class="example" id="org2efb55d">
+type	LinkPoint
+hash	3Gc7rQpIXuIRCb3Si8z6ILmODUF8JBJ0-mcxctngFLo
+group	[#:test]
+domain	imageboard
+path	/a/path
+pubkey	[@:none]
+create	1688657090044084
+links	0
+
+data	11
+hello world
 </pre>
 
 <p>
@@ -363,25 +337,10 @@ The max size is still 2<sup>16</sup>-512-PointHeader<sub>4</sub>. Free space is 
 </pre>
 </div>
 
-<pre class="example" id="org5bdaf6c">
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "link",
-        "::",
-        "--multi",
-        "--create",
-        "[epoch]",
-        "--data-stdin",
-        "--",
-        "hello:[#:pub]",
-    ],
-}
-Traceback (most recent call last):
-  File "&lt;string&gt;", line 1, in &lt;module&gt;
-BrokenPipeError: [Errno 32] Broken pipe
+<pre class="example" id="org4b7c50f">
+xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
+xSQTGMziYmjTDjLBB95UWa53WWNei88rpxVHrY5u36s contains 64912 bytes
+i3Erj6uDTzxluzPOVlBxY_yG7Q9-H7b0iX3s0i-4fQQ contains 20177 bytes
 </pre>
 
 <ul class="org-ul">
@@ -393,9 +352,9 @@ BrokenPipeError: [Errno 32] Broken pipe
 </div>
 
 
-<div id="outline-container-org73a3409" class="outline-3">
-<h3 id="org73a3409">keypoint</h3>
-<div class="outline-text-3" id="text-org73a3409">
+<div id="outline-container-org2f187e1" class="outline-3">
+<h3 id="org2f187e1">keypoint</h3>
+<div class="outline-text-3" id="text-org2f187e1">
 <p>
 Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </p>
@@ -405,19 +364,17 @@ Keypoints are linkpoints with an additional pubkey_32 and signature_64.
 </pre>
 </div>
 
-<pre class="example" id="orgb61efef">
-2023-07-06T11:56:43.977242Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "keypoint",
-        "::",
-        "--password",
-        "my secret",
-    ],
-}
+<pre class="example" id="orgff97c38">
+type	KeyPoint
+hash	2ryM9F7keTaHUM91ycqVdqznFCzx9GdIN3YD52M2150
+group	[#:test]
+domain	imageboard
+path	
+pubkey	[@:me:local]
+create	1688657090146577
+links	0
+
+data	0
 </pre>
 
 <p>
@@ -429,20 +386,8 @@ Or use <code>--sign</code> on a linkpoint command
 </pre>
 </div>
 
-<pre class="example" id="org20497ed">
-2023-07-06T11:56:43.993530Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'pubkey' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'pubkey' : expect between 0..=1 but got [, :str])
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "link",
-        "::",
-        "--sign",
-        "--password",
-        "my secret",
-    ],
-}
+<pre class="example" id="org30c2b84">
+8PvKh_IUq_Pb1UqNo5XKcCmF9doZ4p-Yr2yVkRfXOj8
 </pre>
 </div>
 </div>
@@ -460,62 +405,53 @@ Collect creates a linkpoint with links pointing to the incoming pkts.
 </pre>
 </div>
 
-<pre class="example" id="orgaad0fb4">
-2023-07-06T11:56:44.023618Z  WARN lk::pktf: chance of failure. set --error or --silent flag  data_test=Err(func error : 'type' : expect between 0..=1 but got [, :str]) link_test=Err(func error : 'type' : expect between 0..=1 but got [, :str])
-thread 'main' panicked at 'can't eval LK_GROUP: Eval(func error : '#' : LNS names are reversed spaths - component cant be of size 0)', crates/common/src/static_env.rs:98:29
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Panic! :Original Args {
-    inner: [
-        "/home/rs/Projects/linkspace/target/debug/lk",
-        "collect",
-        "hello::/world",
-        "--sign",
-        "--password",
-        "my secret",
-    ],
-}
+<pre class="example" id="orgebf6690">
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 65020 0
+DataPoint	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 19961 0
+KeyPoint	8PvKh_IUq_Pb1UqNo5XKcCmF9doZ4p-Yr2yVkRfXOj8 0 3
 </pre>
 </div>
 </div>
 
-<div id="outline-container-org4e3e319" class="outline-3">
-<h3 id="org4e3e319">rewrite</h3>
+<div id="outline-container-orgc3dc3ea" class="outline-3">
+<h3 id="orgc3dc3ea">rewrite</h3>
 </div>
 </div>
 
-<div id="outline-container-org0d3b898" class="outline-2">
-<h2 id="org0d3b898">query and filter</h2>
-<div class="outline-text-2" id="text-org0d3b898">
+<div id="outline-container-orgc0d8fd9" class="outline-2">
+<h2 id="orgc0d8fd9">query and filter</h2>
+<div class="outline-text-2" id="text-orgc0d8fd9">
 </div>
-<div id="outline-container-orgb283c31" class="outline-3">
-<h3 id="orgb283c31">print-query</h3>
-</div>
-
-<div id="outline-container-org696d0be" class="outline-3">
-<h3 id="org696d0be">filter</h3>
-</div>
+<div id="outline-container-orgfce30df" class="outline-3">
+<h3 id="orgfce30df">print-query</h3>
 </div>
 
-<div id="outline-container-org9a78ef6" class="outline-2">
-<h2 id="org9a78ef6">database and runtime</h2>
-<div class="outline-text-2" id="text-org9a78ef6">
-</div>
-<div id="outline-container-orge201ec0" class="outline-3">
-<h3 id="orge201ec0">save</h3>
-</div>
-
-<div id="outline-container-org83c8209" class="outline-3">
-<h3 id="org83c8209">watch</h3>
+<div id="outline-container-org7fef06c" class="outline-3">
+<h3 id="org7fef06c">filter</h3>
 </div>
 </div>
 
-<div id="outline-container-org1c8ad3f" class="outline-2">
-<h2 id="org1c8ad3f">ABE</h2>
-<div class="outline-text-2" id="text-org1c8ad3f">
+<div id="outline-container-org459e1ab" class="outline-2">
+<h2 id="org459e1ab">database and runtime</h2>
+<div class="outline-text-2" id="text-org459e1ab">
 </div>
-<div id="outline-container-org2ece0d1" class="outline-3">
-<h3 id="org2ece0d1">eval</h3>
-<div class="outline-text-3" id="text-org2ece0d1">
+<div id="outline-container-org51f8262" class="outline-3">
+<h3 id="org51f8262">save</h3>
+</div>
+
+<div id="outline-container-orgcbacd21" class="outline-3">
+<h3 id="orgcbacd21">watch</h3>
+</div>
+</div>
+
+<div id="outline-container-orgc6e89d5" class="outline-2">
+<h2 id="orgc6e89d5">ABE</h2>
+<div class="outline-text-2" id="text-orgc6e89d5">
+</div>
+<div id="outline-container-org91a551f" class="outline-3">
+<h3 id="org91a551f">eval</h3>
+<div class="outline-text-3" id="text-org91a551f">
 <p>
 You can use <code>lk eval</code> to run a single expression instead of for each packet in a stream.
 </p>
@@ -533,11 +469,11 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688644604185862</code>
+<code class="src src-bash">lk eval "[now/?u]"</code> <code>1688657090398888</code>
 </p>
 
 <p>
-<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Thu, 06 Jul 2023 11:56:44 +0000</code>
+<code class="src src-bash">lk eval "[now/s:str]"</code> <code>Thu, 06 Jul 2023 15:24:50 +0000</code>
 </p>
 
 <p>
@@ -549,9 +485,9 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 </p>
 </div>
 
-<div id="outline-container-orgf6ece31" class="outline-4">
-<h4 id="orgf6ece31">LNS</h4>
-<div class="outline-text-4" id="text-orgf6ece31">
+<div id="outline-container-orga7930a9" class="outline-4">
+<h4 id="orga7930a9">LNS</h4>
+<div class="outline-text-4" id="text-orga7930a9">
 <p>
 <code class="src src-bash">lk eval "[[#:0]/b]"</code> ==
 </p>
@@ -562,16 +498,23 @@ You can use <code>lk eval</code> to run a single expression instead of for each 
 
 
 
-<div class="ctabs" id="org979cb10">
-<div class="O" id="org7de0221">
+<div class="ctabs" id="org7a62941">
+<div class="O" id="org5f25f40">
 
 </div>
-<div class="help" id="org9e38d15">
-<pre class="example" id="org913c341">
+<div class="help" id="orgcc18427">
+<pre class="example" id="orge080974">
+The context has one or more scopes active
+Each scope has functions and macros
+For each function the option set  ['[' , '/' , '?'] is given
+These refers to its use as:
+ '['  =&gt; Can be used to open   '[func/..]'
+ ':'  =&gt; Can be used in a pipe '[../func]'
+ '?'  =&gt; Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]
+
 # bytes
 Byte padding/trimming
 ## Functions
--                  [/?          1..=16     the '' (empty) fnc can be used to start an expr such as {:12/u8} which is the same as {u8:12}  
 - ?a               [/           1..=1     encode bytes into ascii-bytes format  
 - ?a0              [/           1..=1     encode bytes into ascii-bytes format but strip prefix '0' bytes  
 - a                [/?          1..=3     [bytes,length = 16,pad_byte = \0] - alias for 'lpad'  
@@ -587,7 +530,135 @@ Byte padding/trimming
 - lfixed           [/           1..=3     [bytes,length = 16,pad_byte = \0] - left pad and cut input bytes  
 - rfixed           [/           1..=3     [bytes,length = 16,pad_byte = \0] - right pad and cut input bytes  
 - slice            [/           1..=4     [bytes,start=0,stop=len,step=1] - python like slice indexing  
-- ~utf8            [/           1..=1     lossy encode as utf8
+- ~utf8            [/           1..=1     lossy encode as utf8  
+
+# UInt
+Unsigned integer functions
+## Functions
+- +                [/           1..=16     Saturating addition. Requires all inputs to be equal size  
+- -                [/           1..=16     Saturating subtraction. Requires all inputs to be equal size  
+- u8               [/?          1..=1     parse 1 byte  
+- u16              [/?          1..=1     parse 2 byte  
+- u32              [/?          1..=1     parse 4 byte  
+- u64              [/?          1..=1     parse 8 byte  
+- u128             [/?          1..=1     parse 16 byte  
+- ?u               [/           1..=1     Print big endian bytes as decimal  
+- lu               [/           1..=1     parse little endian byte (upto 16)  
+- lu8              [/           1..=1     parse 1 little endian byte  
+- lu16             [/           1..=1     parse 2 little endian byte  
+- lu32             [/           1..=1     parse 4 little endian byte  
+- lu64             [/           1..=1     parse 8 little endian byte  
+- lu128            [/           1..=1     parse 16 little endian byte  
+- ?lu              [/           1..=1     print little endian number  
+
+# base-n
+base{2,8,16,32,64} encoding - (b64 is url-safe no-padding)
+## Functions
+- b2               [/?          1..=1     decode binary  
+- b8               [/           1..=1     encode octets  
+- b16              [/?          1..=1     decode hex  
+- ?b               [/           1..=1     encode base64  
+- 2mini            [/           1..=1     encode mini  
+- b                [/?          1..=1     decode base64  
+
+# comment function / void function. evaluates to nothing
+
+## Functions
+- C                [/           1..=16     the comment function. all arguments are ignored. evaluates to ''  
+
+# help
+
+## Functions
+- help             [/           0..=16     help  
+## Macros
+- help             desribe current eval context  
+
+# logic ops
+ops are : &lt; &gt; = 0 1 
+## Functions
+- size?            [/           3..=3     [in,OP,VAL] error unless size passes the test ( UNIMPLEMENTED )  
+- val?             [/           3..=3     [in,OP,VAL] error unless value passes the test ( UNIMPLMENTED)  
+## Macros
+- or               :{EXPR}[:{EXPR}]* short circuit evaluate until valid return. Empty is valid, use {_/minsize?} to error on empty  
+
+# encode
+attempt an inverse of a set of functions
+## Functions
+- eval             [/           1..=1     parse and evaluate  
+- ?                [/           2..=8     encode  
+## Macros
+- ?                find an abe encoding for the value trying multiple reversal functions - [/fn:{opts}]*   
+- ~?               same as '?' but ignores all errors  
+- e                eval inner expression list. Useful to avoid escapes: eg file:{/e:/some/dir:thing}:opts does not require escapes the '/'   
+
+# static-lns
+static lns for local only [#:0] and public [#:pub]
+## Functions
+- #                [ ?          1..=16     resolve #:0 , #:pub, and #:test without a db  
+- @                [ ?          1..=16     resolve @:none  
+
+# stamp
+utilities for stamp values (big endian u64 microsecond since unix epoch)
+arguments consists of ( [+-][YMWDhmslu]usize : )* (str | delta | ticks | val)?
+
+## Functions
+- s                [/           0..=16     if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0  
+- now              [            0..=16     current systemtime  
+- epoch            [            0..=16     unix epoch / zero time  
+- s++              [            0..=16     max stamp  
+
+# path
+path utils. Usually [//some/path] is the most readable
+## Functions
+- ?p               [/           1..=1     decode path  
+- path_idx         [/           2..=3     path idx [start,?end]  
+- p                [/?          1..=8     build path from arguments  
+## Macros
+-                  the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val  
+- ~                similar to '//' but forgiving on empty components  
+
+# lns
+
+## Functions
+- #                [ ? &lt;partial&gt; 1..=7     (namecomp)* - get the associated lns group  
+- ?#               [/           1..=1     find by group# tag  
+- @                [ ? &lt;partial&gt; 1..=7     (namecomp)* - get the associated lns key  
+- ?@               [/           1..=1     find by pubkey@ tag  
+## Macros
+- lns              [:comp]*/expr  
+
+# private-lns
+Only look at the private claims lookup tree. Makes no requests
+## Functions
+- private#         [ ?          1..=7     (namecomp)* - get the associated lns group  
+- ?private#        [/           1..=1     find by group# tag  
+- private@         [ ?          1..=7     (namecomp)* - get the associated lns key  
+- ?private@        [/           1..=1     find by pubkey@ tag  
+## Macros
+- private-lns      [:comp]*/expr  
+
+# filesystem env
+read files from Ok("/tmp/linkspace")/files 
+## Functions
+- files            [/           1..=1     read a file from the LK_DIR/files directory  
+
+# database
+get packets from the local db.
+e-funcs evaluate their args as if in pkt scope.
+funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]] == [readhash:..:group:str])
+## Functions
+- readhash         [/           1..=16     open a pkt by hash and use tail args as if calling in a netpkt scope  
+- read             [/           2..=16     read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx  
+## Macros
+- readhash         HASH ':' expr (':' alt if not found)   
+
+# Unset&lt;abe::eval::EScope&lt;linkspace_common::eval::OSEnv&gt;&gt;
+
+
+# argv
+
+## Functions
+- argv             [/           1..=4     argv slice idx - 'argv:-1'
 </pre>
 
 </div>
@@ -607,7 +678,7 @@ Byte padding/trimming
 </div>
 </div></div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-06 Thu 13:56</p>
+<p class="date">Created: 2023-07-06 Thu 17:24</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
