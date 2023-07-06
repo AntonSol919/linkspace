@@ -2,7 +2,7 @@ use std::{sync::{Arc }, path::{Path,PathBuf},fmt::Debug, io::{Write, self} };
 
 use anyhow::Context;
 pub use ipcbus::ProcBus;
-use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktExt, NetPktPtr };
+use linkspace_pkt::{ Stamp, PUBLIC_GROUP_PKT, NetPkt, AB, NetPktPtr };
 use lmdb_sys::MDB_envinfo;
 use tracing::instrument;
 use crate::{LNS_ROOTS};
@@ -51,26 +51,13 @@ impl BTreeEnv {
         {
             let new = save_ptr_one(&env, &***PUBLIC_GROUP_PKT)?.is_new();
             if new && std::env::var_os("LK_NO_LNS").is_none(){
-                let mut bytes = LNS_ROOTS;
-                let mut roots:Vec<_> = std::iter::from_fn(||{
-                    if bytes.is_empty() { return None;}
-                    let pkt = crate::pkt::read::read_pkt(bytes, true).unwrap();
-                    bytes = &bytes[pkt.size() as usize..];
-                    match pkt{
-                        std::borrow::Cow::Borrowed(o) =>Some((o,SaveState::Pending)),
-                        std::borrow::Cow::Owned(_) => panic!(),
-                    }
-                }).collect();
+                let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p|(p,SaveState::Pending)).collect();
                 save_ptr(&env, &mut roots)?;
             }
         }
         Ok(env)
     }
 
-    pub fn local_enckey(&self) -> anyhow::Result<String> {
-        // TODO this should prob check for read only access
-        Ok(std::fs::read_to_string(self.0.location.join("local_auth"))?.lines().next().context("missing enckey")?.to_owned())
-    }
     #[instrument(ret,skip(bytes))]
     pub fn set_files_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
         tracing::trace!(bytes=%AB(bytes));

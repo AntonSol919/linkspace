@@ -65,8 +65,8 @@ pub struct PredicateAliases {
     pub follow: bool,
 
     #[clap(long)]
-    /// add recv:<:[now:+..] 
-    pub ttl : Option<String>
+    /// add recv:<:[s:INIT:+{until}] where INIT is set at start
+    pub until : Option<String>
 }
 
 impl PredicateAliases {
@@ -84,7 +84,7 @@ impl PredicateAliases {
             watch,
             qid,
             follow,
-            ttl,
+            until,
         } = self;
         let signed = signed
             .then(||
@@ -110,8 +110,8 @@ impl PredicateAliases {
         let watch = qid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
             .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)));
 
-        let ttl = ttl.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" : { "now" : "+" v}));
-
+        let now = now().0.to_vec();
+        let ttl = until.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" :  { : now / "s" : "+" v}));
         let follow = follow.then(|| abev!(: (KnownOptions::Follow.to_string())));
 
         watch.into_iter()

@@ -70,6 +70,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 
 ## Internals
 
+- `lk` help strings should not evaluate on every run
 - ipath and spath (const) macro's need a rewrite.
 - lk_pull should register a on_close to overwrite the packet signaled to the exchange.
 - Detangle field_ids abe and ruletype

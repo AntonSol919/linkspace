@@ -216,7 +216,8 @@ impl ABList {
         self.0.is_empty() || self.as_exact_bytes().map(|v| v.is_empty()).unwrap_or(false)
     }
     /**
-    a/b:c => [(_,a)] , [(/,b),(:,c)]
+    a/b:c => [(0,a)] , [(/,b),(:,c)]
+    :a/b:c => [(:,a)] , [(/,b),(:,c)]
     /a/b:c => Dont care - handled by eval already
     
     */
@@ -607,7 +608,6 @@ impl<A: Scope> Scope for &A {
     }
 }
 impl<A: Scope, B: Scope> Scope for (A, B) {
-    #[inline(always)]
     fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
         self.0
             .try_apply_func(id, args, init, ctx)
@@ -629,7 +629,6 @@ impl<A: Scope, B: Scope> Scope for (A, B) {
     }
 }
 impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
-    #[inline(always)]
     fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
         ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, ctx)
     }
@@ -686,11 +685,11 @@ impl<B: Scope> EvalCtx<B> {
 fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABItem, EvalError> {
     match expr {
         ABE::Ctr(c) => {
-            dbgprintln!("Match Ctr({c})  (depth={depth})");
+            dbgprintln!("Match/Return Ctr({c})  (depth={depth})");
             Ok(ABItem::Ctr(*c))
         }
         ABE::Expr(Expr::Bytes(b)) => {
-            dbgprintln!("Match bytes('{}') (depth={depth})", as_abtxt(b));
+            dbgprintln!("Match/Return bytes('{}') (depth={depth})", as_abtxt(b));
             Ok(ABItem::Bytes(b.to_vec()))
         }
         ABE::Expr(Expr::Lst(ls)) => {
@@ -707,6 +706,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                         [ABE::Ctr(Ctr::Colon), ref rest @ ..] => {
                             let mut result = vec![];
                             dump_abe_bytes(&mut result, rest);
+                            dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&result));
                             return Ok(ABItem::Bytes(result));
                         }
                         // enable {//...}
@@ -716,7 +716,10 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     dbgprintln!("Eval('{}')", as_abtxt(id));
                     match ctx.scope.try_apply_macro(id, rest, &ctx.scope) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
-                        ApplyResult::Value(b) => return Ok(ABItem::Bytes(b)),
+                        ApplyResult::Value(b) => {
+                            dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&b));
+                            return Ok(ABItem::Bytes(b))   
+                        },
                         ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
                     }
                 }
@@ -730,7 +733,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                 scope: &impl Scope,
                 id: &[u8],
                 input_and_args: &[&[u8]],
-                init: bool,
+                init:bool
             ) -> Result<Vec<u8>, EvalError> {
                 dbgprintln!(
                     "Call({init},id={},inp={:?} )",
@@ -744,30 +747,24 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                 }
             }
             let it = inner_abl.split_fslash();
-            let mut calls = it.map(|ls| ls.iter().map(|(_c, b)| b.as_slice()));
-            let mut stack = [&[] as &[u8]; 16];
-            let mut init_id_args = match calls.next() {
-                None => return Err(EvalError::Other(anyhow!("empty {{}} not enabled"))),
-                Some(v) => v,
-            };
-            let mut id = init_id_args.next().unwrap_or(&[]);
-            let argc = stack
-                .iter_mut()
-                .zip(&mut init_id_args)
-                .fold(0, |i, (slot, slice)| {
-                    *slot = slice;
-                    i + 1
-                });
-            if init_id_args.next().is_some() {
-                return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
-            }
-            let args = &stack[..argc];
-            dbgprintln!("Start: '{}' - {:?} ", as_abtxt(id), args);
-            let mut bytes = call(&ctx.scope, id, args, true)?;
-            for mut id_and_args in calls {
-                stack = [&[] as &[u8]; 16];
-                id = id_and_args.next().unwrap_or(&[]);
-                stack[0] = bytes.as_slice();
+            
+            let mut stack : [&[u8]; 16];
+            let mut id :&[u8];
+            let mut carry = vec![];
+
+            for sub_expr in it {
+                dbgprintln!("calling {sub_expr:?}");
+                stack = [&[];16];
+                let mut id_and_args = sub_expr.iter().map(|(_,c)|c.as_slice());
+                let init = match sub_expr.first().and_then(|f| f.0){
+                    // [.../some:thing]
+                    Some(Ctr::FSlash) =>{ id = id_and_args.next().unwrap_or(&[]); false},
+                    // [:..]
+                    Some(Ctr::Colon) => {id = &[]; true},
+                    // [..]
+                    None => {id = id_and_args.next().unwrap_or(&[]) ; true},
+                };
+                stack[0] = carry.as_slice();
                 let argc =
                     1 + stack[1..]
                         .iter_mut()
@@ -782,13 +779,14 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                 let args = &stack[..argc];
                 dbgprintln!(
                     "'{}' -> '{}' :: {:?} ::",
-                    as_abtxt(&bytes),
+                    as_abtxt(&carry),
                     as_abtxt(id),
                     args
                 );
-                bytes = call(&ctx.scope, id, args, false)?;
+                carry = call(&ctx.scope, id, args, init )?;
             }
-            Ok(ABItem::Bytes(bytes))
+            dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&carry));
+            Ok(ABItem::Bytes(carry))
         }
     }
 }

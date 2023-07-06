@@ -99,10 +99,10 @@ Most commands are used in a pipeline and read packets from stdin.
 #[derive(Parser)]
 #[clap(author, about,version,long_version=BUILD_INFO)]
 struct Cli {
-    #[clap(flatten)]
-    common: CommonOpts,
     #[clap(subcommand)]
     command: Command,
+    #[clap(flatten)]
+    common: CommonOpts,
 }
 
 #[derive(Parser)]
@@ -153,7 +153,7 @@ enum Command {
 
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
     */
-    #[clap(alias="p",before_long_help=PKT_HELP.to_string())]
+    #[clap(alias="p",before_long_help=&*PKT_HELP)]
     Pktf(pktf::PktFmtOpts),
     /// abe   - encode input into abe
     #[clap(alias = "n")]
@@ -166,7 +166,7 @@ enum Command {
     },
 
     /// query - print full query from common aliases
-    #[clap(alias="q",alias="print-predicate",before_help=QUERY_HELP.to_string())]
+    #[clap(alias="q",alias="print-predicate",before_help=&*QUERY_HELP)]
     PrintQuery {
         #[clap(flatten)]
         opts: CLIQuery,

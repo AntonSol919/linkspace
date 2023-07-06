@@ -27,7 +27,6 @@ impl NetHeaderMutate {
         clear: NetPktHeader::cfrom([255; 32]),
         set: NetPktHeader::cfrom([0; 32]),
     };
-    #[inline(always)]
     pub fn mutate(&self, h: &mut NetPktHeader) {
         let b: &mut [u128; 2] = unsafe { &mut *(h as *mut NetPktHeader as *mut [u128; 2]) };
         let clear: &[u128; 2] =

@@ -133,7 +133,6 @@ pub(crate) fn next_byte(
     }
 }
 
-#[inline(always)]
 fn parse_abtxt(
     string: &[u8],
     dest: &mut impl Write,

@@ -51,19 +51,20 @@ A couple of well known internet protocols that have this property are:
 | FTP    | /Projects/linkspace/readme.md | In a supernet [...] |
 | SQL    | SELECT * from MSG where ID=1; | A message in a db   |
 
-
-With these tools various 'platforms' exists so that people have a model for two or more devices to communicate.
+Using these tools we do not just create websites to provide information.
+At first we used these tools to create websites to provide information.
+But this has changed and we instead build 'platforms'.
+Services that store, forward, and administrate messages so multiple that multiple devices can communicate.
 
 <b>We have reached the limit of using this model of streaming questions/answers paradigm for multi-party communication.</b>
 
 First, the stream abstraction can leak.
 Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
-Then, when more than two devices are involved the leaks compound.
-Two devices go out of sync.
-Either somewhere in the system an answer becomes stale or wrong,
-or doesn't scaling and have everyone contact a single source of truth.
 
-Alternatively you use something like a supernet.
+Then, when more than two devices are involved the leaks compound.
+Synchronization is as slow as the slowest link, answers become stale or wrong.
+
+Alternatively you design a system as a supernet.
 
 :::{.definition}
 Supernet  [ˈsü-pərˌnet]<br>
@@ -93,8 +94,6 @@ To understand what each field does lets start with a simple example of a message
 
 :::{.container .pkt .pd}
 +-----------------------------------+----------------------------------+
-| Key                               | Value                            |
-+===================================+==================================+
 | /image/BrokenMachine.jpg          | [image data]                     |
 +-----------------------------------+----------------------------------+
 | /thread/Coffee machine broke!/msg | Fix pls? image/BrokenMachine.jpg |
@@ -123,7 +122,7 @@ To understand what each field does lets start with a simple example of a message
 :::
 
 
-The key "image/BrokenMachine.jpg" is called a **path** and maps to [image data].
+The "image/BrokenMachine.jpg" is called a **path** and maps to [image data].
 So far this should look familiar as it is similar to files in directories.
 I'll refer to each entry as a **point**, and multiple entries as a **set**.
 The example shown has two sets **merging**. The result is a new set with 3 messages.

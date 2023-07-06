@@ -127,7 +127,6 @@ impl PointThinPtr {
     }
 
     /// Check the header length fields and return the point size. This is the length without the hash.
-    #[inline(always)]
     pub fn internal_consitent_length(&self) -> Result<(), Error> {
         self.point_header().check()?;
         let mut point_size = self.point_header().upoint_size();

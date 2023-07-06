@@ -8,22 +8,17 @@ use tracing::instrument;
 use crate::prelude::*;
 use crate::protocols::lns::{LNS, VOTE_TAG};
 
-use super::claim::{LiveClaim, ClaimData, Claim };
+use super::claim::{LiveClaim, Claim };
 use super::name::Name;
 
 
 pub fn root_claim() -> LiveClaim{
-    let mut it = lns_root_claims();
+    let mut it = linkspace_core::LNS_ROOTS.iter();
     let claim_pkt = it.next().unwrap();
     let nsigns = claim_pkt.get_links().iter().filter(|v| v.tag.0[15] == b'^').count();
-    let data = ClaimData::try_from(claim_pkt.data()).unwrap();
-    let claim = Claim{pkt:RecvPkt::from_dyn(&claim_pkt),data,name:Name::root()};
+    let claim = Claim{pkt:RecvPkt::from_dyn(&claim_pkt),name:Name::root()};
     let signatures = it.take(nsigns).map(|p| RecvPkt::from_dyn(&p)).collect();
     LiveClaim { claim, signatures, parent: None }
-}
-
-pub fn lns_root_claims() -> impl Iterator<Item=NetPktBox>{
-    crate::pkt_reader::NetPktDecoder::new(linkspace_core::LNS_ROOTS).map(|v| v.unwrap().as_netbox())
 }
 
 pub type IssueHandler<'o> = &'o mut dyn FnMut(Issue) -> anyhow::Result<()>;

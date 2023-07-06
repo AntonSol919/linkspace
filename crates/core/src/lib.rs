@@ -35,6 +35,7 @@ pub use parse_display;
 
 pub use linkspace_cryptography as crypto;
 pub use linkspace_pkt as pkt;
+use pkt::NetPktPtr;
 pub mod consts;
 
 pub mod env;
@@ -65,4 +66,22 @@ macro_rules! try_opt {
     };
 }
 
-pub static LNS_ROOTS:&[u8] = include_bytes!("./lnsroots.pkt");
+#[repr(align(32))]
+pub struct StaticPkts<const N: usize>(pub [u8;N]);
+pub static LNS_ROOTS: StaticPkts<520> = StaticPkts(*include_bytes!("./lnsroots.pkt"));
+impl<const N:usize> StaticPkts<N>{
+    pub fn iter<'o>(&'o self) -> impl Iterator<Item= &'o NetPktPtr> + 'o {
+        let mut bytes = &self.0 as &[u8];
+        std::iter::from_fn(move ||{
+            if bytes.is_empty() { return None;}
+            let pkt = crate::pkt::read::read_pkt(bytes, true).unwrap();
+            match pkt{
+                std::borrow::Cow::Borrowed(o) => {
+                    bytes = &bytes[pkt::NetPktExt::size(&o) as usize..];
+                    Some(o)
+                },
+                std::borrow::Cow::Owned(_) => panic!(),
+            }
+        })
+    }
+}

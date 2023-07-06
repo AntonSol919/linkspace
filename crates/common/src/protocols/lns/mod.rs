@@ -5,31 +5,31 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 /**
-LNS is quite a bit complex because it supports 3 modes.
-Each with a different idea of when a claim is 'live'.
+LNS is complex. In part because it supports 3 modes.
 
 The modes are :
-- the public roots (:com , :dev, :free etc) - authorities vote and claims have fast path based lookup.
-- a :local admin - creates keypoints to other 'roots' creating a chain of names.
-- the :files claims are claims stored as files in the LK_DIR/files/ directory
+- public roots (:com , :dev etc) - claims are created and authorities vote - (compromised) keys are easy/cheap to replace and fast path lookup.
+- a :local admin - creates keypoints to other 'roots' creating a chain of names - a simple forward lookup where each (group of) keys names others keys.
+- a :file looks for a claim file in the $LK_DIR/files/ directory
 
-an admin key/process creates a local lookup & reverse-lookup table such that each can quickly be resolved.
-Every part of this is not yet fully implemented.
+Each has a different concept of when a claim is 'live'.
+
+Not all part of are fully implemented.
 
 **/
 
 
 
-use abe::eval::{clist, ApplyResult};
+use abe::eval::{ ApplyResult};
 use anyhow::{Context };
 use byte_fmt::ab;
 use linkspace_argon2_identity::pubkey;
-use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC };
+use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC, Point };
 use tracing::instrument;
 
 use crate::runtime::Linkspace;
 
-use self::{claim::{LiveClaim, Claim, resolve_enckey}, name::{Name, SpecialName}, public_claim::IssueHandler};
+use self::{claim::{LiveClaim, Claim,  read_enckey}, name::{Name, SpecialName}, public_claim::IssueHandler};
 
 
 pub mod name;
@@ -48,6 +48,7 @@ pub const CLAIM_PREFIX : IPathC<15> = ipath1::<6>(b"claims");
 /// tag expected for local claims pointing to a (live) lns:[#:pub] claim
 pub const PUB_CLAIM_TAG : Tag = ab(b"pub-claim");
 pub const PUBKEY_TAG : Tag = ab(b"pubkey@");
+pub const PUBKEY_AUTH_TAG : Tag = ab(b"pubkey^");
 pub const VOTE_TAG : Tag = ab(b"vote");
 pub const GROUP_TAG: Tag = ab(b"group#");
 pub const ENCKEY_TAG : Tag = ab(b"enckey");
@@ -58,16 +59,32 @@ pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1::<6>(b"by
 pub static BY_GROUP_TAG : [&[u8];2] = [b"by-tag",&GROUP_TAG.0];
 pub static BY_PUBKEY_TAG : [&[u8];2] = [b"by-tag",&PUBKEY_TAG.0];
 
+/// (Until stamp,_)
+#[inline(always)]
+pub fn as_stamp_tag(tag:Tag) -> (Stamp,[u8;8]) {
+    (Stamp::try_from(&tag.0[0..8]).unwrap(),tag.0[8..].try_into().unwrap())
+}
 
-pub fn auth_tag(b:&[u8]) -> Tag {
-    let mut auth = ab(b"^");
-    auth[0..15][15-b.len()..].copy_from_slice(b);
-    auth
+#[inline(always)]
+pub fn stamp_tag(stamp:Stamp,rest:[u8;8]) -> Tag {
+    let mut t = Tag::default();
+    t[0..8].copy_from_slice(&stamp.0);
+    t[8..].copy_from_slice(&rest);
+    t
+}
+
+pub fn lnstag(stamp:Stamp,rest:&[u8], kind:u8) -> anyhow::Result<Tag>{
+    anyhow::ensure!(rest.len() < 8 );
+    let mut t = Tag::default();
+    t[0..8].copy_from_slice(&stamp.0);
+    t[0..15][15-rest.len()..].copy_from_slice(&rest);
+    t[15] = kind;
+    Ok(t)
 }
 /// Get the parent claim
 pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandler) -> anyhow::Result<Result<Claim,Claim>>{
     match name.special() {
-        Some(SpecialName::File) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap())),
+        Some(SpecialName::File) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&mut [Link::DEFAULT],&[]).unwrap())),
         Some(SpecialName::Local) => todo!(),
         None => {
             let (parent,_val) = name.spath().pop();
@@ -79,7 +96,7 @@ pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandle
 
 fn dummy_root(name:&Name) -> LiveClaim{
     LiveClaim{
-        claim: Claim::new(name.clone(),Stamp::MAX,&[],vec![]).unwrap(),
+        claim: Claim::new(name.clone(),Stamp::MAX,&mut [Link{tag:[255;16].into(),ptr:[0;32].into()}],&[]).unwrap(),
         signatures: vec![],
         parent: None,
     }
@@ -124,13 +141,14 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
 
 pub fn lookup_enckey(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<(PubKey,String)>>{
     let claim = lookup_claim(lk, name)?;
-    match claim{
-        None => Ok(None),
-        Some(c) => match c.enckey()?{
-            Some(k) => resolve_enckey(&lk.get_reader(), k).map(Some),
-            None => Ok(None)
-        },
+    if let Some(c) = claim{
+        return match c.enckey(){
+            Ok(k) => Ok(Some(k)),
+            Err(None) => Ok(None),
+            Err(Some(link)) => Ok(lk.get_reader().read(&link.ptr)?.map(|pkt| read_enckey(pkt.data())).transpose()?),
+        }
     }
+    Ok(None)
 }
 
 
@@ -171,7 +189,7 @@ pub fn setup_special_keyclaim(
         else { tracing::debug!(old_claim=%c)}
     }
     let pubkey = pubkey(enckey)?.into();
-    let claim = Claim::new(name, Stamp::MAX, &[Link{tag: PUBKEY_TAG,ptr:pubkey}], vec![clist(["enckey",enckey])])?;
+    let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: PUBKEY_TAG,ptr:pubkey}], enckey.as_bytes())?;
     match sp {
         SpecialName::Local => {
             if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}

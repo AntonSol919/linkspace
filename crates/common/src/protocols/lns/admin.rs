@@ -6,11 +6,11 @@
 
 /// The lns:[#:0] lookup entries.
 
-use crate::{prelude::*, protocols::lns::{GROUP_TAG, LNS, BY_TAG_P, PUBKEY_TAG}};
+use crate::{prelude::*, protocols::lns::{GROUP_TAG, LNS, BY_TAG_P, PUBKEY_TAG, stamp_tag}};
 use linkspace_core::prelude::{query_mode::Order, RecvPktPtr, lmdb::save_dyn_iter};
 use tracing::instrument;
 
-use super::claim::Claim;
+use super::{claim::Claim, as_stamp_tag};
 
 
 // only call this with a valid claim
@@ -39,7 +39,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         let p = ptr_lookup_entry(&read, GROUP_TAG, *grp, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
         let path = BY_TAG_P.into_spathbuf().push(GROUP_TAG).push(grp).ipath();
-        let new_link = Link{tag: create_rtag(new_claim.until()),ptr:new_claim.pkt.hash()};
+        let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_group = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }
     tracing::debug!(?add_new_group);
@@ -60,7 +60,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         let p = ptr_lookup_entry(&read, PUBKEY_TAG, *pubkey, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
         let path = BY_TAG_P.into_spathbuf().push(PUBKEY_TAG).push(pubkey).ipath();
-        let new_link = Link{tag: create_rtag(new_claim.until()),ptr:new_claim.pkt.hash()};
+        let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_pubkey = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }
     tracing::debug!(?add_new_pubkey);
@@ -103,7 +103,7 @@ pub fn ptr_lookup_entry<'o>(reader: &'o ReadTxn, tag: Tag, ptr: LkHash,admin:Opt
 pub type TaggedClaim = ((Stamp,[u8;8]),anyhow::Result<Option<Claim>>);
 fn read_claims<'o>(reader: &'o ReadTxn,pkt: &'o impl NetPkt,valid_at:Stamp) -> impl Iterator<Item=TaggedClaim> +'o{
     pkt.get_links().iter()
-        .map(|v| (rtag(v.tag),v.ptr))
+        .map(|v| (as_stamp_tag(v.tag),v.ptr))
         .filter(move |((until,_),_)| *until > valid_at)
         .map(|(rt,p)| (rt,Claim::read(reader,&p)))
 }
@@ -132,21 +132,11 @@ pub fn mut_ptrlookup_entry(links:&[Link],path:&IPath,remove:Option<LkHash>,add_l
         Some((false,link)) => (None,Some(link)),
         None => (None,None),
     };
-    let lks =  links.iter().copied().filter(|l| Some(l.ptr) != remove).filter(|l| rtag(l.tag).0 > now);
+    let lks =  links.iter().copied().filter(|l| Some(l.ptr) != remove).filter(|l| as_stamp_tag(l.tag).0 > now);
     let new : Vec<_> = pre.into_iter().chain(lks).chain(post.into_iter()).collect();
     point(PRIVATE,LNS,path,&new,&[],now,admin,()).as_netbox()
 }
 
 
 
-
-/// (Until stamp,_)
-pub fn rtag(tag:Tag) -> (Stamp,[u8;8]) {
-    (Stamp::try_from(&tag.0[0..8]).unwrap(),tag.0[8..].try_into().unwrap())
-}
-fn create_rtag(stamp:Stamp) -> Tag {
-    let mut t = Tag::default();
-    t[0..8].copy_from_slice(&stamp.0);
-    t
-}
 

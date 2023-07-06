@@ -74,6 +74,7 @@ pub fn it() {
     assert_eq!(b, b"helloworld")
 }
 
+// Everything is marked inline to have a chance that the a monomorphized NetPkt byte_segments calls see through copying the empty segments.
 impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub const fn from_array<const N: usize>(segments: [&'a [u8]; N]) -> Self {
@@ -111,9 +112,11 @@ impl<'a> ByteSegments<'a> {
         let mut i = 0;
         while i < 8 {
             let len = self.0[i].len();
-            core::ptr::copy_nonoverlapping(self.0[i].as_ptr(), dest, len);
+            if len > 0 {
+                core::ptr::copy_nonoverlapping(self.0[i].as_ptr(), dest, len);
+            }
             dest = dest.add(len);
-            i = i.wrapping_add(1);
+            i = i +1;
         }
         dest
     }

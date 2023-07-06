@@ -9,16 +9,16 @@ use anyhow::*;
 use linkspace_common::{
     anyhow::{self},
     cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
-    prelude::{*, convert::AnyABE}, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, auth_tag, GROUP_TAG, public_claim::Issue }, identity,  };
+    prelude::{* }, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, GROUP_TAG, public_claim::Issue, PUBKEY_AUTH_TAG, lnstag }, identity,  };
 use tracing_subscriber::EnvFilter;
 
 
 #[derive(Parser )]
 pub struct Opts {
-    #[clap(flatten)]
-    common: CommonOpts,
     #[clap(subcommand)]
     cmd: Cmd,
+    #[clap(flatten)]
+    common: CommonOpts,
 }
 
 #[derive(Parser )]
@@ -43,14 +43,12 @@ pub enum Cmd {
         name:NameExpr
     },
     Vote{
-        name:String,
+        name:NameExpr,
         claim: HashExpr,
         #[clap(flatten)]
         key: KeyOpts,
         #[clap(long,default_value="stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(last=true)]
-        additional_data: Vec<AnyABE>
     },
     CreateClaim{
         /// name of claim
@@ -96,25 +94,21 @@ fn main() -> anyhow::Result<()> {
     let Opts { mut common, cmd } = Opts::parse();
     common.mut_write_private().get_or_insert(true);
     match cmd {
-        Cmd::Vote { name, claim, key ,write, additional_data } => {
+        Cmd::Vote { name, claim, key ,write } => {
             let lk= common.runtime()?;
             let ctx = common.eval_ctx();
-            //let name = name.eval(&ctx)?;
+            let name = name.eval(&ctx)?;
             let mut write = common.open(&write)?;
-            let additional_data : Vec<_> = additional_data.
-                into_iter()
-                .map(|e| e.eval(&ctx))
-                .try_collect()?;
 
             let reader =lk.get_reader();
             let hash = claim.eval(&ctx)?;
             let claim_pkt = reader.read(&hash)?.context("cant find claim")?;
             let claim = Claim::from(claim_pkt)?;
-            //ensure!(claim.name == name);
+            ensure!(claim.name == name);
             let signing = key.identity(&common, true)?;
-            //let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
-            //ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
-            let pkt = lns::claim::vote(&claim, signing,additional_data.into())?;
+            let live_parent = lns::lookup_authority_claim(&lk, &name,&mut |_|Ok(()))?.map_err(|_e| anyhow!("only found upto {}",name))?;
+            ensure!(live_parent.authorities().any(|p| p == signing.pubkey()),"key is not an authority in {live_parent}");
+            let pkt = lns::claim::vote(&claim, signing,&[])?;
             common.write_multi_dest(&mut write, &pkt, None)?;
         }
         Cmd::Get{name, write, write_signatures,chain } => {
@@ -148,20 +142,21 @@ fn main() -> anyhow::Result<()> {
         },
         Cmd::CreateClaim { name, group, pubkey, auth, until, write,allow_empty, no_auth, enckey,copy_from} => {
             let mut write = common.open(&write)?;
-
+            let ctx = common.eval_ctx();
+            let until = until.eval(&ctx)?;
+            
             let as_link = |tag:Tag| move |ptr:LkHash| Link::new(tag,ptr);
             let mut links = vec![];
-            let ctx = common.eval_ctx();
             let name = name.eval(&ctx)?;
-            let until = until.eval(&ctx)?;
             let mut pubkey = pubkey.map(|e| e.eval(&ctx)).transpose()?;
-            let mut misc= vec![];
+            let mut data= vec![];
             match enckey {
                 Some(k) => {
                     let encpubkey : PubKey= identity::pubkey(&k)?.into();
                     if let Some(pk) = pubkey { ensure!(pk == encpubkey,"pubkey and enckey don't match. pick one")}
                     pubkey = Some(encpubkey);
-                    misc.push(clist([b"enckey",k.as_bytes()]));
+                    use std::io::Write;
+                    writeln!(&mut data,"{}",k)?;
                 },
                 None => {},
             }
@@ -174,15 +169,18 @@ fn main() -> anyhow::Result<()> {
 
             links.extend(group.map(as_link(GROUP_TAG)));
             links.extend(pubkey.map(as_link(PUBKEY_TAG)));
-            links.extend(pubkey.filter(|_| !no_auth).map(as_link(auth_tag(&PUBKEY_TAG[1..]))));
+            links.extend(pubkey.filter(|_| !no_auth).map(as_link(PUBKEY_AUTH_TAG)));
             for link_e in auth {
                 let mut auth_link = link_e.eval(&ctx)?;
-                ensure!(auth_link.tag.0[0] == 0, "tag must start with 0 - it is shifted left to add the ^ authority token");
-                auth_link.tag = auth_tag(&auth_link.tag.0[1..]);
+                let tag = auth_link.tag.cut_prefix_nulls();
+                auth_link.tag = lnstag(Stamp::ZERO,&tag,b'^')?;
                 links.push(auth_link)
             }
-            ensure!(allow_empty || !links.is_empty(),"empty claim");
-            let claim = Claim::new(name, until, &links, misc)?;
+            if links.is_empty(){
+                ensure!(allow_empty,"empty claim");
+                links.push(Link::DEFAULT);
+            }
+            let claim = Claim::new(name, until, &mut links, &data)?;
             common.write_multi_dest(&mut write, &claim.pkt, None)?;
         },
         Cmd::Ls { name } => {

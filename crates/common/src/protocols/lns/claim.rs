@@ -1,9 +1,7 @@
 
 use std::fmt::{Display, Debug};
 
-use abe::{ast::{Ctr}, abconf::ABConf};
 use anyhow::{ensure, Context};
-use either::Either;
 use crate::{prelude::*};
 use linkspace_core::{prelude::{PRIVATE }, stamp_fmt::delta_stamp };
 use linkspace_pkt::{NetPkt, PointExt, SelectLink,  lptr,   reroute::RecvPkt};
@@ -48,7 +46,6 @@ impl Debug for LiveClaim {
 pub struct Claim{
     pub pkt:RecvPkt<NetPktBox>,
     pub name:Name,
-    pub data: ClaimData
 }
 
 impl Display for Claim {
@@ -59,7 +56,7 @@ impl Display for Claim {
         for Link{ptr,tag} in self.pkt.get_links(){
             writeln!(f,"{ptr}\t{tag}")?;
         }
-        writeln!(f,"{}",self.data)
+        Ok(())
     }
 }
 impl Debug for Claim {
@@ -68,21 +65,23 @@ impl Debug for Claim {
     }
 }
 
-pub fn resolve_enckey(r:&ReadTxn,claim_enckey:Either<&str,LkHash>) -> anyhow::Result<(PubKey,String)>{
-    match claim_enckey {
-        Either::Left(s) => {
-            let pubkey = linkspace_argon2_identity::pubkey(s)?;
-            Ok((pubkey.into(),s.to_string()))
-        },
-        Either::Right(p) => resolve_enckey(r,Either::Left(r.read(&p)?.context("Missing pkt")?.get_data_str()?)),
-    }
+
+pub fn read_enckey(data:&[u8]) -> anyhow::Result<(PubKey,String)>{
+    let first_line = data[..data.len().min(130)]
+        .split(|i|*i ==b'\n')
+        .next().context("empty data")?;
+    let st = std::str::from_utf8(first_line)?;
+    let pubkey = linkspace_argon2_identity::pubkey(st)?;
+    Ok((pubkey.into(),st.to_string()))
 }
 
 impl Claim {
-    pub fn new(name:Name,until:Stamp,links:&[Link],misc:Vec<ABList>) -> anyhow::Result<Self>{
+    pub fn new(name:Name,until:Stamp,links:&mut [Link],data:&[u8]) -> anyhow::Result<Self>{
+        ensure!(!links.is_empty(),"requires at least one link");
+        ensure!(as_stamp_tag(links[0].tag).0 != Stamp::ZERO,"the first link of a claim must have its first 8 tag bytes set to zero to bet set as 'until'" );
+        links[0].tag[0..8].copy_from_slice(&until.0);
         let path = name.claim_ipath();
-        let data = ClaimData::new(until, misc).to_vec();
-        let group =name.claim_group().unwrap_or(PRIVATE);
+        let group = name.claim_group().unwrap_or(PRIVATE);
         let pkt = linkpoint(group, LNS, &path, links, &data, Stamp::ZERO, ()).as_netbox(); 
         ensure!(*pkt.get_create_stamp() < until);
         Self::from(pkt)
@@ -91,14 +90,8 @@ impl Claim {
         reader.read(ptr)?.map(Claim::from).transpose()
     }
     
-    pub fn enckey(&self) -> anyhow::Result<Option<Either<&str,LkHash>>>{
-        match self.data.0.has_optional_value(&[b"enckey"]){
-            Some(Ok(Some(val))) => Ok(Some(Either::Left(std::str::from_utf8(val)?))),
-            _ => match self.links().first_eq(ENCKEY_TAG){
-                Some(lnk) => Ok(Some(Either::Right(lnk.ptr))),
-                None => Ok(None),
-            },
-        }
+    pub fn enckey(&self) -> Result<(PubKey,String),Option<&Link>>{
+        read_enckey(self.pkt.data()).map_err(|_| self.links().first_eq(ENCKEY_TAG))
     }
     
     pub fn from(pkt: impl NetPkt)-> anyhow::Result<Self>{
@@ -111,10 +104,10 @@ impl Claim {
         let namep= it.spath();
         let name = Name::from_spath(namep)?;
         ensure!(*pkt.get_group() == name.claim_group().unwrap_or(PRIVATE),"claim point in the wrong group");
-        let data = ClaimData::try_from(pkt.data())?;
-        Ok(Claim{pkt:RecvPkt::from_dyn(&pkt),data,name})
+        ensure!(!pkt.get_links().is_empty(),"no links?");
+        Ok(Claim{pkt:RecvPkt::from_dyn(&pkt),name})
     }
-    pub fn until(&self) -> Stamp {self.data.until()}
+    pub fn until(&self) -> Stamp {as_stamp_tag(self.pkt.get_links()[0].tag).0}
     pub fn pubkey(&self) -> Option<&PubKey>{ self.links().first_eq(PUBKEY_TAG).map(lptr)}
     pub fn group(&self) -> Option<&GroupID>{ self.links().first_eq(GROUP_TAG).map(lptr)}
     pub fn authorities(&self) -> impl Iterator<Item=PubKey>+'_{ self.pkt.get_links().iter().filter(|v| v.tag[15] == b'^').map(|v| v.ptr)}
@@ -135,55 +128,7 @@ pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetP
 }
 
 // TODO abdata should be a newtype
-pub fn vote(claim: &Claim,key: &SigningKey,abc:ABConf)-> anyhow::Result<NetPktBox>{
+pub fn vote(claim: &Claim,key: &SigningKey,data:&[u8])-> anyhow::Result<NetPktBox>{
     let vote_link = [Link::new("vote",claim.pkt.hash())];
-    let data = abc.to_string().into_bytes();
     Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_ipath(), &vote_link, &data, now(), key, ()).as_netbox())
 }
-
-pub struct ClaimData(ABConf);
-impl ClaimData {
-    pub fn new(until:Stamp,mut values:Vec<ABList>) -> Self {
-        values.splice(0..0, [clist([b"until" as &[u8],&until.0])]);
-        ClaimData(ABConf::new(values))
-    }
-
-    pub fn conf_data(&self) -> &ABConf{
-        &self.0
-    }
-    pub fn try_from(b:&[u8]) -> anyhow::Result<Self>{
-        let abc = ABConf::try_from(b, true, Some(abconf::ABConfFmt::ABCTxt))?;
-        let cd = ClaimData(abc);
-        cd.try_until().context("expected valid 'until:STAMP' as first item")?;
-        Ok(cd)
-    }
-    pub fn to_vec(&self) -> Vec<u8>{
-        self.to_string().into_bytes()
-    }
-
-    fn until(&self) -> Stamp{
-        self.try_until().unwrap()
-    }
-    // the newtype should ensure this always succeeds.
-    fn try_until(&self) -> Option<Stamp>{
-        let abl=  self.0.first()?;
-        match abl.as_slice(){
-            [(None,until),(Some(Ctr::Colon),b)]  if until == b"until"=> {
-                Some(U64(b.as_slice().try_into().ok()?))
-            }
-            _ => None
-        }
-    }
-}
-impl Display for ClaimData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f,"#abtxt")?;
-        for abl in self.0.iter(){
-             writeln!(f,"{abl}")?;
-        }
-        Ok(())
-    }
-}
-
-
-

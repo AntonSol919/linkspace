@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_pkt::*;
 
-use crate::prelude::TestOp;
+use crate::prelude::{TestOp };
 
 use super::pkt_predicates::PktPredicates;
 
@@ -22,6 +22,8 @@ impl PktPredicates {
         }
         r
     }
+    
+
     pub fn from_gd(group: GroupID, domain: Domain) -> Self {
         Self::DEFAULT.group(group).unwrap().domain(domain).unwrap()
     }
@@ -43,6 +45,10 @@ impl PktPredicates {
             anyhow::bail!("disjoin spath {:?} <> {:?}", sp, &*self.path_prefix);
         };
         Ok(())
+    }
+    pub fn key(mut self, k: PubKey) -> anyhow::Result<Self> {
+        self.pubkey.try_add(TestOp::Equal,k.into())?;
+        Ok(self)
     }
     pub fn group(mut self, g: GroupID) -> anyhow::Result<Self> {
         self.group.try_add(TestOp::Equal, g.into())?;
