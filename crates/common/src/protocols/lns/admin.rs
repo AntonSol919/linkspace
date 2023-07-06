@@ -29,14 +29,14 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
 
     let drop_old_group = old_claim_grp
         .filter(|_| old_claim_grp != new_claim.group().cloned())// we can skip this step if they new_ptr pkt will overwrite anyways
-        .and_then(|grp| ptr_lookup_entry(&read, GROUP_TAG,grp , admin_k).into_opt())
+        .and_then(|grp| ptr_lookup_entry(&read, &GROUP_TAG,grp , admin_k).into_opt())
         .transpose()?
         .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_ipath(), old_chash, None, admin, now));
 
     tracing::debug!(?drop_old_group);
     let mut add_new_group = None;
     if let Some(grp) = new_claim.group(){
-        let p = ptr_lookup_entry(&read, GROUP_TAG, *grp, admin_k).into_ok()?;
+        let p = ptr_lookup_entry(&read, &GROUP_TAG, *grp, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
         let path = BY_TAG_P.into_spathbuf().push(GROUP_TAG).push(grp).ipath();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
@@ -49,7 +49,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
     let old_claim_pubkey = old_claim.and_then(|v| v.pubkey()).cloned();
     let drop_old_pubkey = old_claim_pubkey
         .filter(|_| old_claim_pubkey != new_claim.pubkey().cloned())// we can skip this step if they new_ptr pkt will overwrite anyways
-        .and_then(|pubkey| ptr_lookup_entry(&read, PUBKEY_TAG,pubkey , admin_k).into_opt())
+        .and_then(|pubkey| ptr_lookup_entry(&read, &PUBKEY_TAG,pubkey , admin_k).into_opt())
         .transpose()?
         .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_ipath(),  old_chash, None, admin, now));
 
@@ -57,7 +57,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
 
     let mut add_new_pubkey = None;
     if let Some(pubkey) = new_claim.pubkey(){
-        let p = ptr_lookup_entry(&read, PUBKEY_TAG, *pubkey, admin_k).into_ok()?;
+        let p = ptr_lookup_entry(&read, &PUBKEY_TAG, *pubkey, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
         let path = BY_TAG_P.into_spathbuf().push(PUBKEY_TAG).push(pubkey).ipath();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
@@ -83,12 +83,12 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
 }
 
 #[instrument(ret,skip(reader),level="debug")]
-pub fn ptr_lookup(reader: &ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<Claim> {
+pub fn ptr_lookup(reader: &ReadTxn, tag: &[u8], ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<Claim> {
     let ple = ptr_lookup_entry(reader, tag, ptr, admin);
     read_claims(reader, ple.into_ok()??.pkt, now()).find_map(|(_,p)| p.ok()?).into()
 }
 #[instrument(ret,skip(reader),level="debug")]
-pub fn ptr_lookup_entry<'o>(reader: &'o ReadTxn, tag: Tag, ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr<'o>> {
+pub fn ptr_lookup_entry<'o>(reader: &'o ReadTxn, tag: &[u8], ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr<'o>> {
     let path = BY_TAG_P.into_spathbuf().push(tag).push(ptr);
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).path(path)?.create_before(now()).unwrap();
     // entries have the form /by-tag/TAG/PTR

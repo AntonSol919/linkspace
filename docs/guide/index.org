@@ -3,7 +3,6 @@
 
 #+SETUPFILE: ../utils.org
 
-
 #+BEGIN_VERSE
 This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
@@ -194,7 +193,7 @@ Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   lk link "a_domain:[#:pub]:/dir1/dir2/thing" -- \
-            first_tag_1:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0 \
+            first_tag_1:Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk \
             another_tag:[#:pub] \
   | lk pktf
   
@@ -210,7 +209,7 @@ Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
 #+begin_py
 
 The API deals with arbitrary bytes, not encoded strings.
-In python, we have 4 common ways to get bytes.
+Some example python code that returns a value of type 'bytes' are:
 
 - ~"some string".encode()"~
 - the ~b"byte notation"~
@@ -218,7 +217,7 @@ In python, we have 4 common ways to get bytes.
 - evaluate an ABE string with [[lk_eval]].
 
 #+begin_src python :session lkpy :exports both :results value verbatim 
-  ptr1 = lk_eval("[b:RD3ltOheG4CrBurUMntnhZ8PtZ6yAYF_C1urKGZ0BB0]")
+  ptr1 = lk_eval("[b:Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk]")
   link1 = Link(tag=b"first tag 1",ptr=ptr1)
 
   ptr2 = lk_eval("[#:pub]")
@@ -237,8 +236,8 @@ In python, we have 4 common ways to get bytes.
   )
   str(linkp)
 #+END_SRC
+#+end_py
 
-#+END_py
 
 #+END_ctabs
 
@@ -428,9 +427,9 @@ All fields are arbitrary bytes, and lk_encode can print them as ab text
 
 #+begin_src python :session lkpy :exports both :results output verbatim
   multiline = """newline
-  tab	""".encode()
+  tab	""".encode() # encode implies utf-8
 
-  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]"])]) # encode implies utf-8
+  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]"])
 
   print(lk_encode(lkp.path0),"\t",list(lkp.path0))
   print(lk_encode(lkp.path1),"\t",list(lkp.path1))

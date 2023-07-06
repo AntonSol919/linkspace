@@ -78,7 +78,9 @@ pub fn read_enckey(data:&[u8]) -> anyhow::Result<(PubKey,String)>{
 impl Claim {
     pub fn new(name:Name,until:Stamp,links:&mut [Link],data:&[u8]) -> anyhow::Result<Self>{
         ensure!(!links.is_empty(),"requires at least one link");
-        ensure!(as_stamp_tag(links[0].tag).0 != Stamp::ZERO,"the first link of a claim must have its first 8 tag bytes set to zero to bet set as 'until'" );
+        let link_stamp = as_stamp_tag(links[0].tag).0;
+        ensure!(link_stamp == Stamp::ZERO || link_stamp == until,
+                "links[0].tag[..8] is used for until - currently holds {} (wants {})",links[0],AB(until.0) );
         links[0].tag[0..8].copy_from_slice(&until.0);
         let path = name.claim_ipath();
         let group = name.claim_group().unwrap_or(PRIVATE);
@@ -91,10 +93,11 @@ impl Claim {
     }
     
     pub fn enckey(&self) -> Result<(PubKey,String),Option<&Link>>{
-        read_enckey(self.pkt.data()).map_err(|_| self.links().first_eq(ENCKEY_TAG))
+        read_enckey(self.pkt.data()).map_err(|_| self.links().first_tailmask(&ENCKEY_TAG))
     }
     
     pub fn from(pkt: impl NetPkt)-> anyhow::Result<Self>{
+        tracing::trace!(p=%PktFmtDebug(&pkt),"reading claim");
         ensure!(pkt.is_linkpoint(),"claim is always a linkpoint");
         let spath = pkt.get_path();
         ensure!(spath.starts_with(&CLAIM_PREFIX));
@@ -103,13 +106,15 @@ impl Claim {
         it.next().unwrap();
         let namep= it.spath();
         let name = Name::from_spath(namep)?;
-        ensure!(*pkt.get_group() == name.claim_group().unwrap_or(PRIVATE),"claim point in the wrong group");
+        ensure!(*pkt.get_group() == name.claim_group().unwrap_or(PRIVATE),
+                "claim point {name} ({:?}) in the wrong group ({})",
+                name.claim_group(),pkt.get_group());
         ensure!(!pkt.get_links().is_empty(),"no links?");
         Ok(Claim{pkt:RecvPkt::from_dyn(&pkt),name})
     }
     pub fn until(&self) -> Stamp {as_stamp_tag(self.pkt.get_links()[0].tag).0}
-    pub fn pubkey(&self) -> Option<&PubKey>{ self.links().first_eq(PUBKEY_TAG).map(lptr)}
-    pub fn group(&self) -> Option<&GroupID>{ self.links().first_eq(GROUP_TAG).map(lptr)}
+    pub fn pubkey(&self) -> Option<&PubKey>{ self.links().first_tailmask(&PUBKEY_TAG).map(lptr)}
+    pub fn group(&self) -> Option<&GroupID>{ self.links().first_tailmask(&GROUP_TAG).map(lptr)}
     pub fn authorities(&self) -> impl Iterator<Item=PubKey>+'_{ self.pkt.get_links().iter().filter(|v| v.tag[15] == b'^').map(|v| v.ptr)}
 
     pub fn links(&self) -> SelectLink{

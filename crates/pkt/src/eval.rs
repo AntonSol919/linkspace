@@ -131,6 +131,7 @@ impl<'o> SelectLink<'o> {
         self.0.iter().find(|l| l.tag == tag)
     }
     pub fn first_tailmask(self,tail:&[u8]) -> Option<&'o Link>{
+        if tail.len() > 16 { return None};
         self.0.iter().find(|l| l.tag.ends_with(tail))
     }
 }

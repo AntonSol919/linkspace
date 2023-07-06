@@ -167,9 +167,9 @@ fn main() -> anyhow::Result<()> {
 
             let group = group.map(|e| e.eval(&ctx)).transpose()?;
 
-            links.extend(group.map(as_link(GROUP_TAG)));
-            links.extend(pubkey.map(as_link(PUBKEY_TAG)));
-            links.extend(pubkey.filter(|_| !no_auth).map(as_link(PUBKEY_AUTH_TAG)));
+            links.extend(group.map(as_link(ab(&GROUP_TAG))));
+            links.extend(pubkey.map(as_link(ab(&PUBKEY_TAG))));
+            links.extend(pubkey.filter(|_| !no_auth).map(as_link(ab(&PUBKEY_AUTH_TAG))));
             for link_e in auth {
                 let mut auth_link = link_e.eval(&ctx)?;
                 let tag = auth_link.tag.cut_prefix_nulls();
@@ -198,15 +198,15 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         },
-        Cmd::LsGroup { group } => ls_tag(&common,GROUP_TAG,group)?,
-        Cmd::LsPubkey{ pubkey} => ls_tag(&common,PUBKEY_TAG,pubkey)?,
+        Cmd::LsGroup { group } => ls_tag(&common,&GROUP_TAG,group)?,
+        Cmd::LsPubkey{ pubkey} => ls_tag(&common,&PUBKEY_TAG,pubkey)?,
 
     };
     Ok(())
 }
 
 
-fn ls_tag(common:&CommonOpts,tag:Tag,ptr:Option<PExpr>) -> anyhow::Result<()>{
+fn ls_tag(common:&CommonOpts,tag:&[u8],ptr:Option<PExpr>) -> anyhow::Result<()>{
     let ctx = common.eval_ctx();
     let ptr = ptr.map(|g|g.eval(&ctx)).transpose()?;
     let rt = common.env()?;
@@ -215,7 +215,7 @@ fn ls_tag(common:&CommonOpts,tag:Tag,ptr:Option<PExpr>) -> anyhow::Result<()>{
         for (_,el) in c_ok{
             match el {
                 Result::Ok(Some(c)) => {
-                    let val = c.links().first_eq(tag).map(|l|l.ptr.to_string()).unwrap_or("cleared".to_string());
+                    let val = c.links().first_tailmask(tag).map(|l|l.ptr.to_string()).unwrap_or("cleared".to_string());
                     println!("{val} {} {}",c.pkt.hash(),c.name)
                 },
                 Result::Ok(None) => {

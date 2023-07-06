@@ -1,3 +1,13 @@
+# v0.3.1
+
+### General 
+
+- LNS: use tags to store 'until'
+- LNS: by-tag uses tag.ends_with instead of eq
+- ABE: change ABList from (val,delim?) to (delim?,val)
+
+
+
 # v0.3.0
 ### General
 

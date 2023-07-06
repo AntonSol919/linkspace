@@ -22,7 +22,7 @@ Not all part of are fully implemented.
 
 use abe::eval::{ ApplyResult};
 use anyhow::{Context };
-use byte_fmt::ab;
+use byte_fmt::{ab, AB};
 use linkspace_argon2_identity::pubkey;
 use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC, Point };
 use tracing::instrument;
@@ -46,18 +46,18 @@ pub mod admin;
 pub const LNS: Domain = ab(b"lns");
 pub const CLAIM_PREFIX : IPathC<15> = ipath1::<6>(b"claims");
 /// tag expected for local claims pointing to a (live) lns:[#:pub] claim
-pub const PUB_CLAIM_TAG : Tag = ab(b"pub-claim");
-pub const PUBKEY_TAG : Tag = ab(b"pubkey@");
-pub const PUBKEY_AUTH_TAG : Tag = ab(b"pubkey^");
-pub const VOTE_TAG : Tag = ab(b"vote");
-pub const GROUP_TAG: Tag = ab(b"group#");
-pub const ENCKEY_TAG : Tag = ab(b"enckey");
+pub const PUB_CLAIM_TAG : [u8;9] = *b"pub-claim";
+pub const PUBKEY_TAG : [u8;7] = *b"pubkey@";
+pub const PUBKEY_AUTH_TAG :[u8;7] = *b"pubkey^";
+pub const GROUP_TAG: [u8;6] = *b"group#";
+pub const ENCKEY_TAG : [u8;6] = *b"enckey";
 /// A linkpoint at lns:[#:0]:by-tag/../PTR will contain by-claim:CLAIM_HASH
 pub const BY_CLAIM_TAG : Tag = ab(b"by-claim");
+pub const VOTE_TAG : Tag = ab(b"vote");
 
 pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1::<6>(b"by-tag");
-pub static BY_GROUP_TAG : [&[u8];2] = [b"by-tag",&GROUP_TAG.0];
-pub static BY_PUBKEY_TAG : [&[u8];2] = [b"by-tag",&PUBKEY_TAG.0];
+pub static BY_GROUP_TAG : [&[u8];2] = [b"by-tag",&GROUP_TAG];
+pub static BY_PUBKEY_TAG : [&[u8];2] = [b"by-tag",&PUBKEY_TAG];
 
 /// (Until stamp,_)
 #[inline(always)]
@@ -165,15 +165,15 @@ pub fn lookup_claim(lk:&Linkspace,name:&Name) -> anyhow::Result<Option<Claim>>{
 }
 
 #[instrument(skip(lk),ret)]
-pub fn reverse_lookup(lk:&Linkspace,tag:Tag,ptr:LkHash) -> ApplyResult<Claim>{
+pub fn reverse_lookup(lk:&Linkspace,tag:&[u8],ptr:LkHash) -> ApplyResult<Claim>{
     // Because we can't yet trust the admin, we have to do a forward lookup as well to validate this is a valid claim.
     let claim = admin::ptr_lookup(&lk.get_reader(), tag, ptr, None)?;
     let name = &claim.name;
     let by_name = lookup_claim(lk, name)??;
-    if by_name.links().first_eq(tag).map(|p|p.ptr == ptr).unwrap_or(false){
+    if by_name.links().first_tailmask(tag).map(|p|p.ptr == ptr).unwrap_or(false){
         Some(by_name).into()
     }else {
-        Err(anyhow::anyhow!("found {claim} pointing to {name} but this is set to {by_name} with a different {tag} link")).into()
+        Err(anyhow::anyhow!("found {claim} pointing to {name} but this is set to {by_name} with a different {} link",AB(tag))).into()
     }
 }
 
@@ -189,7 +189,7 @@ pub fn setup_special_keyclaim(
         else { tracing::debug!(old_claim=%c)}
     }
     let pubkey = pubkey(enckey)?.into();
-    let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: PUBKEY_TAG,ptr:pubkey}], enckey.as_bytes())?;
+    let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: ab(&PUBKEY_TAG),ptr:pubkey}], enckey.as_bytes())?;
     match sp {
         SpecialName::Local => {
             if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}

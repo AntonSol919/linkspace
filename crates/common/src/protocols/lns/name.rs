@@ -76,8 +76,8 @@ impl Name {
         tracing::debug!(%path,"name from");
         let rcomps = path.collect();
         if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        //if rcomps.is_empty(){ return Err(NameError::MinLen)}
-        let special = None; //SpecialName::from(rcomps.first().unwrap());
+        if rcomps.is_empty(){ return Err(NameError::MinLen)}
+        let special = SpecialName::from(rcomps.first().unwrap());
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
         Ok(Name { spath: path.into_spathbuf() ,special})
     }

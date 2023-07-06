@@ -18,7 +18,7 @@ pub fn list_all_potential_claims_with_prefix<'o>(reader:&'o ReadTxn,name: &Name)
 
 
 pub type TaggedClaim = ((Stamp,[u8;8]),anyhow::Result<Option<Claim>>);
-pub fn list_all_reverse_lookups(_reader: &ReadTxn, _tag: AB<[u8; 16]>,_ptr:Option<LkHash>) -> Vec<Vec<TaggedClaim>> {
+pub fn list_all_reverse_lookups(_reader: &ReadTxn, _tag: &[u8],_ptr:Option<LkHash>) -> Vec<Vec<TaggedClaim>> {
     todo!()
 }
 
