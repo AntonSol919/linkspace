@@ -142,17 +142,20 @@
       </tr>
       </tbody>
       </table>
-      <p>With these tools various ‘platforms’ exists so that people have
-      a model for two or more devices to communicate.</p>
+      <p>Using these tools we do not just create websites to provide
+      information. At first we used these tools to create websites to
+      provide information. But this has changed and we instead build
+      ‘platforms’. Services that store, forward, and administrate
+      messages so multiple that multiple devices can communicate.</p>
       <p><b>We have reached the limit of using this model of streaming
       questions/answers paradigm for multi-party communication.</b></p>
       <p>First, the stream abstraction can leak. Streams get
       disconnected, the other side hangs up, the other side is
-      overloaded, etc. Then, when more than two devices are involved the
-      leaks compound. Two devices go out of sync. Either somewhere in
-      the system an answer becomes stale or wrong, or doesn’t scaling
-      and have everyone contact a single source of truth.</p>
-      <p>Alternatively you use something like a supernet.</p>
+      overloaded, etc.</p>
+      <p>Then, when more than two devices are involved the leaks
+      compound. Synchronization is as slow as the slowest link, answers
+      become stale or wrong.</p>
+      <p>Alternatively you design a system as a supernet.</p>
       <div class="definition">
       <p>Supernet [ˈsü-pərˌnet]<br> A self-referential multi-participant
       data organization protocol whose primary addressing method uses
@@ -186,12 +189,6 @@
       <col style="width: 50%" />
       <col style="width: 48%" />
       </colgroup>
-      <thead>
-      <tr class="header">
-      <th>Key</th>
-      <th>Value</th>
-      </tr>
-      </thead>
       <tbody>
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
@@ -246,11 +243,11 @@
       </tbody>
       </table>
       </div>
-      <p>The key “image/BrokenMachine.jpg” is called a
-      <strong>path</strong> and maps to [image data]. So far this should
-      look familiar as it is similar to files in directories. I’ll refer
-      to each entry as a <strong>point</strong>, and multiple entries as
-      a <strong>set</strong>. The example shown has two sets
+      <p>The “image/BrokenMachine.jpg” is called a <strong>path</strong>
+      and maps to [image data]. So far this should look familiar as it
+      is similar to files in directories. I’ll refer to each entry as a
+      <strong>point</strong>, and multiple entries as a
+      <strong>set</strong>. The example shown has two sets
       <strong>merging</strong>. The result is a new set with 3
       messages.</p>
       <p>One of the most useful aspects of linkspace is a way to talk

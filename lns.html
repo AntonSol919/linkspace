@@ -43,12 +43,12 @@
     
     <div id="main">
       <h1 id="LNS">LNS</h1>
-      <p>LNS is a convention to for naming things in linkspace. It
-      writes points in the lns domain to be exact.</p>
+      <p>LNS is a convention to for naming things in linkspace.</p>
+      <p>It writes points in the lns domain to be exact.</p>
       <p>Things like groups and public keys are 32 bytes. They look like
-      [b:HrwlM8KNA25F2nkjLzU6exrKdXcI3TCH5ZseeSyIMrI]. This is
-      unreadable for humans.</p>
-      <p>LNS enables us to assign them names. Both publicly by
+      <code>[b:HrwlM8KNA25F2nkjLzU6exrKdXcI3TCH5ZseeSyIMrI]</code>. This
+      is unreadable for humans.</p>
+      <p>With LNS they can be assigned names. Both publicly by
       registering, and privately for your own convenience.</p>
       <p><strong>Groups</strong> look like:</p>
       <ul>
@@ -66,12 +66,15 @@
       <p>The top level names :local, :file , :env, and :pub are special.
       You can take a look on how it integrates with linkspace in the <a
       href="./docs/guide/index.html#ABELNS">guide</a>.</p>
-      <p>LNS is currently only partially operational.</p>
-      <p>But you can register a public name!</p>
+      <div class="container warn">
+      <p>LNS is only partially operational, and not yet useful.</p>
+      <p>Public registration are a way to show your support for the
+      project.</p>
+      </div>
       <h3 id="what-does-a-registration-do">What does a registration
       do?</h3>
-      <p>It gives you binding right for all sub registration. That means
-      if you register under @:yourcompany:com you can set up:</p>
+      <p>It gives you binding right for all sub registration. If you
+      register @:yourcompany:com you can set up:</p>
       <ol type="1">
       <li>a key addressed with the name @:yourcompany:com</li>
       <li>a group addressed with the name #:yourcompany:com</li>
@@ -79,15 +82,17 @@
       *:yourcompany:com</li>
       </ol>
       <p>I.e. The key with the authority for yourcompany:com can create
-      bindings for sales:yourcompany:com. That registration can set up a
-      binding, such as for the key @:bob:sales:yourcompany:com.</p>
+      bindings for sales:yourcompany:com. That registration in turn is
+      able to set up new sub registrations, such as
+      @:bob:sales:yourcompany:com.</p>
       <h3 id="do-i-require-a-registration">Do I require a
       registration?</h3>
-      <p>No. Its just a public or private phone-book.</p>
+      <p>No. Its a public ( or private ) address-book.</p>
       <h3 id="does-it-require-money">Does it require money?</h3>
-      <p>That depends. The public LNS registries are meant to set their
-      own rules. Some top level names can ask you to pay - others are
-      free.</p>
+      <p>The private will never cost money. For a public registration it
+      depends. Each registration can set their own rules for sub
+      registrations. Some top level names can ask you to pay - others
+      are free.</p>
       <p>The current top level registries accepting names are:</p>
       <ul>
       <li>example:free - First come, first served.</li>
@@ -97,8 +102,8 @@
       </ul>
       <h3 id="how-do-i-register">How do I register?</h3>
       <p>This is currently still a manual process as its not a high
-      priority and other parts is still missing. However, you can
-      pre-register your name to make sure its yours.</p>
+      priority. However, you can pre-register your name to make sure its
+      yours.</p>
       <p>To make a :free claim get the <code>lk</code> and
       <code>linkspace-lns</code> utility from the download or build from
       source.</p>
@@ -111,10 +116,9 @@ lk lns create-claim &#39;YOUR_NAME:free&#39; --copy-from YOUR_NAME:local --until
       class="email">antonsol919+lns@gmail.com</a>.</p>
       <h3 id="can-i-be-a-top-level-authority-like-nl-or-org-etc">Can I
       be a top level authority like ‘:nl’ or ‘:org’, etc?</h3>
-      <p>Yes. I am looking for people willing to do so. Shoot me a
+      <p>Yes. I am looking for people interested to do so. Shoot me a
       message at <a href="mailto:antonsol919+registar@gmail.com"
-      class="email">antonsol919+registar@gmail.com</a> if you’re
-      interested.</p>
+      class="email">antonsol919+registar@gmail.com</a>.</p>
     </div>
     </body>
 </html>

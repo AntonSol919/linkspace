@@ -106,7 +106,14 @@ pre {
     border: 0.1em solid #cce3f9;
     font-family: monospace;
 }
-
+.warn{
+    background-color: #ffffcc !important;
+    max-width: 60vw;
+    border-radius: 10px;
+    padding: 0.4em;
+    border: 0.1em solid black;
+    font-family: monospace;
+}
 
 
 
