@@ -732,7 +732,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             fn call(
                 scope: &impl Scope,
                 id: &[u8],
-                input_and_args: &[&[u8]],
+                mut input_and_args: &[&[u8]],
                 init:bool
             ) -> Result<Vec<u8>, EvalError> {
                 dbgprintln!(
@@ -740,6 +740,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     as_abtxt(id),
                     input_and_args
                 );
+                if init { input_and_args = &input_and_args[1..]}
                 match scope.try_apply_func(id, input_and_args, init, &scope) {
                     ApplyResult::NoValue => Err(EvalError::NoSuchFunc(id.to_vec())),
                     ApplyResult::Value(b) => Ok(b),
@@ -749,41 +750,26 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
             let it = inner_abl.split_fslash();
             
             let mut stack : [&[u8]; 16];
-            let mut id :&[u8];
             let mut carry = vec![];
 
             for sub_expr in it {
                 dbgprintln!("calling {sub_expr:?}");
+                let size = sub_expr.len();
                 stack = [&[];16];
                 let mut id_and_args = sub_expr.iter().map(|(_,c)|c.as_slice());
-                let init = match sub_expr.first().and_then(|f| f.0){
-                    // [.../some:thing]
-                    Some(Ctr::FSlash) =>{ id = id_and_args.next().unwrap_or(&[]); false},
-                    // [:..]
-                    Some(Ctr::Colon) => {id = &[]; true},
-                    // [..]
-                    None => {id = id_and_args.next().unwrap_or(&[]) ; true},
-                };
-                stack[0] = carry.as_slice();
-                let argc =
-                    1 + stack[1..]
-                        .iter_mut()
-                        .zip(&mut id_and_args)
-                        .fold(0, |i, (slot, slice)| {
-                            *slot = slice;
-                            i + 1
-                        });
-                if id_and_args.next().is_some() {
+                stack.iter_mut().zip(&mut id_and_args).for_each(|(s,v)| *s = v);
+                if id_and_args.next().is_some(){
                     return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
                 }
-                let args = &stack[..argc];
-                dbgprintln!(
-                    "'{}' -> '{}' :: {:?} ::",
-                    as_abtxt(&carry),
-                    as_abtxt(id),
-                    args
-                );
-                carry = call(&ctx.scope, id, args, init )?;
+                let ctr = sub_expr.first().and_then(|f| f.0);
+                if ctr == Some(Ctr::Colon){
+                    carry = stack.concat();
+                }else {
+                    let id = stack[0];
+                    stack[0] = carry.as_slice();
+                    let args = &stack[..size];
+                    carry = call(&ctx.scope, id, args, ctr.is_none())?;
+                }
             }
             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&carry));
             Ok(ABItem::Bytes(carry))

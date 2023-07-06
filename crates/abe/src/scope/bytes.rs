@@ -98,10 +98,6 @@ impl EvalScopeImpl for BytesFE {
         
 
         fncs!([
-            ("",1..=16,"the '' (empty) fnc can be used to start an expr such as {:12/u8} which is the same as {u8:12}",
-             |_,i:&[&[u8]]| Ok(i.concat()),
-             { id : |b:&[u8],_| Some(as_abtxt(b).to_string()) }
-            ),
             ("?a",1..=1,"encode bytes into ascii-bytes format",|_,i:&[&[u8]]| Ok(as_abtxt(i[0]).into_owned().into_bytes())),
             ("?a0",1..=1,"encode bytes into ascii-bytes format but strip prefix '0' bytes",
              |_,i:&[&[u8]]| Ok(as_abtxt(cut_prefix_nulls(i[0])).into_owned().into_bytes())),
