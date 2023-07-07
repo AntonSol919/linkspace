@@ -40,6 +40,7 @@ use linkspace_common::{
         *, lmdb::{save_ptr, save::SaveState}, 
     }, predicate_aliases::ExtWatchCLIOpts,
 };
+use point::{PointOpts, GenPointOpts};
 use tracing_subscriber::EnvFilter;
 use watch::{DGPDWatchCLIOpts, CLIQuery};
 
@@ -107,6 +108,7 @@ struct Cli {
 
 #[derive(Parser)]
 enum Command {
+    
     /// points - create a new datapoint
     #[clap(alias = "d", alias = "data")]
     Datapoint{
@@ -141,7 +143,13 @@ enum Command {
         #[clap(flatten)]
         link: point::PointOpts,
     },
-
+    /// points - create a new point - detect what kind of point - prefer to be exact by using 'data', 'link', or 'keyp' 
+    Point{
+        #[clap(short, long, default_value = "stdout")]
+        write: Vec<WriteDestSpec>,
+        #[clap(flatten)]
+        point: point::GenPointOpts,
+    },
     #[clap(alias = "e")]
     /** abe - eval ABE expression
 
@@ -259,7 +267,7 @@ enum Command {
         pkt_in: PktReadOpts,
         field_mut: Vec<MutFieldExpr> ,
     },
-    /// Output known link.ptr packets ( this is not the same as setting :follow )
+    /// Get and write all link.ptr points
     GetLinks(get_links::GetLinks),
     /// queue datapackets until a linkpoint with a matching link is received
     DataFilter {
@@ -289,6 +297,8 @@ fn main() -> std::process::ExitCode {
             .with_env_filter(env_filter)
             .with_writer(std::io::stderr)
             .init();
+        let args = std::env::args();
+        tracing::trace!(?args);
         let Cli { common, command } = Cli::parse();
         run(command, common)
     });
@@ -318,6 +328,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Datapoint{write,read_opts} => {
             crate::datapoint::write_datapoint(write, &common, read_opts)?;
         }
+        
         Command::Save(opts) => {
             crate::save::save(opts, common)?;
         }
@@ -346,6 +357,20 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             link.sign = true;
             let mut write = common.open(&write)?;
             point::linkpoint(common, link, multi, &mut write)?
+        }
+        Command::Point { write, mut point} =>{
+            match point.dgs{
+                None => {
+                    let data = std::mem::take(&mut point.read);
+                    crate::datapoint::write_datapoint(write, &common, data)?;
+                },
+                Some(dgs) =>{
+                    let mut write = common.open(&write)?;
+                    let GenPointOpts{ create, create_int, sign, key, read, dgs:_, link } = point;
+                    let p = PointOpts{ create, create_int, sign, key, read, dgs, link};
+                    point::linkpoint(common, p,Default::default(), &mut write)?;
+                },
+            }
         }
         Command::Key(opts) => keys::keygen(&common, opts)?,
         Command::DataFilter { .. } => {

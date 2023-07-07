@@ -30,6 +30,17 @@ pub struct KeyOpts {
     #[clap(skip)]
     signing_key: std::sync::OnceLock<SigningKey>,
 }
+impl Default for KeyOpts {
+    fn default() -> Self {
+        Self { password: Default::default(),
+               display_pass: Default::default(),
+               utf8_password: Default::default(),
+               key: "me:local".parse().unwrap(),
+               enckey: Default::default(),
+               signing_key: Default::default()
+        }
+    }
+}
 impl KeyOpts {
 
     pub fn enckey(&self, _common:&CommonOpts) ->anyhow::Result<Option<(PubKey,String)>>{

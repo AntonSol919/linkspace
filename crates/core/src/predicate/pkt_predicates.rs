@@ -235,9 +235,9 @@ impl PktPredicates {
     }
     // is in invalid state on error
     fn and(&mut self, rule: &Predicate) -> anyhow::Result<()> {
-        tracing::debug!(%rule,"new rule");
         tracing::trace!(%self);
         let Predicate { kind, val, op } = rule;
+        tracing::debug!(%val,%kind,%op,%rule,"new rule");
         let val = val.clone();
         let op = *op;
         match kind {

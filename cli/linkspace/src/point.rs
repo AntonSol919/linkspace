@@ -9,7 +9,7 @@ use linkspace_common::{
     prelude::*,
 };
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug,Default)]
 pub struct MultiOpts {
     /// produce copies while reading data ( defaults is to read once and truncate. )
     #[clap(short,long)]
@@ -123,4 +123,21 @@ pub fn linkpoint(
         };
         if multi.multi_link.is_some() { links.pop();}
     }
+}
+
+#[derive(Parser, Debug)]
+pub struct GenPointOpts {
+    #[clap(long, alias = "u")]
+    pub create: Option<StampExpr>,
+    #[clap(long, conflicts_with = "create")]
+    pub create_int: Option<Stamp>,
+    #[clap(long)]
+    pub sign: bool,
+    #[clap(flatten)]
+    pub key: KeyOpts,
+    #[clap(flatten)]
+    pub read: DataReadOpts,
+    pub dgs: Option<DGPExpr>,
+    #[clap(last=true)]
+    pub link: Vec<LinkExpr>,
 }

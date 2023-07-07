@@ -240,3 +240,25 @@ tbody {
     }
 
 }
+
+code::before{
+    content:" $ ";
+}
+pre {
+    background-color: rgb(230, 237, 243);
+    color: rgb(13, 17, 23);
+    border-radius:6px;
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+    font-size: 13.6px;
+    line-height: 19.7167px;
+    margin-bottom: 16px;
+    margin-top: 0px;
+    padding:16px;
+}
+
+.verse {
+    border-left: 5px solid #6AB0DE;
+    background-color: #E7F2FA;
+    padding: 6px 20px;
+    font-style: italic;
+}

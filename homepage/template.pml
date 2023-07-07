@@ -15,10 +15,12 @@
         <a href="./index.html">Home</a>
       </li>
       <li>
+        <a href="./code.html">Quick start</a>
+      </li>
+      <li>
         <a href="./basics.html">Basics</a>
       </li>
-
-      <li >
+      <li>
         <a href="./lns.html">LNS</a>
       </li>
       <li >

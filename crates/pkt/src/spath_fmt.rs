@@ -63,7 +63,12 @@ impl ABEValidator for IPathBuf {
 }
 
 impl SPathBuf {
-    pub fn try_from_ablist(ablist: ABList) -> Result<Self, SPathExprErr> {
+    pub fn try_from_ablist(mut ablist: ABList) -> Result<Self, SPathExprErr> {
+        match ablist.first(){
+            None => return Ok(SPathBuf::new()),
+            Some((ctr,bytes)) if *ctr != Some(Ctr::FSlash) && bytes.is_empty() => { ablist.pop_front(); }
+            _ => {}
+        }
         if let Ok(b) = ablist.as_exact_bytes() {
             return Ok(SPath::from_slice(b)?.into_spathbuf());
         }

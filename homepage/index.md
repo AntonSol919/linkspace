@@ -21,7 +21,8 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressing
 - Group/Domain split
 
-[Basics](./basics.html) gives a high level introduction.  
+If you want a quick explanation in code see the [Quick Start](./code.html).   
+[Basics](./basics.html) is a high level description.  
 The [tutorials](./docs/tutorial/index.html) has some practical examples.  
 The [Guide](./docs/guide/index.html) is an in-depth overview of the API and how it fits together.  
 

@@ -64,6 +64,8 @@ Having the keys ordered by 'first' might set a bad incentive.
 - init 
 
 ## Misc
+- could have a db env using a single file where tables are created on open.
+- Add [pkt-dot] output format
 - Create full folder import/export example (Update cli/impex)
 - Exchange with bloom filter(+count)
 - Port anyhost exchange to rust 

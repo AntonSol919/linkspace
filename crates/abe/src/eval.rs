@@ -176,17 +176,18 @@ impl ABList {
         self
     }
     pub fn into_exact_bytes(mut self) -> Result<Vec<u8>, Self> {
-        if self.0.len() == 1 && self.0[0].0.is_none(){
-            Ok(self.0.pop().unwrap().1)
-        } else {
-            Err(self)
+        match &self.0[..] {
+            [] => Ok(vec![]),
+            [(None,_)] => Ok(self.0.pop().unwrap().1),
+            _ => Err(self)
         }
     }
     pub fn as_exact_bytes(&self) -> Result<&[u8], &Self> {
-        if self.0.len() == 1 && self.0[0].0.is_none(){
-            Ok(&self.0[0].1)
-        } else {
-            Err(self)
+        match &self.0[..]{
+            [] => Ok(&[]),
+            [(None,b)] => Ok(&b),
+            _ => Err(self)
+
         }
     }
 

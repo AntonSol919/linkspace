@@ -141,9 +141,25 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
         ("select link".into(), String::new())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        fncs!([(
+        fncs!([
+            ("links",0..=4, Some(true),"[delim='\\n',start=0,stop=len,step=1] - python like slice indexing",|links:&Self,i:&[&[u8]]|{
+                let (delim,rest) = i.split_first().unwrap_or((&(&[b'\n'] as &[u8]),&[]));
+
+                use std::io::Write;
+                let mut r = vec![];
+                let mut it =   abe::scope::bytes::slice(&links.0,rest)?;
+                if let Some(link) = it.next(){
+                    write!(&mut r, "{link}")?;
+                    for link in it {
+                        r.extend_from_slice(delim); 
+                        write!(&mut r, "{link}")?;
+                    }
+                }
+                Ok(r)
+            }),
+            (
             "*=",
-            1..=1,
+                1..=1, Some(true),
             "[suffix] get first link with tag ending in suffix",
             |links: &Self, i: &[&[u8]]| {
                 links.first_tailmask(i[0]).map(ptrv).context("no such link")

@@ -29,9 +29,13 @@ pub struct GetLinks{
 
 #[derive(Clone,Parser,Copy)]
 pub enum GetLinksMode{
-    Skip,
+    /// continue if not known
+    Skip, 
+    /// wait for the point to be saved. 
     Pause,
+    /// return an error
     Error,
+    /// continue and output out of order when it is saved.
     Watch
 }
 
