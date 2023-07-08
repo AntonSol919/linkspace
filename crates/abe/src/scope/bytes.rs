@@ -115,6 +115,7 @@ impl EvalScopeImpl for BytesFE {
             ("~rcut",1..=2,"[bytes,length = 16] - lcut without error",|_,i:&[&[u8]]| cut(i,false,false)),
             ("lfixed",1..=3,"[bytes,length = 16,pad_byte = \\0] - left pad and cut input bytes",|_,i:&[&[u8]]| pad(i,true,0,false,true)),
             ("rfixed",1..=3,"[bytes,length = 16,pad_byte = \\0] - right pad and cut input bytes",|_,i:&[&[u8]]| pad(i,false,0,false,true)),
+            ("replace",3..=3,"[bytes,from,to] - replace pattern from to to",|_,i:&[&[u8]]| replace(i.try_into().unwrap())),
 
             ("slice",1..=4,"[bytes,start=0,stop=len,step=1] - python like slice indexing",|_,i:&[&[u8]]|{
                 slice(i[0],&i[1..]).map(|i| i.copied().collect::<Vec<u8>>() )
@@ -123,6 +124,16 @@ impl EvalScopeImpl for BytesFE {
 
         ])
     }
+}
+fn replace([mut b, from,to]:[&[u8];3]) -> Vec<u8>{
+    let mut r =Vec::with_capacity(b.len());
+    while let Some((h,rest)) = b.split_first(){
+        match b.strip_prefix(from){
+            Some(rest) => {r.extend_from_slice(to); b = rest},
+            None => {r.push(*h); b = rest},
+        }
+    }
+    r
 }
 
 /// python like slice indexing

@@ -27,10 +27,10 @@ pub struct ExtWatchCLIOpts {
 pub struct PredicateAliases {
     /// only match locally indexed pkts           | i_new:=:[u32:0]
     #[clap(long, alias = "no-new")]
-    pub index: bool,
+    pub db_only: bool,
     /// only match new unindexed pkts             | i_db:=:[u32:0]
-    #[clap(long, alias = "no-db")]
-    pub new: bool,
+    #[clap(long, alias = "no-index")]
+    pub new_only: bool,
 
     /// match upto max packets.                   | i:<:[u32:max]
     #[clap(long)]
@@ -76,8 +76,8 @@ impl PredicateAliases {
             max,
             signed,
             unsigned,
-            index,
-            new,
+            db_only,
+            new_only,
             max_branch,
             max_index,
             max_new,
@@ -104,8 +104,8 @@ impl PredicateAliases {
             .map(|i| abev!( (QScope::Branch.to_string()) : "<" : +(U32::from(i).to_abe())));
 
 
-        let new = new.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
-        let log = index.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
+        let new = new_only.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
+        let log = db_only.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
 
         let watch = qid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
             .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)));

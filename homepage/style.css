@@ -122,7 +122,7 @@ p {
     padding: 0px;
 }
 
-.op {
+.set_op {
     align-self: center;
     font-size:3em;
 }
@@ -241,7 +241,7 @@ tbody {
 
 }
 
-code::before{
+pre > code > span::before{
     content:" $ ";
 }
 pre {
@@ -249,14 +249,12 @@ pre {
     color: rgb(13, 17, 23);
     border-radius:6px;
     font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-    font-size: 13.6px;
-    line-height: 19.7167px;
     margin-bottom: 16px;
     margin-top: 0px;
     padding:16px;
 }
 
-.verse {
+.line-block {
     border-left: 5px solid #6AB0DE;
     background-color: #E7F2FA;
     padding: 6px 20px;

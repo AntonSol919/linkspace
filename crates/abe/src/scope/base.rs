@@ -1,4 +1,4 @@
-use base64::{prelude::BASE64_URL_SAFE_NO_PAD, DecodeError, Engine};
+use base64::{prelude::{BASE64_URL_SAFE_NO_PAD,BASE64_STANDARD}, DecodeError, Engine};
 
 use crate::{eval::{EvalScopeImpl, ScopeFunc, ApplyResult, ApplyErr}, fncs, ABE, cut_prefix_nulls};
 
@@ -65,7 +65,15 @@ impl EvalScopeImpl for BaseNScope {
                    }
                    ApplyResult::NoValue
                }
-             )
+             ),
+            ("?bs",1..=1,"encode base64 standard padded",|_,i:&[&[u8]]| Ok(BASE64_STANDARD.encode(i[0]).into_bytes())),
+            ( @C "bs", 1..=1, None, "decode base64 standard padded",
+               |_,i:&[&[u8]],_,_| Ok(BASE64_STANDARD.decode(i[0])?),
+               |_,b:&[u8],_| -> ApplyResult<String>{
+                   ApplyResult::Value(format!("[bs:{}]",BASE64_STANDARD.encode(b).replace("/", "\\/")))
+               }
+            )
+
         ])
     }
 }

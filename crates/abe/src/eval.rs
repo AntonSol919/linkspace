@@ -724,7 +724,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                         ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
                     }
                 }
-                [ABE::Expr(Expr::Lst(_)), ..] => {
+                [ABE::Expr(Expr::Lst(_)), ..] | [ABE::Expr(_), ABE::Expr(_) ]=> {
                     Err(EvalError::Other(anyhow!("function names can not be expressions")))?
                 }
                 _ => _eval(depth + 1, ctx, ls)?,
@@ -1047,6 +1047,7 @@ fn try_applyresult(){
     assert!(matches!(some_err_v(),ApplyResult::Err(_)));
 
     fn required() -> ApplyResult<isize>{
+        use anyhow::Context;
         let v : Option<isize> = None;
         v.context("missing")?.into()
     }

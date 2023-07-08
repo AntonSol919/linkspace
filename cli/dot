@@ -1,0 +1,33 @@
+digraph G {
+    rankdir=LR
+      node[shape="record"]
+      subgraph cluster_a {subgraph cluster_b {hello[label="/hello/world|<1> l1| | data|"] ; hello:1 -> world }};
+      subgraph cluster_thing{
+        label = "process #2";
+        color=blue
+             color=lightgrey;
+           label = "group1";
+           lisp [label="<0> zero |<1> one|2",shape="record"]
+           lisp:1 -> common_lisp [label=test];
+           common_lisp[group=3]
+           lisp:0 -> scheme;
+      }
+      subgraph cluster_thing {
+       subgraph cluster_domain{
+           label = "domain";
+           thing2 -> lisp:0
+       }
+      }
+      subgraph cluster_2{
+           label = "group2";
+           thing -> common_lisp;
+           thing[group=3]
+           lisp -> scheme;
+      }
+  subgraph cluster_1 {
+            node [style=filled];
+      b0 -> b1 -> b2 -> b3;
+      label = "process #2";
+      color=blue
+    }
+    }

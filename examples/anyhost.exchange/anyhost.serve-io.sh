@@ -24,7 +24,7 @@ lk eval "last rx [u64:$LAST_RX/us:str]\nlast tx [u64:$LAST_TX/us:str]\n"
 
 export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
-LK_SKIP_HASH=false lk save --new db --new stdout \
+LK_SKIP_HASH=false lk save --new-only db --new stdout \
         --old file:>( lk pktf "$PID Ignored [hash:str] (old)" >&2 ) \
    | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
@@ -33,7 +33,7 @@ LK_SKIP_HASH=false lk save --new db --new stdout \
         --write db  > /dev/null &
 
 # Read new request keypoints and return their content
-lk watch --new "[f:exchange]:$LK_GROUP:/pull/$LK_GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
+lk watch --new-only "[f:exchange]:$LK_GROUP:/pull/$LK_GROUP:**" -- "pubkey:=:$THEIR_KEY"  \
     | lk pktf --inspect ">>>>Pull req [hash:str]\n[data]\n<<<<$PID " \
     | lk multi-watch \
     | lk dedup \

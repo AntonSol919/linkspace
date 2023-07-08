@@ -4,27 +4,27 @@
 #+SETUPFILE: ../utils.org
 
 **** layout for the 'tree' btreemap
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
   lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 #+END_SRC
 
 **** dot graph 
 
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
   lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 #+END_SRC
 
 
 **** Reading/Writing large files
 
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
 export FILE=$2
 export CHAN=${3:-default}
 export IN=${4:-$FILE}
 cat "$IN" | lk data | lk --env collect blobs:$LK_GROUP:/[env:CHAN]/[env:FILE] --write db --forward db
 #+END_SRC
 
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
 export FILE=$2
 export CHAN=${3:-default}
 export OUT=${4:-$FILE}
@@ -38,13 +38,13 @@ lk --env watch "blobs:$LK_GROUP:/[env:CHAN]/[env:FILE]" --max 1 | \
 
 **** A poor man's REPL 
 
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
   lk eval [argv:-1] argv -D'\n' --data-eval --data-stdin 
 #+END_SRC
 
 Each read goes into argv, which is added to the context of each read.
 
-#+BEGIN_SRC bash :session cli0 :exports code 
+#+BEGIN_SRC 
   hello
   [0] world
   The value of \[1\] = [1]
@@ -59,7 +59,7 @@ prints ~The value of [1] = hello world~
 
 FIXME: The debug build is significant slower - especially for keypoint:
 
-#+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
+#+BEGIN_SRC 
   lscpu | grep "Model name"
   lk --version
   echo Datapoints

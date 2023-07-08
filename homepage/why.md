@@ -1,4 +1,3 @@
-# Basics
 
 ## The internet of streams
 
@@ -25,8 +24,8 @@ To do this it uses the following types of packets to transmit data between two d
 +-----------------+-----------------------+-----------------------------------------------------------------+
 :::
 
-Packets are transmitted and - using the `IP address` - they reach their destination: a device such as the one you're using right now.
-On the device an application is running that looks for packets with a specific `port` to arrive.
+Packets are transmitted and - using the `IP address` - they reach their destination; a device such as the one you're using right now.
+On the device an application is running that waits for packets with a specific `port` to arrive.
 
 In transit, a packet can get lost or corrupted.
 The result is that packets don't arrive in the order they were sent.
@@ -34,7 +33,7 @@ By adding a sequence number, the destination can verify all packets have arrived
 
 I imagine the proto-internet was first discovered when people realized that packet SEQUENCE IDs are essential complexity.
 When transmitting data, something must define the order of packets.
-Consequently the physical route each packet takes is irrelevant.
+As a consequence, the physical route each packet takes is irrelevant.
 
 The result is that _conceptually_ each application on each device can talk to any other application on any other device.
 
@@ -42,7 +41,7 @@ This model is ideal for phone-calls or video streams.
 To build more interesting applications we create protocols to add further structure to the stream of data.
 There are thousands of different protocols, but what most of them have in common is a way to transmit questions and answers.
 
-A couple of well known internet protocols that have this property are:
+A couple of well known variants that have this property are:
 
 | System | Question                      | Answer              |
 |--------+-------------------------------+---------------------|
@@ -51,20 +50,21 @@ A couple of well known internet protocols that have this property are:
 | FTP    | /Projects/linkspace/readme.md | In a supernet [...] |
 | SQL    | SELECT * from MSG where ID=1; | A message in a db   |
 
-Using these tools we do not just create websites to provide information.
 At first we used these tools to create websites to provide information.
-But this has changed and we instead build 'platforms'.
-Services that store, forward, and administrate messages so multiple that multiple devices can communicate.
+But this has grown into interactive 'platforms'.
+Services that store, forward, and administrate information such that multiple devices, and thus people, can communicate.
+
+The thesis of linkspace is this: 
 
 <b>We have reached the limit of using this model of streaming questions/answers paradigm for multi-party communication.</b>
 
 First, the stream abstraction can leak.
-Streams get disconnected, the other side hangs up, the other side is overloaded, etc.
+Streams get disconnected, one side is overloaded or errors, etc.
 
 Then, when more than two devices are involved the leaks compound.
-Synchronization is as slow as the slowest link, answers become stale or wrong.
+Synchronization is as slow as the slowest link, answers become stale or bad, and assumptions that an application relies on are no longer true.
 
-Alternatively you design a system as a supernet.
+Alternatively you built a supernet.
 
 :::{.definition}
 Supernet  [ˈsü-pərˌnet]<br>
@@ -74,18 +74,18 @@ addressing method uses hashes instead of endpoint identifiers.
 e.g. git, bitcoin, linkspace
 :::
 
-Once you start thinking in terms of supernets, it becomes clear that many problems with streaming questions/answers are accidental complexity. When a supernet is used to build an application those problems become irrelevant or trivial[^trivial] - and we can do things that are practically impossible if we keep talking streams.
+Once you start thinking in terms of supernets, it becomes clear that many problems with streaming questions/answers are accidental complexity. Using a supernet to build an application those problems become irrelevant or trivial[^trivial] - and we can do things that are practically impossible if we keep talking streams.
 
-[^trivial]: Trivial is perhaps overstating it, but take for example a stream getting disconnected - A supernet with a good API should guide a developer to take the most extreme cases of asynchronicity into account. i.e. slow or disconnected server should not break a system as it does to the majority of 'platforms'. Well designed supernet applications can be truely offline-first and 'serverless'.
+[^trivial]: Trivial is perhaps overstating it, but take for example a stream getting disconnected - A supernet with a good API should guide a developer to take the most extreme cases of asynchronicity into account. i.e. slow or disconnected server should not break a system. Well designed supernet applications can be offline-first and without any critically important nodes or line of communication.
 
 ## Linkspace
 
 Linkspace attempts to provide a model where: for any group running any application, there exists a space to address data[^idea].
 
-[^idea]: This idea and other ideas used in linkspace aren't new. But I believe linkspace is a simple and powerful synthesis compared to previous attempts (see [alts](#alts)).
+[^idea]: This idea and other ideas used in linkspace aren't new. But I believe linkspace is a simple synthesis compared to previous attempts (see [alts](#alts)).
 
-If the current internet is essentially streams for key-value systems, so you can talk _to_ server, 
-then linkspace is essentially a shared key-value space, so groups can talk _about_ data.
+If the current internet is streams for key-value systems, so you can talk _to_ server, 
+then linkspace is a shared key-value space, so groups can talk _about_ data.
 
 A unit in linkspace is called a **point**. Each point has data, some auxiliary fields, and is uniquely identified by its hash.
 
@@ -94,14 +94,14 @@ To understand what each field does lets start with a simple example of a message
 
 :::{.container .pkt .pd}
 +-----------------------------------+----------------------------------+
-| /image/BrokenMachine.jpg          | [image data]                     |
+| /image/BrokenMachine.jpg          | (image data)                     |
 +-----------------------------------+----------------------------------+
 | /thread/Coffee machine broke!/msg | Fix pls? image/BrokenMachine.jpg |
 +-----------------------------------+----------------------------------+
 :::
 
 
-<div class="op">+</div>
+<div class="set_op">+</div>
 
 :::{.container .pkt .pd}
 +-----------------------------------+----------------------------------+
@@ -109,11 +109,11 @@ To understand what each field does lets start with a simple example of a message
 +-----------------------------------+----------------------------------+
 :::
 
-<div class="op">=</div>
+<div class="set_op">=</div>
 
 :::{.container .pkt .pd}
 +-----------------------------------+----------------------------------+
-| /image/BrokenMachine.jpg          | [image data]                     |
+| /image/BrokenMachine.jpg          | (image data)                     |
 +-----------------------------------+----------------------------------+
 | /thread/Can we use Rust?/msg      | I heard it is great.             |
 +-----------------------------------+----------------------------------+
@@ -122,7 +122,7 @@ To understand what each field does lets start with a simple example of a message
 :::
 
 
-The "image/BrokenMachine.jpg" is called a **path** and maps to [image data].
+The "image/BrokenMachine.jpg" is called a **path** and maps to (image data).
 So far this should look familiar as it is similar to files in directories.
 I'll refer to each entry as a **point**, and multiple entries as a **set**.
 The example shown has two sets **merging**. The result is a new set with 3 messages.
@@ -133,54 +133,52 @@ Practically any digital communication can be understood as merging sets of point
 
 Online platforms have dubbed different words for actions you can take:
 '_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
-Fundamentally they can be understood as a frontend application providing an interface to __merge__ sets of points.
-Either on your device or on theirs[^device].
+Fundamentally they can be understood as a frontend application providing an interface to merge sets of points.
+Either on your device or "in the ☁️" (i.e. on their device[^device]).
 
 [^device]: Your device immediatly forgetting those data points is a configuration detail.
 
-The internet we use today has a single host design. 
+The internet in use today has a single host design. 
 For instance, a web-browser or app contacts `http://www.some_platform.com`
 for the key `/image/BrokenMachine.jpg` to get an image.
 
-This is simple, but it has downsides.
+This is relatively straight forward, but it has downsides.
 
-There is a misconception on what an address is[^address],
-a host can get disconnected,
+A host can get disconnected,
 you can't (re)share and (re)use your copy of the data,
+there is a misconception on what an address is[^address],
 and there is no standard on what happens when two people create two different `image/BrokenMachine.jpg` but with different pictures.
 
-[^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '[image data]' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '[image data]'. A subtle but consequental difference. Linkspace does not have this discrepency.
+[^address]: The perception is created that the address 'http://www.some_platform.com/image/BrokenMachine.jpg' is addressing '(image data)' - this is wrong. The address is used for your request to find where it needs to go, this address then usually replies with '(image data)'. A subtle but consequental difference. Linkspace does not have this discrepency.
 
-I would argue these fall under accidental complexity.
+This might seem benign, but it has an enormous complexity cost.
 
-Especially the last one. Once the speed of light is measurable in a network, it requires a specific design to avoid two or more computers to write to the same path.
-
-In our single host design, the data is hosted on a server and the person who has administrative access to that server can then administrate which one is the 'real' copy, and which one should be forgotten. 
+With a single host design every server can define (and edit) what the 'real' copy of the data and its address is.
+Consequently, every device/server has slightly different semantics on how it deals with the issues listed - and most are missing basic features such as an unambiguous way to address things.
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Every path can refer to multiple points.
+Every path can refer to multiple points, and every point is hashed.
+There is a 32 byte number that uniquely addresses the exact content of that point[^uniq]. (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
 
-Each point is hashed.
-i.e. there exists a unique 32 bytes (or ~77-digit number) that uniquely identifies the point[^uniq] (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
+[^uniq]: Unique for all intents and purposes.
 
-[^uniq]: Unique for all intents and purposes - except for the purpose of counting to 2^256+1.
-
-It doesn't matter when or where sets are merged - the result only has a single copy per message.
+It doesn't matter when or where sets are merged, a set only ever has a single copy of a point.
+It doesn't matter how you received a message or how you send it; If you create a new message and refer to the hash, everybody can knows exactly what you're referring to.
 
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
-| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | [image data]                     |
+| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | (image data)                     |
 +-----------------------------------+--------------------------------+----------------------------------+
 | /thread/Coffee machine broke!/msg | <span id="hh1">[HASH_1]</span> | Fix pls? image/BrokenMachine.jpg |
 +-----------------------------------+--------------------------------+----------------------------------+
 :::
 
-<div class="op">+</div>
+<div class="set_op">+</div>
 
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
-| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | [image data]                     |
+| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | (image data)                     |
 +-----------------------------------+--------------------------------+----------------------------------+
 | /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better than VS   |
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -188,11 +186,11 @@ It doesn't matter when or where sets are merged - the result only has a single c
 +-----------------------------------+--------------------------------+----------------------------------+
 :::
 
-<div class="op">=</div>
+<div class="set_op">=</div>
  
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
-| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | [image data]                     |
+| /image/BrokenMachine.jpg          | <span id="hh0">[HASH_0]</span> | (image data)                     |
 +-----------------------------------+--------------------------------+----------------------------------+
 | /thread/Emacs or vim?/msg         | <span id="hh2">[HASH_2]</span> | I heard they're better than VS   |
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -203,72 +201,75 @@ It doesn't matter when or where sets are merged - the result only has a single c
 
 :::
 
-We can uniquely get a specific point by its <span id="hh0">[HASH_0]</span>,
+Anyone can uniquely address a specific point by its <span id="hh0">[HASH_0]</span>,
 or multiple entries through a path "/thread/Tabs or spaces/msg".
 
 This might seem more trouble than existing solutions like a filesystem or HTTP.
-In those, one request by name gets you a single result. 
+In those, a request using a path gets you a single result. But this is not the case.
 
-However, this is not a real issue for two reasons. 
+In linkspace points have a 'create' timestamp and can be signed by a public key (which i'll refer to with [@:...keyname]).
 
-In practice it is trivial to only request 'the latest value' or 'the latest value signed by someone you trust'.
+The single result HTTP or a filesystem provides is an incomplete abstraction.
+It is unable to capture events over time and there is no way to scale it.
+In so far as that having a single result is simple; the same thing is achieved in linkspace by requesting only 'the latest point with path X' or 'the latest point with path X signed by someone you trust'.
 
-The later is especially interesting. 
-If an application only requests points signed by a specific key, it effectivly administrates similar to how it is done in our current single host-administrator design.
-However, it has the additional property that it can be independent from hosting the data. 
-i.e. in linkspace 'hosting data' and 'content administration' can be decoupled.
+The effects of the second option is worth considering for a moment:
+When an application limits itself to points created (or linked) by a specific key, then that key has a administrative 'include/exclude' power, but it 
+is not tied to a physical server hosting data.
 
-:::{.container .pkt .pkthd}
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /image/BrokenMachine.jpg          | [@:alice:salesexample]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | [image data]                                |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /thread/Coffee machine broke!/msg | [@:alice:salesexample]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? image/BrokenMachine.jpg            |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-:::
-
-<div class="op">+</div>
+Put in different terms - linkspace has the property that 'hosting data' and 'content administration' are decoupled.
 
 :::{.container .pkt .pkthd}
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /thread/Coffee machine broke!/msg | [@:bob:maintenance:example] | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!         |
-|                                   |                             |            |                                | Isn't <span id="hh0">this</span> from 2015? |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
++-----------------------------------+------------------------------+------------+--------------------------------+---------------------------------------------+
+| /image/BrokenMachine.jpg          | [@:alice:sales:example]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | (image data)                                |
++-----------------------------------+------------------------------+------------+--------------------------------+---------------------------------------------+
+| /thread/Coffee machine broke!/msg | [@:alice:sales:example]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? <span id="hh0">[HASH_0]</span>     |
++-----------------------------------+------------------------------+------------+--------------------------------+---------------------------------------------+
 :::
 
-<div class="op">=</div>
+<div class="set_op">+</div>
 
 :::{.container .pkt .pkthd}
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /image/BrokenMachine.jpg          | [@:alice:salesexample]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | [image data]                                |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /thread/Coffee machine broke!/msg | [@:alice:salesexample]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? image/BrokenMachine.jpg            |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-| /thread/Coffee machine broke!/msg | [@:bob:maintenance:example] | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!         |
-|                                   |                             |            |                                | Isn't <span id="hh0">this</span> from 2015? |
-+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
++-----------------------------------+-----------------------------+------------+--------------------------------+-------------------------------------------------+
+| /thread/Coffee machine broke!/msg | [@:bob:maintenance:example] | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!             |
+|                                   |                             |            |                                | Isn't <span id="hh0">[HASH_0]</span> from 2015? |
++-----------------------------------+-----------------------------+------------+--------------------------------+-------------------------------------------------+
 :::
 
-A point has two preceding fields. A **group** that signal who can read/write to the tree, and a **domain** field to indicate which application should read it.
-Essentially any pair of (domain, group) has its own tree.
+<div class="set_op">=</div>
+
+:::{.container .pkt .pkthd}
++-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+| /image/BrokenMachine.jpg          | [@:alice:sales:example]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | (image data)                                    |
++-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+| /thread/Coffee machine broke!/msg | [@:alice:sales:example]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? <span id="hh0">[HASH_0]</span>         |
++-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+| /thread/Coffee machine broke!/msg | [@:bob:maintenance:example]  | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!             |
+|                                   |                              |            |                                | Isn't <span id="hh0">[HASH_0]</span> from 2015? |
++-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+:::
+
+A point has two preceding fields. A **group** that signal who is allowed to read or add a point, and a **domain** field to indicate which application uses it.
+Essentially any pair of (domain, group) has its own space.
 
 For example the `msg_board` application and the `[#:example]` group.
 
 :::{.container .pkt .dgpkthd}
-+----------+-------------+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-|msg_board | [#:example] | /image/BrokenMachine.jpg          | [@:alice:salesexample]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | [image data]                                |
-+----------+-------------+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-|msg_board | [#:example] | /thread/Coffee machine broke!/msg | [@:alice:salesexample]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? image/BrokenMachine.jpg            |
-+----------+-------------+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
-|msg_board | [#:example] | /thread/Coffee machine broke!/msg | [@:bob:maintenance:example] | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!         |
-|          |             |                                   |                             |            |                                | Isn't <span id="hh0">this</span> from 2015? |
-+----------+-------------+-----------------------------------+-----------------------------+------------+--------------------------------+---------------------------------------------+
++----------+-------------+-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+|msg_board | [#:example] | /image/BrokenMachine.jpg          | [@:alice:sales:example]      | 2015/01/29 | <span id="hh0">[HASH_0]</span> | (image data)                                    |
++----------+-------------+-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+|msg_board | [#:example] | /thread/Coffee machine broke!/msg | [@:alice:sales:example]      | 2023/03/02 | <span id="hh1">[HASH_1]</span> | Fix pls? <span id="hh0">[HASH_0]</span>         |
++----------+-------------+-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
+|msg_board | [#:example] | /thread/Coffee machine broke!/msg | [@:bob:maintenance:example]  | 2023/03/02 | <span id="hh3">[HASH_4]</span> | Hey <span id="hh1">[HASH_1]</span>!             |
+|          |             |                                   |                              |            |                                | Isn't <span id="hh0">[HASH_0]</span> from 2015? |
++----------+-------------+-----------------------------------+------------------------------+------------+--------------------------------+-------------------------------------------------+
 :::
 
-Note that the group and public keys are actually 32 bytes. 
-For brevity I used the [LNS](./lns.html) representation for `[@:alice:salesexample]` and `[#:example]`.
-LNS solves a similar problem as DNS, i.e. turning a name like `www.example.com` into a number like `192.168.0.1`.
+Note that the group and public keys are 32 bytes.
+For brevity I used the [LNS](./lns.html) representation for `[@:alice:sales:example]` and `[#:example]`.
+LNS solves a similar problem as DNS, i.e. instead of using a number like `192.168.0.1` you can use a user friendly name.
 
-Finally, the messages we used as an example have a <span id="hh1">[HASH]</span> directly in their data field.
+Finally, in our example so far I used a <span id="hh1">[HASH]</span> directly in their data field.
 This would not work well for most use-cases.
 Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
@@ -294,6 +295,20 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 +---------------------+----------------------+-------------------------------+--------------------+
 :::
 
+
+<details>
+
+<summary>
+Click here to see (part of) the example in graph form
+</summary>
+
+![msg_board](./images/msg_board.png)
+
+Note that the 'data=(image data)', 'data=[link:reply to]', and the tags 'reply to:', 'image links:' are just examples.
+Each application defines its own data format and what tags mean.
+
+</details>
+
 [^4]: Both TCP/IP packets and linkspace packets have control fields that are irrelevant to a vast majority of developers.
 
 For the full specification of creating and writing points see the [guide](./docs/guide/index.html#packet_layout)
@@ -303,60 +318,51 @@ However, this should be enough to reason about the basics:
 
 Users generate their identity, together they form groups and set up a method to exchange data.
 
-The result is that _conceptually_ an application only needs to process the state of the trees.
+The result is that _conceptually_ an application only needs to process its view of a shared space.
 
-## Ready to give it a try?
-
-Linkspace is not an end-user application.
-It is a software library and command line tools.
-A GUI frontend to manage groups/domains/keys is outside its scope.
-
-The packet format is stable. Points created will stay readable in future versions.
-The API is mostly stable but will have some breaking changes and additional conventions.
-
-To give it a try you can [Download](https://github.com/AntonSol919/linkspace/releases) the pre-build CLI and python bindings to follow along with
-the [tutorial](./docs/tutorial/index.html) or the more technical [Guide](./docs/guide/index.html),
-
-For the adventurous there is initial support for wasm, and a POC HTTP bridge called [Webbit]( https://github.com/AntonSol919/webbit) that works similar to WebDAV.
+To give linkspace a try [Download](https://github.com/AntonSol919/linkspace/releases) the latest release, and check out the apps or the (python) [tutorials](./docs/tutorial/index.html).
 
 # Q&A
 
 ### Who is linkspace for?
 
-Me from 10 years ago, me today, the next generation that wants their internet to be better, and everyone else. In that order.
+Me, the next generation that wants their internet to be better, and everyone else. 
 
 #### The tool
 
 If you're just interested in the tool; linkspace can shrink a 'stack' significantly.
 
 Data formats change and grow as projects goes on.
-Using linkspace to carry the data many potentially-critical features are built in at the basics.
+By using linkspace to carry the data, many potentially-critical features are built in.
 Instead of risking a costly and complex upgrade when you need a feature yesterday, you get a lot of properties by default such as:
 uniquely addressable/cross referencing events, security against tampering, logging, secure user identities, low effort backups, etc.
 
-It is scaleable decoupled data creation, routing, storing, and processing; with data authenticity and user authentication to control access, wire up business logic, or log 'who' did 'what' and 'when'. Take the parts you want and leave the rest out.
+It is scaleable decoupled data creation, routing, storing, and processing; with data authenticity and user authentication to control access, wire up business logic, or log 'who' did 'what' and 'when'. Take the parts you want and leave the rest.
 
 It even runs in the browser[^browser], meaning you can reuse more code logic and tools.
 
 [^browser]: Currently only the reading, processing and writing packets API is supported. With the rest put on the TODO list.
 
-Finally, by talking _about_ data there is a lot of potential for a 'network effect'. e.g. a support-ticket references the exact IoT event, a sale can references the your exact history of the object, etc.
+Finally, by talking _about_ data there is a lot of potential for a 'network effect'. e.g. a support-ticket references the exact IoT event, a sale can references the exact history of the object, etc.
 
-#### The idea
+#### The idea{#idea}
 
 I build linkspace so I (and hopefully others) can:
 
-- define, prototype, build, and run real-serverless offline-first apps quickly.
+- define, prototype, build, and run real-serverless[^serverless] apps quickly.
 - build an application without having to decide how to administrate for everyone that uses it - that responsibility sits with the (group of) users.
 
-I hope it might solve some of the worst problems with the current internet.
+[^serverless]: It bugs me to no end that some marketing department ruined the word 'serverless'. I'm talking about: a networked application that works without any critically important lines of communication or hosts.
 
-Perhaps the greatest insanity of this time (and I believe its defining feature) is a few for-profit advertisement / propaganda services are the host-administrators of the digital 'public squares' for more than 2<sup>32</sup> people alive.
+I believe it can be part of the solution for some of the worst problems with the current internet.
+
+Perhaps the greatest insanity of this time (and I would argue its defining feature) is a few for-profit advertisement / propaganda services are the host-administrators of the digital 'public squares' for more than 2<sup>32</sup> people alive.
 
 It is questionable for people (and the groups they organize in) to be subjected to the interests of an unaccountable administrator.
-But I think the real impact is the medium as the message: You are not in control, surrender your minds for profit and submit to apathy.
+But that can be a matter of perspective.
+The hidden cost is far more worrying in my opinion. It is the medium as the message: You are not in control, surrender your minds for profit and submit to apathy.
 
-It is a staggering amount of wasted potential for people to not experience and learn to building something for, and with, a group outside the limits and interest of a higher-authority-incorporated.
+It is a staggering amount of wasted potential for people to never experience what it means to build and be a community outside the limitations and interest of a higher-authority-incorporated.
 
 We are all lesser for it.
 
@@ -393,19 +399,20 @@ As far as overhead goes, it is designed to be fast/low energy such that a low-en
 
 Yes.
 
-Linkspace lack 6 decades of tooling that made the internet and web relatively easy for users, but that can change.
+Linkspace lacks 6 decades of tooling that made the internet and web relatively easy for users, but that can change.
 
 But is it worth it?
 
 Yes.
 
+The height of what we build is set by the weakest foundation.
 Technically supernets better model the reality of multi party communication - asynchronous and authenticated[^auth]
-In the long run they could end up with less moving parts and with fewer configurations.
+In the long run it could end up with less moving parts and with fewer configurations.
 
-[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the keyholder send the message.
+[^auth]:Authenticated as in: cryptographicaly proven that messages were created by a user of a public key regardless how you got the message - I call this 'the reality' because a wire-dump of an HTTPS session is also proof that the keyholder send the message. It's just not a property easy to use right now.
 
-For society it is important that anyone can take responsibility if they want.
-
+And finally, I believe it can do some [good](#idea).
+    
 ### Isn't it a good thing that a host administrates what I and others see online?
 
 Sure.
@@ -428,7 +435,7 @@ then they would get a better deal then they do now.
 
 ## Why not [alternative]?{#alts}
 
-There are two similar types of systems that can't do what I want.
+There are two types of systems that can't do what I want.
 
 - Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
 - Faster email: It's not that fast and it is using server-defined authenticity - plus most of the list below.
@@ -437,9 +444,9 @@ Other supernet-like systems are limited in some way or simply choose a different
 
 - Too specialized. E.g. Git has a lot of plumbing for diffing text.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
-- Either its primarily hashes, or its primarily path names. Linkspace has both as first class addresses.
-- Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a second protocol. That means no json or base64.
-- No Groups. Setting who you share with and how is not supported or its little more than 'run multiple instances'.
+- Either its primarily hashes, or its primarily path names. Linkspace has both set as a property of a 'point'.
+- Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a secondary protocol to hand off to. That means no json or base64.
+- No Groups. Setting who you share with and how is not supported, or its little more than 'run multiple instances'.
 - No domains. Everything becomes one app with premature-bureaucracy and an ever expanding set of compatibility requirements that grinds development/experiments to a halt.
 - Its focused on signatures and consensus.
 - Poor scripting support.

@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+
+FMT='"p[hash:str]"\[label=" { <hash> [hash/2mini] | data_size:[data_size:str] } | [path:str] | [/links: | <[i:str]> [tag:str] ] "\] ;
+[/links: "p[hash:str]"\:[i:str] -> "p[ptr:str]"\:hash ;\n ]'
+{
+echo 'digraph G{rankdir=RL ; node[shape="record"] ; ' ;
+$@ | lk p "$FMT" ;
+echo '}' ;
+} 

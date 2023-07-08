@@ -9,7 +9,7 @@ use linkspace_common::{
         opts::CommonOpts,
         reader::{ DataReadOpts},
     },
-    prelude::{eval,scope::{ argv::ArgList},  *},
+    prelude::{eval,scope::{ argv::ArgList},  ast::parse_abe_forgiving},
 };
 use std::io::{ Write};
 
@@ -31,7 +31,7 @@ pub enum WithData{
 pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
     let EvalOpts { json, abe, data } = opts;
 
-    let abe = parse_abe(&abe)?;
+    let abe = parse_abe_forgiving(&abe)?;
 
     let mut arglist = vec![];
     let ctx = common.eval_ctx();

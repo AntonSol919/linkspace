@@ -36,6 +36,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 - Add a syntax to :follow a subset of links. (useful lk_pull and lns in general)
 - Add custom ABE callback for a user defined scope
 - '#ab' length-delimited binary format for abtext
+- [/links:] macro should include a scope to access the packet.
 
 ## LNS 
 - LNS : reinit roots

@@ -1,3 +1,4 @@
+
 # Linkspace - a general purpose supernet
 
 > Supernet  [ˈsü-pərˌnet]
@@ -21,17 +22,18 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressing
 - Group/Domain split
 
-If you want a quick explanation using code check out [Quick Start](https://www.linkspace.dev/code.html).  
-[Basics](https://www.linkspace.dev/basics.html) is a high level description.  
-The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) document some practical examples.  
-The [Guide](https://www.linkspace.dev/docs/guide/index.html) is a in-depth overview of the API and how it fits together.  
+Linkspace is not an end-user application. 
+It is a packet format, and a software library (and command line tools) to build more powerful and useful applications.
+
+If you're comfortable reading bash then [Quick Start](https://www.linkspace.dev/code.html) is a good place to start.   
+If you're not, or prefer a more high level description, begin at the [why](https://linkspace.dev/why.html) page. 
+The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
+The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more depth on the API and technical design.
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
 to give it a try.
 
 
-Linkspace is not an end-user application. It is a software library(and command line tools) to make more powerful end-users applications.
-A GUI frontend to manage groups/domains/keys is outside its scope.
 
 Linkspace is currently in **beta**.
 

@@ -158,7 +158,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
                 Ok(r)
             }),
             (
-            "*=",
+            "link",
                 1..=1, Some(true),
             "[suffix] get first link with tag ending in suffix",
             |links: &Self, i: &[&[u8]]| {
@@ -176,8 +176,8 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
                     _ => anyhow::bail!("links expects")
                 };
                 let mut out = vec![];
-                for link in links.0 {
-                    let ctx = EvalCtx { scope }.scope(EScope(LinkEnv { link }));
+                for (i,link) in links.0.iter().enumerate() {
+                    let ctx = EvalCtx { scope }.scope(EScope(LinkEnv { link, idx: (i as u16).into() }));
                     match eval(&ctx, abe) {
                         Ok(ablist) => match ablist.into_exact_bytes() {
                             Ok(o) => {
@@ -197,6 +197,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
 #[derive(Copy, Clone, Debug)]
 pub struct LinkEnv<'o> {
     link: &'o Link,
+    idx : U16,
 }
 impl<'o> EvalScopeImpl for LinkEnv<'o> {
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -223,6 +224,19 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                         b"abe" => Ok(lk.link.tag.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.link.tag.as_str(true).into_owned().into_bytes()),
                         b"" => Ok(lk.link.tag.0.to_vec()),
+                        _ => bail!("unexpected fmt expect ?(str|abe)"),
+                    }
+                }
+            ),
+            (
+                "i",
+                0..=1,
+                "[?(str|abe)] - u16 idx",
+                |lk: &Self, i: &[&[u8]]| {
+                    match i.get(0).copied().unwrap_or(b"") {
+                        b"abe" => Ok(lk.idx.to_abe_str().into_bytes()),
+                        b"str" => Ok(lk.idx.to_string().into_bytes()),
+                        b"" => Ok(lk.idx.0.to_vec()),
                         _ => bail!("unexpected fmt expect ?(str|abe)"),
                     }
                 }

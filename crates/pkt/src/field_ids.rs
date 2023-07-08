@@ -450,11 +450,7 @@ impl FieldEnum {
             FieldEnum::CreateF => write!(out, "{}", CreateF::get_ptr(pkt)),
             FieldEnum::PubKeyF => write!(out, "{}", PubKeyF::get_ptr(pkt)),
             FieldEnum::SignatureF => write!(out, "{}", SignatureF::get_ptr(pkt)),
-            FieldEnum::DataF => {
-                let data = pkt.as_point().data();
-                let data = std::str::from_utf8(data)?;
-                out.write_all(data.as_bytes())
-            }
+            FieldEnum::DataF => write!(out,"{}",AB(pkt.as_point().data()))
         }?;
         Ok(())
     }

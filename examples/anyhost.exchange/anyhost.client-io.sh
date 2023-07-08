@@ -26,7 +26,7 @@ lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\n
 export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
-LK_SKIP_HASH=false lk save --new db --new stdout \
+LK_SKIP_HASH=false lk save --new-only db --new stdout \
     | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
@@ -34,7 +34,7 @@ LK_SKIP_HASH=false lk save --new db --new stdout \
               --write db &
 
 # read the pull request made by other apps and place them into the group
-lk --private watch --new "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
+lk --private watch --new-only "[f:exchange]:[#:0]:/pull/$LK_GROUP:**" \
     | lk --private rewrite \
                 --group $LK_GROUP \
                 --write db --write stdout sign-all \

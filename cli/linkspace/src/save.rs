@@ -41,7 +41,7 @@ pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
     let mut old = common.open(&old)?;
     ensure!(
         new.iter().any(|v| matches!(v.out, Out::Db)),
-        "currently not possible to skip saving new packets add a --new db"
+        "currently not possible to skip saving new packets add a --new-only db"
     );
     new.retain(|v| !matches!(v.out, Out::Db));
     old.retain(|v| !matches!(v.out, Out::Db));

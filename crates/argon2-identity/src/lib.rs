@@ -168,10 +168,14 @@ pub fn test_encoding_decoding(){
     let e = encrypt(&key, b"hello", None);
     check_key(&e, b"hello");
 
-    let empty = "$argon2d$v=19$m=16384,t=4,p=1$WXRa3NqtPwBpbyQPhEx1rCaMBKqiUDyZaecjdgIPLbY$EoCRQphpbp05CiLWEVncNE5zEqs4/K6KU2rrCtiSf0Y";
-    check_key(empty,b"");
-    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0";
-    check_key(hello,b"hello");
-    let hello = "$argon2d$v=19$m=16384,t=4,p=1$Au5RqvgqltiHj8ajyxwHrYBmaOudIx1XExjeM4zxS5I$mt8Q/Gq+jTM/4Ci9bW0P/4AJFWNuY5PWxzzsDyeBCb0";
-    assert!(decrypt(hello,b"not hello").is_err());
+    assert!(decrypt(&e,b"not hello").is_err());
+}
+
+pub static TEST_KEY_ID : &str = "$argon2d$v=19$m=8,t=1,p=1$tb0anwpH0rSbYe6JLd1Bgtf00QQUAYuhOcBqeSjAgW4$kYAtGyF78cfPjRqcm4Y/s1hgQTRysELK/L910P2u27c";
+
+#[test]
+pub fn test_key_encoding(){
+    let key = public_testkey();
+    let e = encrypt(&key,b"",Some(INSECURE_COST));
+    assert_eq!(e,TEST_KEY_ID);
 }

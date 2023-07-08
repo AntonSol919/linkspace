@@ -1,5 +1,12 @@
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeFuncInfo, EvalCtx, ApplyResult, ScopeMacro, ScopeMacroInfo}, parse_abe_b, ast::{take_first, is_colon}};
+use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeFuncInfo, EvalCtx, ApplyResult, ScopeMacro, ScopeMacroInfo, Scope }, parse_abe_b, ast::{take_first, is_colon}};
 use anyhow::{anyhow, Context};
+
+fn encode(inp:&[&[u8]], scope: &dyn Scope) -> anyhow::Result<String>{
+    let ctx = EvalCtx{scope};
+    if inp.len() > 2 { return Err(anyhow!("Options not yet supported"))};
+    let kind = std::str::from_utf8(inp[1]).context("bad encoder")?;
+    Ok(crate::eval::encode(&ctx, inp[0], kind, false)?)
+}
 
 #[derive(Copy, Clone)]
 pub struct Encode;
@@ -35,11 +42,52 @@ impl EvalScopeImpl for Encode {
                   help: "encode",
               },
               apply: |_, inp, _, scope| {
+
                   let ctx = EvalCtx{scope};
                   if inp.len() > 2 { return ApplyResult::Err(anyhow!("Options not yet supported"))};
                   let kind = std::str::from_utf8(inp[1]).context("bad encoder")?;
                   let r = crate::eval::encode(&ctx, inp[0], kind, false)?;
                   ApplyResult::Value(r.into_bytes())
+              },
+              to_abe: crate::eval::none,
+          },
+          ScopeFunc {
+              info: ScopeFuncInfo {
+                  id: "??",
+                  init_eq: None,
+                  to_abe: false, // TODO
+                  argc: 2..=8,
+                  help: "encode - strip out '[' ']'",
+              },
+              apply: |_, inp, _, scope| {
+                  let r = encode(inp,scope)?;
+                  let v = match r.strip_prefix("[").and_then(|o| o.strip_suffix("]")){
+                      Some(v) => v.as_bytes().to_vec(),
+                      None => r.into_bytes(),
+                  };
+                  ApplyResult::Value(v)
+              },
+              to_abe: crate::eval::none,
+          },
+          ScopeFunc {
+              info: ScopeFuncInfo {
+                  id: "???",
+                  init_eq: None,
+                  to_abe: false, // TODO
+                  argc: 2..=8,
+                  help: "encode - strip out '[func:' + ']'",
+              },
+              apply: |_, inp, _, scope| {
+                  let r = encode(inp,scope)?;
+                  let v = match r.strip_prefix("[").and_then(|o| o.strip_suffix("]")){
+                      Some(v) => {
+                          let mut it = v.as_bytes().split(|v| *v == b':');
+                          it.next();
+                          it.as_slice().to_vec()
+                      },
+                      None => r.into_bytes(),
+                  };
+                  ApplyResult::Value(v)
               },
               to_abe: crate::eval::none,
           },

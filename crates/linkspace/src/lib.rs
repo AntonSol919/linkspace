@@ -285,21 +285,21 @@ pub mod abe {
     ```
     # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
-    lk_split_abe("this:is/the:example[::]\n[::]newline[:/]",b"/",|expr,ctr| { v.push((expr,ctr)); true} );
-    assert_eq!(v,&[(0,"this"), (b':',"is/the"), (b':',"example[::]"),(b'\n',"[::]newline[:/]")])
+    lk_split_abe("this:is/the:example[::]\n[::]newline[:/]",b"/",|expr,has_brackets,ctr| { v.push((expr,has_brackets,ctr)); true} );
+    assert_eq!(v,&[(0,false,"this"), (b':',false,"is/the"), (b':',true,"example[::]"),(b'\n',true,"[::]newline[:/]")])
     ```
      **/
     pub fn lk_split_abe<'o>(
         expr: &'o str,
         exclude_ctr: &[u8],
-        mut per_comp: impl FnMut(u8,&'o str) -> bool,
+        mut per_comp: impl FnMut(u8,bool,&'o str) -> bool,
     ) -> LkResult<()> {
         let plain = exclude_ctr
             .iter()
             .filter_map(|v| CtrChar::try_from_char(*v))
             .fold(0, |a, b| a ^ b as u32);
-        for (c, d) in split_abe(expr, plain, 0)? {
-            if !per_comp(c, d) {
+        for (a,b,c) in split_abe(expr, plain, 0)? {
+            if !per_comp(a,b,c) {
                 return Ok(());
             }
         }

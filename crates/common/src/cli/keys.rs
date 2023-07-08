@@ -142,7 +142,6 @@ pub struct KeyGenOpts {
 
 pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
     use linkspace_argon2_identity::{decrypt, encrypt, pubkey};
-    let rt = common.runtime()?;
     let KeyGenOpts {
         decrypt_cost,
         overwrite,
@@ -157,6 +156,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         error_none,
     } = opts;
 
+    let with_rt = if no_lk { None} else{ Some(common.runtime()?)};
     use linkspace_argon2_identity::{INSECURE_COST, DEFAULT_COST, EXPENSIVE_COST};
     let cost = Some(match decrypt_cost{
         0 => INSECURE_COST,
@@ -182,10 +182,10 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
     //ensure!(name.local_branch_authority(),"key names must end in :local - use lns to create public identities");
     let user_enckey_input = key.enckey.is_some();
 
-    let mut enckey = match key.enckey.clone() {
-        Some(k) => Some(k),
-        None if no_lk => None ,
-        None => match lns::lookup_enckey(&rt, &name)?{
+    let mut enckey = match (key.enckey.clone(),&with_rt) {
+        (Some(k),_) => Some(k),
+        (None,None)=> None ,
+        (None,Some(rt)) => match lns::lookup_enckey(&rt, &name)?{
             None if error_none => bail!("no key found"),
             None => None,
             Some(_) if error_some => anyhow::bail!("already exists"),
@@ -204,8 +204,6 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         enckey = Some(encrypt(&skey, &new_password, cost))
     }
 
-    let rt = &common.runtime()?;
-
     if overwrite {
         let enckey = match user_enckey_input {
             true => {
@@ -222,10 +220,9 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
             }
         };
 
-        let pubkey = if no_lk {
-            B64(pubkey(&enckey)?)
-        } else {
-            lns::setup_special_keyclaim(rt, name, &enckey,true)?
+        let pubkey = match &with_rt {
+            Some(rt) => lns::setup_special_keyclaim(&rt, name, &enckey,true)?,
+            None => B64(pubkey(&enckey)?),
         };
         print(enckey,pubkey);
         return Ok(());
@@ -247,10 +244,9 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         None => {
             let password = key.password_bytes_prompt(common, true,"generating new - password>")?;
             let enckey = generate(&password);
-            let pubkey = if no_lk {
-                B64(pubkey(&enckey)?)
-            }else{
-                lns::setup_special_keyclaim(rt, name, &enckey,false)?
+            let pubkey = match &with_rt {
+                None => B64(pubkey(&enckey)?),
+                Some(rt) => lns::setup_special_keyclaim(&rt, name, &enckey,false)?
             };
             print(enckey,pubkey)
         }

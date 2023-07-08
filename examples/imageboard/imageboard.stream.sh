@@ -15,7 +15,7 @@ lk pull "imageboard:$LK_GROUP:/$BOARD" --follow -- "create:>:[now:-1D]"
 $BINS/imageboard.view.sh $BOARD 0 # run once
 
 #On receiving a new packet of interest we repaint the board from that stamp
-lk watch --new "imageboard:$LK_GROUP:/$BOARD" | \
+lk watch --new-only "imageboard:$LK_GROUP:/$BOARD" | \
     lk pktf "[create:str]" | \
     while read STAMP; do
         $BINS/imageboard.view.sh $BOARD $STAMP

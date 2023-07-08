@@ -18,7 +18,7 @@
         <a href="./code.html">Quick start</a>
       </li>
       <li>
-        <a href="./basics.html">Basics</a>
+        <a href="./why.html">Why</a>
       </li>
       <li>
         <a href="./lns.html">LNS</a>

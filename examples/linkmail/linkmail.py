@@ -209,7 +209,7 @@ class Linkmail(cmd.Cmd):
     def do_open(self,idx):
         pkt = self.lst[int(idx)] if idx else self.last_shown
         self.last_shown = pkt
-        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/us:str]\\n[data:str]\\n"
+        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/us:str]\\n[data/~utf8]\\n"
         print(lk_eval2str(print_template,pkt))
         self.lst.clear()
         for link in pkt.links:

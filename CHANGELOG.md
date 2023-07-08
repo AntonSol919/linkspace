@@ -5,6 +5,11 @@
 - LNS: use tags to store 'until'
 - LNS: by-tag uses tag.ends_with instead of eq
 - ABE: change ABList from (val,delim?) to (delim?,val)
+- ABE: rename 's' (stamp) function to 'us' (microseconds)
+
+### CLI 
+
+- watch-tree no longer defaults to '**' depth
 
 
 

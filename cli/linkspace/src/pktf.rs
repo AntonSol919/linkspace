@@ -10,7 +10,7 @@ use linkspace_common::{
         opts::{CommonOpts,},reader::PktReadOpts,
         tracing, WriteDest, WriteDestSpec,
     },
-    prelude::{TypedABE, *},
+    prelude::{TypedABE, *, ast::parse_abe_forgiving},
 };
 use std::io::{stderr, stdout, Write};
 
@@ -40,7 +40,8 @@ pub struct PktFmtOpts {
     /// delimiter to print between packets.
     #[clap(short, long, default_value = "\\n")]
     delimiter: TypedABE<Vec<u8>>,
-    #[clap(value_parser=parse_abe,default_value=&DEFAULT_PKT, action = clap::ArgAction::Append, env="LK_PRINTF")]
+    /// Use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
+    #[clap(value_parser=parse_abe_forgiving,default_value=&DEFAULT_PKT, action = clap::ArgAction::Append, env="LK_PRINTF")]
     fmt: Vec<Vec<ABE>>,
 }
 
@@ -57,7 +58,6 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
     } = popts;
     let write_private = common.write_private().unwrap_or(true);
     common.mut_read_private().get_or_insert(true);
-
     let datap_fmt = fmt.get(0).context("Missing fmt")?.clone();
     let linkp_fmt = fmt.get(1).unwrap_or(&datap_fmt).clone();
     let keyp_fmt = fmt.get(2).unwrap_or(&linkp_fmt).clone();

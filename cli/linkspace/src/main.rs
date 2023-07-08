@@ -157,7 +157,7 @@ enum Command {
     Use "[help]" for a list of functions.
     */
     Eval(eval::EvalOpts),
-    /** abe   - eval expression for each pkt from stdin
+    /** abe   - eval expression for each pkt from stdin 
 
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
     */
@@ -413,12 +413,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             cquery.opts.watch_opts.exprs.push( hpred.into());
             watch::watch(common, cquery, write)?;
         }
-        Command::WatchTree { mut query, asc, write } => {
-            if let Some(dgpd) = &mut query.opts.dgpd {
-                if dgpd.subsegment_limit == 0 {
-                    dgpd.subsegment_limit = 255;
-                }
-            }
+        Command::WatchTree { query, asc, write } => {
             watch::watch(
                 common,
                 query.mode(Mode {

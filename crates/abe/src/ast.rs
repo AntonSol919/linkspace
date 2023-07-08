@@ -371,6 +371,8 @@ impl Display for Expr {
 }
 
 use thiserror::Error;
+
+use self::collect::ABTok;
 #[derive(Error, Debug)]
 pub enum ASTParseError {
     #[error("ABTxt Error {}",.0)]
@@ -392,14 +394,20 @@ pub fn parse_ablist_b(st:&[u8]) -> anyhow::Result<crate::eval::ABList>{
     abe.as_slice().try_into().map_err(|e| anyhow!("expr not supported - {e}"))
 }
 
+mod collect {
+    use std::iter::Peekable;
 
-pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
+    use crate::{abtxt::CtrChar, ABE};
+
+    use super::{Ctr, Expr};
+
     #[derive(Clone, PartialEq)]
-    enum ABTok {
+    pub enum ABTok {
         Bytes(Vec<u8>),
         Ctr(CtrChar),
     }
-    fn collect(tokens: &mut impl Iterator<Item = ABTok>) -> Option<ABE> {
+    /// turn a linear sequence of tokens into a ast. 
+    pub fn collect(tokens: &mut Peekable<impl Iterator<Item = ABTok>>) -> Option<ABE> {
         match tokens.next() {
             None => None,
             Some(t) => Some(match t {
@@ -410,10 +418,20 @@ pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
                     ::std::iter::from_fn(|| collect(tokens)).collect(),
                 )),
                 ABTok::Ctr(_) => todo!("Make unreachable"),
-                ABTok::Bytes(b) => ABE::Expr(Expr::Bytes(b)),
+                ABTok::Bytes(mut b) => {
+                    while let Some(ABTok::Bytes(o)) = tokens.peek(){
+                        b.extend_from_slice(o);
+                        tokens.next();
+                    }
+                    ABE::Expr(Expr::Bytes(b))
+                },
             }),
         }
-    }
+    } 
+}
+
+// FIXME: this should be replaced with a call to split_abe
+pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
     let mut bytes = vec![];
@@ -428,8 +446,8 @@ pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
                 if !bytes.is_empty() {
                     r.push(ABTok::Bytes(bytes));
                 }
-                let mut it = r.into_iter();
-                return Ok(std::iter::from_fn(|| collect(&mut it)).collect());
+                let mut it = r.into_iter().peekable();
+                return Ok(std::iter::from_fn(|| collect::collect(&mut it)).collect());
             }
             Byte::Ctr { kind, rest } => {
                 todo = rest;
@@ -454,65 +472,136 @@ pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
         }
     }
 }
+pub fn parse_abe_forgiving(st: &str) -> Result<Vec<ABE>, ASTParseError> {
+    parse_abe_forgiving_b(st.as_ref())
+}
+pub fn parse_abe_forgiving_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
+    let mut depth = 0;
+    let mut r: Vec<ABTok> = vec![];
+    let mut bytes = vec![];
+    let mut todo = st;
+    let len = todo.len();
+    loop {
+        let b = match crate::abtxt::next_byte(todo, len - todo.len(), STD_PLAIN_CSET,STD_ERR_CSET){
+            Ok(o) => o,
+            Err(ABTxtError::ParseError { byte, idx:_}) => {todo = &todo[1..];bytes.push(byte); continue;}
+            Err(e) => return Err(e.into())
+        };
+        match b{
+            Byte::Finished => {
+                if depth != 0 {
+                    return Err(ASTParseError::UnmatchedOpen);
+                }
+                if !bytes.is_empty() {
+                    r.push(ABTok::Bytes(bytes));
+                }
+                let mut it = r.into_iter().peekable();
+                return Ok(std::iter::from_fn(|| collect::collect(&mut it)).collect());
+            }
+            Byte::Ctr { kind, rest } => {
+                todo = rest;
+                // Open Brackets increase the depth, and match their close brackets
+                match kind {
+                    CtrChar::OpenBracket => depth += 1,
+                    CtrChar::CloseBracket if depth == 0 => {
+                        return Err(ASTParseError::UnmatchedClose)
+                    }
+                    CtrChar::CloseBracket => depth -= 1,
+                    _ => {}
+                };
+                if !bytes.is_empty() {
+                    r.push(ABTok::Bytes(std::mem::take(&mut bytes)));
+                }
+                r.push(ABTok::Ctr(kind))
+            }
+            Byte::Byte { byte, rest } => {
+                todo = rest;
+                bytes.push(byte);
+            }
+        }
+    }
+}
+
+
 /// Split abe into top level components
 /// See next_byte for the meaning of cset
 pub fn split_abe(
     st: &str,
     plain_cset: u32,
     err_cset: u32,
-) -> Result<Vec<(u8,&str)>, ASTParseError> {
-    Ok(split_abe_b(st.as_bytes(), plain_cset, err_cset)?
-        .into_iter()
-        .map(|(c, b)| (c,unsafe { std::str::from_utf8_unchecked(b) }))
-        .collect())
+) -> Result<Vec<(u8,bool,&str)>, ASTParseError> {
+    Ok(split_abe_b(st.as_bytes(), plain_cset, err_cset)
+        .map(|i| i.map(|(c,i, b)| (c,i,unsafe { std::str::from_utf8_unchecked(b) })))
+        .try_collect()?)
 }
+
+#[test]
+pub fn abesplit(){
+    
+    let v : Vec<_> = split_abe_b(b"hello/world\nok",0, 0).try_collect().unwrap();
+    assert_eq!(&*v,&[(0,false,b"hello" as &[u8]),(b'/',false,b"world"),(b'\n',false,b"ok")]);
+
+    let v : Vec<_> = split_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
+
+}
+
 /// Split abe into top level components
 pub fn split_abe_b(
     st: &[u8],
     plain_cset: u32,
     err_cset: u32,
-) -> Result<Vec<( u8,&[u8])>, ASTParseError> {
+) -> impl Iterator<Item=Result<(u8,bool,&[u8]),ASTParseError>>{
     let mut depth = 0;
-    let mut r: Vec<(u8,&[u8] )> = vec![(0,&[])];
+    let mut head_ctr = 0;
     let mut todo = st;
     let mut start_comp = 0;
+    let mut with_inner = false;
     let len = todo.len();
-    loop {
-        match crate::abtxt::next_byte(todo, len - todo.len(), plain_cset, err_cset)? {
-            Byte::Finished => {
-                if depth != 0 {
-                    return Err(ASTParseError::UnmatchedOpen);
-                }
-                let at = len - todo.len();
-                r.last_mut().unwrap().1 = &st[start_comp..at];
-                return Ok(r);
-            }
-            Byte::Ctr { kind, rest } => {
-                if depth == 0 && !kind.is_bracket() {
+    std::iter::from_fn(move ||{
+        if todo.is_empty(){ return None};
+        loop {
+            let byte = match crate::abtxt::next_byte(todo, len - todo.len(), plain_cset, err_cset){
+                Ok(b) => b,
+                Err(e) => return Some(Err(e.into()))
+            } ;
+            match byte {
+                Byte::Finished => {
+                    if depth != 0 {
+                        return Some(Err(ASTParseError::UnmatchedOpen));
+                    }
                     let at = len - todo.len();
-                    r.last_mut().unwrap().1 = &st[start_comp..at];
-                    r.push((kind.as_char(),&[]));
-                    todo = rest;
-                    start_comp = len - todo.len();
-                } else {
-                    todo = rest;
-                    match kind {
-                        CtrChar::OpenBracket => depth += 1,
-                        CtrChar::CloseBracket if depth == 0 => {
-                            return Err(ASTParseError::UnmatchedClose)
+                    todo = &[];
+                    return Some(Ok((head_ctr,with_inner,&st[start_comp..at])));
+                }
+                Byte::Ctr { kind, rest } => {
+                    if depth == 0 && !kind.is_bracket() {
+                        let at = len - todo.len();
+                        let r = (head_ctr,std::mem::take(&mut with_inner),&st[start_comp..at]);
+                        todo = rest;
+                        start_comp = len - todo.len();
+                        head_ctr = kind.as_char();
+                        return Some(Ok(r));
+                    } else {
+                        with_inner = true;
+                        todo = rest;
+                        match kind {
+                            CtrChar::OpenBracket => depth += 1,
+                            CtrChar::CloseBracket if depth == 0 => {
+                                return Some(Err(ASTParseError::UnmatchedClose))
+                            }
+                            CtrChar::CloseBracket => depth -= 1,
+                            _ => {}
                         }
-                        CtrChar::CloseBracket => depth -= 1,
-                        _ => {}
                     }
                 }
-            }
-            Byte::Byte { rest, .. } => {
-                todo = rest;
+                Byte::Byte { rest, .. } => {
+                    todo = rest;
+                }
             }
         }
-    }
+    })
 }
-
+                       
 pub fn print_abe<B: std::borrow::Borrow<ABE>>(v: impl IntoIterator<Item = B>) -> String {
     v.into_iter().map(|v| v.borrow().to_string()).collect()
 }
