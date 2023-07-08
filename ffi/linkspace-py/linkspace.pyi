@@ -199,7 +199,7 @@ def lk_process_while(lk:Linkspace, qid:bytes|None=None,timeout:bytes|None=None) 
         lk: Linkspace instance
         qid: query id
         timeout: u64 microseconds.
-            E.g. lk_eval("[s:+1m3s]")
+            E.g. lk_eval("[us:+1m3s]")
             or int(1000 * 1000 * 63).to_bytes(8)
     Returns:
         0 if a timeout has expired.
@@ -317,7 +317,7 @@ def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
     A minimal example looks like: 
     # 
     immediate_reply = lk_status_poll(lk,qid=b"status",callback=lambda _ : True,
-               timeout=lk_eval("[s:+2s]"),
+               timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                group=group,
                objtype=b"process") 
@@ -327,7 +327,7 @@ def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
     Args:
         lk:
         qid: name to lk_watch. Can be lk_stop or watched with lk_process_while
-        timeout: microseconds window to check for reply. e.g. lk_eval("[s:+2s]").
+        timeout: microseconds window to check for reply. e.g. lk_eval("[us:+2s]").
         group: GroupID for the objtype
         domain: domain for the objtype
         objtype: a agreed upon name for the status.

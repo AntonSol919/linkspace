@@ -18,7 +18,7 @@ common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_name
 keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
 
 recent_ok = lk_status_poll(
-    lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[s:+2s]"),
+    lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[us:+2s]"),
     domain=b"exchange",
     group=group,
     objtype=b"process")
@@ -69,7 +69,7 @@ while host_lobby is None or host_lobby.create_pkt is None:
         i = input("<int> to join > ");
 
         if i == "w":
-            lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[s:+10s]"))
+            lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[us:+10s]"))
             continue
         if i == "":
             lk_process(lk)
@@ -146,7 +146,7 @@ while not host_lobby.start_pkt:
     except KeyboardInterrupt:
         cmd = "/leave"
     if cmd == "":
-        #lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
+        #lk_process_while(lk,timeout=lk_eval("[us:+2s]"))
         lk_process(lk)
     elif me_host and cmd == "/start":
         lk_process(lk)

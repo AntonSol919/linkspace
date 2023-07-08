@@ -77,7 +77,7 @@ def get_exchange_status(watch_finish=False):
     status =[] 
     lk_status_poll(lk,qid=b"status",
                callback=lambda pkt: status.append(pkt) ,
-               timeout=lk_eval("[s:+2s]"),
+               timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                group=group,
                objtype=b"process")
@@ -101,7 +101,7 @@ Use 'help list' for more options
 """
 
 
-list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
+list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/us:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
 class Linkmail(cmd.Cmd):
     intro =intro
     prompt = "> "
@@ -209,7 +209,7 @@ class Linkmail(cmd.Cmd):
     def do_open(self,idx):
         pkt = self.lst[int(idx)] if idx else self.last_shown
         self.last_shown = pkt
-        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/s:str]\\n[data:str]\\n"
+        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/us:str]\\n[data:str]\\n"
         print(lk_eval2str(print_template,pkt))
         self.lst.clear()
         for link in pkt.links:

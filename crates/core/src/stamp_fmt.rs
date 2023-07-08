@@ -287,8 +287,8 @@ impl StampEF {
 impl EvalScopeImpl for StampEF {
     fn about(&self) -> (String, String) {
         (
-            "stamp".into(),
-            r#"utilities for stamp values (big endian u64 microsecond since unix epoch)
+            "microseconds".into(),
+            r#"utilities for microseconds values (big endian u64 microsecond since unix epoch)
 arguments consists of ( [+-][YMWDhmslu]usize : )* (str | delta | ticks | val)?
 "#
             .into(),
@@ -296,11 +296,11 @@ arguments consists of ( [+-][YMWDhmslu]usize : )* (str | delta | ticks | val)?
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         crate::eval::fncs!([
-            (@C "s",0..=16,None,"if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0",
+            (@C "us",0..=16,None,"if chained, mutate 8 bytes input as stamp (see scope help). if used as head assume stamp 0",
              |s:&Self,i:&[&[u8]],init,_| if init {s.apply(Stamp::ZERO,i) } else {s.apply(Stamp::try_from(i[0])?,&i[1..])},none),
             ("now",0..=16,Some(true),"current systemtime",|s:&Self,i:&[&[u8]]| s.apply(s.now(),i)),
             ("epoch",0..=16,Some(true),"unix epoch / zero time",|s:&Self,i:&[&[u8]]| s.apply(Stamp::ZERO,i)),
-            ("s++",0..=16,Some(true),"max stamp",|s:&Self,i:&[&[u8]]| s.apply(Stamp::MAX,i))
+            ("us++",0..=16,Some(true),"max stamp",|s:&Self,i:&[&[u8]]| s.apply(Stamp::MAX,i))
         ])
     }
 }

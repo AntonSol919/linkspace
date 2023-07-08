@@ -87,12 +87,16 @@ You can get fancy with `pktf` and `xargs`.
   cat mylog | lk pktf "mytag:[hash:str]" | xargs lk point ::/my/example/link -- >> mylog
 #+END_SRC
 
+
+
+
+
 But a tool like `lk collect` might be better.
 
 `lk point` detects what you're doing but it's better to be explicit with what kind of point you want:
 `datapoint`, `linkpoint`, and `keypoint` (a signed linkpoint).
 
-Note that linkpoint and keypoint do not read stdin by default.
+NOTE: linkpoint and keypoint do not read data from stdin by default.
 
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
   echo somedata | lk linkpoint ::/my/other_path --data-stdin | lk pktf "[hash:str] = [data]"

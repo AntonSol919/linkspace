@@ -18,4 +18,4 @@ Most are a work in progress - but mineweeper can be read as is.
 
 # Misc
 
-- [hacks](./hacks.html)
+- [Tips&Tricks](./tips_and_tricks.html)

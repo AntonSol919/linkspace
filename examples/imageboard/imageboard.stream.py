@@ -12,7 +12,7 @@ create_stamp = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 lk = lk_open(create=True)
 ok = lk_status_poll(lk,
                qid=b"ex",
-               timeout=lk_eval("[s:+2s]"),
+               timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                objtype=b"process")
 if not ok and lk_process_while(lk,qid=b"ex") == 0:
