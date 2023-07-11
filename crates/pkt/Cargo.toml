@@ -16,8 +16,8 @@ repository.workspace = true
 default = ["abe"]
 abe = []
 [dependencies]
-linkspace-cryptography = { path ="../cryptography", version = "0.3.0-rc2"}
-byte-fmt = { path = "../byte-fmt" , version = "0.3.0-rc2"}
+linkspace-cryptography = { path ="../cryptography", version = "0.3.1-rc1"}
+byte-fmt = { path = "../byte-fmt" , version = "0.3.1-rc1"}
 
 serde.workspace = true
 thiserror.workspace = true
