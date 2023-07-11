@@ -6,11 +6,13 @@
 - LNS: by-tag uses tag.ends_with instead of eq
 - ABE: change ABList from (val,delim?) to (delim?,val)
 - ABE: rename 's' (stamp) function to 'us' (microseconds)
+- ABE: rename '*=' to 'link:name' (gets the first link with a tag ending with name)
 
 ### CLI 
 
 - watch-tree no longer defaults to '**' depth
-
+- cli query option renamed --db-only and --new-only for clarity
+- make eval and pktf use a forgiving abe parser. Top level inputs are read as is allowing for unicode and newlines
 
 
 # v0.3.0
