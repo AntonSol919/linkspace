@@ -1,4 +1,5 @@
 #+TITLE: The Linkspace Guide
+
 #+AUTHOR: Anton Sol
 
 #+SETUPFILE: ../utils.org
@@ -9,7 +10,7 @@ Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahea
 #+END_VERSE
 
 This is a technical document describing the linkspace packet format, and software library to create, query, and process those packets.
-You should be familiar with the [[../../basics.html][basics]].
+You should be familiar with either the [[../../code.html][quick start]] or the [[../../why.html][why]].
 If you're better with hands on experience or just want to see it put into practice check out the [[../tutorial/index.html][tutorials]].
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim

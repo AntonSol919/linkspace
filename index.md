@@ -1,3 +1,4 @@
+
 :::{.definition}
 Supernet  [ˈsü-pərˌnet]<br>
 A self-referential multi-participant data organization protocol whose primary
@@ -21,8 +22,13 @@ Linkspace is a supernet with the following highlights:
 - Path (URL like) addressing
 - Group/Domain split
 
-[Basics](./basics.html) gives a high level introduction.  
-The [tutorials](./docs/tutorial/index.html) has some practical examples.  
-The [Guide](./docs/guide/index.html) is an in-depth overview of the API and how it fits together.  
+
+Linkspace is not an end-user application. 
+It is a packet format, and a software library (and command line tools) to build more powerful and useful applications.
+
+If you're comfortable reading bash then [Quick Start](./code.html) is a good place to start.   
+If you're not, or prefer a more high level description, begin at the [why](why.html) page. 
+The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
+The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more depth on the API and technical design.
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or build from source by cloning the [git](https://github.com/AntonSol919/linkspace) repo. 

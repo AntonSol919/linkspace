@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-03 Mon 15:36 -->
+<!-- 2023-07-11 Tue 11:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Imageboard</title>
@@ -23,18 +23,12 @@
 <header>
 <h1 class="title">Imageboard</h1>
 <p class="subtitle" role="doc-subtitle">A Linkspace Application Tutorial</p>
-</header><div class="ctabs" id="org157a3c9">
-<p class="verse">
+</header><p class="verse">
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples<br>
 </p>
 
-</div>
-
-<p>
-Checkout the <a href="./lk.html">./lk.html</a> tutorial
-</p>
-
-<div class="sh" id="org482829d">
+<div class="ctabs" id="org443e0b5">
+<div class="sh" id="orge2ebc56">
 <p>
 
 </p>
@@ -79,7 +73,7 @@ fi
 START_STAMP=${2:-"0"} # If no stamp is given we begin at 0, i.e. unix epoch in microseconds
 
 # We select everything with a create field greater or equal to $START_STAMP
-lk watch --index "imageboard:$LK_GROUP:/$BOARD" -- "create:&gt;=:[u64:$START_STAMP]" \
+lk watch --db-only "imageboard:$LK_GROUP:/$BOARD" -- "create:&gt;=:[u64:$START_STAMP]" \
     | lk pktf "[/links:[tag:str] [ptr:str]]" \
     | while read REF; do
         X=${REF:0:8}
@@ -115,7 +109,7 @@ lk pull "imageboard:$LK_GROUP:/$BOARD" --follow -- "create:&gt;:[now:-1D]"
 $BINS/imageboard.view.sh $BOARD 0 # run once
 
 #On receiving a new packet of interest we repaint the board from that stamp
-lk watch --new "imageboard:$LK_GROUP:/$BOARD" | \
+lk watch --new-only "imageboard:$LK_GROUP:/$BOARD" | \
     lk pktf "[create:str]" | \
     while read STAMP; do
         $BINS/imageboard.view.sh $BOARD $STAMP
@@ -128,7 +122,7 @@ lk watch --new "imageboard:$LK_GROUP:/$BOARD" | \
 </div>
 
 
-<div class="py" id="org2104216">
+<div class="py" id="org1d71a26">
 <p>
 This is a straight-up translation of the bash script.
 It works, but it could be done better by having only a single python instance running.
@@ -296,7 +290,7 @@ create_stamp = int(sys.argv[2]) if len(sys.argv) &gt; 2 else 0
 lk = lk_open(create=True)
 ok = lk_status_poll(lk,
                qid=b"ex",
-               timeout=lk_eval("[s:+2s]"),
+               timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                objtype=b"process")
 if not ok and lk_process_while(lk,qid=b"ex") == 0:
@@ -332,9 +326,11 @@ lk_process_while(lk)
 </div>
 
 </div>
+
+</div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-03 Mon 15:36</p>
+<p class="date">Created: 2023-07-11 Tue 11:57</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

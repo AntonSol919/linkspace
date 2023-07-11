@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2023-07-11 Tue 11:57 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tips &amp; Tricks</title>
+<meta name="generator" content="Org Mode" />
+<link rel="icon" type="image/x-icon" href="../../images/logo.png">
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script type="text/javascript" src="../utils.js"></script>
+<link rel="stylesheet" type="text/css" href="./style.css"/>
+</head>
+<body>
+<div id="content" class="content">
+<header>
+<h1 class="title">Tips &amp; Tricks</h1>
+</header><nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org29664af">layout for the 'tree' btreemap</a></li>
+<li><a href="#org65daa3f">dot graph</a></li>
+<li><a href="#org7bb2fa6">Reading/Writing large files</a></li>
+<li><a href="#org21f2043">A poor man's REPL</a></li>
+<li><a href="#org447da79">Single thread performance:</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org29664af" class="outline-2">
+<h2 id="org29664af">layout for the 'tree' btreemap</h2>
+<div class="outline-text-2" id="text-org29664af">
+<pre class="example">
+lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org65daa3f" class="outline-2">
+<h2 id="org65daa3f">dot graph</h2>
+<div class="outline-text-2" id="text-org65daa3f">
+<pre class="example">
+lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org7bb2fa6" class="outline-2">
+<h2 id="org7bb2fa6">Reading/Writing large files</h2>
+<div class="outline-text-2" id="text-org7bb2fa6">
+<pre class="example">
+export FILE=$2
+export CHAN=${3:-default}
+export IN=${4:-$FILE}
+cat "$IN" | lk data | lk --env collect blobs:$LK_GROUP:/[env:CHAN]/[env:FILE] --write db --forward db
+</pre>
+
+<pre class="example">
+export FILE=$2
+export CHAN=${3:-default}
+export OUT=${4:-$FILE}
+lk --env watch "blobs:$LK_GROUP:/[env:CHAN]/[env:FILE]" --max 1 | \
+     lk --env get-links -R --forward null --write "file-expr:[env:OUT]:[data]" pause
+      ;;
+</pre>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-org21f2043" class="outline-2">
+<h2 id="org21f2043">A poor man's REPL</h2>
+<div class="outline-text-2" id="text-org21f2043">
+<pre class="example">
+lk eval [argv:-1] argv -D'\n' --data-eval --data-stdin 
+</pre>
+
+<p>
+Each read goes into argv, which is added to the context of each read.
+</p>
+
+<pre class="example">
+hello
+[0] world
+The value of \[1\] = [1]
+# press Ctrl-d to close stdin
+</pre>
+
+<p>
+prints <code>The value of [1] = hello world</code>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org447da79" class="outline-2">
+<h2 id="org447da79">Single thread performance:</h2>
+<div class="outline-text-2" id="text-org447da79">
+<p>
+FIXME: The debug build is significant slower - especially for keypoint:
+</p>
+
+<pre class="example">
+lscpu | grep "Model name"
+lk --version
+echo Datapoints
+lk data --data /dev/zero --data-reads 10000 | pv &gt; /dev/null
+echo Linkpoints  
+lk link :: --data-reads 10000 --create-int 0 --multi --data /dev/zero | pv &gt; /dev/null
+echo keypoints
+lk keypoint :: --password "my secret" --data-reads 1000 --create-int 0 --multi --data /dev/zero | pv &gt; /dev/null
+</pre>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2023-07-11 Tue 11:57</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

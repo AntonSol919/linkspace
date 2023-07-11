@@ -1301,21 +1301,21 @@ See guide#ABE to understand its use and indepth explanation.
     ```
     # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
-    lk_split_abe(&quot;this:is/the:example[::]\n[::]newline[:/]&quot;,b&quot;/&quot;,|expr,ctr| { v.push((expr,ctr)); true} );
-    assert_eq!(v,&amp;[(0,&quot;this&quot;), (b&#39;:&#39;,&quot;is/the&quot;), (b&#39;:&#39;,&quot;example[::]&quot;),(b&#39;\n&#39;,&quot;[::]newline[:/]&quot;)])
+    lk_split_abe(&quot;this:is/the:example[::]\n[::]newline[:/]&quot;,b&quot;/&quot;,|expr,has_brackets,ctr| { v.push((expr,has_brackets,ctr)); true} );
+    assert_eq!(v,&amp;[(0,false,&quot;this&quot;), (b&#39;:&#39;,false,&quot;is/the&quot;), (b&#39;:&#39;,true,&quot;example[::]&quot;),(b&#39;\n&#39;,true,&quot;[::]newline[:/]&quot;)])
     ```
      **/
     </span><span class="kw">pub fn </span>lk_split_abe&lt;<span class="lifetime">&#39;o</span>&gt;(
         expr: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>str,
         exclude_ctr: <span class="kw-2">&amp;</span>[u8],
-        <span class="kw-2">mut </span>per_comp: <span class="kw">impl </span>FnMut(u8,<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>str) -&gt; bool,
+        <span class="kw-2">mut </span>per_comp: <span class="kw">impl </span>FnMut(u8,bool,<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>str) -&gt; bool,
     ) -&gt; LkResult&lt;()&gt; {
         <span class="kw">let </span>plain = exclude_ctr
             .iter()
             .filter_map(|v| CtrChar::try_from_char(<span class="kw-2">*</span>v))
             .fold(<span class="number">0</span>, |a, b| a ^ b <span class="kw">as </span>u32);
-        <span class="kw">for </span>(c, d) <span class="kw">in </span>split_abe(expr, plain, <span class="number">0</span>)<span class="question-mark">? </span>{
-            <span class="kw">if </span>!per_comp(c, d) {
+        <span class="kw">for </span>(a,b,c) <span class="kw">in </span>split_abe(expr, plain, <span class="number">0</span>)<span class="question-mark">? </span>{
+            <span class="kw">if </span>!per_comp(a,b,c) {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             }
         }

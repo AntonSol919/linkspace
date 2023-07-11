@@ -2,7 +2,7 @@
 title:  Tutorials
 ---
 
-These are some tutorials and code examples. 
+These are some tutorials and code examples.
 Most are a work in progress - but mineweeper can be read as is.
 
 # Applications
@@ -18,5 +18,4 @@ Most are a work in progress - but mineweeper can be read as is.
 
 # Misc
 
-- [lk - the command line interface](./lk-command-line-interface.html)
-- [hacks](./hacks.html)
+- [Tips&Tricks](./tips_and_tricks.html)

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-03 Mon 15:36 -->
+<!-- 2023-07-11 Tue 11:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Linkmail</title>
@@ -23,7 +23,7 @@
 <header>
 <h1 class="title">Linkmail</h1>
 <p class="subtitle" role="doc-subtitle">A Linkspace Application</p>
-</header><div class="ctabs" id="orgf78f58b">
+</header><div class="ctabs" id="org4111d79">
 <p class="verse">
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples<br>
 </p>
@@ -110,7 +110,7 @@ def get_exchange_status(watch_finish=False):
     status =[] 
     lk_status_poll(lk,qid=b"status",
                callback=lambda pkt: status.append(pkt) ,
-               timeout=lk_eval("[s:+2s]"),
+               timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                group=group,
                objtype=b"process")
@@ -134,7 +134,7 @@ Use 'help list' for more options
 """
 
 
-list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/s:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
+list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/us:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
 class Linkmail(cmd.Cmd):
     intro =intro
     prompt = "&gt; "
@@ -242,7 +242,7 @@ class Linkmail(cmd.Cmd):
     def do_open(self,idx):
         pkt = self.lst[int(idx)] if idx else self.last_shown
         self.last_shown = pkt
-        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/s:str]\\n[data:str]\\n"
+        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/us:str]\\n[data/~utf8]\\n"
         print(lk_eval2str(print_template,pkt))
         self.lst.clear()
         for link in pkt.links:
@@ -289,7 +289,7 @@ while True:
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-03 Mon 15:36</p>
+<p class="date">Created: 2023-07-11 Tue 11:57</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

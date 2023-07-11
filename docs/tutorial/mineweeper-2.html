@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-03 Mon 15:36 -->
+<!-- 2023-07-11 Tue 11:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>(WIP) MineWeeper Lobby</title>
@@ -26,7 +26,7 @@
 <header>
 <h1 class="title">(WIP) MineWeeper Lobby</h1>
 <p class="subtitle" role="doc-subtitle">A Linkspace Application Tutorial</p>
-</header><div class="py" id="orgc78243a">
+</header><div class="py" id="org7dfd74d">
 <div class="org-src-container">
 <pre class="src src-python">#!/bin/env python3
 
@@ -48,7 +48,7 @@ common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_name
 keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
 
 recent_ok = lk_status_poll(
-    lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[s:+2s]"),
+    lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[us:+2s]"),
     domain=b"exchange",
     group=group,
     objtype=b"process")
@@ -99,7 +99,7 @@ while host_lobby is None or host_lobby.create_pkt is None:
         i = input("&lt;int&gt; to join &gt; ");
 
         if i == "w":
-            lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[s:+10s]"))
+            lk_process_while(lk,qid=b"lobbies",timeout=lk_eval("[us:+10s]"))
             continue
         if i == "":
             lk_process(lk)
@@ -176,7 +176,7 @@ while not host_lobby.start_pkt:
     except KeyboardInterrupt:
         cmd = "/leave"
     if cmd == "":
-        #lk_process_while(lk,timeout=lk_eval("[s:+2s]"))
+        #lk_process_while(lk,timeout=lk_eval("[us:+2s]"))
         lk_process(lk)
     elif me_host and cmd == "/start":
         lk_process(lk)
@@ -221,7 +221,7 @@ os.system(f"python \"{srcpath}/mineweeper-multiplayer.py\" {game_setup_hash}")
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-03 Mon 15:36</p>
+<p class="date">Created: 2023-07-11 Tue 11:57</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

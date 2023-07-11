@@ -4,14 +4,11 @@
 
 #+SETUPFILE: ../utils.org
 
-#+begin_ctabs
 #+BEGIN_VERSE
 Available in the [[https://github.com/AntonSol919/linkspace/releases][pkg]] or in repository/examples
 #+END_VERSE
-#+end_ctabs
 
-Checkout the [[./lk.html]] tutorial
-
+#+begin_ctabs
 #+begin_sh
 
 - placing images
@@ -37,3 +34,5 @@ It works, but it could be done better by having only a single python instance ru
 - streaming images
 #+INCLUDE: "../../examples/imageboard/imageboard.stream.py" src bash
 #+end_py
+
+#+end_ctabs

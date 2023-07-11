@@ -18,7 +18,7 @@
         <a href="./code.html">Quick start</a>
       </li>
       <li>
-        <a href="./basics.html">Basics</a>
+        <a href="./why.html">Why</a>
       </li>
       <li>
         <a href="./lns.html">LNS</a>
@@ -44,7 +44,6 @@
     </nav>
     
     <div id="main">
-      <h1 id="basics">Basics</h1>
       <h2 id="the-internet-of-streams">The internet of streams</h2>
       <p>The digital world you know is built on structuring streams of
       data. At its core the internet<a href="#fn1" class="footnote-ref"
@@ -91,17 +90,17 @@
       </table>
       </div>
       <p>Packets are transmitted and - using the <code>IP address</code>
-      - they reach their destination: a device such as the one you’re
+      - they reach their destination; a device such as the one you’re
       using right now. On the device an application is running that
-      looks for packets with a specific <code>port</code> to arrive.</p>
+      waits for packets with a specific <code>port</code> to arrive.</p>
       <p>In transit, a packet can get lost or corrupted. The result is
       that packets don’t arrive in the order they were sent. By adding a
       sequence number, the destination can verify all packets have
       arrived and reorder them to the order they were sent in.</p>
       <p>I imagine the proto-internet was first discovered when people
       realized that packet SEQUENCE IDs are essential complexity. When
-      transmitting data, something must define the order of packets.
-      Consequently the physical route each packet takes is
+      transmitting data, something must define the order of packets. As
+      a consequence, the physical route each packet takes is
       irrelevant.</p>
       <p>The result is that <em>conceptually</em> each application on
       each device can talk to any other application on any other
@@ -111,8 +110,8 @@
       structure to the stream of data. There are thousands of different
       protocols, but what most of them have in common is a way to
       transmit questions and answers.</p>
-      <p>A couple of well known internet protocols that have this
-      property are:</p>
+      <p>A couple of well known variants that have this property
+      are:</p>
       <table>
       <thead>
       <tr class="header">
@@ -144,20 +143,20 @@
       </tr>
       </tbody>
       </table>
-      <p>Using these tools we do not just create websites to provide
-      information. At first we used these tools to create websites to
-      provide information. But this has changed and we instead build
-      ‘platforms’. Services that store, forward, and administrate
-      messages so multiple that multiple devices can communicate.</p>
+      <p>At first we used these tools to create websites to provide
+      information. But this has grown into interactive ‘platforms’.
+      Services that store, forward, and administrate information such
+      that multiple devices, and thus people, can communicate.</p>
+      <p>The thesis of linkspace is this:</p>
       <p><b>We have reached the limit of using this model of streaming
       questions/answers paradigm for multi-party communication.</b></p>
       <p>First, the stream abstraction can leak. Streams get
-      disconnected, the other side hangs up, the other side is
-      overloaded, etc.</p>
+      disconnected, one side is overloaded or errors, etc.</p>
       <p>Then, when more than two devices are involved the leaks
       compound. Synchronization is as slow as the slowest link, answers
-      become stale or wrong.</p>
-      <p>Alternatively you design a system as a supernet.</p>
+      become stale or bad, and assumptions that an application relies on
+      are no longer true.</p>
+      <p>Alternatively you built a supernet.</p>
       <div class="definition">
       <p>Supernet [ˈsü-pərˌnet]<br> A self-referential multi-participant
       data organization protocol whose primary addressing method uses
@@ -166,7 +165,7 @@
       </div>
       <p>Once you start thinking in terms of supernets, it becomes clear
       that many problems with streaming questions/answers are accidental
-      complexity. When a supernet is used to build an application those
+      complexity. Using a supernet to build an application those
       problems become irrelevant or trivial<a href="#fn2"
       class="footnote-ref" id="fnref2"
       role="doc-noteref"><sup>2</sup></a> - and we can do things that
@@ -176,10 +175,9 @@
       running any application, there exists a space to address data<a
       href="#fn3" class="footnote-ref" id="fnref3"
       role="doc-noteref"><sup>3</sup></a>.</p>
-      <p>If the current internet is essentially streams for key-value
-      systems, so you can talk <em>to</em> server, then linkspace is
-      essentially a shared key-value space, so groups can talk
-      <em>about</em> data.</p>
+      <p>If the current internet is streams for key-value systems, so
+      you can talk <em>to</em> server, then linkspace is a shared
+      key-value space, so groups can talk <em>about</em> data.</p>
       <p>A unit in linkspace is called a <strong>point</strong>. Each
       point has data, some auxiliary fields, and is uniquely identified
       by its hash.</p>
@@ -194,7 +192,7 @@
       <tbody>
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Coffee machine broke!/msg</td>
@@ -203,7 +201,7 @@
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       +
       </div>
       <div class="container pkt pd">
@@ -220,7 +218,7 @@
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       =
       </div>
       <div class="container pkt pd">
@@ -232,7 +230,7 @@
       <tbody>
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Can we use Rust?/msg</td>
@@ -246,7 +244,7 @@
       </table>
       </div>
       <p>The “image/BrokenMachine.jpg” is called a <strong>path</strong>
-      and maps to [image data]. So far this should look familiar as it
+      and maps to (image data). So far this should look familiar as it
       is similar to files in directories. I’ll refer to each entry as a
       <strong>point</strong>, and multiple entries as a
       <strong>set</strong>. The example shown has two sets
@@ -261,40 +259,41 @@
       can take: ‘<em>creating posts</em>’, ‘<em>uploading image</em>’,
       ‘<em>upvote/like a post</em>’, ‘<em>stream a video</em>’, etc.
       Fundamentally they can be understood as a frontend application
-      providing an interface to <strong>merge</strong> sets of points.
-      Either on your device or on theirs<a href="#fn4"
+      providing an interface to merge sets of points. Either on your
+      device or “in the ☁️” (i.e. on their device<a href="#fn4"
       class="footnote-ref" id="fnref4"
-      role="doc-noteref"><sup>4</sup></a>.</p>
-      <p>The internet we use today has a single host design. For
+      role="doc-noteref"><sup>4</sup></a>).</p>
+      <p>The internet in use today has a single host design. For
       instance, a web-browser or app contacts
       <code>http://www.some_platform.com</code> for the key
       <code>/image/BrokenMachine.jpg</code> to get an image.</p>
-      <p>This is simple, but it has downsides.</p>
-      <p>There is a misconception on what an address is<a href="#fn5"
-      class="footnote-ref" id="fnref5"
-      role="doc-noteref"><sup>5</sup></a>, a host can get disconnected,
-      you can’t (re)share and (re)use your copy of the data, and there
-      is no standard on what happens when two people create two
-      different <code>image/BrokenMachine.jpg</code> but with different
+      <p>This is relatively straight forward, but it has downsides.</p>
+      <p>A host can get disconnected, you can’t (re)share and (re)use
+      your copy of the data, there is a misconception on what an address
+      is<a href="#fn5" class="footnote-ref" id="fnref5"
+      role="doc-noteref"><sup>5</sup></a>, and there is no standard on
+      what happens when two people create two different
+      <code>image/BrokenMachine.jpg</code> but with different
       pictures.</p>
-      <p>I would argue these fall under accidental complexity.</p>
-      <p>Especially the last one. Once the speed of light is measurable
-      in a network, it requires a specific design to avoid two or more
-      computers to write to the same path.</p>
-      <p>In our single host design, the data is hosted on a server and
-      the person who has administrative access to that server can then
-      administrate which one is the ‘real’ copy, and which one should be
-      forgotten.</p>
+      <p>This might seem benign, but it has an enormous complexity
+      cost.</p>
+      <p>With a single host design every server can define (and edit)
+      what the ‘real’ copy of the data and its address is. Consequently,
+      every device/server has slightly different semantics on how it
+      deals with the issues listed - and most are missing basic features
+      such as an unambiguous way to address things.</p>
       <p>In linkspace there is no such thing as a ‘real’ copy on a
       single host.</p>
-      <p>Every path can refer to multiple points.</p>
-      <p>Each point is hashed. i.e. there exists a unique 32 bytes (or
-      ~77-digit number) that uniquely identifies the point<a href="#fn6"
-      class="footnote-ref" id="fnref6"
-      role="doc-noteref"><sup>6</sup></a> (which I’ll show as <span
-      id="hh0">[HASH_0]</span> instead of typing out).</p>
-      <p>It doesn’t matter when or where sets are merged - the result
-      only has a single copy per message.</p>
+      <p>Every path can refer to multiple points, and every point is
+      hashed. There is a 32 byte number that uniquely addresses the
+      exact content of that point<a href="#fn6" class="footnote-ref"
+      id="fnref6" role="doc-noteref"><sup>6</sup></a>. (which I’ll show
+      as <span id="hh0">[HASH_0]</span> instead of typing out).</p>
+      <p>It doesn’t matter when or where sets are merged, a set only
+      ever has a single copy of a point. It doesn’t matter how you
+      received a message or how you send it; If you create a new message
+      and refer to the hash, everybody can knows exactly what you’re
+      referring to.</p>
       <div class="container pkt phd">
       <table style="width:99%;">
       <colgroup>
@@ -306,7 +305,7 @@
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Coffee machine broke!/msg</td>
@@ -316,7 +315,7 @@
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       +
       </div>
       <div class="container pkt phd">
@@ -330,7 +329,7 @@
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Emacs or vim?/msg</td>
@@ -345,7 +344,7 @@
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       =
       </div>
       <div class="container pkt phd">
@@ -359,7 +358,7 @@
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Emacs or vim?/msg</td>
@@ -379,27 +378,32 @@
       </tbody>
       </table>
       </div>
-      <p>We can uniquely get a specific point by its <span
+      <p>Anyone can uniquely address a specific point by its <span
       id="hh0">[HASH_0]</span>, or multiple entries through a path
       “/thread/Tabs or spaces/msg”.</p>
       <p>This might seem more trouble than existing solutions like a
-      filesystem or HTTP. In those, one request by name gets you a
-      single result.</p>
-      <p>However, this is not a real issue for two reasons.</p>
-      <p>In practice it is trivial to only request ‘the latest value’ or
-      ‘the latest value signed by someone you trust’.</p>
-      <p>The later is especially interesting. If an application only
-      requests points signed by a specific key, it effectivly
-      administrates similar to how it is done in our current single
-      host-administrator design. However, it has the additional property
-      that it can be independent from hosting the data. i.e. in
-      linkspace ‘hosting data’ and ‘content administration’ can be
-      decoupled.</p>
+      filesystem or HTTP. In those, a request using a path gets you a
+      single result. But this is not the case.</p>
+      <p>In linkspace points have a ‘create’ timestamp and can be signed
+      by a public key (which i’ll refer to with [@:…keyname]).</p>
+      <p>The single result HTTP or a filesystem provides is an
+      incomplete abstraction. It is unable to capture events over time
+      and there is no way to scale it. In so far as that having a single
+      result is simple; the same thing is achieved in linkspace by
+      requesting only ‘the latest point with path X’ or ‘the latest
+      point with path X signed by someone you trust’.</p>
+      <p>The effects of the second option is worth considering for a
+      moment: When an application limits itself to points created (or
+      linked) by a specific key, then that key has a administrative
+      ‘include/exclude’ power, but it is not tied to a physical server
+      hosting data.</p>
+      <p>Put in different terms - linkspace has the property that
+      ‘hosting data’ and ‘content administration’ are decoupled.</p>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
       <col style="width: 22%" />
-      <col style="width: 18%" />
+      <col style="width: 19%" />
       <col style="width: 8%" />
       <col style="width: 20%" />
       <col style="width: 28%" />
@@ -407,32 +411,32 @@
       <tbody>
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2015/01/29</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Coffee machine broke!/msg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2023/03/02</td>
       <td><span id="hh1">[HASH_1]</span></td>
-      <td>Fix pls? image/BrokenMachine.jpg</td>
+      <td>Fix pls? <span id="hh0">[HASH_0]</span></td>
       </tr>
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       +
       </div>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
-      <col style="width: 22%" />
+      <col style="width: 21%" />
       <col style="width: 18%" />
-      <col style="width: 8%" />
+      <col style="width: 7%" />
       <col style="width: 20%" />
-      <col style="width: 28%" />
+      <col style="width: 30%" />
       </colgroup>
       <tbody>
       <tr class="odd">
@@ -441,37 +445,37 @@
       <td>2023/03/02</td>
       <td><span id="hh3">[HASH_4]</span></td>
       <td>Hey <span id="hh1">[HASH_1]</span>! Isn’t <span
-      id="hh0">this</span> from 2015?</td>
+      id="hh0">[HASH_0]</span> from 2015?</td>
       </tr>
       </tbody>
       </table>
       </div>
-      <div class="op">
+      <div class="set_op">
       =
       </div>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
-      <col style="width: 22%" />
+      <col style="width: 21%" />
       <col style="width: 18%" />
-      <col style="width: 8%" />
-      <col style="width: 20%" />
-      <col style="width: 28%" />
+      <col style="width: 7%" />
+      <col style="width: 19%" />
+      <col style="width: 30%" />
       </colgroup>
       <tbody>
       <tr class="odd">
       <td>/image/BrokenMachine.jpg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2015/01/29</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>/thread/Coffee machine broke!/msg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2023/03/02</td>
       <td><span id="hh1">[HASH_1]</span></td>
-      <td>Fix pls? image/BrokenMachine.jpg</td>
+      <td>Fix pls? <span id="hh0">[HASH_0]</span></td>
       </tr>
       <tr class="odd">
       <td>/thread/Coffee machine broke!/msg</td>
@@ -479,16 +483,15 @@
       <td>2023/03/02</td>
       <td><span id="hh3">[HASH_4]</span></td>
       <td>Hey <span id="hh1">[HASH_1]</span>! Isn’t <span
-      id="hh0">this</span> from 2015?</td>
+      id="hh0">[HASH_0]</span> from 2015?</td>
       </tr>
       </tbody>
       </table>
       </div>
       <p>A point has two preceding fields. A <strong>group</strong> that
-      signal who can read/write to the tree, and a
-      <strong>domain</strong> field to indicate which application should
-      read it. Essentially any pair of (domain, group) has its own
-      tree.</p>
+      signal who is allowed to read or add a point, and a
+      <strong>domain</strong> field to indicate which application uses
+      it. Essentially any pair of (domain, group) has its own space.</p>
       <p>For example the <code>msg_board</code> application and the
       <code>[#:example]</code> group.</p>
       <div class="container pkt dgpkthd">
@@ -496,30 +499,30 @@
       <colgroup>
       <col style="width: 5%" />
       <col style="width: 7%" />
-      <col style="width: 19%" />
-      <col style="width: 15%" />
+      <col style="width: 18%" />
+      <col style="width: 16%" />
       <col style="width: 6%" />
       <col style="width: 17%" />
-      <col style="width: 24%" />
+      <col style="width: 25%" />
       </colgroup>
       <tbody>
       <tr class="odd">
       <td>msg_board</td>
       <td>[#:example]</td>
       <td>/image/BrokenMachine.jpg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2015/01/29</td>
       <td><span id="hh0">[HASH_0]</span></td>
-      <td>[image data]</td>
+      <td>(image data)</td>
       </tr>
       <tr class="even">
       <td>msg_board</td>
       <td>[#:example]</td>
       <td>/thread/Coffee machine broke!/msg</td>
-      <td>[@:alice:salesexample]</td>
+      <td>[@:alice:sales:example]</td>
       <td>2023/03/02</td>
       <td><span id="hh1">[HASH_1]</span></td>
-      <td>Fix pls? image/BrokenMachine.jpg</td>
+      <td>Fix pls? <span id="hh0">[HASH_0]</span></td>
       </tr>
       <tr class="odd">
       <td>msg_board</td>
@@ -529,18 +532,18 @@
       <td>2023/03/02</td>
       <td><span id="hh3">[HASH_4]</span></td>
       <td>Hey <span id="hh1">[HASH_1]</span>! Isn’t <span
-      id="hh0">this</span> from 2015?</td>
+      id="hh0">[HASH_0]</span> from 2015?</td>
       </tr>
       </tbody>
       </table>
       </div>
-      <p>Note that the group and public keys are actually 32 bytes. For
-      brevity I used the <a href="./lns.html">LNS</a> representation for
-      <code>[@:alice:salesexample]</code> and <code>[#:example]</code>.
-      LNS solves a similar problem as DNS, i.e. turning a name like
-      <code>www.example.com</code> into a number like
-      <code>192.168.0.1</code>.</p>
-      <p>Finally, the messages we used as an example have a <span
+      <p>Note that the group and public keys are 32 bytes. For brevity I
+      used the <a href="./lns.html">LNS</a> representation for
+      <code>[@:alice:sales:example]</code> and <code>[#:example]</code>.
+      LNS solves a similar problem as DNS, i.e. instead of using a
+      number like <code>192.168.0.1</code> you can use a user friendly
+      name.</p>
+      <p>Finally, in our example so far I used a <span
       id="hh1">[HASH]</span> directly in their data field. This would
       not work well for most use-cases. Instead, a point in linkspace
       has a list of <a
@@ -608,6 +611,18 @@
       </tbody>
       </table>
       </div>
+      <details>
+      <summary>
+      Click here to see (part of) the example in graph form
+      </summary>
+      <figure>
+      <img src="./images/msg_board.png" alt="msg_board" />
+      <figcaption aria-hidden="true">msg_board</figcaption>
+      </figure>
+      <p>Note that the ‘data=(image data)’, ‘data=[link:reply to]’, and
+      the tags ‘reply to:’, ‘image links:’ are just examples. Each
+      application defines its own data format and what tags mean.</p>
+      </details>
       <p>For the full specification of creating and writing points see
       the <a href="./docs/guide/index.html#packet_layout">guide</a></p>
       <p>There are some nuances and various advanced topics. However,
@@ -615,71 +630,61 @@
       <p>Users generate their identity, together they form groups and
       set up a method to exchange data.</p>
       <p>The result is that <em>conceptually</em> an application only
-      needs to process the state of the trees.</p>
-      <h2 id="ready-to-give-it-a-try">Ready to give it a try?</h2>
-      <p>Linkspace is not an end-user application. It is a software
-      library and command line tools. A GUI frontend to manage
-      groups/domains/keys is outside its scope.</p>
-      <p>The packet format is stable. Points created will stay readable
-      in future versions. The API is mostly stable but will have some
-      breaking changes and additional conventions.</p>
-      <p>To give it a try you can <a
+      needs to process its view of a shared space.</p>
+      <p>To give linkspace a try <a
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
-      the pre-build CLI and python bindings to follow along with the <a
-      href="./docs/tutorial/index.html">tutorial</a> or the more
-      technical <a href="./docs/guide/index.html">Guide</a>,</p>
-      <p>For the adventurous there is initial support for wasm, and a
-      POC HTTP bridge called <a
-      href="https://github.com/AntonSol919/webbit">Webbit</a> that works
-      similar to WebDAV.</p>
+      the latest release, and check out the apps or the (python) <a
+      href="./docs/tutorial/index.html">tutorials</a>.</p>
       <h1 id="qa">Q&amp;A</h1>
       <h3 id="who-is-linkspace-for">Who is linkspace for?</h3>
-      <p>Me from 10 years ago, me today, the next generation that wants
-      their internet to be better, and everyone else. In that order.</p>
+      <p>Me, the next generation that wants their internet to be better,
+      and everyone else.</p>
       <h4 id="the-tool">The tool</h4>
       <p>If you’re just interested in the tool; linkspace can shrink a
       ‘stack’ significantly.</p>
-      <p>Data formats change and grow as projects goes on. Using
-      linkspace to carry the data many potentially-critical features are
-      built in at the basics. Instead of risking a costly and complex
-      upgrade when you need a feature yesterday, you get a lot of
-      properties by default such as: uniquely addressable/cross
-      referencing events, security against tampering, logging, secure
-      user identities, low effort backups, etc.</p>
+      <p>Data formats change and grow as projects goes on. By using
+      linkspace to carry the data, many potentially-critical features
+      are built in. Instead of risking a costly and complex upgrade when
+      you need a feature yesterday, you get a lot of properties by
+      default such as: uniquely addressable/cross referencing events,
+      security against tampering, logging, secure user identities, low
+      effort backups, etc.</p>
       <p>It is scaleable decoupled data creation, routing, storing, and
       processing; with data authenticity and user authentication to
       control access, wire up business logic, or log ‘who’ did ‘what’
-      and ‘when’. Take the parts you want and leave the rest out.</p>
+      and ‘when’. Take the parts you want and leave the rest.</p>
       <p>It even runs in the browser<a href="#fn8" class="footnote-ref"
       id="fnref8" role="doc-noteref"><sup>8</sup></a>, meaning you can
       reuse more code logic and tools.</p>
       <p>Finally, by talking <em>about</em> data there is a lot of
       potential for a ‘network effect’. e.g. a support-ticket references
-      the exact IoT event, a sale can references the your exact history
-      of the object, etc.</p>
-      <h4 id="the-idea">The idea</h4>
+      the exact IoT event, a sale can references the exact history of
+      the object, etc.</p>
+      <h4 id="idea">The idea</h4>
       <p>I build linkspace so I (and hopefully others) can:</p>
       <ul>
-      <li>define, prototype, build, and run real-serverless
-      offline-first apps quickly.</li>
+      <li>define, prototype, build, and run real-serverless<a
+      href="#fn9" class="footnote-ref" id="fnref9"
+      role="doc-noteref"><sup>9</sup></a> apps quickly.</li>
       <li>build an application without having to decide how to
       administrate for everyone that uses it - that responsibility sits
       with the (group of) users.</li>
       </ul>
-      <p>I hope it might solve some of the worst problems with the
-      current internet.</p>
-      <p>Perhaps the greatest insanity of this time (and I believe its
-      defining feature) is a few for-profit advertisement / propaganda
-      services are the host-administrators of the digital ‘public
-      squares’ for more than 2<sup>32</sup> people alive.</p>
+      <p>I believe it can be part of the solution for some of the worst
+      problems with the current internet.</p>
+      <p>Perhaps the greatest insanity of this time (and I would argue
+      its defining feature) is a few for-profit advertisement /
+      propaganda services are the host-administrators of the digital
+      ‘public squares’ for more than 2<sup>32</sup> people alive.</p>
       <p>It is questionable for people (and the groups they organize in)
       to be subjected to the interests of an unaccountable
-      administrator. But I think the real impact is the medium as the
+      administrator. But that can be a matter of perspective. The hidden
+      cost is far more worrying in my opinion. It is the medium as the
       message: You are not in control, surrender your minds for profit
       and submit to apathy.</p>
-      <p>It is a staggering amount of wasted potential for people to not
-      experience and learn to building something for, and with, a group
-      outside the limits and interest of a
+      <p>It is a staggering amount of wasted potential for people to
+      never experience what it means to build and be a community outside
+      the limitations and interest of a
       higher-authority-incorporated.</p>
       <p>We are all lesser for it.</p>
       <p>The message of linkspace should be: You are in control, and you
@@ -717,17 +722,18 @@
       <h3 id="complexity">Can you ask people to deal with the added
       complexity?</h3>
       <p>Yes.</p>
-      <p>Linkspace lack 6 decades of tooling that made the internet and
+      <p>Linkspace lacks 6 decades of tooling that made the internet and
       web relatively easy for users, but that can change.</p>
       <p>But is it worth it?</p>
       <p>Yes.</p>
-      <p>Technically supernets better model the reality of multi party
-      communication - asynchronous and authenticated<a href="#fn9"
-      class="footnote-ref" id="fnref9"
-      role="doc-noteref"><sup>9</sup></a> In the long run they could end
+      <p>The height of what we build is set by the weakest foundation.
+      Technically supernets better model the reality of multi party
+      communication - asynchronous and authenticated<a href="#fn10"
+      class="footnote-ref" id="fnref10"
+      role="doc-noteref"><sup>10</sup></a> In the long run it could end
       up with less moving parts and with fewer configurations.</p>
-      <p>For society it is important that anyone can take responsibility
-      if they want.</p>
+      <p>And finally, I believe it can do some <a
+      href="#idea">good</a>.</p>
       <h3
       id="isnt-it-a-good-thing-that-a-host-administrates-what-i-and-others-see-online">Isn’t
       it a good thing that a host administrates what I and others see
@@ -752,8 +758,7 @@
       links to others; then they would get a better deal then they do
       now.</p>
       <h2 id="alts">Why not [alternative]?</h2>
-      <p>There are two similar types of systems that can’t do what I
-      want.</p>
+      <p>There are two types of systems that can’t do what I want.</p>
       <ul>
       <li>Synchronizing chain of trust: Is slow and not useful for the
       vast majority of users - (and easy to emulate in a supernet).</li>
@@ -769,13 +774,13 @@
       requires multiple levels to deal with fragmentation in multiple
       ways.</li>
       <li>Either its primarily hashes, or its primarily path names.
-      Linkspace has both as first class addresses.</li>
+      Linkspace has both set as a property of a ‘point’.</li>
       <li>Too slow. Packet routing/parsing should be doable in just a
       few instructions - ideally possible in an integrated circuit. It
-      should be fast enough to stream video without using a second
-      protocol. That means no json or base64.</li>
-      <li>No Groups. Setting who you share with and how is not supported
-      or its little more than ‘run multiple instances’.</li>
+      should be fast enough to stream video without using a secondary
+      protocol to hand off to. That means no json or base64.</li>
+      <li>No Groups. Setting who you share with and how is not
+      supported, or its little more than ‘run multiple instances’.</li>
       <li>No domains. Everything becomes one app with
       premature-bureaucracy and an ever expanding set of compatibility
       requirements that grinds development/experiments to a halt.</li>
@@ -800,29 +805,28 @@
       example a stream getting disconnected - A supernet with a good API
       should guide a developer to take the most extreme cases of
       asynchronicity into account. i.e. slow or disconnected server
-      should not break a system as it does to the majority of
-      ‘platforms’. Well designed supernet applications can be truely
-      offline-first and ‘serverless’.<a href="#fnref2"
-      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn3"><p>This idea and other ideas used in linkspace aren’t
-      new. But I believe linkspace is a simple and powerful synthesis
-      compared to previous attempts (see <a href="#alts">alts</a>).<a
-      href="#fnref3" class="footnote-back"
+      should not break a system. Well designed supernet applications can
+      be offline-first and without any critically important nodes or
+      line of communication.<a href="#fnref2" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
+      <li id="fn3"><p>This idea and other ideas used in linkspace aren’t
+      new. But I believe linkspace is a simple synthesis compared to
+      previous attempts (see <a href="#alts">alts</a>).<a href="#fnref3"
+      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <li id="fn4"><p>Your device immediatly forgetting those data
       points is a configuration detail.<a href="#fnref4"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <li id="fn5"><p>The perception is created that the address
       ‘http://www.some_platform.com/image/BrokenMachine.jpg’ is
-      addressing ‘[image data]’ - this is wrong. The address is used for
+      addressing ‘(image data)’ - this is wrong. The address is used for
       your request to find where it needs to go, this address then
-      usually replies with ‘[image data]’. A subtle but consequental
+      usually replies with ‘(image data)’. A subtle but consequental
       difference. Linkspace does not have this discrepency.<a
       href="#fnref5" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn6"><p>Unique for all intents and purposes - except for
-      the purpose of counting to 2^256+1.<a href="#fnref6"
-      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+      <li id="fn6"><p>Unique for all intents and purposes.<a
+      href="#fnref6" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
       <li id="fn7"><p>Both TCP/IP packets and linkspace packets have
       control fields that are irrelevant to a vast majority of
       developers.<a href="#fnref7" class="footnote-back"
@@ -831,11 +835,17 @@
       packets API is supported. With the rest put on the TODO list.<a
       href="#fnref8" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn9"><p>Authenticated as in: cryptographicaly proven that
+      <li id="fn9"><p>It bugs me to no end that some marketing
+      department ruined the word ‘serverless’. I’m talking about: a
+      networked application that works without any critically important
+      lines of communication or hosts.<a href="#fnref9"
+      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+      <li id="fn10"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
       an HTTPS session is also proof that the keyholder send the
-      message.<a href="#fnref9" class="footnote-back"
+      message. It’s just not a property easy to use right now.<a
+      href="#fnref10" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       </ol>
       </aside>

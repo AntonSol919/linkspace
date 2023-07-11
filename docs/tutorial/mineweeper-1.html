@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-03 Mon 15:36 -->
+<!-- 2023-07-11 Tue 11:57 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MineWeeper</title>
@@ -27,26 +27,26 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org6a327d6">Bob's Hotseat MineWeeper</a></li>
-<li><a href="#org528b7fa">Game on</a></li>
-<li><a href="#org3bdda6f">Multiplayer</a></li>
-<li><a href="#org51ab8e5">Cheating</a>
+<li><a href="#orge38af98">Bob's Hotseat MineWeeper</a></li>
+<li><a href="#orgb6827a1">Game on</a></li>
+<li><a href="#orgd94ba71">Multiplayer</a></li>
+<li><a href="#org760e514">Cheating</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org5ec8bf8">Who cares?</a></li>
-<li><a href="#orgbb35031">Emulate host/client</a></li>
-<li><a href="#orgc2a0c2d">Rng-esus died for your sins</a></li>
+<li><a href="#org714cd9a">Who cares?</a></li>
+<li><a href="#orgeb121a9">Emulate host/client</a></li>
+<li><a href="#org34f8b30">Rng-esus died for your sins</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org45fef69">A dose of reality</a></li>
+<li><a href="#org91a4817">A reality check</a></li>
 </ul>
 </div>
 </nav>
 <p>
-This is the first a <a href="../index.html">series</a> of tutorials to show how to use linkspace from python.
+This is the first a <a href="./index.html">series</a> of tutorials to show how to use linkspace.
 </p>
 
 <p>
@@ -54,7 +54,7 @@ We'll follow Bob in his journey.
 </p>
 
 
-<figure id="org209d64c">
+<figure id="org1c50eb6">
 <img src="./images/bob-hi.png" alt="bob-hi.png">
 
 </figure>
@@ -78,7 +78,7 @@ These knowledge/skills are assumed:
 <li>the difference between a string and bytes</li>
 <li>What it means to set the seed for a random number generator.</li>
 <li>What a hash and public keys is.</li>
-<li>You've read the <a href="http://www.linkspace.dev/basics.html">basics</a>.</li>
+<li>You've read the <a href="../../code.html">quick start</a> or  <a href="../..//why.html">why</a>.</li>
 </ul>
 
 <p>
@@ -113,24 +113,14 @@ Before you continue, please check this consent form to not hold Bob accountable 
 </div>
 
 
-<div id="outline-container-org6a327d6" class="outline-2">
-<h2 id="org6a327d6">Bob's Hotseat MineWeeper</h2>
-<div class="outline-text-2" id="text-org6a327d6">
+<div id="outline-container-orge38af98" class="outline-2">
+<h2 id="orge38af98">Bob's Hotseat MineWeeper</h2>
+<div class="outline-text-2" id="text-orge38af98">
 <p>
 Bob's game is perfect, but there is a teeny-tiny, little, detail missing.
-</p>
-
-<p>
-It only works in hotseat mode.
-Every player has to be at the same keyboard taking turns.
-</p>
-
-<p>
+It only works in hotseat mode. Every player has to be at the same keyboard taking turns.
 Bob's a friendly guy, but he doesn't want you coming to his house.
 Instead, he'll build something, such that others can enjoy his perfect game with their friends over the internet.
-</p>
-
-<p>
 No problemo.
 </p>
 
@@ -143,7 +133,7 @@ It asks the user for a list of player names.
 Players take turns entering which cell to reveal until someone reveals a mine or no more safe cells exist.
 </p>
 
-<div class="py" id="org42f4521">
+<div class="py" id="org01614fb">
 <div class="org-src-container">
 <pre class="src src-python">from mineweeper import MineWeeper, clear_screen, NoSuchCell,AlreadyRevealed
 import re,random
@@ -184,8 +174,8 @@ Maybe someday he'll make it a 3D VR experience.
 <img src="./images/bob-doubt.png" alt="bob-doubt.png">
 </p>
 
-<div class="ctabs" id="org1aec691">
-<div class="info" id="org4610001">
+<div class="ctabs" id="orge663120">
+<div class="info" id="orge5d71bd">
 <p>
 Contrary to Bob, we don't care much for the details of MineWeeper.
 In case you're interested checkout the tab or open the code in ./app/mineweeper-py/mineweeper.py
@@ -193,7 +183,7 @@ In case you're interested checkout the tab or open the code in ./app/mineweeper-
 
 </div>
 
-<div class="py" id="org33b78c8">
+<div class="py" id="org606812e">
 <div class="org-src-container">
 <pre class="src src-python">import linkspace
 import itertools
@@ -313,15 +303,15 @@ class MineWeeper():
 </div>
 </div>
 
-<div id="outline-container-org528b7fa" class="outline-2">
-<h2 id="org528b7fa">Game on</h2>
-<div class="outline-text-2" id="text-org528b7fa">
+<div id="outline-container-orgb6827a1" class="outline-2">
+<h2 id="orgb6827a1">Game on</h2>
+<div class="outline-text-2" id="text-orgb6827a1">
 <p>
 After searching high and low for a method to share it with the world, our friend Bob reaches for enlightenment.
 </p>
 
 
-<figure id="orgad3168c">
+<figure id="org6620e04">
 <img src="./images/bob-enlightend.png" alt="bob-enlightend.png">
 
 </figure>
@@ -363,10 +353,7 @@ Developing linkspace application boils down to:
 </ul>
 
 <p>
-For Bob building linkspace application, it offers him the abstraction that all players can address a shared space of points.
-</p>
-
-<p>
+For Bob linkspace offers him the abstraction that all players can address a shared space of points.
 For a user of linkspace, Bob's game is just another domain application.
 It provides a friendly interface reading/writing the bytes that the developer wants to be shared around.
 </p>
@@ -382,9 +369,6 @@ Bob recognizes that his game has two distinct phases.
 
 <p>
 He'll start with 'play the game', and build the lobby system for proposing/joining/starting a game later.
-</p>
-
-<p>
 He's not set on the details, but every game starts with at least the players knowing:
 </p>
 
@@ -396,7 +380,7 @@ He's not set on the details, but every game starts with at least the players kno
 </ul>
 
 <p class="verse">
-In this setup everybody knows the board, but we'll touch on <a href="#org51ab8e5">Cheating</a> later.<br>
+In this setup everybody knows the board, but we'll touch on <a href="#org760e514">Cheating</a> later.<br>
 </p>
 
 <p>
@@ -404,10 +388,10 @@ Players can play a game after they agree on those fields.
 JSON works well enough.
 After some consideration he realized a 'seed' field isn't necessary.
 The hash of the packet can fill the role.
-He ends up with a packet to start the game with that looks as follows:
+The point that starts the game ends up looking as follows:
 </p>
 
-<pre class="example" id="orgb008592">
+<pre class="example" id="orgfb21937">
 type	LinkPoint
 hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
 group	[#:test]
@@ -430,8 +414,8 @@ data	278
 }
 </pre>
 
-<div class="ctabs" id="org243e903">
-<div class="info" id="org3113c74">
+<div class="ctabs" id="org4d5f6e5">
+<div class="info" id="orgfab2944">
 <p>
 
 </p>
@@ -444,7 +428,7 @@ It requires tmux to be installed (available in most package managers)
 
 </div>
 
-<div class="setup" id="org7cbed89">
+<div class="setup" id="org600b5c0">
 <p>
 
 </p>
@@ -511,9 +495,9 @@ Finally, in each session we can use the upper panel to run:
 </div>
 
 
-<div id="outline-container-org3bdda6f" class="outline-2">
-<h2 id="org3bdda6f">Multiplayer</h2>
-<div class="outline-text-2" id="text-org3bdda6f">
+<div id="outline-container-orgd94ba71" class="outline-2">
+<h2 id="orgd94ba71">Multiplayer</h2>
+<div class="outline-text-2" id="text-orgd94ba71">
 <p>
 The outline is as follows:
 </p>
@@ -522,22 +506,25 @@ The outline is as follows:
 <li>open the linkspace instance and a signing key.</li>
 <li>Use the hash of the game packet to get the configuration.</li>
 <li>Interpret the settings, including a list of [player names,pubkeys].</li>
-<li>while not done:</li>
 </ul>
-<p>
-&#x2013; Print the state.
-&#x2013; If our turn -&gt; make a choice and save the move info.
-&#x2013; Else -&gt; wait for the current player to make a move.
-</p>
 
 <p>
-But how do we determine whose turn it is?
-There is no host to orchestrate, and packets can arrive for each players in a different order. Somebody might cheat :O?
-In linkspace ordering some packets is actually trivial.
-Adding a link to another packet is proof that one was created before the other.
+while nobody hit a mine:
 </p>
 
-<div class="py" id="org25ee617">
+<ul class="org-ul">
+<li>Print the state.</li>
+<li>If our turn -&gt; make a choice and save the move info.</li>
+<li>Else -&gt; wait for the current player to make a move.</li>
+</ul>
+
+<p>
+How do we determine whose turn it is?
+There is no host to orchestrate, and packets can arrive for each players in a different order. 
+The solution is rather mundane. Adding a link to another packet is proof that one was created before the other.
+</p>
+
+<div class="py" id="org206975f">
 <div class="org-src-container">
 <pre class="src src-python">#!/bin/env python3
 
@@ -715,8 +702,8 @@ print("Fin")
 
 </div>
 
-<div class="ctabs" id="org20b9e44">
-<div class="info" id="orgfca65bb">
+<div class="ctabs" id="org3fef4af">
+<div class="info" id="org89b60d5">
 <p>
 
 </p>
@@ -724,7 +711,7 @@ print("Fin")
 <p>
 To start the mineweeper-multiplayer.py manually, we run the following in each session
 </p>
-<div class="bash" id="org3fcbb8d">
+<div class="bash" id="orgaad8803">
 <p>
 mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
 </p>
@@ -737,9 +724,9 @@ mineweeper-multiplayer.py $( cat ../setup.pkt | lk p [hash:str] )
 </div>
 </div>
 
-<div id="outline-container-org51ab8e5" class="outline-2">
-<h2 id="org51ab8e5">Cheating</h2>
-<div class="outline-text-2" id="text-org51ab8e5">
+<div id="outline-container-org760e514" class="outline-2">
+<h2 id="org760e514">Cheating</h2>
+<div class="outline-text-2" id="text-org760e514">
 <p>
 There are three ways to deal with cheating.
 </p>
@@ -749,7 +736,7 @@ Four if you count Bobs disapproval as an option.
 </p>
 
 
-<figure id="org19588b7">
+<figure id="org5b3f53e">
 <img src="./images/bob-angry.png" alt="bob-angry.png">
 
 </figure>
@@ -766,9 +753,9 @@ On the other hand, only the host can cheat and nobody would know about it.
 </p>
 </div>
 
-<div id="outline-container-org5ec8bf8" class="outline-4">
-<h4 id="org5ec8bf8">Who cares?</h4>
-<div class="outline-text-4" id="text-org5ec8bf8">
+<div id="outline-container-org714cd9a" class="outline-4">
+<h4 id="org714cd9a">Who cares?</h4>
+<div class="outline-text-4" id="text-org714cd9a">
 <p>
 The option you should take by default.
 Most games <span class="underline">can</span> be cheated, so the upside of making it more difficult has its limits.
@@ -787,9 +774,9 @@ For a game like MineWeeper that is usually enough.
 </div>
 </div>
 
-<div id="outline-container-orgbb35031" class="outline-4">
-<h4 id="orgbb35031">Emulate host/client</h4>
-<div class="outline-text-4" id="text-orgbb35031">
+<div id="outline-container-orgeb121a9" class="outline-4">
+<h4 id="orgeb121a9">Emulate host/client</h4>
+<div class="outline-text-4" id="text-orgeb121a9">
 <p>
 One option is to emulate a host/client setup.
 The first player could act as host and watch for turns and reply with the result.
@@ -803,9 +790,9 @@ Once the game is done, the host can release the packet and players could check i
 </div>
 </div>
 
-<div id="outline-container-orgc2a0c2d" class="outline-4">
-<h4 id="orgc2a0c2d">Rng-esus died for your sins</h4>
-<div class="outline-text-4" id="text-orgc2a0c2d">
+<div id="outline-container-org34f8b30" class="outline-4">
+<h4 id="org34f8b30">Rng-esus died for your sins</h4>
+<div class="outline-text-4" id="text-org34f8b30">
 <p>
 There are a number of ways to define a set of rules that make MineWeeper random without anyone knowing the full mine map.
 </p>
@@ -863,9 +850,9 @@ Cheating is now impossible.
 </div>
 </div>
 
-<div id="outline-container-org45fef69" class="outline-2">
-<h2 id="org45fef69">A dose of reality</h2>
-<div class="outline-text-2" id="text-org45fef69">
+<div id="outline-container-org91a4817" class="outline-2">
+<h2 id="org91a4817">A reality check</h2>
+<div class="outline-text-2" id="text-org91a4817">
 <p>
 In the <a href="./mineweeper-2.html">next</a> installment Bob will continue his journey to building the best game ever.
 This time by building a lobby system so it's actually playable.
@@ -884,19 +871,18 @@ Some tools and standards don't exist yet or are only partially implemented.
 <p>
 It's a project to rebuild the internet into something better.
 That means taking some steps backwards before going forward.
-At the crrent version it has reached the usability of 1980's email.
+At the current version it has reached the usability of 1980's email.
 It works, but its not pretty nor user friendly.
 </p>
 
 <p>
 That being said, there are currently no breaking changes to Bob's program planned.
-And every improvement to other systems improves the experience of using a linkspace application.
 </p>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-03 Mon 15:36</p>
+<p class="date">Created: 2023-07-11 Tue 11:57</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
