@@ -21,7 +21,7 @@ If you're unfamiliar with reading bash then [[./why.html][why]] might be a bette
 *** Point
 
 A single unit in linkspace is called a `point`.
-A point can hold upto 64kb of data.
+A point can hold just shy of 64kb.
 
 #+NAME: point-hello
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
@@ -80,7 +80,7 @@ What makes a supernet is:
 - A point references other points by hash
 
 In linkspace these references are called `links`. Each link is a 16 byte tag and 32 byte hash value.
-Tags can be anything. If less then 16 bytes are supplied it is left-padded with 0's.
+Tags can be anything. If less than 16 bytes are supplied it is left-padded with 0's.
 
 
 #+NAME: links
@@ -96,7 +96,7 @@ You can get fancy with `pktf` and `xargs`.
   cat mylog | lk pktf "mytag:[hash:str]" | xargs lk point ::/my/example/link -- >> mylog
 #+END_SRC
 
-A tool like `lk collect` has a few additional option for building points linking to other points.
+A tool like `lk collect` has a few additional options for building points linking to other points.
 However, the `lk` binary is meant to do simple things.
 Use the library and a better programming language when doing non-trivial stuff.
 
@@ -236,7 +236,7 @@ Notifies watching threads.
 
 *** A general purpose supernet
 
-To build an application pick a domain name (like you would an ip port - its also 16 bytes 0 padded).
+To build an application pick a domain name (like you would an ip port - 16 bytes '\0' padded).
 For example `imageboard`.
 
 #+BEGIN_VERSE
@@ -250,8 +250,8 @@ For example `imageboard`.
 
 The goal of linkspace is to make it simple to build applications for a network of devices.
 
-A typical linkspace applications shouldn't have to think about sockets.
-Instead the application should only have to define how points are linked and how to handle them not being available (yet).
+A typical linkspace applications shouldn't have to deal with sockets.
+Instead, the application should only have to define how points are linked and how to handle them not being available (yet).
 
 #+BEGIN_VERSE
 That can be a challenge at first. But the end result are better applications in general.
@@ -287,7 +287,7 @@ Building an image requires the program to watch for new packets in `imageboard::
 
 #+BEGIN_VERSE
 You should always quote your arguments.
-Otherwise the previous example would not have worked.
+Otherwise, the previous example would not have worked.
 Without the quotes the characters `[lin` in "[links]" would be interpreted by the default bash shell.
 #+END_VERSE
 
@@ -353,7 +353,7 @@ You can build a system to exchange points in a group from scratch.
 Linkspace does not prescribe a way to do so.
 Each group / network is different, and no single solution can cover every situation.
 
-For example you can, use `lk watch imageboard:$MYGROUP | ...` and forward the entire stream to another device using netcat/socat, ssh, email, http, a USB stick,
+For example, you can, use `lk watch imageboard:$MYGROUP | ...` and forward the entire stream to another device using netcat/socat, ssh, email, http, a USB stick,
 or any other way to exchange bytes.
 
 There are build in tools to allow building more complex networks.
@@ -378,7 +378,7 @@ See [[./docs/guide/index.org#mutable][the guide]] for the mutable field names.
 #+END_SRC
 
 #+BEGIN_VERSE
-The key take away here is - everything talks (streams of) packets. Avoid building custom serialization e.g. `struct MyStruct {customheader , packet}`.
+The key takeaway here is - everything talks (streams of) packets. Avoid building custom serialization e.g. `struct MyStruct {customheader , packet}`.
 This makes your streams incompatible with all other tools.
 #+END_VERSE
 

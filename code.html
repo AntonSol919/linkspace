@@ -51,11 +51,11 @@
       href="./why.html">why</a> might be a better place to start.</p>
       <div class="sourceCode" id="version"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="version-1"><a href="#version-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> <span class="at">--version</span></span></code></pre></div>
-      <pre class="example"><code>linkspace-cli linkspace-cli - 0.3.0-rc2 - main - d2e5c2c - 1.72.0-nightly
+      <pre class="example"><code>linkspace-cli linkspace-cli - 0.3.1-rc1 - main - ef1f816 - 1.72.0-nightly
 </code></pre>
       <h1 id="point">Point</h1>
       <p>A single unit in linkspace is called a `point`. A point can
-      hold upto 64kb of data.</p>
+      hold just shy of 64kb.</p>
       <div class="sourceCode" id="point-hello"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="point-hello-1"><a href="#point-hello-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Hello, Sol!&quot;</span> <span class="kw">|</span> <span class="ex">lk</span> point <span class="op">&gt;</span> mylog</span></code></pre></div>
       <p>Beyond just data, there are some (optional) additional fields,
@@ -79,17 +79,17 @@ lk point ::/my/example/path/subpath --sign --enckey &quot;$KEY&quot; --password 
       class="sourceCode bash"><code class="sourceCode bash"><span id="pktf-1"><a href="#pktf-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;The hash: [hash:str] refers to a point with path &#39;[path:str]&#39; and data: &#39;[data]&#39;&quot;</span></span></code></pre></div>
       <pre class="example"><code>The hash: Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk refers to a point with path &#39;&#39; and data: &#39;Hello, Sol!
 &#39;
-The hash: EbyXFjGYRqEitwHPNgw-2sY5Z7bhgEz06bIqNlW8_rQ refers to a point with path &#39;/my/example/path&#39; and data: &#39;some data&#39;
-The hash: lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ refers to a point with path &#39;/my/example/other_path&#39; and data: &#39;&#39;
-The hash: QJSwPc2xVLeMAMhmDtPq5reINJyrcS-F5OHiz4LxZSM refers to a point with path &#39;/my/example/path/subpath&#39; and data: &#39;&#39;
+The hash: SS9VDaGDTdNdycCSM0ny3kg099tbghkIvSPTK8ePCwI refers to a point with path &#39;/my/example/path&#39; and data: &#39;some data&#39;
+The hash: eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw refers to a point with path &#39;/my/example/other_path&#39; and data: &#39;&#39;
+The hash: HkTBv41zb6DjnskSQm6hddP7waqaEwl7zlix__8hN9s refers to a point with path &#39;/my/example/path/subpath&#39; and data: &#39;&#39;
 </code></pre>
       <p>`filter` to take a subset of points. Here we take only the
       points with a path starting with `/my/example` and 1 additional
       component</p>
       <div class="sourceCode" id="filter"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="filter-1"><a href="#filter-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> filter ::/my/example:<span class="pp">*</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str] [path:str]&quot;</span></span></code></pre></div>
-      <pre class="example"><code>EbyXFjGYRqEitwHPNgw-2sY5Z7bhgEz06bIqNlW8_rQ /my/example/path
-lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
+      <pre class="example"><code>SS9VDaGDTdNdycCSM0ny3kg099tbghkIvSPTK8ePCwI /my/example/path
+eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
 </code></pre>
       <p>What makes a supernet is:</p>
       <ul>
@@ -98,14 +98,14 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
       </ul>
       <p>In linkspace these references are called `links`. Each link is
       a 16 byte tag and 32 byte hash value. Tags can be anything. If
-      less then 16 bytes are supplied it is left-padded with 0's.</p>
+      less than 16 bytes are supplied it is left-padded with 0's.</p>
       <div class="sourceCode" id="links"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="links-1"><a href="#links-1" aria-hidden="true" tabindex="-1"></a><span class="va">HASH</span><span class="op">=</span><span class="va">($(</span><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="pp">[</span><span class="ss">hash:str</span><span class="pp">]</span><span class="va">))</span></span>
 <span id="links-2"><a href="#links-2" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> point <span class="st">&quot;::/my/example/link&quot;</span> <span class="at">--</span> <span class="st">&quot;my first link:</span><span class="va">${HASH</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;other link:Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk&quot;</span> <span class="op">&gt;&gt;</span> mylog</span></code></pre></div>
       <p>You can get fancy with `pktf` and `xargs`.</p>
       <div class="sourceCode" id="links-xargs"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="links-xargs-1"><a href="#links-xargs-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;mytag:[hash:str]&quot;</span> <span class="kw">|</span> <span class="fu">xargs</span> lk point ::/my/example/link <span class="at">--</span> <span class="op">&gt;&gt;</span> mylog</span></code></pre></div>
-      <p>A tool like `lk collect` has a few additional option for
+      <p>A tool like `lk collect` has a few additional options for
       building points linking to other points. However, the `lk` binary
       is meant to do simple things. Use the library and a better
       programming language when doing non-trivial stuff.</p>
@@ -125,7 +125,7 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
       default.</p>
       <div class="sourceCode" id="point-stdin"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="point-stdin-1"><a href="#point-stdin-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> somedata <span class="kw">|</span> <span class="ex">lk</span> linkpoint ::/my/other_path <span class="at">--data-stdin</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str] = [data]&quot;</span></span></code></pre></div>
-      <pre class="example"><code>VEExijKGDN6ApIdT8R-bVGDarVAucmFVO3plMoalbMw = somedata
+      <pre class="example"><code>7GROFD-rvGWO3n8fbXpIMXFudN1uOzJdMKqlOuZuedo = somedata
 </code></pre>
       <p>Linkspace is primarily its packet format. Using linkspace can
       be as simple as a device broadcasting linkspace points. Everything
@@ -159,7 +159,7 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
       `watch –mode ..`.</p>
       <div class="sourceCode" id="watchtree"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="watchtree-1"><a href="#watchtree-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> watch-tree ::/my:<span class="pp">**</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[path:str]&quot;</span> <span class="op">&gt;</span> ./watching <span class="kw">&amp;</span></span></code></pre></div>
-      <pre class="example"><code>[1] 25573
+      <pre class="example"><code>[1] 20523
 </code></pre>
       <div class="sourceCode" id="react"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="react-1"><a href="#react-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> ./watching</span></code></pre></div>
@@ -185,8 +185,7 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
       <h1 id="a-general-purpose-supernet">A general purpose
       supernet</h1>
       <p>To build an application pick a domain name (like you would an
-      ip port - its also 16 bytes 0 padded). For example
-      `imageboard`.</p>
+      ip port - 16 bytes '\0' padded). For example `imageboard`.</p>
       <div class="line-block">`pktf` is common enough to have the alias
       `lk p`.</div>
       <div class="sourceCode" id="domain"><pre
@@ -195,8 +194,8 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
 </code></pre>
       <p>The goal of linkspace is to make it simple to build
       applications for a network of devices.</p>
-      <p>A typical linkspace applications shouldn't have to think about
-      sockets. Instead the application should only have to define how
+      <p>A typical linkspace applications shouldn't have to deal with
+      sockets. Instead, the application should only have to define how
       points are linked and how to handle them not being available
       (yet).</p>
       <div class="line-block">That can be a challenge at first. But the
@@ -228,12 +227,12 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
       <div class="sourceCode" id="watch-tree"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="watch-tree-1"><a href="#watch-tree-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> watch-tree <span class="st">&quot;imageboard::/hello:**&quot;</span> <span class="at">--max</span> 1 <span class="dt">\</span></span>
 <span id="watch-tree-2"><a href="#watch-tree-2" aria-hidden="true" tabindex="-1"></a>   <span class="kw">|</span> <span class="ex">lk</span> p <span class="st">&quot;[hash:str] has the links:\n [links]&quot;</span> </span></code></pre></div>
-      <pre class="example"><code>gGtA0cQmbXMtZyl7Uo2bvBaEDhfD49ISlffOqDginU4 has the links:
+      <pre class="example"><code>ywKNw4L0mFMCF2IktHU_58wnjOeNkeCx48a4lB1Yxtw has the links:
  0000003000000200:Sz0ZZDWxKht-jbM7Tfkn0nis4tNoKNPH_kfI7JYUnY4
 </code></pre>
       <div class="line-block">You should always quote your
       arguments.<br />
-      Otherwise the previous example would not have worked.<br />
+      Otherwise, the previous example would not have worked.<br />
       Without the quotes the characters `[lin` in "[links]" would be
       interpreted by the default bash shell.</div>
       <p>A link might hold a hash to a point that is not yet available
@@ -255,7 +254,7 @@ lUDG9V6o6dWv_l9PBGLZQlNzRjrBOFTNwLFb2xbyqgQ /my/example/other_path
 <span id="get-links-2"><a href="#get-links-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">lk</span> get-links pause <span class="dt">\</span></span>
 <span id="get-links-3"><a href="#get-links-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str]&quot;</span></span></code></pre></div>
       <pre class="example"><code>Sz0ZZDWxKht-jbM7Tfkn0nis4tNoKNPH_kfI7JYUnY4
-gGtA0cQmbXMtZyl7Uo2bvBaEDhfD49ISlffOqDginU4
+ywKNw4L0mFMCF2IktHU_58wnjOeNkeCx48a4lB1Yxtw
 </code></pre>
       <p>For the imageboard applications we now have to wire up another
       program to merge images into a single picture. See the tutorial
@@ -295,10 +294,10 @@ Pkt(
       scratch. Linkspace does not prescribe a way to do so. Each group /
       network is different, and no single solution can cover every
       situation.</p>
-      <p>For example you can, use `lk watch imageboard:$MYGROUP | …` and
-      forward the entire stream to another device using netcat/socat,
-      ssh, email, http, a USB stick, or any other way to exchange
-      bytes.</p>
+      <p>For example, you can, use `lk watch imageboard:$MYGROUP | …`
+      and forward the entire stream to another device using
+      netcat/socat, ssh, email, http, a USB stick, or any other way to
+      exchange bytes.</p>
       <p>There are build in tools to allow building more complex
       networks.</p>
       <p>A `point` refers to the fields we've seen so far. All these
@@ -315,7 +314,7 @@ netcat 10.0.2.0 -p 6000 | lk route ubits0:=:0001 | lk save &amp; # get packets f
 lk linkpoint example::/hello | lk route ubits0:=:0002 | lk save # save my packets with ubits 0002
 lk watch-log --asc example::/hello -- &quot;ubits0:&gt;:0000&quot; | nc 10.0.0.1 -p 6000  &amp; # forward all packets with ubits0 higher than 0000 back to host. 
 </code></pre>
-      <div class="line-block">The key take away here is - everything
+      <div class="line-block">The key takeaway here is - everything
       talks (streams of) packets. Avoid building custom serialization
       e.g. `struct MyStruct {customheader , packet}`.<br />
       This makes your streams incompatible with all other tools.</div>
