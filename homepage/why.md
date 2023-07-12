@@ -302,7 +302,7 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 Click here to see (part of) the example in graph form
 </summary>
 
-![msg_board](./images/msg_board.png)
+![msg_board](./images/msg_board.svg)
 
 Note that the 'data=(image data)', 'data=[link:reply to]', and the tags 'reply to:', 'image links:' are just examples.
 Each application defines its own data format and what tags mean.
