@@ -1,3 +1,7 @@
+# Why
+
+These are exciting times. 
+More than 2^32 people have connected, and how we network is due an upgrade. 
 
 ## The internet of streams
 
@@ -54,7 +58,7 @@ At first we used these tools to create websites to provide information.
 But this has grown into interactive 'platforms'.
 Services that store, forward, and administrate information such that multiple devices, and thus people, can communicate.
 
-The thesis of linkspace is this: 
+One reason for building linkspace is this: 
 
 <b>We have reached the limit of using this model of streaming questions/answers paradigm for multi-party communication.</b>
 
@@ -134,9 +138,8 @@ Practically any digital communication can be understood as merging sets of point
 Online platforms have dubbed different words for actions you can take:
 '_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
 Fundamentally they can be understood as a frontend application providing an interface to merge sets of points.
-Either on your device or "in the ☁️" (i.e. on their device[^device]).
+Either on your device or "in the ☁cloud☁️️" (i.e. on their device).
 
-[^device]: Your device immediatly forgetting those data points is a configuration detail.
 
 The internet in use today has a single host design. 
 For instance, a web-browser or app contacts `http://www.some_platform.com`
@@ -302,7 +305,7 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 Click here to see (part of) the example in graph form
 </summary>
 
-![msg_board](./images/msg_board.png)
+<img style="width:100%;" src="images/msg_board.svg"/>
 
 Note that the 'data=(image data)', 'data=[link:reply to]', and the tags 'reply to:', 'image links:' are just examples.
 Each application defines its own data format and what tags mean.
@@ -316,50 +319,57 @@ For the full specification of creating and writing points see the [guide](./docs
 There are some nuances and various advanced topics.
 However, this should be enough to reason about the basics:
 
-Users generate their identity, together they form groups and set up a method to exchange data.
+A single unit in linkspace is a point, addressable by hash and path, and links to other points.
+Domain applications provide a user interface to read and write points. 
+Users generate their identity and form groups to exchange points. 
 
 The result is that _conceptually_ an application only needs to process its view of a shared space.
 
-To give linkspace a try [Download](https://github.com/AntonSol919/linkspace/releases) the latest release, and check out the apps or the (python) [tutorials](./docs/tutorial/index.html).
+To give linkspace a try [Download](https://github.com/AntonSol919/linkspace/releases) the latest release,
+and check out the apps or the (python) [tutorials](./docs/tutorial/index.html).
 
 # Q&A
 
 ### Who is linkspace for?
 
-Me, the next generation that wants their internet to be better, and everyone else. 
+Linkspace was build to solve a problem for: Me, people who want a better internet, and everyone else.
 
-#### The tool
+Starting with that last group:
+
+#### The tool 
 
 If you're just interested in the tool; linkspace can shrink a 'stack' significantly.
 
-Data formats change and grow as projects goes on.
-By using linkspace to carry the data, many potentially-critical features are built in.
-Instead of risking a costly and complex upgrade when you need a feature yesterday, you get a lot of properties by default such as:
-uniquely addressable/cross referencing events, security against tampering, logging, secure user identities, low effort backups, etc.
+Data formats change and grow as projects go on.
+By using linkspace to carry the data, many potentially-critical properties are there by design.
 
-It is scaleable decoupled data creation, routing, storing, and processing; with data authenticity and user authentication to control access, wire up business logic, or log 'who' did 'what' and 'when'. Take the parts you want and leave the rest.
+Instead of risking a costly and half backed upgrade later, you get them without any intrusive design changes required:
+uniquely addressable/cross referencing events, security against tampering, logging, cryptographic authenticated and auditable events, low effort backups, etc.
 
-It even runs in the browser[^browser], meaning you can reuse more code logic and tools.
+Linkspace can be scaleable decoupled data creation, routing, storing, and processing; with data authenticity and user authentication to control access, wire up business logic, or log 'who' did 'what' and 'when'. Take the parts you want and leave the rest.
+
+It even runs in the browser[^browser], so you can reuse more code logic and tools.
 
 [^browser]: Currently only the reading, processing and writing packets API is supported. With the rest put on the TODO list.
 
-Finally, by talking _about_ data there is a lot of potential for a 'network effect'. e.g. a support-ticket references the exact IoT event, a sale can references the exact history of the object, etc.
+Finally, there is a lot of potential for a 'network effect'. e.g. a support-ticket references the exact IoT event, a sale can references the exact history of the object, an ecosystem of additional tools that talk (part of) the same protocol, and more.
 
 #### The idea{#idea}
 
-I build linkspace so I (and hopefully others) can:
+I build linkspace so I could:
 
 - define, prototype, build, and run real-serverless[^serverless] apps quickly.
 - build an application without having to decide how to administrate for everyone that uses it - that responsibility sits with the (group of) users.
 
-[^serverless]: It bugs me to no end that some marketing department ruined the word 'serverless'. I'm talking about: a networked application that works without any critically important lines of communication or hosts.
+[^serverless]: It bugs me that a marketing department ruined the word 'serverless'. I'm talking about: a networked application that works without any critically important lines of communication or hosts.
 
-I believe it can be part of the solution for some of the worst problems with the current internet.
+I believe it can be part of the solution for some of the worst problems with the current web.
 
-Perhaps the greatest insanity of this time (and I would argue its defining feature) is a few for-profit advertisement / propaganda services are the host-administrators of the digital 'public squares' for more than 2<sup>32</sup> people alive.
+Perhaps the greatest insanity of this time (and I would argue its defining feature) is a few for-profit advertisement / influencing services are the host-administrators of the digital 'public squares' for more than 2<sup>32</sup> people alive.
 
 It is questionable for people (and the groups they organize in) to be subjected to the interests of an unaccountable administrator.
-But that can be a matter of perspective.
+But that can be a matter of perspective, as you could argue people and groups _could_ reorganize if the host-admin misbehaves.
+
 The hidden cost is far more worrying in my opinion. It is the medium as the message: You are not in control, surrender your minds for profit and submit to apathy.
 
 It is a staggering amount of wasted potential for people to never experience what it means to build and be a community outside the limitations and interest of a higher-authority-incorporated.
@@ -371,6 +381,8 @@ The message of linkspace should be: You are in control, and you should build the
 ### Is linkspace a blockchain?
 
 No.
+
+I have no tokens to sell - (But please consider support the project by registering an [LNS](./lns.html) name. Thank you!)
 
 Blockchains and supernets share a common idea:
 
@@ -384,7 +396,7 @@ A blockchain's goal is to provide a model and tools to make consensus simple.
 However, consensus on all events isn't that useful as a foundational feature for the vast majority of applications.
 
 Supernets don't bother with a global truth. Their goal is to work with the links between packets.
-Consequently, it's not difficult to define a 'blockchain' style consensus in a general purpose supernet.
+Consequently, it's not difficult to define a 'blockchain' style consensus in a supernet.
 
 ### Won't an app have a lot of overhead compared to a basic Web server?
 
@@ -413,9 +425,9 @@ In the long run it could end up with less moving parts and with fewer configurat
 
 And finally, I believe it can do some [good](#idea).
     
-### Isn't it a good thing that a host administrates what I and others see online?
+### Wouldn't it be bad if no one administrates what I and others see online?
 
-Sure.
+Sure - to some extend.
 
 There are different ways to do so.
 The straight forward approach is to have the application or user trust the public key of someone to scan and whitelist content. 
@@ -437,14 +449,14 @@ then they would get a better deal then they do now.
 
 There are two types of systems that can't do what I want.
 
-- Synchronizing chain of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet).
+- Tokens / Synchronizing chains of trust: Is slow and not useful for the vast majority of users - (and easy to emulate in a supernet). 
 - Faster email: It's not that fast and it is using server-defined authenticity - plus most of the list below.
 
 Other supernet-like systems are limited in some way or simply choose a different design:
 
 - Too specialized. E.g. Git has a lot of plumbing for diffing text.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
-- Either its primarily hashes, or its primarily path names. Linkspace has both set as a property of a 'point'.
+- Its hashes, without including paths. Linkspace has both as a property of a 'point'.
 - Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a secondary protocol to hand off to. That means no json or base64.
 - No Groups. Setting who you share with and how is not supported, or its little more than 'run multiple instances'.
 - No domains. Everything becomes one app with premature-bureaucracy and an ever expanding set of compatibility requirements that grinds development/experiments to a halt.
@@ -454,3 +466,11 @@ Other supernet-like systems are limited in some way or simply choose a different
 
 That does not mean I think alternatives are necessarily worse.
 Different systems have different strong points.
+
+I think the two things that set linkspace apart from similar systems are:
+
+- First class pathnames allow (part of) existing designs to be copied 'as is'.
+- All the things it doesn't do. Linkspace is primarily its point format, and secondarily an ecosystem of tools to make it easy to build complex things with those points. 
+
+Linkspace is free and open source under the MPL-2.0. 
+Give it a try next time you want to talk about data.

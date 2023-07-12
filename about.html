@@ -15,7 +15,7 @@
         <a href="./index.html">Home</a>
       </li>
       <li>
-        <a href="./code.html">Quick start</a>
+        <a href="./code_intro.html">Quick start</a>
       </li>
       <li>
         <a href="./why.html">Why</a>

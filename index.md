@@ -26,7 +26,7 @@ Linkspace is a supernet with the following highlights:
 Linkspace is not an end-user application. 
 It is a packet format, and a software library (and command line tools) to build more powerful and useful applications.
 
-If you're comfortable reading bash then [Quick Start](./code.html) is a good place to start.   
+If you're comfortable reading bash then [Quick Start](./code_intro.html) is a good place to start.   
 If you're not, or prefer a more high level description, begin at the [why](why.html) page. 
 The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
 The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more depth on the API and technical design.

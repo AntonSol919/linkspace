@@ -15,7 +15,7 @@ lk keyp "msg_board:[#:test]:/thread/thread/Coffee machine broke!/msg" --enckey $
    -- "reply to:${HASH[1]}" "image link:${HASH[0]}" >> /tmp/msgboard
 
 {
-    echo ' digraph G{ rankdir=RL ; node[shape="record"] ;' 
+    echo ' digraph G{ rankdir=RL ; rank="same" ; node[shape="record"] ;' 
     lk p --pkts /tmp/msgboard  '"p[hash:str]"\[label=" { <hash> [hash/2mini] }  | { signed: [pubkey/2mini] | [path:str] } | data=[data] | [links_len:str] links [/links: | <[i:str]> [tag:str]\: [ptr/2mini] ] "\];
      [/links: "p[hash:str]"\:[i:str] -> "p[ptr:str]"\:hash ;\n ]' ;
      echo "}" ;

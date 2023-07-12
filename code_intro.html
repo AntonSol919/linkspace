@@ -15,7 +15,7 @@
         <a href="./index.html">Home</a>
       </li>
       <li>
-        <a href="./code.html">Quick start</a>
+        <a href="./code_intro.html">Quick start</a>
       </li>
       <li>
         <a href="./why.html">Why</a>
@@ -44,14 +44,15 @@
     </nav>
     
     <div id="main">
-      <p>This is a quick introduction for linkspace using the command
-      line tool `lk` in bash. You can follow along by <a
+      <p>This introduction jumps headlong into linkspace using the
+      command line tool `lk` in bash. If you're unfamiliar with reading
+      bash then <a href="./why.html">why</a> is a better place to start.
+      You can follow along by <a
       href="https://github.com/AntonSol919/linkspace/releases">downloading</a>
-      the latest release. If you're unfamiliar with reading bash then <a
-      href="./why.html">why</a> might be a better place to start.</p>
+      the latest release.</p>
       <div class="sourceCode" id="version"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="version-1"><a href="#version-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> <span class="at">--version</span></span></code></pre></div>
-      <pre class="example"><code>linkspace-cli linkspace-cli - 0.3.1-rc1 - main - ef1f816 - 1.72.0-nightly
+      <pre class="example"><code>linkspace-cli linkspace-cli - 0.3.1-rc1 - main - 106061e - 1.72.0-nightly
 </code></pre>
       <h1 id="point">Point</h1>
       <p>A single unit in linkspace is called a `point`. A point can
@@ -79,17 +80,17 @@ lk point ::/my/example/path/subpath --sign --enckey &quot;$KEY&quot; --password 
       class="sourceCode bash"><code class="sourceCode bash"><span id="pktf-1"><a href="#pktf-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;The hash: [hash:str] refers to a point with path &#39;[path:str]&#39; and data: &#39;[data]&#39;&quot;</span></span></code></pre></div>
       <pre class="example"><code>The hash: Yrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk refers to a point with path &#39;&#39; and data: &#39;Hello, Sol!
 &#39;
-The hash: SS9VDaGDTdNdycCSM0ny3kg099tbghkIvSPTK8ePCwI refers to a point with path &#39;/my/example/path&#39; and data: &#39;some data&#39;
-The hash: eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw refers to a point with path &#39;/my/example/other_path&#39; and data: &#39;&#39;
-The hash: HkTBv41zb6DjnskSQm6hddP7waqaEwl7zlix__8hN9s refers to a point with path &#39;/my/example/path/subpath&#39; and data: &#39;&#39;
+The hash: KXDT6NORMMAHrSX1yKgoxPX-bXMydDNFI6T4QfSxX0k refers to a point with path &#39;/my/example/path&#39; and data: &#39;some data&#39;
+The hash: CavtGsDzcNysCAUoPnqPX3ijmyodl8rIQimg80SMj4o refers to a point with path &#39;/my/example/other_path&#39; and data: &#39;&#39;
+The hash: uH9sMzedaItl5E9Ntjd7WIPxB3IH1nUKbcarD8HDEfA refers to a point with path &#39;/my/example/path/subpath&#39; and data: &#39;&#39;
 </code></pre>
       <p>`filter` to take a subset of points. Here we take only the
       points with a path starting with `/my/example` and 1 additional
       component</p>
       <div class="sourceCode" id="filter"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="filter-1"><a href="#filter-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> mylog <span class="kw">|</span> <span class="ex">lk</span> filter ::/my/example:<span class="pp">*</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str] [path:str]&quot;</span></span></code></pre></div>
-      <pre class="example"><code>SS9VDaGDTdNdycCSM0ny3kg099tbghkIvSPTK8ePCwI /my/example/path
-eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
+      <pre class="example"><code>KXDT6NORMMAHrSX1yKgoxPX-bXMydDNFI6T4QfSxX0k /my/example/path
+CavtGsDzcNysCAUoPnqPX3ijmyodl8rIQimg80SMj4o /my/example/other_path
 </code></pre>
       <p>What makes a supernet is:</p>
       <ul>
@@ -125,7 +126,7 @@ eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
       default.</p>
       <div class="sourceCode" id="point-stdin"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="point-stdin-1"><a href="#point-stdin-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> somedata <span class="kw">|</span> <span class="ex">lk</span> linkpoint ::/my/other_path <span class="at">--data-stdin</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str] = [data]&quot;</span></span></code></pre></div>
-      <pre class="example"><code>7GROFD-rvGWO3n8fbXpIMXFudN1uOzJdMKqlOuZuedo = somedata
+      <pre class="example"><code>KbiehZXgKTWUxeo4E4qP9dIa1gomGO8c-DIu3P2jtG8 = somedata
 </code></pre>
       <p>Linkspace is primarily its packet format. Using linkspace can
       be as simple as a device broadcasting linkspace points. Everything
@@ -159,7 +160,7 @@ eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
       `watch –mode ..`.</p>
       <div class="sourceCode" id="watchtree"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="watchtree-1"><a href="#watchtree-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> watch-tree ::/my:<span class="pp">**</span> <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[path:str]&quot;</span> <span class="op">&gt;</span> ./watching <span class="kw">&amp;</span></span></code></pre></div>
-      <pre class="example"><code>[1] 20523
+      <pre class="example"><code>[1] 10718
 </code></pre>
       <div class="sourceCode" id="react"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="react-1"><a href="#react-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> ./watching</span></code></pre></div>
@@ -227,7 +228,7 @@ eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
       <div class="sourceCode" id="watch-tree"><pre
       class="sourceCode bash"><code class="sourceCode bash"><span id="watch-tree-1"><a href="#watch-tree-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lk</span> watch-tree <span class="st">&quot;imageboard::/hello:**&quot;</span> <span class="at">--max</span> 1 <span class="dt">\</span></span>
 <span id="watch-tree-2"><a href="#watch-tree-2" aria-hidden="true" tabindex="-1"></a>   <span class="kw">|</span> <span class="ex">lk</span> p <span class="st">&quot;[hash:str] has the links:\n [links]&quot;</span> </span></code></pre></div>
-      <pre class="example"><code>ywKNw4L0mFMCF2IktHU_58wnjOeNkeCx48a4lB1Yxtw has the links:
+      <pre class="example"><code>ciEsA2xnVktIvtePHSUSVcdJ_hHIlOM41lI5-23z7Ko has the links:
  0000003000000200:Sz0ZZDWxKht-jbM7Tfkn0nis4tNoKNPH_kfI7JYUnY4
 </code></pre>
       <div class="line-block">You should always quote your
@@ -254,7 +255,7 @@ eCV5c7nKe5EhvmxWNWK0p9c-NagOSelLmoDJpzec_Sw /my/example/other_path
 <span id="get-links-2"><a href="#get-links-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">lk</span> get-links pause <span class="dt">\</span></span>
 <span id="get-links-3"><a href="#get-links-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">lk</span> pktf <span class="st">&quot;[hash:str]&quot;</span></span></code></pre></div>
       <pre class="example"><code>Sz0ZZDWxKht-jbM7Tfkn0nis4tNoKNPH_kfI7JYUnY4
-ywKNw4L0mFMCF2IktHU_58wnjOeNkeCx48a4lB1Yxtw
+ciEsA2xnVktIvtePHSUSVcdJ_hHIlOM41lI5-23z7Ko
 </code></pre>
       <p>For the imageboard applications we now have to wire up another
       program to merge images into a single picture. See the tutorial
@@ -374,9 +375,8 @@ Error {
       href="./docs/guide/index.html">Guide</a>. See <a
       href="./why.html">why</a> for some of the reasoning behind
       linkspace.</p>
-      <p>Linkspace is licensed under the MPL-2.0. Consider it for your
-      next project where the goal is to talk <u>about</u> data with more
-      than two devices.</p>
+      <p>Linkspace is free and open source under the MPL-2.0. Give it a
+      try next time you want to talk about data.</p>
     </div>
     </body>
 </html>

@@ -15,7 +15,7 @@
         <a href="./index.html">Home</a>
       </li>
       <li>
-        <a href="./code.html">Quick start</a>
+        <a href="./code_intro.html">Quick start</a>
       </li>
       <li>
         <a href="./why.html">Why</a>
@@ -44,6 +44,9 @@
     </nav>
     
     <div id="main">
+      <h1 id="why">Why</h1>
+      <p>These are exciting times. More than 2^32 people have connected,
+      and how we network is due an upgrade.</p>
       <h2 id="the-internet-of-streams">The internet of streams</h2>
       <p>The digital world you know is built on structuring streams of
       data. At its core the internet<a href="#fn1" class="footnote-ref"
@@ -147,7 +150,7 @@
       information. But this has grown into interactive ‘platforms’.
       Services that store, forward, and administrate information such
       that multiple devices, and thus people, can communicate.</p>
-      <p>The thesis of linkspace is this:</p>
+      <p>One reason for building linkspace is this:</p>
       <p><b>We have reached the limit of using this model of streaming
       questions/answers paradigm for multi-party communication.</b></p>
       <p>First, the stream abstraction can leak. Streams get
@@ -260,9 +263,7 @@
       ‘<em>upvote/like a post</em>’, ‘<em>stream a video</em>’, etc.
       Fundamentally they can be understood as a frontend application
       providing an interface to merge sets of points. Either on your
-      device or “in the ☁️” (i.e. on their device<a href="#fn4"
-      class="footnote-ref" id="fnref4"
-      role="doc-noteref"><sup>4</sup></a>).</p>
+      device or “in the ☁cloud☁️️” (i.e. on their device).</p>
       <p>The internet in use today has a single host design. For
       instance, a web-browser or app contacts
       <code>http://www.some_platform.com</code> for the key
@@ -270,8 +271,8 @@
       <p>This is relatively straight forward, but it has downsides.</p>
       <p>A host can get disconnected, you can’t (re)share and (re)use
       your copy of the data, there is a misconception on what an address
-      is<a href="#fn5" class="footnote-ref" id="fnref5"
-      role="doc-noteref"><sup>5</sup></a>, and there is no standard on
+      is<a href="#fn4" class="footnote-ref" id="fnref4"
+      role="doc-noteref"><sup>4</sup></a>, and there is no standard on
       what happens when two people create two different
       <code>image/BrokenMachine.jpg</code> but with different
       pictures.</p>
@@ -286,8 +287,8 @@
       single host.</p>
       <p>Every path can refer to multiple points, and every point is
       hashed. There is a 32 byte number that uniquely addresses the
-      exact content of that point<a href="#fn6" class="footnote-ref"
-      id="fnref6" role="doc-noteref"><sup>6</sup></a>. (which I’ll show
+      exact content of that point<a href="#fn5" class="footnote-ref"
+      id="fnref5" role="doc-noteref"><sup>5</sup></a>. (which I’ll show
       as <span id="hh0">[HASH_0]</span> instead of typing out).</p>
       <p>It doesn’t matter when or where sets are merged, a set only
       ever has a single copy of a point. It doesn’t matter how you
@@ -560,8 +561,8 @@
       <thead>
       <tr class="header">
       <th></th>
-      <th>Field<a href="#fn7" class="footnote-ref" id="fnref7"
-      role="doc-noteref"><sup>7</sup></a></th>
+      <th>Field<a href="#fn6" class="footnote-ref" id="fnref6"
+      role="doc-noteref"><sup>6</sup></a></th>
       <th>Purpose</th>
       <th>IP Packet Analogue</th>
       </tr>
@@ -615,10 +616,7 @@
       <summary>
       Click here to see (part of) the example in graph form
       </summary>
-      <figure>
-      <img src="./images/msg_board.png" alt="msg_board" />
-      <figcaption aria-hidden="true">msg_board</figcaption>
-      </figure>
+      <p><img style="width:100%;" src="images/msg_board.svg"/></p>
       <p>Note that the ‘data=(image data)’, ‘data=[link:reply to]’, and
       the tags ‘reply to:’, ‘image links:’ are just examples. Each
       application defines its own data format and what tags mean.</p>
@@ -627,8 +625,10 @@
       the <a href="./docs/guide/index.html#packet_layout">guide</a></p>
       <p>There are some nuances and various advanced topics. However,
       this should be enough to reason about the basics:</p>
-      <p>Users generate their identity, together they form groups and
-      set up a method to exchange data.</p>
+      <p>A single unit in linkspace is a point, addressable by hash and
+      path, and links to other points. Domain applications provide a
+      user interface to read and write points. Users generate their
+      identity and form groups to exchange points.</p>
       <p>The result is that <em>conceptually</em> an application only
       needs to process its view of a shared space.</p>
       <p>To give linkspace a try <a
@@ -637,51 +637,57 @@
       href="./docs/tutorial/index.html">tutorials</a>.</p>
       <h1 id="qa">Q&amp;A</h1>
       <h3 id="who-is-linkspace-for">Who is linkspace for?</h3>
-      <p>Me, the next generation that wants their internet to be better,
-      and everyone else.</p>
+      <p>Linkspace was build to solve a problem for: Me, people who want
+      a better internet, and everyone else.</p>
+      <p>Starting with that last group:</p>
       <h4 id="the-tool">The tool</h4>
       <p>If you’re just interested in the tool; linkspace can shrink a
       ‘stack’ significantly.</p>
-      <p>Data formats change and grow as projects goes on. By using
-      linkspace to carry the data, many potentially-critical features
-      are built in. Instead of risking a costly and complex upgrade when
-      you need a feature yesterday, you get a lot of properties by
-      default such as: uniquely addressable/cross referencing events,
-      security against tampering, logging, secure user identities, low
+      <p>Data formats change and grow as projects go on. By using
+      linkspace to carry the data, many potentially-critical properties
+      are there by design.</p>
+      <p>Instead of risking a costly and half backed upgrade later, you
+      get them without any intrusive design changes required: uniquely
+      addressable/cross referencing events, security against tampering,
+      logging, cryptographic authenticated and auditable events, low
       effort backups, etc.</p>
-      <p>It is scaleable decoupled data creation, routing, storing, and
-      processing; with data authenticity and user authentication to
-      control access, wire up business logic, or log ‘who’ did ‘what’
-      and ‘when’. Take the parts you want and leave the rest.</p>
-      <p>It even runs in the browser<a href="#fn8" class="footnote-ref"
-      id="fnref8" role="doc-noteref"><sup>8</sup></a>, meaning you can
-      reuse more code logic and tools.</p>
-      <p>Finally, by talking <em>about</em> data there is a lot of
-      potential for a ‘network effect’. e.g. a support-ticket references
-      the exact IoT event, a sale can references the exact history of
-      the object, etc.</p>
+      <p>Linkspace can be scaleable decoupled data creation, routing,
+      storing, and processing; with data authenticity and user
+      authentication to control access, wire up business logic, or log
+      ‘who’ did ‘what’ and ‘when’. Take the parts you want and leave the
+      rest.</p>
+      <p>It even runs in the browser<a href="#fn7" class="footnote-ref"
+      id="fnref7" role="doc-noteref"><sup>7</sup></a>, so you can reuse
+      more code logic and tools.</p>
+      <p>Finally, there is a lot of potential for a ‘network effect’.
+      e.g. a support-ticket references the exact IoT event, a sale can
+      references the exact history of the object, an ecosystem of
+      additional tools that talk (part of) the same protocol, and
+      more.</p>
       <h4 id="idea">The idea</h4>
-      <p>I build linkspace so I (and hopefully others) can:</p>
+      <p>I build linkspace so I could:</p>
       <ul>
       <li>define, prototype, build, and run real-serverless<a
-      href="#fn9" class="footnote-ref" id="fnref9"
-      role="doc-noteref"><sup>9</sup></a> apps quickly.</li>
+      href="#fn8" class="footnote-ref" id="fnref8"
+      role="doc-noteref"><sup>8</sup></a> apps quickly.</li>
       <li>build an application without having to decide how to
       administrate for everyone that uses it - that responsibility sits
       with the (group of) users.</li>
       </ul>
       <p>I believe it can be part of the solution for some of the worst
-      problems with the current internet.</p>
+      problems with the current web.</p>
       <p>Perhaps the greatest insanity of this time (and I would argue
       its defining feature) is a few for-profit advertisement /
-      propaganda services are the host-administrators of the digital
+      influencing services are the host-administrators of the digital
       ‘public squares’ for more than 2<sup>32</sup> people alive.</p>
       <p>It is questionable for people (and the groups they organize in)
       to be subjected to the interests of an unaccountable
-      administrator. But that can be a matter of perspective. The hidden
-      cost is far more worrying in my opinion. It is the medium as the
-      message: You are not in control, surrender your minds for profit
-      and submit to apathy.</p>
+      administrator. But that can be a matter of perspective, as you
+      could argue people and groups <em>could</em> reorganize if the
+      host-admin misbehaves.</p>
+      <p>The hidden cost is far more worrying in my opinion. It is the
+      medium as the message: You are not in control, surrender your
+      minds for profit and submit to apathy.</p>
       <p>It is a staggering amount of wasted potential for people to
       never experience what it means to build and be a community outside
       the limitations and interest of a
@@ -691,6 +697,9 @@
       should build the best places you can.</p>
       <h3 id="is-linkspace-a-blockchain">Is linkspace a blockchain?</h3>
       <p>No.</p>
+      <p>I have no tokens to sell - (But please consider support the
+      project by registering an <a href="./lns.html">LNS</a> name. Thank
+      you!)</p>
       <p>Blockchains and supernets share a common idea:</p>
       <p>Using cryptographic hashes and public keys to provide a model
       for communication data that transcends the connection used to
@@ -705,8 +714,8 @@
       foundational feature for the vast majority of applications.</p>
       <p>Supernets don’t bother with a global truth. Their goal is to
       work with the links between packets. Consequently, it’s not
-      difficult to define a ‘blockchain’ style consensus in a general
-      purpose supernet.</p>
+      difficult to define a ‘blockchain’ style consensus in a
+      supernet.</p>
       <h3
       id="wont-an-app-have-a-lot-of-overhead-compared-to-a-basic-web-server">Won’t
       an app have a lot of overhead compared to a basic Web server?</h3>
@@ -728,17 +737,17 @@
       <p>Yes.</p>
       <p>The height of what we build is set by the weakest foundation.
       Technically supernets better model the reality of multi party
-      communication - asynchronous and authenticated<a href="#fn10"
-      class="footnote-ref" id="fnref10"
-      role="doc-noteref"><sup>10</sup></a> In the long run it could end
+      communication - asynchronous and authenticated<a href="#fn9"
+      class="footnote-ref" id="fnref9"
+      role="doc-noteref"><sup>9</sup></a> In the long run it could end
       up with less moving parts and with fewer configurations.</p>
       <p>And finally, I believe it can do some <a
       href="#idea">good</a>.</p>
       <h3
-      id="isnt-it-a-good-thing-that-a-host-administrates-what-i-and-others-see-online">Isn’t
-      it a good thing that a host administrates what I and others see
+      id="wouldnt-it-be-bad-if-no-one-administrates-what-i-and-others-see-online">Wouldn’t
+      it be bad if no one administrates what I and others see
       online?</h3>
-      <p>Sure.</p>
+      <p>Sure - to some extend.</p>
       <p>There are different ways to do so. The straight forward
       approach is to have the application or user trust the public key
       of someone to scan and whitelist content. This emulates the
@@ -760,8 +769,9 @@
       <h2 id="alts">Why not [alternative]?</h2>
       <p>There are two types of systems that can’t do what I want.</p>
       <ul>
-      <li>Synchronizing chain of trust: Is slow and not useful for the
-      vast majority of users - (and easy to emulate in a supernet).</li>
+      <li>Tokens / Synchronizing chains of trust: Is slow and not useful
+      for the vast majority of users - (and easy to emulate in a
+      supernet).</li>
       <li>Faster email: It’s not that fast and it is using
       server-defined authenticity - plus most of the list below.</li>
       </ul>
@@ -773,8 +783,8 @@
       <li>Large ‘packets’ - a hash might refer to gigabytes. This
       requires multiple levels to deal with fragmentation in multiple
       ways.</li>
-      <li>Either its primarily hashes, or its primarily path names.
-      Linkspace has both set as a property of a ‘point’.</li>
+      <li>Its hashes, without including paths. Linkspace has both as a
+      property of a ‘point’.</li>
       <li>Too slow. Packet routing/parsing should be doable in just a
       few instructions - ideally possible in an integrated circuit. It
       should be fast enough to stream video without using a secondary
@@ -792,6 +802,17 @@
       </ul>
       <p>That does not mean I think alternatives are necessarily worse.
       Different systems have different strong points.</p>
+      <p>I think the two things that set linkspace apart from similar
+      systems are:</p>
+      <ul>
+      <li>First class pathnames allow (part of) existing designs to be
+      copied ‘as is’.</li>
+      <li>All the things it doesn’t do. Linkspace is primarily its point
+      format, and secondarily an ecosystem of tools to make it easy to
+      build complex things with those points.</li>
+      </ul>
+      <p>Linkspace is free and open source under the MPL-2.0. Give it a
+      try next time you want to talk about data.</p>
       <aside id="footnotes" class="footnotes footnotes-end-of-document"
       role="doc-endnotes">
       <hr />
@@ -813,39 +834,36 @@
       new. But I believe linkspace is a simple synthesis compared to
       previous attempts (see <a href="#alts">alts</a>).<a href="#fnref3"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn4"><p>Your device immediatly forgetting those data
-      points is a configuration detail.<a href="#fnref4"
-      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn5"><p>The perception is created that the address
+      <li id="fn4"><p>The perception is created that the address
       ‘http://www.some_platform.com/image/BrokenMachine.jpg’ is
       addressing ‘(image data)’ - this is wrong. The address is used for
       your request to find where it needs to go, this address then
       usually replies with ‘(image data)’. A subtle but consequental
       difference. Linkspace does not have this discrepency.<a
+      href="#fnref4" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn5"><p>Unique for all intents and purposes.<a
       href="#fnref5" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn6"><p>Unique for all intents and purposes.<a
-      href="#fnref6" class="footnote-back"
-      role="doc-backlink">↩︎</a></p></li>
-      <li id="fn7"><p>Both TCP/IP packets and linkspace packets have
+      <li id="fn6"><p>Both TCP/IP packets and linkspace packets have
       control fields that are irrelevant to a vast majority of
-      developers.<a href="#fnref7" class="footnote-back"
+      developers.<a href="#fnref6" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn8"><p>Currently only the reading, processing and writing
+      <li id="fn7"><p>Currently only the reading, processing and writing
       packets API is supported. With the rest put on the TODO list.<a
-      href="#fnref8" class="footnote-back"
+      href="#fnref7" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn9"><p>It bugs me to no end that some marketing
-      department ruined the word ‘serverless’. I’m talking about: a
-      networked application that works without any critically important
-      lines of communication or hosts.<a href="#fnref9"
-      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn10"><p>Authenticated as in: cryptographicaly proven that
+      <li id="fn8"><p>It bugs me that a marketing department ruined the
+      word ‘serverless’. I’m talking about: a networked application that
+      works without any critically important lines of communication or
+      hosts.<a href="#fnref8" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn9"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
       an HTTPS session is also proof that the keyholder send the
       message. It’s just not a property easy to use right now.<a
-      href="#fnref10" class="footnote-back"
+      href="#fnref9" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       </ol>
       </aside>
