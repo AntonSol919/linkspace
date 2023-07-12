@@ -2,9 +2,9 @@
 #+PANDOC_OPTIONS: template:./template.pml 
 #+OPTIONS: toc:nil
 
-This is a quick introduction for linkspace using the command line tool `lk` in bash.
+This introduction jumps headlong into linkspace using the command line tool `lk` in bash.
+If you're unfamiliar with reading bash then [[./why.html][why]] is a better place to start.
 You can follow along by [[https://github.com/AntonSol919/linkspace/releases][downloading]] the latest release. 
-If you're unfamiliar with reading bash then [[./why.html][why]] might be a better place to start.
 
 #+NAME: init
 #+BEGIN_SRC bash :session codeorg :exports none
@@ -417,5 +417,5 @@ That's it for this quick introduction.
 For a more in-depth technical guide or the Python API see the [[./docs/guide/index.html][Guide]].
 See [[./why.html][why]] for some of the reasoning behind linkspace.
 
-Linkspace is licensed under the MPL-2.0. 
-Consider it for your next project where the goal is to talk _about_ data with more than two devices.
+Linkspace is free and open source under the MPL-2.0. 
+Give it a try next time you want to talk about data.

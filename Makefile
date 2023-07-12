@@ -39,9 +39,7 @@ git-checkin: homepage docs
 	cargo +nightly check
 
 publish: git-checkin
-	rsync -rvkP --exclude ".gitignore" ./homepage/ ./build/homepage
-	git rev-parse HEAD > ./build/PUBLISH_HEAD
+	rsync -rvkP --exclude "./homepage/.gitignore" ./homepage/ ./build/homepage
 	git checkout publish
 	rsync -rvkP ./build/homepage/ ./
-	echo 'Publish Commit $(cat ./build/PUBLISH_HEAD)'
 
