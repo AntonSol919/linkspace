@@ -22,7 +22,7 @@ These knowledge/skills are assumed:
 - the difference between a string and bytes
 - What it means to set the seed for a random number generator.
 - What a hash and public keys is.
-- You've read the [[../../code.html][quick start]] or  [[../..//why.html][why]].
+- You've read the [[../../code_intro.html][quick start]] or  [[../..//why.html][why]].
 
 In linkspace, the responsibilities for things are different to what we're used to.
 

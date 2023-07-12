@@ -340,7 +340,7 @@ Starting with that last group:
 
 If you're just interested in the tool; linkspace can shrink a 'stack' significantly.
 
-Data formats change and grow as projects goes on.
+Data formats change and grow as projects go on.
 By using linkspace to carry the data, many potentially-critical properties are there by design.
 
 Instead of risking a costly and half backed upgrade later, you get them without any intrusive design changes required:
