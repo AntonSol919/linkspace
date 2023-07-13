@@ -6,7 +6,8 @@
 		 <link rel="stylesheet" href="./style.css"/>
      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Code Pro">
 	<body>
-		 <a id="name" href="./index.html"><img id="logo" src="./images/logo.png"/>Linkspace</a>
+		 <a id="name" href="./index.html">
+       <img id="logo" src="./images/logo.svg"/>Linkspace</a>
 		<div id="tagline">a general purpose supernet</div>
     
 
