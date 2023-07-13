@@ -45,8 +45,8 @@
     
     <div id="main">
       <h1 id="why">Why</h1>
-      <p>These are exciting times. More than 2^32 people have connected,
-      and how we network is due an upgrade.</p>
+      <p>These are exciting times. More than 2<sup>32</sup> people have
+      digitally connected, and how we network is due an upgrade.</p>
       <h2 id="the-internet-of-streams">The internet of streams</h2>
       <p>The digital world you know is built on structuring streams of
       data. At its core the internet<a href="#fn1" class="footnote-ref"
@@ -293,8 +293,8 @@
       <p>It doesn’t matter when or where sets are merged, a set only
       ever has a single copy of a point. It doesn’t matter how you
       received a message or how you send it; If you create a new message
-      and refer to the hash, everybody can knows exactly what you’re
-      referring to.</p>
+      and refer to the hash, any device can knows exactly what you’re
+      pointing to.</p>
       <div class="container pkt phd">
       <table style="width:99%;">
       <colgroup>
@@ -388,18 +388,20 @@
       <p>In linkspace points have a ‘create’ timestamp and can be signed
       by a public key (which i’ll refer to with [@:…keyname]).</p>
       <p>The single result HTTP or a filesystem provides is an
-      incomplete abstraction. It is unable to capture events over time
-      and there is no way to scale it. In so far as that having a single
-      result is simple; the same thing is achieved in linkspace by
-      requesting only ‘the latest point with path X’ or ‘the latest
-      point with path X signed by someone you trust’.</p>
+      incomplete abstraction. It is unable to capture events over time,
+      scaling is impractical, and a valid &amp; consistent results is an
+      assumption - that can break to disastrous effects.</p>
+      <p>In so far as that having a single result is simple; the same
+      thing is achieved in linkspace by requesting only ‘the latest
+      point with path X’ or ‘the latest point with path X signed by
+      someone you trust’.</p>
       <p>The effects of the second option is worth considering for a
       moment: When an application limits itself to points created (or
       linked) by a specific key, then that key has a administrative
       ‘include/exclude’ power, but it is not tied to a physical server
       hosting data.</p>
       <p>Put in different terms - linkspace has the property that
-      ‘hosting data’ and ‘content administration’ are decoupled.</p>
+      ‘hosting data’ and ‘data administration’ are decoupled.</p>
       <div class="container pkt pkthd">
       <table style="width:98%;">
       <colgroup>
@@ -542,14 +544,13 @@
       used the <a href="./lns.html">LNS</a> representation for
       <code>[@:alice:sales:example]</code> and <code>[#:example]</code>.
       LNS solves a similar problem as DNS, i.e. instead of using a
-      number like <code>192.168.0.1</code> you can use a user friendly
-      name.</p>
+      number like <code>192.168.0.1</code> you can use the name
+      <code>www.example.com</code>.</p>
       <p>Finally, in our example so far I used a <span
-      id="hh1">[HASH]</span> directly in their data field. This would
-      not work well for most use-cases. Instead, a point in linkspace
-      has a list of <a
-      href="./docs/guide/index.html#lk_linkpoint">links</a> adjacent to
-      the data.</p>
+      id="hh1">[HASH]</span> directly in the data field. This would not
+      work well for most use-cases. Instead, a point in linkspace has a
+      list of <a href="./docs/guide/index.html#lk_linkpoint">links</a>
+      adjacent to the data.</p>
       <div class="container">
       <table style="width:98%;">
       <colgroup>
@@ -633,7 +634,7 @@
       needs to process its view of a shared space.</p>
       <p>To give linkspace a try <a
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
-      the latest release, and check out the apps or the (python) <a
+      the latest release, and check out the examples or the (python) <a
       href="./docs/tutorial/index.html">tutorials</a>.</p>
       <h1 id="qa">Q&amp;A</h1>
       <h3 id="who-is-linkspace-for">Who is linkspace for?</h3>
@@ -726,8 +727,10 @@
       beyond a single server, etc.</p>
       <p>Once a full stack is build, linkspace is very small w.r.t. its
       features.</p>
-      <p>As far as overhead goes, it is designed to be fast/low energy
-      such that a low-end phone can use it to stream video.</p>
+      <p>As far as speed goes, linkspace point format is designed to be
+      fast - Blake3, well aligned fields. The library is zero-copy where
+      possible. A single thread on my machine can create new packets at
+      a rate of around 800MB/s.</p>
       <h3 id="complexity">Can you ask people to deal with the added
       complexity?</h3>
       <p>Yes.</p>

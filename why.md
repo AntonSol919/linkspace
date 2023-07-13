@@ -1,7 +1,7 @@
 # Why
 
 These are exciting times. 
-More than 2^32 people have connected, and how we network is due an upgrade. 
+More than 2<sup>32</sup> people have digitally connected, and how we network is due an upgrade. 
 
 ## The internet of streams
 
@@ -167,7 +167,7 @@ There is a 32 byte number that uniquely addresses the exact content of that poin
 [^uniq]: Unique for all intents and purposes.
 
 It doesn't matter when or where sets are merged, a set only ever has a single copy of a point.
-It doesn't matter how you received a message or how you send it; If you create a new message and refer to the hash, everybody can knows exactly what you're referring to.
+It doesn't matter how you received a message or how you send it; If you create a new message and refer to the hash, any device can knows exactly what you're pointing to.
 
 :::{.container .pkt .phd}
 +-----------------------------------+--------------------------------+----------------------------------+
@@ -213,14 +213,15 @@ In those, a request using a path gets you a single result. But this is not the c
 In linkspace points have a 'create' timestamp and can be signed by a public key (which i'll refer to with [@:...keyname]).
 
 The single result HTTP or a filesystem provides is an incomplete abstraction.
-It is unable to capture events over time and there is no way to scale it.
+It is unable to capture events over time, scaling is impractical, and a valid & consistent results is an assumption - that can break to disastrous effects.
+
 In so far as that having a single result is simple; the same thing is achieved in linkspace by requesting only 'the latest point with path X' or 'the latest point with path X signed by someone you trust'.
 
 The effects of the second option is worth considering for a moment:
 When an application limits itself to points created (or linked) by a specific key, then that key has a administrative 'include/exclude' power, but it 
 is not tied to a physical server hosting data.
 
-Put in different terms - linkspace has the property that 'hosting data' and 'content administration' are decoupled.
+Put in different terms - linkspace has the property that 'hosting data' and 'data administration' are decoupled.
 
 :::{.container .pkt .pkthd}
 +-----------------------------------+------------------------------+------------+--------------------------------+---------------------------------------------+
@@ -270,9 +271,9 @@ For example the `msg_board` application and the `[#:example]` group.
 
 Note that the group and public keys are 32 bytes.
 For brevity I used the [LNS](./lns.html) representation for `[@:alice:sales:example]` and `[#:example]`.
-LNS solves a similar problem as DNS, i.e. instead of using a number like `192.168.0.1` you can use a user friendly name.
+LNS solves a similar problem as DNS, i.e. instead of using a number like `192.168.0.1` you can use the name `www.example.com`.
 
-Finally, in our example so far I used a <span id="hh1">[HASH]</span> directly in their data field.
+Finally, in our example so far I used a <span id="hh1">[HASH]</span> directly in the data field.
 This would not work well for most use-cases.
 Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_linkpoint) adjacent to the data.
 
@@ -320,13 +321,13 @@ There are some nuances and various advanced topics.
 However, this should be enough to reason about the basics:
 
 A single unit in linkspace is a point, addressable by hash and path, and links to other points.
-Domain applications provide a user interface to read and write points. 
-Users generate their identity and form groups to exchange points. 
+Domain applications provide a user interface to read and write points.
+Users generate their identity and form groups to exchange points.
 
 The result is that _conceptually_ an application only needs to process its view of a shared space.
 
 To give linkspace a try [Download](https://github.com/AntonSol919/linkspace/releases) the latest release,
-and check out the apps or the (python) [tutorials](./docs/tutorial/index.html).
+and check out the examples or the (python) [tutorials](./docs/tutorial/index.html).
 
 # Q&A
 
@@ -405,7 +406,7 @@ Few projects stay that simple. Most projects grow in scope: to identify users, s
 
 Once a full stack is build, linkspace is very small w.r.t. its features.
 
-As far as overhead goes, it is designed to be fast/low energy such that a low-end phone can use it to stream video.
+As far as speed goes, linkspace point format is designed to be fast - Blake3, well aligned fields. The library is zero-copy where possible. A single thread on my machine can create new packets at a rate of around 800MB/s.
 
 ### Can you ask people to deal with the added complexity?{#complexity}
 
