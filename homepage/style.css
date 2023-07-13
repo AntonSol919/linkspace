@@ -56,10 +56,10 @@ nav>hr {
 }
 
 #logo {
-    max-height: 0.9em;
-    max-width: 0.9em;
+    max-height: 0.93em;
+    max-width: 0.93em;
     position: relative;
-    margin-bottom: -0.13em;
+    margin-bottom: -0.18em;
 }
 
 #name {
@@ -230,12 +230,15 @@ tbody {
     }
     body{
     grid-template-areas:
-    'name .    .    '
-        'tagl tagl .    '
+        'name name name '
+        'tagl tagl tagl '
         'navi navi navi '
         'main main main '
     }
-
+    #name , #tagline {
+        text-align:center;
+    }
+    
     #main{
         margin:0px;
         padding:0px;
