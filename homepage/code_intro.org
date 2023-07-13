@@ -51,7 +51,7 @@ and a signature:
   lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password 'my secret' >> mylog
 #+END_SRC
 #+NAME: real-signed
-#+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
+#+BEGIN_SRC bash :session codeorg :exports none :results output verbatim
   KEY='$argon2d$v=19$m=8,t=1,p=1$tb0anwpH0rSbYe6JLd1Bgtf00QQUAYuhOcBqeSjAgW4$kYAtGyF78cfPjRqcm4Y/s1hgQTRysELK/L910P2u27c'
   lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password '' >> mylog
 #+END_SRC
