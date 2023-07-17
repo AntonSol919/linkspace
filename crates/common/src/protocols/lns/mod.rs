@@ -21,7 +21,7 @@ Not all part of are fully implemented.
 
 
 use abe::eval::{ ApplyResult};
-use anyhow::{Context };
+use anyhow::{Context, ensure };
 use byte_fmt::{ab, AB};
 use linkspace_argon2_identity::pubkey;
 use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC, Point };
@@ -29,7 +29,7 @@ use tracing::instrument;
 
 use crate::runtime::Linkspace;
 
-use self::{claim::{LiveClaim, Claim,  read_enckey}, name::{Name, SpecialName}, public_claim::IssueHandler};
+use self::{claim::{LiveClaim, Claim,  read_enckey}, name::{Name, NameType}, public_claim::IssueHandler};
 
 
 pub mod name;
@@ -83,10 +83,10 @@ pub fn lnstag(stamp:Stamp,rest:&[u8], kind:u8) -> anyhow::Result<Tag>{
 }
 /// Get the parent claim
 pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandler) -> anyhow::Result<Result<Claim,Claim>>{
-    match name.special() {
-        Some(SpecialName::File) => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&mut [Link::DEFAULT],&[]).unwrap())),
-        Some(SpecialName::Local) => todo!(),
-        None => {
+    match name.name_type() {
+        NameType::File => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&mut [Link::DEFAULT],&[]).unwrap())),
+        NameType::Local => todo!(),
+        NameType::Public => {
             let (parent,_val) = name.spath().pop();
             let name = Name::from_spath(parent).ok().unwrap_or_else(Name::root);
             Ok(lookup_live_chain(lk, &name, issue_handler)?.map(|p| p.claim).map_err(|p|p.claim))
@@ -105,9 +105,9 @@ fn dummy_root(name:&Name) -> LiveClaim{
 
 /// Lookup the chain of claims that gave a name
 pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
-    match name.special(){
-        Some(SpecialName::File) => {
-            let path = name.file_path()?;
+    match name.name_type(){
+        NameType::File => {
+            let path = name.file_path2()?;
             let claim : anyhow::Result<Claim>= try {
                 let pbytes = match lk.env().files_data(&path, false)?{
                     Some(p) => p,
@@ -122,7 +122,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
                 parent: None,
             }))
         },
-        Some(SpecialName::Local) => {
+        NameType::Local => {
             // No admin process exists yet so we pretend something setup the correct :local claims
              match local_claim::get_private_claim(&lk.get_reader(), name, None).into_ok()?{
                 Some(claim) => {
@@ -135,7 +135,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
              }
         }
         // The admin process doesn't exist yet so we walk the chain for now
-        None => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.spath().iter(), issue_handler),
+        NameType::Public => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.spath().iter(), issue_handler),
     }
 }
 
@@ -183,7 +183,8 @@ pub fn setup_special_keyclaim(
     enckey: &str,
     overwrite:bool
 ) -> anyhow::Result<PubKey> {
-    let sp = name.special().context("will only setup :local or :file keys")?;
+    let sp = name.name_type();
+    ensure!( sp != NameType::Public, "you can only setup :file or :local key claims this way");
     if let Ok(Some(c)) = lookup_claim(lk, &name){
         if !overwrite {anyhow::bail!("claim already set but overwrite is false")}
         else { tracing::debug!(old_claim=%c)}
@@ -191,11 +192,12 @@ pub fn setup_special_keyclaim(
     let pubkey = pubkey(enckey)?.into();
     let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: ab(&PUBKEY_TAG),ptr:pubkey}], enckey.as_bytes())?;
     match sp {
-        SpecialName::Local => {
-            if claim.name.spath().collect().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
+        NameType::Local => {
+            if claim.name.spath().to_array().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
             local_claim::setup_local_keyclaim(lk, claim,None)?;
         },
-        SpecialName::File => file_claim::setup(lk,claim,overwrite)?
+        NameType::File => file_claim::setup(lk,claim,overwrite)?,
+        NameType::Public => unreachable!()
     }
     Ok(pubkey)
 }

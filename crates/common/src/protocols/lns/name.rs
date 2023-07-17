@@ -36,66 +36,74 @@ pub type NameExpr = TypedABE<Name>;
 
 #[derive(Clone,PartialEq,Eq)]
 /// A reversed spath constrained to fit the lns path
-pub struct Name { spath: SPathBuf,special:Option<SpecialName>}
+pub struct Name { spath: SPathBuf,name_type:NameType}
 #[derive(Copy,Clone,PartialEq,Eq)]
-pub enum SpecialName {
+pub enum NameType {
+    Public,
     Local,
     File
 }
-impl SpecialName {
-    pub fn from(b:&[u8]) -> Option<Self>{
+impl NameType {
+    pub fn from_tail(b:&[u8]) -> Self{
         match b {
-            b"local" => Some(SpecialName::Local),
-            b"file" | b"~" => Some(SpecialName::File),
-            _ => None
+            b"local" => NameType::Local,
+            b"file" | b"~" => NameType::File,
+            _ => NameType::Public
         }
     }
 }
 
 
 impl Name {
-    pub fn root() -> Self { Name{spath: SPathBuf::new(), special:None}}
-    pub fn local() -> Self { Name{spath: spath_buf(&[b"local"]), special:Some(SpecialName::Local)}}
-    pub(crate) fn file_path(&self) -> anyhow::Result<std::path::PathBuf>{
-        ensure!(matches!(self.special , Some(SpecialName::File)));
-        self.claim_ipath().collect().into_iter()
+    pub fn root() -> Self { Name{spath: SPathBuf::new(), name_type:NameType::Public}}
+    pub fn local() -> Self { Name{spath: spath_buf(&[b"local"]), name_type:NameType::Local}}
+    pub(crate) fn file_path2(&self) -> anyhow::Result<std::path::PathBuf>{
+        ensure!(matches!(self.name_type , NameType::File));
+
+        let ipath = self.claim_ipath();
+        let lst = ipath.to_array();
+        let piter = lst.iter()
             .map(|s| match std::str::from_utf8(s)?{
-                 "key" => anyhow::bail!("file keyname can't contain the word 'key'"),
+                 "claim.pkt" => anyhow::bail!("file keyname can't can't contain the word 'enckey'"),
                 c => Ok(c)
-            }).chain([Ok("key")]).try_collect()
+            });
+        let pb = [Ok("lns")].into_iter()
+            .chain(piter)
+            .chain([Ok("claim.pkt")]).try_collect()?;
+        Ok(pb)
     }
     pub fn claim_ipath(&self) -> IPathBuf { CLAIM_PREFIX.ipath().join(&self.spath).ipath()}
     pub fn claim_group(&self) -> Option<GroupID> {
-        match self.special{
-            Some(SpecialName::Local) => Some(PRIVATE),
-            Some(SpecialName::File) => None,
-            None => Some(PUBLIC),
+        match self.name_type{
+            NameType::Local => Some(PRIVATE),
+            NameType::File => None,
+            NameType::Public => Some(PUBLIC),
         }
     }
     pub fn from_spath(path:&SPath) -> Result<Name,NameError>{
         tracing::debug!(%path,"name from");
-        let rcomps = path.collect();
+        let rcomps = path.to_array();
         if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
         if rcomps.is_empty(){ return Err(NameError::MinLen)}
-        let special = SpecialName::from(rcomps.first().unwrap());
+        let name_type = NameType::from_tail(rcomps.first().unwrap());
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { spath: path.into_spathbuf() ,special})
+        Ok(Name { spath: path.into_spathbuf() ,name_type})
     }
     pub fn from(comps: &[&[u8]]) -> Result<Name,NameError>{
         if comps.is_empty(){ return Err(NameError::MinLen)}
         if comps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        let special = SpecialName::from(comps.last().unwrap());
+        let special = NameType::from_tail(comps.last().unwrap());
         let it = comps.iter().rev();
         let path = SPathBuf::try_from_iter(it)?;
         if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { spath: path ,special})
+        Ok(Name { spath: path ,name_type: special})
     }
     pub fn spath(&self) -> &SPath {
         &self.spath
     }
 
-    pub fn special(&self) -> Option<SpecialName> {
-        self.special
+    pub fn name_type(&self) -> NameType {
+        self.name_type
     }
 }
 impl TryFrom<ABList> for Name {
@@ -113,7 +121,7 @@ impl ToABE for Name {
         if self.spath.is_empty(){
             return out(ABE::Expr(ast::Expr::Lst(abev!({ "LNS-ROOT" }))))
         }
-        let arr = self.spath.collect();
+        let arr = self.spath.to_array();
         let mut it = arr.iter().rev();
         let first = it.next().unwrap();
         out(ABE::Expr(ast::Expr::Bytes(first.to_vec())));

@@ -58,6 +58,11 @@ impl BTreeEnv {
         Ok(env)
     }
 
+    /// get the 'files' directory - read with [file:] abe functions - use [[files_data]] and [[set_files_data]] to guard against path traversal attacks.
+    pub fn files_path(&self) -> PathBuf{
+        self.dir().join("files")
+    }
+
     #[instrument(ret,skip(bytes))]
     pub fn set_files_data(&self, path: impl AsRef<std::path::Path>+std::fmt::Debug, bytes: &[u8],overwrite:bool) -> anyhow::Result<()>{
         tracing::trace!(bytes=%AB(bytes));
@@ -144,7 +149,7 @@ pub fn save_dyn_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o dyn NetPkt>
     lst.extend(it.map(|o|(o,SaveState::Pending)));
     save_dyn(env,&mut lst)
 }
-fn check_path(path:&std::path::Path) -> anyhow::Result<&std::path::Path>{
+pub fn check_path(path:&std::path::Path) -> anyhow::Result<&std::path::Path>{
     if let Some(c) = path.components().find(|v| !matches!(v,std::path::Component::Normal(_))){
         anyhow::bail!("path can not contain a {c:?} component")
     }

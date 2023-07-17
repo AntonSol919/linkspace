@@ -9,7 +9,7 @@ use anyhow::*;
 use linkspace_common::{
     anyhow::{self},
     cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
-    prelude::{* }, protocols::lns::{self, name::NameExpr, claim::{ Claim}, PUBKEY_TAG, GROUP_TAG, public_claim::Issue, PUBKEY_AUTH_TAG, lnstag }, identity,  };
+    prelude::{* }, protocols::lns::{self, name::{NameExpr, NameType}, claim::{ Claim}, PUBKEY_TAG, GROUP_TAG, public_claim::Issue, PUBKEY_AUTH_TAG, lnstag, file_claim::list_claims }, identity,  };
 use tracing_subscriber::EnvFilter;
 
 
@@ -144,7 +144,7 @@ fn main() -> anyhow::Result<()> {
             let mut write = common.open(&write)?;
             let ctx = common.eval_ctx();
             let until = until.eval(&ctx)?;
-            
+
             let as_link = |tag:Tag| move |ptr:LkHash| Link::new(tag,ptr);
             let mut links = vec![];
             let name = name.eval(&ctx)?;
@@ -186,21 +186,33 @@ fn main() -> anyhow::Result<()> {
         Cmd::Ls { name } => {
             let ctx = common.eval_ctx();
             let name = name.eval(&ctx)?;
-            if name.claim_group().is_none(){ bail!("ls not supported for 'env' names. look in {:?}",common.env()?.dir())}
             let rt = common.env()?;
             let reader = rt.get_reader()?;
-            for c_ok in lns::utils::list_all_potential_claims_with_prefix(&reader,&name){
-                match c_ok {
-                    Result::Ok(o) => {
-                        println!("{o}")
-                    },
-                    Err(e) => eprintln!("{e:#?}"),
+            match name.name_type(){
+                NameType::File => {
+                    let claims = list_claims(&mut rt.files_path(), &name)?;
+                    for c_ok in claims{
+                        match c_ok{
+                            Result::Ok(o) => println!("{o}"),
+                            Err(e) => eprintln!("{e:#?}"),
+                        }
+                    }
+                },
+                _ => {
+                    let claims = lns::utils::list_all_potential_claims_with_prefix(&reader,&name);
+                    for c_ok in claims{
+                        match c_ok {
+                            Result::Ok(o) => {
+                                println!("{o}")
+                            },
+                            Err(e) => eprintln!("{e:#?}"),
+                        }
+                    }
                 }
-            }
+            };
         },
         Cmd::LsGroup { group } => ls_tag(&common,&GROUP_TAG,group)?,
         Cmd::LsPubkey{ pubkey} => ls_tag(&common,&PUBKEY_TAG,pubkey)?,
-
     };
     Ok(())
 }
@@ -224,7 +236,7 @@ fn ls_tag(common:&CommonOpts,tag:&[u8],ptr:Option<PExpr>) -> anyhow::Result<()>{
                 Err(e) => eprintln!("{e:?}"),
             }
         }
-    } 
+    }
     Ok(())
 }
 

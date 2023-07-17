@@ -16,9 +16,10 @@ pub use crate::udp_multicast::UdpIPC;
 pub use event_listener;
 use event_listener::{Event, EventListener};
 
-pub fn get_port(bus_id: u64) -> u16 {
-    let mut lockfile =
-        fslock::LockFile::open(&std::env::temp_dir().join("procbus.map.lock")).unwrap();
+pub fn get_port(bus_id: u64) -> std::io::Result<u16> {
+    let path = std::env::temp_dir().join("procbus.map.lock");
+    let mut lockfile = fslock::LockFile::open(&path)
+        .map_err(|e| {eprintln!("cant open lock file {path:?}"); e})?;
     lockfile.lock_with_pid().unwrap();
     let path = std::env::temp_dir().join("procbus.map");
     let mut bytes = match std::fs::read(&path) {
@@ -36,7 +37,7 @@ pub fn get_port(bus_id: u64) -> u16 {
         let saved_port = u16::from_ne_bytes([b[8], b[9]]);
         new_port = new_port.max(saved_port);
         if u64::from_ne_bytes(b[0..8].try_into().unwrap()) == bus_id {
-            return saved_port;
+            return Ok(saved_port);
         };
     }
     bytes.extend(bus_id.to_ne_bytes());
@@ -44,7 +45,7 @@ pub fn get_port(bus_id: u64) -> u16 {
     bytes.extend(new_port.to_ne_bytes());
     std::fs::write(&path, bytes).unwrap();
     lockfile.unlock().unwrap();
-    new_port
+    Ok(new_port)
 }
 
 pub struct ProcBus(Arc<Inner>);
@@ -64,7 +65,7 @@ impl ProcBus {
     pub fn new(path: &PathBuf) -> std::io::Result<ProcBus> {
         tracing::debug!("using UDP for IPC signals");
         let bus_id = u64::from_be_bytes(std::fs::read(path.join("id")).expect("missing id file").try_into().expect("bad id file"));
-        let port = get_port(bus_id);
+        let port = get_port(bus_id)?;
         let pid = std::process::id();
         
         Ok(ProcBus(Arc::new(Inner{

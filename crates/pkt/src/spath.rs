@@ -395,7 +395,7 @@ impl SPath {
         self.strip_prefix(prefix)
             .expect(" Target does not start with prefix")
     }
-    pub fn collect(&self) -> arrayvec::ArrayVec<&[u8],MAX_PATH_LEN>{
+    pub fn to_array(&self) -> arrayvec::ArrayVec<&[u8],MAX_PATH_LEN>{
         arrayvec::ArrayVec::from_iter(self.iter())
     }
     pub fn iter(&self) -> &SPathIter {

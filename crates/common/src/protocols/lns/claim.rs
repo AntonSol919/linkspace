@@ -132,7 +132,6 @@ pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetP
     Ok((links,pkt))
 }
 
-// TODO abdata should be a newtype
 pub fn vote(claim: &Claim,key: &SigningKey,data:&[u8])-> anyhow::Result<NetPktBox>{
     let vote_link = [Link::new("vote",claim.pkt.hash())];
     Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_ipath(), &vote_link, &data, now(), key, ()).as_netbox())
