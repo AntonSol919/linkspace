@@ -2,11 +2,12 @@
 # A 'activate' script is available in the source and binary pkg.
 # This is the version compatible with the binary pkg.
 
-export PYTHONPATH=$PWD/python
-export PATH=$PWD/bin:$PATH
-export PATH=$(find $PWD/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH
+PKG_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export PYTHONPATH=$PKG_DIR/python
+export PATH=$PKG_DIR/bin:$PATH
+export PATH=$(find $PKG_DIR/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH
 
-export LK_DIR=${LK_DIR:-"$PWD/linkspace"}
+export LK_DIR=${LK_DIR:-"$PKG_DIR/linkspace"}
 export LK_GROUP=${LK_GROUP:-[#:test]}
 
 if [[ ! -v LK_PASS ]]; then

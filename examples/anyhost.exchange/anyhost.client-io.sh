@@ -26,7 +26,7 @@ lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\n
 export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
-LK_SKIP_HASH=false lk save --new-only db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
     | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \

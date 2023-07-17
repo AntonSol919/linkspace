@@ -46,7 +46,7 @@ a timestamp that defaults to `now`:
 and a signature:
 
 #+NAME: point-signed
-#+BEGIN_SRC 
+#+BEGIN_SRC bash :exports code
   KEY=$(lk key --no-pubkey --no-lk --password 'my secret')
   lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password 'my secret' >> mylog
 #+END_SRC

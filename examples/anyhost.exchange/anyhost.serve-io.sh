@@ -24,7 +24,7 @@ lk eval "last rx [u64:$LAST_RX/us:str]\nlast tx [u64:$LAST_TX/us:str]\n"
 
 export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
-LK_SKIP_HASH=false lk save --new-only db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
         --old file:>( lk pktf "$PID Ignored [hash:str] (old)" >&2 ) \
    | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
