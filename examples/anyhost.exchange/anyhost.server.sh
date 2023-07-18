@@ -3,8 +3,8 @@ set -euo pipefail
 
 export PORT=${PORT:-"5020"}
 echo My Key $(lk key)
-export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
-echo Serving $LK_GROUP $PORT 
+
+echo Serving $LK_GROUP $PORT
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 
 function fin (){

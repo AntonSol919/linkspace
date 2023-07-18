@@ -7,6 +7,7 @@ name=${name:-${1:-bob}}
 
 mkdir -p $name
 cd $name
+export LK_GROUP=${LK_GROUP:-[#:test]} # err if not set
 export LK_DIR=$PWD
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 echo $name $(lk key --no-enckey --no-check) | tee ./emulate_name_key
