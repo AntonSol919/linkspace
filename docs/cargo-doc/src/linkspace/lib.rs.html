@@ -1014,6 +1014,9 @@
 <a href="#1014" id="1014">1014</a>
 <a href="#1015" id="1015">1015</a>
 <a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1218,7 +1221,7 @@ Some internals structs defs are currently leaking and will be removed.
     }
 }
 
-<span class="kw">pub use </span>abe::{lk_encode, lk_eval, lk_split_abe};
+<span class="kw">pub use </span>abe::{lk_encode, lk_eval, lk_tokenize_abe};
 <span class="doccomment">/** ascii byte expression utilities
 
 ABE is a byte templating language.
@@ -1231,14 +1234,15 @@ See guide#ABE to understand its use and indepth explanation.
     <span class="kw">pub use </span>linkspace_common::pkt::repr::DEFAULT_PKT;
     <span class="kw">use </span>linkspace_common::{
         abe::abtxt::as_abtxt,
-        prelude::{abtxt::CtrChar, ast::split_abe},
+        prelude::{abtxt::CtrChar, ast::tokenize_abe},
     };
 
     <span class="doccomment">/**
     Evaluate an expression and return the bytes
 
     Optionally add a `pkt` as a context.
-    Refuses &#39;\n&#39; and &#39;\t&#39;, and returns delimiters &#39;:&#39; and &#39;/&#39; as plain bytes.
+    &#39;:&#39; and &#39;/&#39; outside of &#39;[&#39; and &#39;]&#39; read as plain bytes.
+    Set parse_unencoded to true to read bytes outside the range 0x20..0xfe as-is. i.e. useful for contemplating with newlines and utf8.
     See [lk_split_abe] for different delimiter behavior
 
     ```
@@ -1292,12 +1296,13 @@ See guide#ABE to understand its use and indepth explanation.
 
     A list of functions can be found with ```lk_eval(&quot;[help]&quot;)```
     **/
-    </span><span class="kw">pub fn </span>lk_eval&lt;<span class="lifetime">&#39;o</span>&gt;(expr: <span class="kw-2">&amp;</span>str, udata: <span class="kw">impl </span>Into&lt;UserData&lt;<span class="lifetime">&#39;o</span>&gt;&gt;) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
-        varctx::lk_eval(ctx::ctx(udata.into())<span class="question-mark">?</span>, expr)
+    </span><span class="kw">pub fn </span>lk_eval&lt;<span class="lifetime">&#39;o</span>&gt;(expr: <span class="kw-2">&amp;</span>str, udata: <span class="kw">impl </span>Into&lt;UserData&lt;<span class="lifetime">&#39;o</span>&gt;&gt;,parse_unencoded:bool) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
+        varctx::lk_eval(ctx::ctx(udata.into())<span class="question-mark">?</span>, expr,parse_unencoded)
     }
     <span class="doccomment">/**
-    Exec callback for each expr between control characters (&#39;:&#39;, &#39;/&#39;, &#39;\n&#39;, &#39;\t&#39;).
-    The first delimiter can be &#39;\0&#39;.
+    An abe parser. Useful to split a cli argument like &#39;domain:[#:test]:/thing/[12/u32] correctly.
+    The callback is called with (ctrl, contains_brackets, bytes ) where ctrl is 0 | &#39;:&#39; | &#39;/&#39;
+    Only the first ctrl can be &#39;\0&#39;.
     ```
     # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
@@ -1305,16 +1310,16 @@ See guide#ABE to understand its use and indepth explanation.
     assert_eq!(v,&amp;[(0,false,&quot;this&quot;), (b&#39;:&#39;,false,&quot;is/the&quot;), (b&#39;:&#39;,true,&quot;example[::]&quot;),(b&#39;\n&#39;,true,&quot;[::]newline[:/]&quot;)])
     ```
      **/
-    </span><span class="kw">pub fn </span>lk_split_abe&lt;<span class="lifetime">&#39;o</span>&gt;(
+    </span><span class="kw">pub fn </span>lk_tokenize_abe&lt;<span class="lifetime">&#39;o</span>&gt;(
         expr: <span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>str,
-        exclude_ctr: <span class="kw-2">&amp;</span>[u8],
+        exclude_ctr:<span class="kw-2">&amp;</span>[u8],
         <span class="kw-2">mut </span>per_comp: <span class="kw">impl </span>FnMut(u8,bool,<span class="kw-2">&amp;</span><span class="lifetime">&#39;o </span>str) -&gt; bool,
     ) -&gt; LkResult&lt;()&gt; {
         <span class="kw">let </span>plain = exclude_ctr
             .iter()
             .filter_map(|v| CtrChar::try_from_char(<span class="kw-2">*</span>v))
             .fold(<span class="number">0</span>, |a, b| a ^ b <span class="kw">as </span>u32);
-        <span class="kw">for </span>(a,b,c) <span class="kw">in </span>split_abe(expr, plain, <span class="number">0</span>)<span class="question-mark">? </span>{
+        <span class="kw">for </span>(a,b,c) <span class="kw">in </span>tokenize_abe(expr, plain, <span class="number">0</span>)<span class="question-mark">? </span>{
             <span class="kw">if </span>!per_comp(a,b,c) {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             }
@@ -1963,10 +1968,11 @@ See guide#ABE to understand its use and indepth explanation.
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::abe::ctx::LkCtx;
-    <span class="kw">use </span>linkspace_common::abe::{eval::eval, parse_abe};
+    <span class="kw">use </span>linkspace_common::{abe::{eval::eval, parse_abe}, prelude::parse_abe_strict_b};
 
-    <span class="kw">pub fn </span>lk_eval(ctx: LkCtx, expr: <span class="kw-2">&amp;</span>str) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
-        <span class="kw">let </span>expr = parse_abe(expr)<span class="question-mark">?</span>;
+    <span class="doccomment">/// [[crate::lk_eval]] with a custom context.
+    </span><span class="kw">pub fn </span>lk_eval(ctx: LkCtx, expr: <span class="kw-2">&amp;</span>str, parse_unencoded: bool) -&gt; LkResult&lt;Vec&lt;u8&gt;&gt; {
+        <span class="kw">let </span>expr = parse_abe(expr,parse_unencoded)<span class="question-mark">?</span>;
         <span class="kw">let </span>val = eval(<span class="kw-2">&amp;</span>ctx.as_dyn(), <span class="kw-2">&amp;</span>expr)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(val.concat())
     }
@@ -2001,11 +2007,11 @@ See guide#ABE to understand its use and indepth explanation.
         <span class="kw">let </span>password = <span class="kw">match </span>password{
             <span class="prelude-val">Some</span>(v) =&gt; Cow::Borrowed(v),
             <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>std::env::var(<span class="string">&quot;LK_PASS&quot;</span>){
-                <span class="prelude-val">Ok</span>(abe) =&gt; Cow::Owned(eval(<span class="kw-2">&amp;</span>ctx.as_dyn(),<span class="kw-2">&amp;</span>parse_abe(<span class="kw-2">&amp;</span>abe)<span class="question-mark">?</span>)<span class="question-mark">?</span>.concat()),
+                <span class="prelude-val">Ok</span>(abe) =&gt; Cow::Owned(eval(<span class="kw-2">&amp;</span>ctx.as_dyn(),<span class="kw-2">&amp;</span>parse_abe_strict_b(abe.as_bytes())<span class="question-mark">?</span>)<span class="question-mark">?</span>.concat()),
                 <span class="prelude-val">Err</span>(_e) =&gt; Cow::Borrowed(<span class="kw-2">&amp;</span>[] <span class="kw">as </span><span class="kw-2">&amp;</span>[u8]),
             }
         };
-        <span class="kw">let </span>expr = parse_abe(<span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>;
+        <span class="kw">let </span>expr = parse_abe_strict_b(name.as_bytes())<span class="question-mark">?</span>;
         <span class="kw">let </span>name : lns::name::Name = eval(<span class="kw-2">&amp;</span>ctx.as_dyn(), <span class="kw-2">&amp;</span>expr)<span class="question-mark">?</span>.try_into()<span class="question-mark">?</span>;
         <span class="kw">match </span>lns::lookup_enckey(<span class="kw-2">&amp;</span>linkspace.<span class="number">0</span>, <span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>{
             <span class="prelude-val">Some</span>((<span class="kw">_</span>,enckey)) =&gt; {

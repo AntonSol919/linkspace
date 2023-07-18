@@ -46,12 +46,12 @@ a timestamp that defaults to `now`:
 and a signature:
 
 #+NAME: point-signed
-#+BEGIN_SRC bash :exports code
+#+BEGIN_SRC 
   KEY=$(lk key --no-pubkey --no-lk --password 'my secret')
   lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password 'my secret' >> mylog
 #+END_SRC
 #+NAME: real-signed
-#+BEGIN_SRC bash :session codeorg :exports none :results output verbatim
+#+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
   KEY='$argon2d$v=19$m=8,t=1,p=1$tb0anwpH0rSbYe6JLd1Bgtf00QQUAYuhOcBqeSjAgW4$kYAtGyF78cfPjRqcm4Y/s1hgQTRysELK/L910P2u27c'
   lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password '' >> mylog
 #+END_SRC
@@ -366,7 +366,7 @@ Filters work on these mutable bytes as well.
 This let you quickly build specific network topologies.
 
 #+BEGIN_VERSE
-See [[./docs/guide/index.html#mutable][the guide]] for the mutable field names.
+See [[./docs/guide/index.org#mutable][the guide]] for the mutable field names.
 #+END_VERSE
 
 #+name: exchange
@@ -379,7 +379,7 @@ See [[./docs/guide/index.html#mutable][the guide]] for the mutable field names.
 
 #+BEGIN_VERSE
 The key takeaway here is - everything talks (streams of) packets. Avoid building custom serialization e.g. `struct MyStruct {customheader , packet}`.
-This keeps your stream compatible with other tools.
+This makes your streams incompatible with all other tools.
 #+END_VERSE
 
 
@@ -395,7 +395,7 @@ One such convention is the `pull` convention. This writes a query as a specific 
 #+END_SRC
 
 The goal of `pull` is to allow one process, e.g. an application like [[./docs/tutorial/imageboard.html][imageboard (bash)]] or [[./docs/tutorial/mineweeper-1.html][mineweeper (python)]]
-to signal another process, e.g. a group exchange process like  [[./docs/tutorial/bash.exchange.html][bash.exchange]],
+to signal another process, e.g. a group exchange application like  [[./docs/tutorial/bash.exchange.html][bash.exchange]],
 that it wants packets matching a query from the group.
 
 Queries define a 'set of points' in linkspace.
@@ -414,7 +414,7 @@ Queries are designed such that joining two query strings the result is the commo
 #+END_SRC
 
 That's it for this quick introduction.
-For a more in-depth technical guide or the library API see the [[./docs/guide/index.html][Guide]].
+For a more in-depth technical guide or the Python API see the [[./docs/guide/index.html][Guide]].
 See [[./why.html][why]] for some of the reasoning behind linkspace.
 
 Linkspace is free and open source under the MPL-2.0. 

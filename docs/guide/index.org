@@ -397,19 +397,20 @@ If there is no obvious way to do something use a general purpose language to dea
 
 When building an application you can choose where to use ABE and when to use a different encoding.
 
-** Parsing
+** Basic Encoding
 
 - Most printable ascii letters are as is.
-- Newline and Tab are external delimiters. Separating two blocks.
+- Newline is an external delimiters.
 - ~:~ and ~/~ are internal delimiters. Separating two byte expressions.
 - ~[~ and ~]~ wrap an expression
-- ~:~, ~/~, ~\~, ~[~, ~]~  can be escaped with a ~\~. (Use ~'\n'~ and ~'\t'~ for newline and tab )
+- ~:~, ~/~, ~\~, ~[~, ~]~  can be escaped with a ~\~.
 - ~\x00~ up-to ~\xFF~ for bytes.
 - ~\0~ equals  ~\x00~,  ~\f~ equals ~\xFF~
 
 We can encode binary into valid abtxt as follows:
+
 #+BEGIN_VERSE
-We'll get back to [[#lk_encode][encode]] later. 
+We'll get back to [[#lk_encode][encode]] more in depth later. 
 #+END_VERSE
 
 #+BEGIN_ctabs
@@ -417,7 +418,7 @@ We'll get back to [[#lk_encode][encode]] later.
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 printf "hello" | lk encode -i
 printf "world/" | lk encode -i
-printf "nl \n tab \t" | lk encode -i
+printf "nl \n" | lk encode -i
 printf "open [ close ]" | lk encode -i
 printf "emoji ⌨" | lk encode -i
 #+END_SRC
@@ -441,13 +442,12 @@ All fields are arbitrary bytes, and lk_encode can print them as ab text
 
 #+end_py
 #+end_ctabs
- 
 
 ** lk_eval
 
 ABE is evaluated by substituting an expressions ( ~[..]~ ) with its result.
 For example in ~[u8:97]~, the function 'u8' is called with the arguments ["97"].
-The function 'u8' turns a decimal repr of a byte into the byte.
+The function 'u8' reads the decimal string and writes it as a byte.
 The byte 97 equals the character 'a'. The byte 99 equals the byte 'c'
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
@@ -458,12 +458,10 @@ lk eval "ab[u8:99]" | xxd
 lk eval --json "h[u8:101]ll[u8:111] / world:etc" 
 #+END_SRC
 
-Note that bytes are joined after evaluating. In the example this results in the byte component ~'hello '~.
-The delimiters ('\n' '\t' ':' '/') are interpreted depends on the context.
-For instance, ~lk eval~ prints them 'as is' when seen outside of ~[...]~
+Note that bytes are joined after evaluating. In the example this results in ~h~ + ~e~ + ~ll~ + ~o~ + ~' '~ => ~'hello '~.
+The meaning of the delimiters ('\n', ':', '/') are interpreted depending on the context.
+For instance, ~lk eval~ prints them 'as is' for the outer expression.
 
-In other words: ~eval "hello/:[u8:99]\n"~ == ~hello/:c\n~ ,
-but within brackets they have another meaning:  ~eval "hello/:[hello/ \n :]"~ will error.
 
 #+Begin_VERSE
 The rest of this chapter explains ABE further in depth.
@@ -480,6 +478,12 @@ With basic knowledge of its purpose to read and write separated bytes (i.e. ~[ [
 the rest of the guide (starting at [[Query]]) can be read while you return here for reference in case something is unclear.
 #+end_VERSE
 
+
+There are two modes for tokenizing (before evaluation).
+- Strict: ~\n~, ~\t~, ~\r~ and bytes outside the range 0x20(SPACE)..=0x7e(~) are escaped.
+- Parse Unencoded: bytes outside 0x20..=0x7e are read 'as-is'.
+
+Both error when bytes are incorrectly escaped or non-closed ~[~, ~]~ brackets exists.
 
 *** Sub-expressions
 
@@ -624,14 +628,14 @@ But you can do some wizardry combining it with ~[/links]~.
 
 *** Usage notes
 
-ABE expressions evaluate into a list of [ (bytes,?sep) ].
-Sometimes each element has a different meaning, e.g. [ ( domain , : ) , (group , _) ] in the CLI arguments.
-You can process this list with ~lk_split_abe~. 
+ABE expressions evaluate into a list of [ (?sep,bytes) ].
+Sometimes each element has a different meaning, e.g. [ ( 0, domain ) , ( :,  group) ] in the CLI arguments.
+You can process this list with ~lk_tokenize_abe~. 
 
 But in the majority of cases we don't care about the list and only want a single result.
 ~lk_eval~ does just that. It interprets the separators as plain characters.
 
-Finally, consider what you would expect to happen when an evaluator takes a ABE expression as its final argument:
+Finally, consider what you would expect to happen when an macro takes a ABE expression as its final argument:
 
 - ~[/links:abc[:hello]/world]~
 - ~[/readhash:[#:pub]:the pkt:[pkt]]~
@@ -686,7 +690,7 @@ lk_eval2str("[help]",pkt=lk_linkpoint(),argv=["hello"]) # the help won't show up
 Translate bytes into abe such that ~lk_eval(lk_encode(X)) == X~
 
 #+begin_verse
-We can get meta. lk_encode is available as the evaluator ~[/?:bytes:options]~
+We can get meta. lk_encode is available as the macro ~[/?:bytes:options]~
 #+end_verse
 
 #+begin_ctabs
@@ -717,9 +721,9 @@ This is how packets are printed by default using ~lk pktf~ or pythons ~str(pkt)~
 #+end_ctabs
 
 
-** lk_split_abe
+** lk_tokenize_abe
 :PROPERTIES:
-:CUSTOM_ID: lk_split_abe
+:CUSTOM_ID: lk_tokenize_abe
 :END:
 
 

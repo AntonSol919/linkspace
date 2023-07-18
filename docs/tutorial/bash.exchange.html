@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-11 Tue 11:57 -->
+<!-- 2023-07-18 Tue 14:36 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A bash exchange example</title>
@@ -27,8 +27,8 @@
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/<br>
 </p>
 
-<div class="ctabs" id="org30aea44">
-<div class="info" id="org986cfc1">
+<div class="ctabs" id="orgde2777e">
+<div class="info" id="org70ff9ff">
 <p class="verse">
 Available in the repo/examples/<br>
 See repo/dev/exchange.md for some open design issues/notes.<br>
@@ -41,7 +41,7 @@ It does no pruning before sending or receiving.
 </p>
 
 </div>
-<div class="sh" id="orgb7f2de2">
+<div class="sh" id="orgd2c93f0">
 <p>
 
 </p>
@@ -53,13 +53,13 @@ It does no pruning before sending or receiving.
 <pre class="src src-bash">#!/bin/bash
 set -euo pipefail
 export SERVER=${SERVER:-${1:-"127.0.0.1:5020"}}
-export LK_GROUP_ORIG=$LK_GROUP
-export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
+export LK_GROUP=${LK_GROUP:-[#:test]}
+
 
 socat /dev/null tcp:$SERVER
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 
-echo Connecting $LK_GROUP_ORIG $SERVER
+echo Connecting $LK_GROUP $SERVER
 socat tcp:$SERVER,keepalive exec:"anyhost.handshake.sh connect anyhost.client-io.sh",fdout=4
 #websocat -E --binary ws://$SERVER sh-c:"handshake.sh connect client_io.sh"
 </pre>
@@ -93,7 +93,7 @@ lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\n
 export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
-LK_SKIP_HASH=false lk save --new-only db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
     | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
@@ -160,8 +160,8 @@ set -euo pipefail
 
 export PORT=${PORT:-"5020"}
 echo My Key $(lk key)
-export LK_GROUP=$(lk eval "[:$LK_GROUP/?b]")
-echo Serving $LK_GROUP $PORT 
+
+echo Serving $LK_GROUP $PORT
 export LK_PASS=$(lk key --no-pubkey --no-enckey --display-pass)
 
 function fin (){
@@ -210,7 +210,7 @@ lk eval "last rx [u64:$LAST_RX/us:str]\nlast tx [u64:$LAST_TX/us:str]\n"
 
 export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
-LK_SKIP_HASH=false lk save --new-only db --new stdout \
+LK_SKIP_HASH=false lk save --new db --new stdout \
         --old file:&gt;( lk pktf "$PID Ignored [hash:str] (old)" &gt;&amp;2 ) \
    | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
@@ -236,7 +236,7 @@ wait -n
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-11 Tue 11:57</p>
+<p class="date">Created: 2023-07-18 Tue 14:36</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
