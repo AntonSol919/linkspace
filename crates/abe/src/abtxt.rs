@@ -33,7 +33,6 @@ pub enum CtrChar {
     ForwardSlash = 0b01,
     Colon = 0b10,
     Newline = 0b100,
-    Tab = 0b1000,
     OpenBracket = 0b10000,
     CloseBracket = 0b100000,
 }
@@ -45,7 +44,6 @@ impl CtrChar {
             b']' => CtrChar::CloseBracket,
             b':' => CtrChar::Colon,
             b'\n' => CtrChar::Newline,
-            b'\t' => CtrChar::Tab,
             _ => return None,
         })
     }
@@ -54,7 +52,6 @@ impl CtrChar {
             CtrChar::ForwardSlash => b'/',
             CtrChar::Colon => b':',
             CtrChar::Newline => b'\n',
-            CtrChar::Tab => b'\t',
             CtrChar::OpenBracket => b'[',
             CtrChar::CloseBracket => b']',
         }
@@ -63,8 +60,8 @@ impl CtrChar {
     pub fn is_bracket(&self) -> bool {
         matches!(self, CtrChar::CloseBracket | CtrChar::OpenBracket)
     }
-    pub fn is_ex_delim(&self) -> bool {
-        matches!(self, CtrChar::Newline | CtrChar::Tab)
+    pub fn is_newline(&self) -> bool {
+        matches!(self, CtrChar::Newline)
     }
     pub fn is_internal_delim(&self) -> bool {
         matches!(self, CtrChar::Colon | CtrChar::ForwardSlash)
@@ -77,7 +74,7 @@ pub enum Byte<'a> {
 }
 
 pub const STD_PLAIN_CSET: u32 = 0;
-pub const STD_ERR_CSET: u32 = CtrChar::Newline as u32 | CtrChar::Tab as u32;
+pub const STD_ERR_CSET: u32 = CtrChar::Newline as u32;
 pub(crate) fn next_byte(
     ascii_bytes: &[u8],
     idx: usize,
@@ -95,7 +92,6 @@ pub(crate) fn next_byte(
         b']' => CtrChar::CloseBracket,
         b':' => CtrChar::Colon,
         b'\n' => CtrChar::Newline,
-        b'\t' => CtrChar::Tab,
         b'\\' => {
             let (s, mut rest) = rest
                 .split_first()
@@ -120,7 +116,7 @@ pub(crate) fn next_byte(
             };
             return Ok(Byte::Byte { byte, rest });
         }
-        b'\r' => return Err(ABTxtError::ParseError { idx, byte }),
+        b'\t' | b'\r'  => return Err(ABTxtError::ParseError { idx, byte }),
         0x20..=0x7e => return Ok(Byte::Byte { byte: *b, rest }),
         _b => return Err(ABTxtError::ParseError { idx, byte }),
     };
@@ -141,9 +137,6 @@ fn parse_abtxt(
     let mut rest = string;
     let len = rest.len();
     let mut total = 0;
-    if string == b"\\E" {
-        return Ok(0);
-    }
     loop {
         let idx = len - rest.len();
         match next_byte(rest, idx, STD_PLAIN_CSET, STD_ERR_CSET)? {

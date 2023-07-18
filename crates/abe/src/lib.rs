@@ -21,6 +21,7 @@ pub mod convert;
 pub mod eval;
 pub mod scope;
 pub mod abconf;
+pub mod binary;
 pub use thiserror;
 
 use std::error::Error;
