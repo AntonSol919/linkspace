@@ -2,7 +2,7 @@ use std::fmt::{Display, Debug};
 
 use anyhow::{ensure, bail};
 
-use crate::{eval::{ABList }, ast::{Ctr, parse_ablist_b}};
+use crate::{eval::{ABList }, ast::{Ctr }};
 
 
 #[derive(Default,Clone)]
@@ -15,6 +15,11 @@ hello:world/thing
 ```
 **/
 pub struct ABConf(pub Vec<ABList>);
+
+pub fn parse_ablist_b(st:&[u8]) -> anyhow::Result<crate::eval::ABList>{
+    let abe = crate::ast::parse_abe_strict_b(st)?;
+    abe.as_slice().try_into().map_err(|e| anyhow::anyhow!("expr not supported - {e}"))
+}
 
 impl std::ops::Deref for ABConf{
     type Target = [ABList];

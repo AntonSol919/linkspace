@@ -10,7 +10,7 @@ use linkspace_common::{
         opts::{CommonOpts,},reader::PktReadOpts,
         tracing, WriteDest, WriteDestSpec,
     },
-    prelude::{TypedABE, *, ast::parse_abe_forgiving},
+    prelude::{TypedABE,* },
 };
 use std::io::{stderr, stdout, Write};
 
@@ -40,9 +40,12 @@ pub struct PktFmtOpts {
     /// delimiter to print between packets.
     #[clap(short, long, default_value = "\\n")]
     delimiter: TypedABE<Vec<u8>>,
-    /// Use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
-    #[clap(value_parser=parse_abe_forgiving,default_value=&DEFAULT_PKT, action = clap::ArgAction::Append, env="LK_PRINTF")]
-    fmt: Vec<Vec<ABE>>,
+    /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
+    #[clap(alias="strict",long)]
+    no_parse_unencoded: bool,
+    /// ABE expression to evaluate per packet - use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
+    #[clap(action = clap::ArgAction::Append, env="LK_PKTF")]
+    fmt: Vec<String>,
 }
 
 pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()> {
@@ -54,13 +57,17 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
         delimiter,
         fmt,
         join_delimiter,
+        no_parse_unencoded,
         pkt_in,
     } = popts;
+    let parse_unencoded = !no_parse_unencoded;
     let write_private = common.write_private().unwrap_or(true);
     common.mut_read_private().get_or_insert(true);
-    let datap_fmt = fmt.get(0).context("Missing fmt")?.clone();
-    let linkp_fmt = fmt.get(1).unwrap_or(&datap_fmt).clone();
-    let keyp_fmt = fmt.get(2).unwrap_or(&linkp_fmt).clone();
+    let datap_fmt = fmt.get(0).map(|o| {
+        parse_abe(o, parse_unencoded)
+    }).transpose()?.unwrap_or(DEFAULT_FMT.clone());
+    let linkp_fmt = fmt.get(1).map(|o| parse_abe(o, parse_unencoded)).transpose()?.unwrap_or_else(||datap_fmt.clone());
+    let keyp_fmt = fmt.get(2).map(|o| parse_abe(o, parse_unencoded)).transpose()?.unwrap_or_else(||linkp_fmt.clone());
 
     let ctx = common.eval_ctx();
     if error.is_none() && !silent {

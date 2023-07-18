@@ -6,10 +6,12 @@
 use std::{sync::LazyLock, fmt::{Formatter, Result, self, Display}};
 
 use bstr::{BStr };
-use byte_fmt::{abe::{parse_abe, ABE, ToABE}, B64, AB};
+use byte_fmt::{abe::{ABE, ToABE, ast::parse_abe_strict_b}, B64, AB};
 
 use crate::{NetPkt, PointExt, Point, PRIVATE, PUBLIC, TEST_GROUP };
+
 /// default fmt in many cases and output for `[pkt]`
+// Could be made shorter by using parse_abe_with_unencoded_b
 pub static DEFAULT_PKT: &str = "\
 type\\t[type:str]\\n\
 hash\\t[hash:str]\\n\
@@ -25,14 +27,14 @@ data\\t[data_size:str]\\n\
 ";
 
 
-pub static DEFAULT_FMT: LazyLock<Vec<ABE>> = LazyLock::new(|| parse_abe(DEFAULT_PKT).unwrap());
+pub static DEFAULT_FMT: LazyLock<Vec<ABE>> = LazyLock::new(|| parse_abe_strict_b(DEFAULT_PKT.as_bytes()).unwrap());
 pub static DEFAULT_POINT_FMT: LazyLock<Vec<ABE>> =
-    LazyLock::new(|| parse_abe(DEFAULT_PKT).unwrap());
+    LazyLock::new(|| parse_abe_strict_b(DEFAULT_PKT.as_bytes()).unwrap());
 pub static DEFAULT_NETPKT_FMT: LazyLock<Vec<ABE>> =
-    LazyLock::new(|| parse_abe(DEFAULT_PKT).unwrap());
+    LazyLock::new(|| parse_abe_strict_b(DEFAULT_PKT.as_bytes()).unwrap());
 
 pub static PYTHON_REPR_PKT_FMT: LazyLock<Vec<ABE>> =
-    LazyLock::new(|| parse_abe(PYTHON_PKT).unwrap());
+    LazyLock::new(|| parse_abe_strict_b(PYTHON_PKT.as_bytes()).unwrap());
 
 pub static PYTHON_PKT: &str = "todo - PYTHON_PKT";
 

@@ -53,8 +53,9 @@ impl LinkspaceOpts {
     pub fn root(&self) -> io::Result<PathBuf> {
         crate::static_env::find_linkspace(self.dir.as_deref())
     }
+    #[deprecated]
     pub fn eval(&self, v: &str) -> anyhow::Result<ABList> {
-        Ok(eval(&self.eval_ctx(), &parse_abe(v)?)?)
+        Ok(eval(&self.eval_ctx(), &parse_abe_strict_b(v.as_bytes())?)?)
     }
     pub fn fake_eval_ctx(
     ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'static> {

@@ -140,7 +140,7 @@ impl Query {
     pub fn parse(&mut self, multiline_stament: &[u8], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<()> {
         for line in multiline_stament.split(|ch| *ch == b'\n') {
             if line.is_empty(){ continue;}
-            let e = eval(ctx, &abe::parse_abe_b(line)?)?;
+            let e = eval(ctx, &abe::parse_abe_strict_b(line)?)?;
             self.add_stmt(e)?;
         }
         Ok(())

@@ -89,7 +89,7 @@ def lk_keypoint(key: SigningKey,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
-def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None ) -> bytes:
+def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, parse_unencoded: bool = False ) -> bytes:
     """
     Evaluate an ascii-byte-expression. An ascii representation of arbitrary bytes.
     See the guide and rust docs for examples
@@ -97,11 +97,12 @@ def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None ) -> by
         abe:
         pkt:
         argv:
+        parse_unencoded: accept bytes outside the range 0x20..0xfe - i.e. read newlines and utf8 as-is.
     """
     ...
 
-def lk_eval2str(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None ) -> str:
-    """ lk_eval that attempts to utf-8 decode the result bytes into a string"""
+def lk_eval2str(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, parse_unencoded: bool = False ) -> str:
+    """ lk_eval that attempts to read the result of lk_eval as a utf-8 string"""
     ...
 
 def lk_encode(

@@ -9,7 +9,7 @@ pub mod reader;
 use abe::{
     abev,
     ast::{as_bytes, single},
-    parse_abe, TypedABE, 
+     TypedABE, parse_abe_strict_b, 
 };
 use anyhow::{bail, Context};
 pub use clap;
@@ -60,7 +60,7 @@ pub type WriteDestSpec = WriteDest<()>;
 impl std::str::FromStr for WriteDestSpec {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let abe = parse_abe(s)?;
+        let abe = parse_abe_strict_b(s.as_bytes())?;
         let mut it = abe.split(|v| v.is_colon());
         let dest = as_bytes(single(it.next().context("missing dest")?)?)?;
         let (is_expr, dest) = match dest.strip_suffix(b"-expr") {

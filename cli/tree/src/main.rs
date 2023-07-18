@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use linkspace::misc::RecvPkt;
 use linkspace::linkspace::lk_get_all;
-use linkspace::{abe::lk_split_abe, lk_query };
+use linkspace::{abe::lk_tokenize_abe, lk_query };
 use linkspace::{lk_encode, lk_eval, lk_open, prelude::*};
 
 use clap::Parser;
@@ -77,7 +77,7 @@ fn main() -> LkResult<()> {
     let mut ok = Ok(true);
     let mut i = 0;
     // arguments ould have been typed DGPExpr. This shows one way to parse manually while only importing linkspace
-    lk_split_abe(&dgpe, b"/", |expr: &str, _ctr: u8| {
+    lk_tokenize_abe(&dgpe, b"/", |expr: &str, _ctr: u8| {
         i += 1;
         ok = match i {
             1 => lk_query_parse(&mut query, &format!("domain:=:[{expr}]"),()),

@@ -9,7 +9,7 @@ use linkspace_common::{
         opts::CommonOpts,
         reader::{ DataReadOpts},
     },
-    prelude::{eval,scope::{ argv::ArgList},  ast::parse_abe_forgiving},
+    prelude::{eval,scope::{ argv::ArgList}  },
 };
 use std::io::{ Write};
 
@@ -18,6 +18,10 @@ pub struct EvalOpts {
     /// output json ABList format
     #[clap(long)]
     json: bool,
+    /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
+    #[clap(alias="strict",long)]
+    no_parse_unencoded: bool,
+
     abe: String,
     /// add argv context from a data source - (i.e. [0] [1] ... [7])
     #[command(subcommand)]
@@ -29,9 +33,10 @@ pub enum WithData{
 }
 
 pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
-    let EvalOpts { json, abe, data } = opts;
+    let EvalOpts { json, abe, data, no_parse_unencoded } = opts;
+    let parse_unencoded = !no_parse_unencoded;
 
-    let abe = parse_abe_forgiving(&abe)?;
+    let abe = linkspace_common::prelude::parse_abe(&abe,parse_unencoded)?;
 
     let mut arglist = vec![];
     let ctx = common.eval_ctx();

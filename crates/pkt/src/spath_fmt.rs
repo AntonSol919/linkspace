@@ -35,7 +35,7 @@ impl SPath {
 use crate::*;
 #[derive(Error, Debug)]
 pub enum SPathExprErr {
-    #[error("spath expr must start with '/' and can't contain ':', '\\n', or '\\t' ")]
+    #[error("spath expr must start with '/' and can't contain ':', or '\\n'")]
     BadCtr(Option<Ctr>),
     #[error("SPath error {0}")]
     SPath(#[from] PathError),

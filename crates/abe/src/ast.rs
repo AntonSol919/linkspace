@@ -3,7 +3,6 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use anyhow::{ anyhow};
 use serde::{Serialize, Deserialize};
 use std::borrow::Cow;
 use std::error::Error;
@@ -385,14 +384,8 @@ pub enum ASTParseError {
     NewlineInBrackets,
 }
 
-pub fn parse_abe(st: &str) -> Result<Vec<ABE>, ASTParseError> {
-    parse_abe_b(st.as_ref())
-}
 
-pub fn parse_ablist_b(st:&[u8]) -> anyhow::Result<crate::eval::ABList>{
-    let abe = parse_abe_b(st)?;
-    abe.as_slice().try_into().map_err(|e| anyhow!("expr not supported - {e}"))
-}
+
 
 mod collect {
     use std::iter::Peekable;
@@ -430,8 +423,15 @@ mod collect {
     } 
 }
 
-// FIXME: this should be replaced with a call to split_abe
-pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
+pub fn parse_abe(st: impl AsRef<[u8]>,parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseError> {
+    parse_abe_b(st.as_ref(),parse_unencoded)
+}
+pub fn parse_abe_b(st: &[u8],parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseError> {
+    if parse_unencoded{ parse_abe_with_unencoded_b(st)}
+    else { parse_abe_strict_b(st)}
+}
+
+pub fn parse_abe_strict_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
     let mut bytes = vec![];
@@ -472,10 +472,9 @@ pub fn parse_abe_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
         }
     }
 }
-pub fn parse_abe_forgiving(st: &str) -> Result<Vec<ABE>, ASTParseError> {
-    parse_abe_forgiving_b(st.as_ref())
-}
-pub fn parse_abe_forgiving_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
+
+/// In contrast to [[parse_abe_strict_b]] this function does not error bytes outside the range 0x20..0xfe, but reads them as-is. 
+pub fn parse_abe_with_unencoded_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
     let mut bytes = vec![];
@@ -525,12 +524,12 @@ pub fn parse_abe_forgiving_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
 
 /// Split abe into top level components
 /// See next_byte for the meaning of cset
-pub fn split_abe(
+pub fn tokenize_abe(
     st: &str,
     plain_cset: u32,
     err_cset: u32,
 ) -> Result<Vec<(u8,bool,&str)>, ASTParseError> {
-    Ok(split_abe_b(st.as_bytes(), plain_cset, err_cset)
+    Ok(tokenize_abe_b(st.as_bytes(), plain_cset, err_cset)
         .map(|i| i.map(|(c,i, b)| (c,i,unsafe { std::str::from_utf8_unchecked(b) })))
         .try_collect()?)
 }
@@ -538,15 +537,15 @@ pub fn split_abe(
 #[test]
 pub fn abesplit(){
     
-    let v : Vec<_> = split_abe_b(b"hello/world\nok",0, 0).try_collect().unwrap();
+    let v : Vec<_> = tokenize_abe_b(b"hello/world\nok",0, 0).try_collect().unwrap();
     assert_eq!(&*v,&[(0,false,b"hello" as &[u8]),(b'/',false,b"world"),(b'\n',false,b"ok")]);
 
-    let v : Vec<_> = split_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
+    let v : Vec<_> = tokenize_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
 
 }
 
 /// Split abe into top level components
-pub fn split_abe_b(
+pub fn tokenize_abe_b(
     st: &[u8],
     plain_cset: u32,
     err_cset: u32,

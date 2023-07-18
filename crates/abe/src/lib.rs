@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #![feature(
+    try_blocks,
     slice_as_chunks,
     split_as_slice,
     split_array,
@@ -21,13 +22,12 @@ pub mod convert;
 pub mod eval;
 pub mod scope;
 pub mod abconf;
-pub mod binary;
 pub use thiserror;
 
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
-pub use ast::{parse_abe, parse_abe_b, print_abe, ABE};
+pub use ast::{parse_abe, parse_abe_b,parse_abe_strict_b, tokenize_abe, print_abe, ABE};
 pub use convert::{ABEValidator, ToABE, TypedABE};
 
 pub fn cut_ending_nulls2(b: &[u8]) -> &[u8] {

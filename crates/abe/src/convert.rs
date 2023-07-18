@@ -116,7 +116,7 @@ impl<O> From<TypedABE<O>> for Vec<ABE> {
 impl<O: ABEValidator> TryFrom<&[u8]> for TypedABE<O> {
     type Error = ABEError<O::Error>;
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let abe = parse_abe_b(s).map_err(ABEError::Parse)?;
+        let abe = parse_abe_strict_b(s).map_err(ABEError::Parse)?;
         O::check(&abe).map_err(ABEError::MatchError)?;
         Ok(TypedABE(abe, PhantomData))
     }

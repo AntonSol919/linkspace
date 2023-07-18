@@ -202,7 +202,7 @@ pub mod point {
     }
 }
 
-pub use abe::{lk_encode, lk_eval, lk_split_abe};
+pub use abe::{lk_encode, lk_eval, lk_tokenize_abe};
 /** ascii byte expression utilities
 
 ABE is a byte templating language.
@@ -215,14 +215,15 @@ pub mod abe {
     pub use linkspace_common::pkt::repr::DEFAULT_PKT;
     use linkspace_common::{
         abe::abtxt::as_abtxt,
-        prelude::{abtxt::CtrChar, ast::split_abe},
+        prelude::{abtxt::CtrChar, ast::tokenize_abe},
     };
 
     /**
     Evaluate an expression and return the bytes
 
     Optionally add a `pkt` as a context.
-    Refuses '\n' and '\t', and returns delimiters ':' and '/' as plain bytes.
+    ':' and '/' outside of '[' and ']' read as plain bytes.
+    Set parse_unencoded to true to read bytes outside the range 0x20..0xfe as-is. i.e. useful for contemplating with newlines and utf8.
     See [lk_split_abe] for different delimiter behavior
 
     ```
@@ -276,12 +277,13 @@ pub mod abe {
 
     A list of functions can be found with ```lk_eval("[help]")```
     **/
-    pub fn lk_eval<'o>(expr: &str, udata: impl Into<UserData<'o>>) -> LkResult<Vec<u8>> {
-        varctx::lk_eval(ctx::ctx(udata.into())?, expr)
+    pub fn lk_eval<'o>(expr: &str, udata: impl Into<UserData<'o>>,parse_unencoded:bool) -> LkResult<Vec<u8>> {
+        varctx::lk_eval(ctx::ctx(udata.into())?, expr,parse_unencoded)
     }
     /**
-    Exec callback for each expr between control characters (':', '/', '\n', '\t').
-    The first delimiter can be '\0'.
+    An abe parser. Useful to split a cli argument like 'domain:[#:test]:/thing/[12/u32] correctly.
+    The callback is called with (ctrl, contains_brackets, bytes ) where ctrl is 0 | ':' | '/'
+    Only the first ctrl can be '\0'.
     ```
     # use linkspace::abe::lk_split_abe;
     let mut v = vec![];
@@ -289,16 +291,16 @@ pub mod abe {
     assert_eq!(v,&[(0,false,"this"), (b':',false,"is/the"), (b':',true,"example[::]"),(b'\n',true,"[::]newline[:/]")])
     ```
      **/
-    pub fn lk_split_abe<'o>(
+    pub fn lk_tokenize_abe<'o>(
         expr: &'o str,
-        exclude_ctr: &[u8],
+        exclude_ctr:&[u8],
         mut per_comp: impl FnMut(u8,bool,&'o str) -> bool,
     ) -> LkResult<()> {
         let plain = exclude_ctr
             .iter()
             .filter_map(|v| CtrChar::try_from_char(*v))
             .fold(0, |a, b| a ^ b as u32);
-        for (a,b,c) in split_abe(expr, plain, 0)? {
+        for (a,b,c) in tokenize_abe(expr, plain, 0)? {
             if !per_comp(a,b,c) {
                 return Ok(());
             }
@@ -947,10 +949,11 @@ pub mod varctx {
 
     use super::*;
     use crate::abe::ctx::LkCtx;
-    use linkspace_common::abe::{eval::eval, parse_abe};
+    use linkspace_common::{abe::{eval::eval, parse_abe}, prelude::parse_abe_strict_b};
 
-    pub fn lk_eval(ctx: LkCtx, expr: &str) -> LkResult<Vec<u8>> {
-        let expr = parse_abe(expr)?;
+    /// [[crate::lk_eval]] with a custom context.
+    pub fn lk_eval(ctx: LkCtx, expr: &str, parse_unencoded: bool) -> LkResult<Vec<u8>> {
+        let expr = parse_abe(expr,parse_unencoded)?;
         let val = eval(&ctx.as_dyn(), &expr)?;
         Ok(val.concat())
     }
@@ -985,11 +988,11 @@ pub mod varctx {
         let password = match password{
             Some(v) => Cow::Borrowed(v),
             None => match std::env::var("LK_PASS"){
-                Ok(abe) => Cow::Owned(eval(&ctx.as_dyn(),&parse_abe(&abe)?)?.concat()),
+                Ok(abe) => Cow::Owned(eval(&ctx.as_dyn(),&parse_abe_strict_b(abe.as_bytes())?)?.concat()),
                 Err(_e) => Cow::Borrowed(&[] as &[u8]),
             }
         };
-        let expr = parse_abe(&name)?;
+        let expr = parse_abe_strict_b(name.as_bytes())?;
         let name : lns::name::Name = eval(&ctx.as_dyn(), &expr)?.try_into()?;
         match lns::lookup_enckey(&linkspace.0, &name)?{
             Some((_,enckey)) => {

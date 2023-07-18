@@ -1,4 +1,4 @@
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeFuncInfo, EvalCtx, ApplyResult, ScopeMacro, ScopeMacroInfo, Scope }, parse_abe_b, ast::{take_first, is_colon}};
+use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeFuncInfo, EvalCtx, ApplyResult, ScopeMacro, ScopeMacroInfo, Scope },  ast::{take_first, is_colon, parse_abe_strict_b}};
 use anyhow::{anyhow, Context};
 
 fn encode(inp:&[&[u8]], scope: &dyn Scope) -> anyhow::Result<String>{
@@ -27,7 +27,7 @@ impl EvalScopeImpl for Encode {
                 help: "parse and evaluate",
             },
             apply: |_, inp, _, scope| {
-                let expr = parse_abe_b(inp[0])?;
+                let expr = parse_abe_strict_b(inp[0])?;
                 let ctx = EvalCtx { scope };
                 ApplyResult::Value(crate::eval::eval(&ctx, &expr)?.concat())
             },

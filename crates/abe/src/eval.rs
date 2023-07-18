@@ -822,7 +822,7 @@ pub fn encode(
     options: &str,
     ignore_encoder_errors:bool
 ) -> std::result::Result<String, EncodeError> {
-    let lst = parse_abe(options).map_err(EncodeError::ParseError)?;
+    let lst = parse_abe_strict_b(options.as_bytes()).map_err(EncodeError::ParseError)?;
     encode_abe(ctx, bytes, &lst,ignore_encoder_errors)
 }
 pub fn encode_abe(
@@ -849,7 +849,7 @@ pub fn encode_abe(
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
                 if cfg!(debug_assertions){
-                    let redo = eval(ctx, &parse_abe(&st).expect("bug: encode fmt"))
+                    let redo = eval(ctx, &parse_abe_strict_b(&st.as_bytes()).expect("bug: encode fmt"))
                         .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
                     let redo = redo.as_exact_bytes()
                         .expect("bug: encode multi");

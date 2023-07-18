@@ -122,7 +122,7 @@ impl FromStr for DGPExpr {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
-        let ast = parse_abe(s)?;
+        let ast = parse_abe_strict_b(s.as_bytes())?;
 
         let (dgp, rest) = try_take_dgp(&ast)?;
         is_empty(rest)?;
@@ -202,7 +202,7 @@ impl FromStr for DGPDExpr {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
 
-        let ast = parse_abe(s)?;
+        let ast = parse_abe_strict_b(s.as_bytes())?;
         dgpd(&ast)
     }
 }
