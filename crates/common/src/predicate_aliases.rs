@@ -16,9 +16,9 @@ use linkspace_core::{
 #[derive(Debug, Clone,   Default, Args)]
 #[group(skip)]
 pub struct ExtWatchCLIOpts {
-    #[clap(flatten)]
+    #[command(flatten)]
     pub aliases: PredicateAliases,
-    #[clap(last = true)]
+    #[arg(last = true)]
     pub exprs: Vec<AnyABE>,
 }
 
@@ -26,45 +26,45 @@ pub struct ExtWatchCLIOpts {
 /// aliases for a set of common predicates
 pub struct PredicateAliases {
     /// only match locally indexed pkts           | i_new:=:[u32:0]
-    #[clap(long, alias = "no-new")]
+    #[arg(long, alias = "no-new")]
     pub db_only: bool,
     /// only match new unindexed pkts             | i_db:=:[u32:0]
-    #[clap(long, alias = "no-index")]
+    #[arg(long, alias = "no-index")]
     pub new_only: bool,
 
     /// match upto max packets.                   | i:<:[u32:max]
-    #[clap(long)]
+    #[arg(long)]
     pub max: Option<u32>,
 
     /// match upto max per (dm,grp,path,key) pkts | i_branch:<:[u32:max_branch]
-    #[clap(long)]
+    #[arg(long)]
     pub max_branch: Option<u32>,
     /// match upto max from local index           | i_db:<:[u32:max_index]
-    #[clap(long)]
+    #[arg(long)]
     pub max_index: Option<u32>,
     /// match upto max unindexed pkts             | i_new:<:[u32:max_new]
-    #[clap(long)]
+    #[arg(long)]
     pub max_new: Option<u32>,
 
     /// match only signed pkts                    | pubkey:>:[@:none]
-    #[clap(long, conflicts_with = "unsigned")]
+    #[arg(long, conflicts_with = "unsigned")]
     pub signed: bool,
 
     /// match only unsigned pkts                  | pubkey:=:[@:none]
-    #[clap(long)]
+    #[arg(long)]
     pub unsigned: bool,
 
-    #[clap(long)]
+    #[arg(long)]
     /// Add :qid option (generates qid)
     pub watch: bool,
-    #[clap(long)]
+    #[arg(long)]
     /// set :qid option (implies --watch)
     pub qid: Option<AnyABE>,
-    #[clap(long)]
+    #[arg(long)]
     /// Add :follow option
     pub follow: bool,
 
-    #[clap(long)]
+    #[arg(long)]
     /// add recv:<:[us:INIT:+{until}] where INIT is set at start
     pub until : Option<String>
 }

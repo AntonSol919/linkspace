@@ -8,22 +8,22 @@ use crate::*;
 
 #[derive(Parser)]
 pub struct GetLinks{
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
     /// write dest of incoming packets
-    #[clap(short, long, default_value = "stdout")]
+    #[arg(short, long, default_value = "stdout")]
     forward: Vec<WriteDestSpec>,
     /// write dest of linked packets
-    #[clap(short, long, default_value = "stdout")]
+    #[arg(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
     /// recurse N times
-    #[clap(short,long)]
+    #[arg(short,long)]
     recursive: Option<usize>,
     /// recurse forever. Can be expensive!
-    #[clap(short='R',long,default_value_t,conflicts_with("recursive"))]
+    #[arg(short='R',long,default_value_t,conflicts_with("recursive"))]
     rrecursive: bool,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     mode: GetLinksMode
 }
 

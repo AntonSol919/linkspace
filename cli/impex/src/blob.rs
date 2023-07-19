@@ -19,9 +19,9 @@ pub enum Cmd {
 
 #[derive(Parser, Clone, Debug)]
 pub struct Encode {
-    #[clap(short, long, default_value_t)]
+    #[arg(short, long, default_value_t)]
     group: HashExpr,
-    #[clap(short, long, default_value_t)]
+    #[arg(short, long, default_value_t)]
     domain: Domain,
 }
 pub fn cmd(common: CommonOpts, cmd: Cmd) -> anyhow::Result<()> {

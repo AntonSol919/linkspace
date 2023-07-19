@@ -40,34 +40,34 @@ does nothing
 **/
 pub struct Collect {
     /// tag for each link - this can be an ABE expr with the pkt in scope
-    #[clap(alias = "ctag", long, value_enum, default_value = "[now]")]
+    #[arg(alias = "ctag", long, value_enum, default_value = "[now]")]
     collect_tag: TagExpr,
     /// If set - adds a link to the previously created packet - also an ABE expr
-    #[clap(long)]
+    #[arg(long)]
     chain_tag: Option<TagExpr>,
-    #[clap(long)]
+    #[arg(long)]
     allow_empty: bool,
     /// Link used for the first collect
-    #[clap(alias = "il", long)]
+    #[arg(alias = "il", long)]
     pub init_link: Vec<LinkExpr>,
 
     /// Create packet after collecting max_links from incoming packets
-    #[clap(long,default_value_t=MAX_LINKS_LEN-16)]
+    #[arg(long,default_value_t=MAX_LINKS_LEN-16)]
     max_links: usize,
     /// Create a packet after
-    #[clap(long)]
+    #[arg(long)]
     min_interval: Option<DurationStr>,
 
     /// destination for incoming packets
-    #[clap(short, long, default_value = "stdout")]
+    #[arg(short, long, default_value = "stdout")]
     forward: Vec<WriteDestSpec>,
     /// destination for newly created collection packet
-    #[clap(short, long, default_value = "stdout")]
+    #[arg(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
-    #[clap(flatten)]
+    #[command(flatten)]
     build: PointOpts,
 }
 

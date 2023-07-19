@@ -12,14 +12,14 @@ use linkspace_common::{
 #[derive(Parser, Clone)]
 pub struct SaveForward {
     /// Only new packets are saved to dest
-    #[clap(long, default_value = "db")]
+    #[arg(long, default_value = "db")]
     new: Vec<WriteDestSpec>,
-    #[clap(long, default_value = "null")]
+    #[arg(long, default_value = "null")]
     old: Vec<WriteDestSpec>,
     /// add stdout to both --old and --dest
-    #[clap(short, long)]
+    #[arg(short, long)]
     forward_stdout: bool,
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
 }
 

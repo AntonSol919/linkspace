@@ -29,35 +29,35 @@ rewrite --create "[create:+1D]"
 // TODO add Vec<linkmut { filter, add, map, }>
 #[derive(Parser)]
 pub struct Rewrite {
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub group: Option<HashExpr>,
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub domain: Option<DomainExpr>,
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub path: Option<IPathExpr>,
-    #[clap(long, alias = "u")]
+    #[arg(long, alias = "u")]
     pub create: Option<StampExpr>,
-    #[clap(short,long)]
+    #[arg(short,long)]
     /// rewrite the data field using the --data* options - note that --data-eval has the current packet in scope - e.g. combine with --data-str [data]
     pub interpret_data: bool,
 
     /// Sign all spoints/asserts or only sign already signed
-    #[clap(value_enum)]
+    #[arg(value_enum)]
     pub sign_mode: SignMode,
 
-    #[clap(long, default_value = "stdout")]
+    #[arg(long, default_value = "stdout")]
     pub write: Vec<WriteDestSpec>,
-    #[clap(long, default_value = "null")]
+    #[arg(long, default_value = "null")]
     pub forward: Vec<WriteDestSpec>,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
 
 
-    #[clap(flatten)]
+    #[command(flatten)]
     pub key: KeyOpts,
     
-    #[clap(flatten)]
+    #[command(flatten)]
     pub data_read: DataReadOpts
 }
 pub fn rewrite_pkt(

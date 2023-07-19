@@ -12,12 +12,12 @@ use linkspace_common::{
 #[derive(Debug, Args, Clone,Default)]
 #[group(skip)]
 pub struct DGPDWatchCLIOpts {
-    #[clap(required_unless_present("bare"))]
+    #[arg(required_unless_present("bare"))]
     pub dgpd: Option<DGPDExpr>,
-    #[clap(flatten)]
+    #[command(flatten)]
     pub watch_opts: ExtWatchCLIOpts,
-    /// Do not read any domain:group:path argument - WARNING - this might then include all datapoints depending on mode and filters
-    #[clap(long, short)]
+    /// do not read any domain:group:path argument - WARNING - this might include all datapoints depending on mode and filters
+    #[arg(long, short)]
     pub bare: bool,
 }
 
@@ -53,10 +53,10 @@ pub fn statements2query(it: &[TypedABE<ABList>], ctx: &EvalCtx<impl Scope>) -> a
 #[group(skip)]
 pub struct PrintABE{
     /// print the query
-    #[clap(short,long,alias="print",short)]
+    #[arg(short,long,alias="print",short)]
     pub print_expr: bool,
     /// print in ascii-byte-text format (ABE without '[..]' expressions)
-    #[clap(long,alias="text",conflicts_with="print_expr")]
+    #[arg(long,alias="text",conflicts_with="print_expr")]
     pub print_text: bool,
 }
 impl PrintABE {
@@ -74,11 +74,11 @@ impl PrintABE {
 #[derive(Args,Default)]
 #[group(skip)]
 pub struct CLIQuery {
-    #[clap(flatten)]
+    #[command(flatten)]
     pub print: PrintABE,
-    #[clap(long, default_value = "tree-desc")]
+    #[arg(long, default_value = "tree-desc")]
     pub mode: Option<Mode>,
-    #[clap(flatten)]
+    #[command(flatten)]
     pub opts: DGPDWatchCLIOpts,
 }
 impl CLIQuery {

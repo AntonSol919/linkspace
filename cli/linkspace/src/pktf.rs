@@ -19,32 +19,32 @@ Format packets from stdin according to a template.
 **/
 #[derive(Parser, Clone)]
 pub struct PktFmtOpts {
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
     /// set forward to stdout and print to stderr. Similar to `| tee >( lk pktf >&2 )`
-    #[clap(long)]
+    #[arg(long)]
     inspect: bool,
     /// fallback on eval error
-    #[clap(short, long)]
+    #[arg(short, long)]
     error: Option<TypedABE<Vec<u8>>>,
     /// dont warn on failure
-    #[clap(short, long)]
+    #[arg(short, long)]
     silent: bool,
     /// forward packets to dest
-    #[clap(short, long, default_value = "null")]
+    #[arg(short, long, default_value = "null")]
     forward: Vec<WriteDestSpec>,
     /// Don't print delimiter for last packet.
-    #[clap(short, long)]
+    #[arg(short, long)]
     join_delimiter: bool,
 
     /// delimiter to print between packets.
-    #[clap(short, long, default_value = "\\n")]
+    #[arg(short, long, default_value = "\\n")]
     delimiter: TypedABE<Vec<u8>>,
     /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
-    #[clap(alias="strict",long)]
+    #[arg(alias="strict",long)]
     no_parse_unencoded: bool,
     /// ABE expression to evaluate per packet - use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
-    #[clap(action = clap::ArgAction::Append, env="LK_PKTF")]
+    #[arg(action = clap::ArgAction::Append, env="LK_PKTF")]
     fmt: Vec<String>,
 }
 

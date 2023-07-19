@@ -18,19 +18,19 @@ pub enum Cmd {
 }
 #[derive(Parser, Clone, Debug)]
 pub struct Checkout {
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub r#async: bool,
-    #[clap(flatten)]
+    #[command(flatten)]
     q: ExtWatchCLIOpts,
-    #[clap(long)]
+    #[arg(long)]
     dest: PathBuf,
 }
 
 #[derive(Parser, Clone, Debug)]
 pub struct Encode {
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub r#async: bool,
-    #[clap(long, default_value = "stdout")]
+    #[arg(long, default_value = "stdout")]
     dest: Vec<WriteDest>,
     source: PathBuf,
     dgs: DGPExpr,

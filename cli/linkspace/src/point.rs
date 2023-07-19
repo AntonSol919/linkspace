@@ -12,32 +12,35 @@ use linkspace_common::{
 #[derive(Parser, Debug,Default)]
 pub struct MultiOpts {
     /// produce copies while reading data ( defaults is to read once and truncate. )
-    #[clap(short,long)]
+    #[arg(short,long)]
     multi: bool,
     /// Add link to the previous point 
-    #[clap(long,requires("multi"))]
+    #[arg(long,requires("multi"))]
     multi_link: Option<TagExpr>,
-    // #[clap(long,requires("multiple"))] multi_fixed_stamp: bool
+    // #[arg(long,requires("multiple"))] multi_fixed_stamp: bool
 }
 
 #[derive(Parser, Debug)]
 pub struct PointOpts {
-    #[clap(long, alias = "u")]
+    #[arg(long, alias = "u")]
     pub create: Option<StampExpr>,
-    #[clap(long, conflicts_with = "create")]
+    #[arg(long, conflicts_with = "create")]
     pub create_int: Option<Stamp>,
 
     //pub bare:bool,
-    #[clap(long)]
+    #[arg(long)]
     pub sign: bool,
-    #[clap(flatten)]
+
+    #[command(flatten,next_help_heading="Data Options")]
+    pub read: DataReadOpts,
+
+
+    #[command(flatten,next_help_heading="Key Options")]
     pub key: KeyOpts,
 
-    #[clap(flatten)]
-    pub read: DataReadOpts,
     pub dgs: DGPExpr,
 
-    #[clap(last=true)]
+    #[arg(last=true)]
     pub link: Vec<LinkExpr>,
 }
 
@@ -125,19 +128,21 @@ pub fn linkpoint(
     }
 }
 
+// this is unfortunate as it is PointOpts but with the only difference being Option<dgs> 
 #[derive(Parser, Debug)]
 pub struct GenPointOpts {
-    #[clap(long, alias = "u")]
+    #[arg(long, alias = "u")]
     pub create: Option<StampExpr>,
-    #[clap(long, conflicts_with = "create")]
+    #[arg(long, conflicts_with = "create")]
     pub create_int: Option<Stamp>,
-    #[clap(long)]
+    #[arg(long)]
     pub sign: bool,
-    #[clap(flatten)]
-    pub key: KeyOpts,
-    #[clap(flatten)]
+
+    #[command(flatten,next_help_heading="Data Options")]
     pub read: DataReadOpts,
+    #[command(flatten,next_help_heading="Key Options")]
+    pub key: KeyOpts,
     pub dgs: Option<DGPExpr>,
-    #[clap(last=true)]
+    #[arg(last=true)]
     pub link: Vec<LinkExpr>,
 }

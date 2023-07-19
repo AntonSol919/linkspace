@@ -20,9 +20,9 @@ use linkspace_core::prelude::lmdb::{BTreeEnv };
 use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
 #[derive(Parser, Debug, Clone)]
 pub struct CommonOpts {
-    #[clap(flatten)]
+    #[command(flatten,next_help_heading="Instance Options")]
     pub linkspace: LinkspaceOpts,
-    #[clap(flatten)]
+    #[command(flatten,next_help_heading="General Pkt IO Options")]
     pub io: IOOpts,
 }
 impl std::ops::Deref for CommonOpts {
@@ -33,20 +33,20 @@ impl std::ops::Deref for CommonOpts {
 }
 #[derive(Parser, Debug, Clone)]
 pub struct LinkspaceOpts {
-    #[clap(
+    #[arg(
         short,
         long,
         env = "LK_DIR",
         help = "location of the linkspace instance - defaults to $HOME/linkspace"
     )]
     pub dir: Option<PathBuf>,
-    #[clap(
+    #[arg(
         long,
         env = "LK_INIT",
         help = "create dir if it does not exists"
     )]
     pub init: bool,
-    #[clap(long,help="enable [env:OS_VAR] abe scope",default_value_t)]
+    #[arg(long,help="enable [env:OS_VAR] abe scope",default_value_t)]
     pub env: bool,
 }
 impl LinkspaceOpts {
@@ -86,7 +86,7 @@ impl LinkspaceOpts {
 
 #[derive(Parser, Debug, Clone,Copy)]
 pub struct IOOpts {
-    #[clap(
+    #[arg(
         global = true,
         alias = "private_group",
         long,
@@ -94,15 +94,15 @@ pub struct IOOpts {
         help = "enable io of linkpoints in [#:0]"
     )]
     private: bool,
-    #[clap(flatten)]
-    pub inp: InOpts,
-    #[clap(flatten)]
+    #[command(flatten)]
     pub out: OutOpts,
+    #[command(flatten)]
+    pub inp: InOpts,
 }
 
 #[derive(Parser, Debug, Clone,Copy)]
 pub struct OutOpts {
-    #[clap(
+    #[arg(
         long,
         env = "LK_PRIVATE_WRITE",
         help = "enable output of linkpoints in [#:0]"
@@ -111,19 +111,19 @@ pub struct OutOpts {
 }
 #[derive(Parser, Debug, Clone,Copy )]
 pub struct InOpts {
-    #[clap(
+    #[arg(
         long,
         env = "LK_PRIVATE_READ",
         help = "enable input of linkpoints in [#:0]"
     )]
     pub(crate) private_read: Option<bool>,
-    #[clap(
+    #[arg(
         long,
         env = "LK_HOP",
         help = "toggle hop netheader incr. true for commands unless stated otherwise"
     )]
     pub(crate) hop: Option<bool>,
-    #[clap(
+    #[arg(
         long,
         env = "LK_SKIP_HASH",
         help = "skip validating hashes and signatures"

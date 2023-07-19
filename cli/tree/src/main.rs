@@ -17,7 +17,7 @@ use linkspace::{lk_encode, lk_eval, lk_open, prelude::*};
 use clap::Parser;
 
 #[derive(Parser)]
-#[clap(author, version = "0.1", about, long_about = None)]
+#[arg(author, version = "0.1", about, long_about = None)]
 /**
 Print a domain:group:path tree.
 Using fmt changes the printing of the latest packets, use "" to not print any extra information
@@ -25,17 +25,17 @@ path_encode is used to print the path name component, by default this will use l
 Use --path-encode "b:32" to only encode 32 byte long components as base64
 **/
 struct Cli {
-    #[clap(short, long, env = "LK_DIR")]
+    #[arg(short, long, env = "LK_DIR")]
     linkspace: Option<PathBuf>,
     dgpe: String,
-    #[clap(
+    #[arg(
         default_value = "[hash:str]\\n[/links:\\t[ptr/2mini]\\t[tag:str]\\n]\\n[data_size:str]\\n[data/ltrim:40/?a]"
     )]
     /// eval for printing packets
     fmt: String,
-    #[clap(short, long, default_value = "local@/local#/@/#/b:32")]
+    #[arg(short, long, default_value = "local@/local#/@/#/b:32")]
     path_encode: String,
-    #[clap(last = true)]
+    #[arg(last = true)]
     statement: Vec<String>,
 }
 

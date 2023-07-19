@@ -43,12 +43,12 @@ impl StatusArgs {
 
 #[derive(Parser, Debug)]
 pub struct SetStatus {
-    #[clap(flatten)]
+    #[command(flatten)]
     args: StatusArgs,
     /// the status data.
-    #[clap(flatten)]
+    #[command(flatten,next_help_heading="Data Options")]
     readopts: DataReadOpts,
-    // #[clap(short,long)]
+    // #[arg(short,long)]
     //link: Vec<LinkExpr>,
 }
 pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
@@ -82,21 +82,21 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
 
 #[derive(Parser)]
 pub struct PollStatus {
-    #[clap(flatten)]
+    #[command(flatten)]
     args: StatusArgs,
     /// wait for this duration (since last request) before returning an error 
-    #[clap(short, long, default_value = "5s")]
+    #[arg(short, long, default_value = "5s")]
     timeout: DurationStr,
-    #[clap(short, long, default_value = "stdout")]
+    #[arg(short, long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
     /// Output multiple replies (until last_req+duration)
-    #[clap(short,long)]
+    #[arg(short,long)]
     multi: bool,
     /// only output query before quiting
-    #[clap(long)]
+    #[arg(long)]
     print_query: bool,
     /// only output the request packet
-    #[clap(long)]
+    #[arg(long)]
     write_request: Vec<WriteDestSpec>,
 }
 pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()> {

@@ -98,11 +98,11 @@ lk link :: --write db --write stdout --write stderr --write file:./file
 Most commands are used in a pipeline and read packets from stdin.
 **/
 #[derive(Parser)]
-#[clap(author, about,version,long_version=BUILD_INFO)]
+#[command(author, about,version,long_version=BUILD_INFO)]
 struct Cli {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
-    #[clap(flatten)]
+    #[command(flatten)]
     common: CommonOpts,
 }
 
@@ -110,47 +110,47 @@ struct Cli {
 enum Command {
     
     /// points - create a new datapoint
-    #[clap(alias = "d", alias = "data")]
+    #[command(alias = "d", alias = "data")]
     Datapoint{
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten,next_help_heading="Data Options")]
         read_opts: DataReadOpts
     },
     /** points - create a new linkpoint
 
     Use --no-data by default
     */
-    #[clap(alias = "l", alias = "link")]
+    #[command(alias = "l", alias = "link")]
     Linkpoint {
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         multi:point::MultiOpts,
-        #[clap(flatten)]
+        #[command(flatten)]
         link: point::PointOpts,
     },
     /** points - create a new keypoint
 
     Use --no-data by default
     */
-    #[clap(alias = "keyp")]
+    #[command(alias = "keyp")]
     Keypoint {
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         multi:point::MultiOpts,
-        #[clap(flatten)]
+        #[command(flatten)]
         link: point::PointOpts,
     },
     /// points - create a new point - detect what kind of point - prefer to be exact by using 'data', 'link', or 'keyp' 
     Point{
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         point: point::GenPointOpts,
     },
-    #[clap(alias = "e")]
+    #[command(alias = "e")]
     /** abe - eval ABE expression
 
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
@@ -161,22 +161,22 @@ enum Command {
 
     The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
     */
-    #[clap(alias="p",before_long_help=&*PKT_HELP)]
+    #[command(alias="p",before_long_help=&*PKT_HELP)]
     Pktf(pktf::PktFmtOpts),
     /// abe   - encode input into abe
-    #[clap(alias = "n")]
+    #[command(alias = "n")]
     Encode {
-        #[clap(short,long,action=clap::ArgAction::Count)]
+        #[arg(short,long,action=clap::ArgAction::Count)]
         ignore_err: u8,
         /// a set of '/' delimited options
-        #[clap(default_value = "@/#/b:32:64/")]
+        #[arg(default_value = "@/#/b:32:64/")]
         opts: String,
     },
 
     /// query - print full query from common aliases
-    #[clap(alias="q",alias="print-predicate",before_help=&*QUERY_HELP)]
+    #[command(alias="q",alias="print-predicate",before_help=&*QUERY_HELP)]
     PrintQuery {
-        #[clap(flatten)]
+        #[command(flatten)]
         opts: CLIQuery,
     },
 
@@ -195,35 +195,35 @@ enum Command {
     Save(save::SaveForward),
     /// runtime - get packets matching query
     Watch {
-        #[clap(long, short, default_value = "stdout")]
+        #[arg(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         watch: watch::CLIQuery,
     },
     /// runtime - watch all packets with the same locaiton prefix. alias for: watch --mode tree-desc 'dom:grp:path:**'
     WatchTree {
-        #[clap(short, long)]
+        #[arg(short, long)]
         asc: bool,
-        #[clap(long, short, default_value = "stdout")]
+        #[arg(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         query: watch::CLIQuery,
     },
     /// runtime - alias for: watch --mode hash-asc -- hash:=:HASH
     WatchHash {
         hash: HashExpr,
-        #[clap(long, short, default_value = "stdout")]
+        #[arg(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         rest : ExtWatchCLIOpts 
     },
     /// runtime - alias for: watch --mode log-desc
     WatchLog {
-        #[clap(short, long)]
+        #[arg(short, long)]
         asc: bool,
-        #[clap(long, short, default_value = "stdout")]
+        #[arg(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         query: watch::CLIQuery,
     },
     /// runtime - read a stream of queries
@@ -232,9 +232,9 @@ enum Command {
     Key(keys::KeyGenOpts),
     /// convention - create a pull request
     Pull {
-        #[clap(short, long, default_value = "db")]
+        #[arg(short, long, default_value = "db")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         watch: DGPDWatchCLIOpts,
     },
     /// convention - creates a status update request (or checks for a recent one)
@@ -254,16 +254,16 @@ enum Command {
 
     /// deduplicate packets based on hash
     Dedup {
-        #[clap(long, default_value_t = 256)]
+        #[arg(long, default_value_t = 256)]
         capacity: usize,
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(flatten)]
+        #[command(flatten)]
         pkt_in: PktReadOpts
     },
     /// mutate the netheader of packets
     Route {
-        #[clap(flatten)]
+        #[command(flatten)]
         pkt_in: PktReadOpts,
         field_mut: Vec<MutFieldExpr> ,
     },
@@ -271,11 +271,11 @@ enum Command {
     GetLinks(get_links::GetLinks),
     /// queue datapackets until a linkpoint with a matching link is received
     DataFilter {
-        #[clap(short, long, default_value = "4090")]
+        #[arg(short, long, default_value = "4090")]
         buffer_size: usize,
-        #[clap(short, long, default_value = "stdout")]
+        #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(short, long, default_value = "null")]
+        #[arg(short, long, default_value = "null")]
         dropped: Vec<WriteDestSpec>,
     },
     DbCheck,

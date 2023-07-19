@@ -21,22 +21,22 @@ use tracing_subscriber::EnvFilter;
 /// WARN - currently unstable format
 /// Import/export a files and folders.
 pub struct Opt {
-    #[clap(flatten)]
+    #[command(flatten)]
     common: CommonOpts,
-    #[clap(subcommand)]
+    #[command(subcommand)]
     cmd: Cmd,
 }
 
 #[derive(Subcommand)]
 pub enum Cmd {
-    #[clap(alias = "file")]
+    #[command(alias = "file")]
     Blob {
-        #[clap(subcommand)]
+        #[command(subcommand)]
         cmd: blob::Cmd,
     },
-    #[clap(alias = "folder")]
+    #[command(alias = "folder")]
     Blobmap {
-        #[clap(subcommand)]
+        #[command(subcommand)]
         cmd: blobmap::Cmd,
     },
 }

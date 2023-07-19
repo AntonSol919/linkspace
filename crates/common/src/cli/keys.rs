@@ -13,19 +13,19 @@ use super::{opts::CommonOpts };
 #[derive(Parser, Clone, Debug)]
 pub struct KeyOpts {
     /// (abe) password argon2 encrypted signing key
-    #[clap(long, alias = "pass", env = "LK_PASS")]
+    #[arg(long, alias = "pass", env = "LK_PASS")]
     password: Option<String>,
     /// print password - is always in abtxt format
-    #[clap(long)]
+    #[arg(long)]
     display_pass: bool,
     /// use utf8 encoding for password instead of ABE
-    #[clap(short, long)]
+    #[arg(short, long)]
     utf8_password: bool,
     /// local key name - e.g. my:home:local
-    #[clap(short, long, env = "LK_KEYNAME",default_value="me:local")]
+    #[arg(short, long, env = "LK_KEYNAME",default_value="me:local")]
     key: NameExpr,
     /// use specific enckey instead of looking for key. can be $argon str or (claim) hash
-    #[clap(short, long)]
+    #[arg(short, long)]
     enckey: Option<String>,
     #[clap(skip)]
     signing_key: std::sync::OnceLock<SigningKey>,
@@ -104,38 +104,38 @@ impl KeyOpts {
 **/
 pub struct KeyGenOpts {
     /// overwrite existing entry
-    #[clap(long)]
+    #[arg(long)]
     overwrite: bool,
     /// do not test password if only reading key
-    #[clap(long)]
+    #[arg(long)]
     no_check: bool,
     /// if a key already exists return an error
-    #[clap(long)]
+    #[arg(long)]
     error_some: bool,
     /// if a key does not exists return an error
-    #[clap(long)]
+    #[arg(long)]
     error_none: bool,
 
     /// do not use a linkspace instance. Won't save or get.
-    #[clap(long,conflicts_with_all(["error_some","error_none","overwrite","key"]))]
+    #[arg(long,conflicts_with_all(["error_some","error_none","overwrite","key"]))]
     no_lk: bool,
-    #[clap(flatten)]
+    #[command(flatten)]
     key: KeyOpts,
     /// supress enckey string output
-    #[clap(long)]
+    #[arg(long)]
     no_enckey: bool,
     /// supress pubkey string output
-    #[clap(long)]
+    #[arg(long)]
     no_pubkey: bool,
     /// Set to 0 to use insecure encryption paramaters to speed up unlocking
-    #[clap(long,default_value_t=1)]
+    #[arg(long,default_value_t=1)]
     decrypt_cost: usize,
 
     /// after reading a argon2id, first re-encode it with a new password
-    #[clap(long)]
+    #[arg(long)]
     new_pass: bool,
     /// new password -- implies new_pass
-    #[clap(long)]
+    #[arg(long)]
     new_pass_str: Option<String>,
 }
 

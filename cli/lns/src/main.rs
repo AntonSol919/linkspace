@@ -15,9 +15,9 @@ use tracing_subscriber::EnvFilter;
 
 #[derive(Parser )]
 pub struct Opts {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     cmd: Cmd,
-    #[clap(flatten)]
+    #[command(flatten)]
     common: CommonOpts,
 }
 
@@ -26,11 +26,11 @@ pub enum Cmd {
     /// resolve the claim chain for a linkpoint name
     Get{
         name: Option<NameExpr>,
-        #[clap(long,default_value="stdout")]
+        #[arg(long,default_value="stdout")]
         write: Vec<WriteDestSpec>,
-        #[clap(default_value="null")]
+        #[arg(default_value="null")]
         write_signatures: Vec<WriteDestSpec>,
-        #[clap(long)]
+        #[arg(long)]
         chain:bool
     },
     LsPubkey{
@@ -45,40 +45,40 @@ pub enum Cmd {
     Vote{
         name:NameExpr,
         claim: HashExpr,
-        #[clap(flatten)]
+        #[command(flatten)]
         key: KeyOpts,
-        #[clap(long,default_value="stdout")]
+        #[arg(long,default_value="stdout")]
         write: Vec<WriteDestSpec>,
     },
     CreateClaim{
         /// name of claim
         name:NameExpr,
-        #[clap(long)]
+        #[arg(long)]
         /// the group id value for [#:NAME]
         group: Option<GroupExpr>,
-        #[clap(long)]
+        #[arg(long)]
         /// the public key to find with [@:NAME] - becomes an authority as well unless --no-auth was set
         pubkey: Option<PubKeyExpr>,
         /// do not give the pubkey/enckey authority status
-        #[clap(long)]
+        #[arg(long)]
         no_auth: bool,
         /// implies pubkey
-        #[clap(long,conflicts_with("pubkey"))]
+        #[arg(long,conflicts_with("pubkey"))]
         enckey:Option<String>,
         /// Copy from pubkey
-        #[clap(long,conflicts_with_all(["enckey","pubkey"]))]
+        #[arg(long,conflicts_with_all(["enckey","pubkey"]))]
         copy_from:Option<NameExpr>,
 
-        #[clap(long)]
+        #[arg(long)]
         /// desired list of authname^:pubkey authorities over [NAME + ':*'] - authname is arbitrary ('^' is inserted automatically)
         auth: Vec<LinkExpr>,
-        #[clap(long,default_value="[now:+7D]")]
+        #[arg(long,default_value="[now:+7D]")]
         /// end date of this claim
         until: StampExpr,
-        #[clap(long)]
+        #[arg(long)]
         allow_empty:bool,
 
-        #[clap(long,default_value="stdout")]
+        #[arg(long,default_value="stdout")]
         write: Vec<WriteDestSpec>
     }
 }

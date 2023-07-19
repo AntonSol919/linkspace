@@ -12,22 +12,22 @@ use crate::{watch::{ DGPDWatchCLIOpts, statements2query} };
 #[derive(Parser)]
 pub struct Filter {
     /// Don't filter datapoints
-    #[clap(long)]
+    #[arg(long)]
     allow_datapoint: bool,
-    #[clap(flatten)]
+    #[command(flatten)]
     query: DGPDWatchCLIOpts,
-    #[clap(long, short, default_value = "stdout")]
+    #[arg(long, short, default_value = "stdout")]
     pub write: Vec<WriteDestSpec>,
     /// destination for filtered packets
-    #[clap(short = 'f', long, default_value = "null")]
+    #[arg(short = 'f', long, default_value = "null")]
     pub write_false: Vec<WriteDestSpec>,
-    #[clap(flatten)]
+    #[command(flatten)]
     pkt_in: PktReadOpts,
     /// Do not warn on using recv predicate
-    #[clap(long)]
+    #[arg(long)]
     recv_now: bool,
     /// re-evaluate the ABE expressions in the query after every packet.
-    #[clap(short,long)]
+    #[arg(short,long)]
     live: bool,
 }
 pub fn select(

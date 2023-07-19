@@ -21,19 +21,19 @@ Read multiple queries from pkts on stdin.
 #[derive(Args, Clone)]
 #[group(skip)]
 pub struct MultiWatch {
-    #[clap(flatten)]
+    #[command(flatten)]
     inp:PktReadOpts,
-    #[clap(flatten)]
+    #[command(flatten)]
     print: PrintABE,
     /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
-    #[clap(short, long)]
+    #[arg(short, long)]
     full_ctx: bool,
 
     /// Continue after closing stdin
-    #[clap(short, long)]
+    #[arg(short, long)]
     linger: bool,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     constraint: OrConstrait,
 }
 
@@ -111,7 +111,7 @@ pub struct OrConstrait {
     NOTE: This means a query without any group or domain would imply the first option
 
     **/
-    #[clap(long)]
+    #[arg(long)]
     pub or: Vec<String>,
 }
 

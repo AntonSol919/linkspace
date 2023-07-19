@@ -22,18 +22,18 @@ pub enum Mode {
 }
 #[derive(Parser, Debug, Clone)]
 pub struct FsSyncOpts {
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub file_first: bool,
-    #[clap(long, env = "LK_SYNC", default_value = "./ssync")]
+    #[arg(long, env = "LK_SYNC", default_value = "./ssync")]
     pub root: PathBuf,
-    #[clap(short, long,action=clap::ArgAction::Count)]
+    #[arg(short, long,action=clap::ArgAction::Count)]
     pub clean: u8,
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub r#async: bool,
-    #[clap(subcommand)]
+    #[command(subcommand)]
     pub mode: Mode,
     /// modify the mapping between paths and spaths.
-    #[clap(long)]
+    #[arg(long)]
     pub modify: Vec<PathMod>,
 }
 

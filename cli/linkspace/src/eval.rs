@@ -16,10 +16,10 @@ use std::io::{ Write};
 #[derive(Parser, Clone)]
 pub struct EvalOpts {
     /// output json ABList format
-    #[clap(long)]
+    #[arg(long)]
     json: bool,
     /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
-    #[clap(alias="strict",long)]
+    #[arg(alias="strict",long)]
     no_parse_unencoded: bool,
 
     abe: String,

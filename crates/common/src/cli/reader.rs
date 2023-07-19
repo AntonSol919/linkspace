@@ -19,9 +19,11 @@ use memmap2::Mmap;
 
 #[derive(Parser, Clone, Debug,Default,PartialEq)]
 pub struct PktReadOpts{
-    #[clap(long)]
+    /// read packets from path
+    #[arg(long)]
     pub pkts: Option<PathBuf>,
-    #[clap(long,conflicts_with_all(["pkts"]))]
+    /// don't read any packets. 
+    #[arg(long,conflicts_with_all(["pkts"]))]
     pub no_pkts: bool,
 }
 impl PktReadOpts {
@@ -49,19 +51,19 @@ pub fn check_stdin(pkt_in:&PktReadOpts,read_in:&DataReadOpts,read_default_in:boo
 #[derive(Parser, Clone, Debug,Default,PartialEq)]
 pub struct CommonReadOpts{
     /// open a path to read from
-    #[clap(long)]
+    #[arg(long)]
     pub data: Option<PathBuf>,
     /// default when stdin is not used for packets
-    #[clap(long,conflicts_with_all(["data","data_str","no_data","data_repeat"]))]
+    #[arg(long,conflicts_with_all(["data","data_str","no_data","data_repeat"]))]
     pub data_stdin: bool,
     /// read a static string
-    #[clap(long, conflicts_with_all(["data","data_stdin","no_data"]))]
+    #[arg(long, conflicts_with_all(["data","data_stdin","no_data"]))]
     pub data_str: Option<String>,
     /// read nothing
-    #[clap(long,conflicts_with_all(["data","data_str","data_stdin"]))]
+    #[arg(long,conflicts_with_all(["data","data_str","data_stdin"]))]
     pub no_data: bool,
     /// after finishing jump back to start
-    #[clap(long, alias = "rr", conflicts_with("data_stdin"))]
+    #[arg(long, alias = "rr", conflicts_with("data_stdin"))]
     pub data_repeat: bool,
 }
 impl CommonReadOpts {
@@ -97,22 +99,22 @@ impl CommonReadOpts {
 
 #[derive(Parser, Clone, Debug,Default,PartialEq)]
 pub struct DataReadOpts {
-    #[clap(flatten)]
+    #[command(flatten)]
     pub common : CommonReadOpts,
     /// set a byte to function as a delimiter.
-    #[clap(short = 'D', long)]
+    #[arg(short = 'D', long)]
     pub data_delim: Option<TypedABE<Vec<u8>>>,
     /// maximum amount read per call - defaults to free space in packet
-    #[clap(short = 'n', long)]
+    #[arg(short = 'n', long)]
     pub data_bufsize: Option<usize>,
     /// limit number of 'reads' 
-    #[clap(long)]
+    #[arg(long)]
     pub data_reads: Option<usize>,
     /// set how to deal when the data ( after eval ) exceeds the free space in a packet.
     #[arg(long,value_enum)]
     pub data_overflow : Option<EMode>,
     /// evaluate data as ABE expression.
-    #[clap(long)]
+    #[arg(long)]
     pub data_eval: bool,
 }
 

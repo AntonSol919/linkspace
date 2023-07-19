@@ -17,20 +17,20 @@ use tracing_subscriber::EnvFilter;
 Exchange keypoints to prove each side holds a key.
 **/
 pub struct Opts {
-    #[clap(flatten)]
+    #[command(flatten)]
     common: CommonOpts,
-    #[clap(long, default_value = "stdout")]
+    #[arg(long, default_value = "stdout")]
     write: Vec<WriteDestSpec>,
-    #[clap(long, default_value = "null")]
+    #[arg(long, default_value = "null")]
     /// copy input to
     forward: Vec<WriteDestSpec>,
-    #[clap(long)]
+    #[arg(long)]
     max_diff_secs: Option<usize>,
-    #[clap(flatten)]
+    #[command(flatten)]
     key: KeyOpts,
-    #[clap(subcommand)]
+    #[command(subcommand)]
     mode: Handshake,
-    #[clap(flatten)]
+    #[command(flatten)]
     inp: PktReadOpts,
 }
 
