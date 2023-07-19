@@ -11,10 +11,10 @@ use linkspace_common::{
 
 #[derive(Parser, Debug,Default)]
 pub struct MultiOpts {
-    /// produce copies while reading data ( defaults is to read once and truncate. )
+    /// produce copies while reading data  (defaults is to read once and truncate)
     #[arg(short,long)]
     multi: bool,
-    /// Add link to the previous point 
+    /// add link to the previous point
     #[arg(long,requires("multi"))]
     multi_link: Option<TagExpr>,
     // #[arg(long,requires("multiple"))] multi_fixed_stamp: bool
@@ -22,20 +22,20 @@ pub struct MultiOpts {
 
 #[derive(Parser, Debug)]
 pub struct PointOpts {
+    /// 8 byte abe expression - e.g. [now:-1D] or [u64:0]  (defaults to now)
     #[arg(long, alias = "u")]
     pub create: Option<StampExpr>,
+    /// decimal create stamp - eqv to [u64:{create_int}]
     #[arg(long, conflicts_with = "create")]
     pub create_int: Option<Stamp>,
 
-    //pub bare:bool,
     #[arg(long)]
     pub sign: bool,
 
     #[command(flatten,next_help_heading="Data Options")]
     pub read: DataReadOpts,
 
-
-    #[command(flatten,next_help_heading="Key Options")]
+    #[command(flatten,next_help_heading="Sign Options")]
     pub key: KeyOpts,
 
     pub dgs: DGPExpr,
@@ -140,7 +140,7 @@ pub struct GenPointOpts {
 
     #[command(flatten,next_help_heading="Data Options")]
     pub read: DataReadOpts,
-    #[command(flatten,next_help_heading="Key Options")]
+    #[command(flatten,next_help_heading="Sign Options")]
     pub key: KeyOpts,
     pub dgs: Option<DGPExpr>,
     #[arg(last=true)]

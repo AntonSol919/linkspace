@@ -39,22 +39,22 @@ does nothing
 --forward stdout --write null
 **/
 pub struct Collect {
-    /// tag for each link - this can be an ABE expr with the pkt in scope
+    /// tag for each link
     #[arg(alias = "ctag", long, value_enum, default_value = "[now]")]
     collect_tag: TagExpr,
-    /// If set - adds a link to the previously created packet - also an ABE expr
+    /// if set - adds a link to the previously created packet
     #[arg(long)]
     chain_tag: Option<TagExpr>,
     #[arg(long)]
     allow_empty: bool,
-    /// Link used for the first collect
+    /// link used for the first collect
     #[arg(alias = "il", long)]
     pub init_link: Vec<LinkExpr>,
 
-    /// Create packet after collecting max_links from incoming packets
+    /// create packet after collecting max_links from incoming packets
     #[arg(long,default_value_t=MAX_LINKS_LEN-16)]
     max_links: usize,
-    /// Create a packet after
+    /// create a packet after [DurationStr]
     #[arg(long)]
     min_interval: Option<DurationStr>,
 
