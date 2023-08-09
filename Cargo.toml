@@ -25,7 +25,7 @@ exclude = [
 
 [workspace.dependencies]
 
-anyhow = "=1.0.71"
+anyhow = "=1.0.72"
 arrayvec = "=0.7.2  "
 serde = "=1.0.160"
 hex = "=0.4.3"
