@@ -18,7 +18,7 @@ inotify = ["nix/inotify","memmap2"]
 tracing.workspace = true
 anyhow.workspace =true
 
-socket2 = { version = "0.4.4", features = ["all"]}
+socket2 = { version = "0.5.3", features = ["all"]}
 event-listener = "2.5.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
