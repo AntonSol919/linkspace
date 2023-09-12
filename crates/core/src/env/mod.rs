@@ -10,6 +10,7 @@ use linkspace_pkt::{NetPkt, reroute::RecvPkt, NetPktPtr};
 pub mod tree_key;
 pub mod write_result;
 
+#[cfg(feature="lmdb")]
 pub mod lmdb;
 pub mod query_mode;
 
@@ -21,6 +22,7 @@ pub trait Env {
 }
 
 
+#[cfg(feature="lmdb")]
 impl Env for lmdb::BTreeEnv{
     type RecvPkt<'o> = RecvPktPtr<'o>;
 }

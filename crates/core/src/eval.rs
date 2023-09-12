@@ -15,16 +15,12 @@ use linkspace_pkt::B64;
 use linkspace_pkt::abe::scope::EvalCore;
 use linkspace_pkt::abe::scope::core_scope;
 
-pub const EVAL0_1: &str = "0.1";
 
-pub fn std_ctx() -> EvalCtx<EvalStd> {
-    std_ctx_v(EVAL0_1)
-}
 pub type EvalStd = (
     ((EvalCore, EScope<StaticLNS>), EScope<StampEF>),
     EScope<PathFE>,
 );
-pub const fn std_ctx_v(_version: &str) -> EvalCtx<EvalStd> {
+pub const fn std_ctx() -> EvalCtx<EvalStd> {
     EvalCtx {
         scope: (
             ((core_scope(), EScope(StaticLNS)), EScope(StampEF{fixed_now:None})),

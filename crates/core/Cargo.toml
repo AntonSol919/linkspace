@@ -12,10 +12,11 @@ homepage.workspace = true
 documentation.workspace = true
 repository.workspace = true
 
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default=["lmdb"]
-lmdb = ["lmdb-rkv", "lmdb-rkv-sys", "libc"]
+lmdb = ["lmdb-rkv", "lmdb-rkv-sys", "libc","ipcbus"]
 
 [dependencies]
 
@@ -32,7 +33,7 @@ libc = { workspace = true,optional=true}
 smallvec.workspace = true
 
 dunce = "1.0.2"
-ipcbus = { path = "../ipcbus", version = "0.1.0"}
+ipcbus = { path = "../ipcbus", version = "0.1.0", optional = true}
 lmdb-rkv = { git="https://github.com/AntonSol919/lmdb-rs", optional = true }
 lmdb-rkv-sys = { git="https://github.com/AntonSol919/lmdb-rs" ,optional = true }
 #lmdb-rkv = {path = "../../../lmdb-rs",optional=true}

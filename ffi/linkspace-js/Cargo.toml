@@ -23,6 +23,7 @@ abe = []
 
 [dependencies]
 wasm-bindgen = "0.2.87"
+linkspace = { path = "../../crates/linkspace", default-features = false}
 linkspace-pkt = { path = "../../../linkspace/crates/pkt" , default-features = false}
 linkspace-argon2-identity = { path = "../../../linkspace/crates/argon2-identity"}
 web-sys ={ version = "0.3.63",features=["console","TextDecoder"]}

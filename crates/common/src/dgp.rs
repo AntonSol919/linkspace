@@ -164,11 +164,11 @@ pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
     let mut it = ast.split(|v| matches!(v, ABE::Ctr(Ctr::Colon)));
 
     let domain = match it.next().unwrap_or(&[]){
-        &[] => TypedABE::from_unchecked(crate::static_env::domain().to_abe()),
+        &[] => TypedABE::from_unchecked(crate::thread_local::domain().to_abe()),
         v => v.try_into()?,
     };
     let group = match it.next().unwrap_or(&[]){
-        &[] => TypedABE::from_unchecked(crate::static_env::group().to_abe()),
+        &[] => TypedABE::from_unchecked(crate::thread_local::group().to_abe()),
         v => v.try_into()?
     };
     let path = it.next().unwrap_or_default().try_into()?;

@@ -34,21 +34,30 @@ pub use linkspace_argon2_identity as identity;
 pub use linkspace_core as core;
 pub use linkspace_pkt as pkt;
 
-#[cfg(feature = "cli")]
-pub mod cli;
-#[cfg(test)]
-pub mod tests;
-
+pub mod dgp;
+pub mod thread_local;
 pub mod pkt_reader;
 pub mod pkt_stream_utils;
 pub mod prelude;
 pub mod protocols;
-pub mod runtime;
-pub mod static_env;
 
-pub mod dgp;
-pub mod eval;
+
+#[cfg(feature = "cli")]
+pub mod cli;
+#[cfg(feature = "cli")]
 pub mod predicate_aliases;
+
+#[cfg(test)]
+pub mod tests;
+
+
+#[cfg(feature="runtime")]
+pub mod runtime;
+#[cfg(feature="runtime")]
+pub mod static_env;
+#[cfg(feature="runtime")]
+pub mod eval;
+
 
 
 pub fn saturating_cast(val:u32) -> i32{

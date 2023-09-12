@@ -1,6 +1,4 @@
 
-use linkspace_common::prelude::{U16, U32 };
-use tracing::debug_span;
 
 // Copyright Anton Sol
 //
@@ -37,7 +35,7 @@ A reply is accepted if it was made now-timeout.
 
 This might change
 **/
-use crate::{*, runtime::{lk_get_all, lk_watch2}};
+use crate::{*};
 pub const STATUS_PATH: IPathC<16> = ipath1::<7>(concat_bytes!([255], b"status"));
 
 #[derive(Copy, Clone)]
@@ -92,7 +90,13 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
     Ok(q)
 }
 
-pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: impl PktHandler + 'static) -> LkResult<bool>{
+#[cfg(feature="runtime")]
+pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
+                      mut cb: impl crate::runtime::cb::PktHandler + 'static) -> LkResult<bool>{
+    use crate::runtime::{lk_watch2,lk_get_all};
+    use linkspace_common::prelude::{U16, U32};
+    use tracing::debug_span;
+
     let span = debug_span!("status_poll",?status,?d_timeout);
     let _ = span.enter();
     let mut ok = false;
@@ -128,7 +132,7 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp, mut cb: im
     Ok(ok)
 }
 
-fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<()>{
+pub fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<()>{
     anyhow::ensure!(*pkt.get_domain() == status.domain
                     && *pkt.get_group() == PRIVATE
                     && pkt.get_ipath() == path
@@ -139,7 +143,12 @@ fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<()>{
 }
 
 /// Insert a callback that is triggered on a request. Must yield a valid response. Don't forget to process
+#[cfg(feature="runtime")]
 pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linkspace,Domain,GroupID,&IPath,Link) -> LkResult<NetPktBox> +'static)-> LkResult<()>{
+    use tracing::debug_span;
+    use linkspace_common::prelude::{U16, U32};
+    use crate::runtime::{lk_watch2};
+
     let span = debug_span!("status_set",?status);
     let _ = span.enter();
     let LkStatus { domain, group, objtype, instance,qid }= status;

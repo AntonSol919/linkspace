@@ -9,6 +9,7 @@ pub use std::sync::Arc;
 pub use linkspace_pkt::{*,eval,exprs,Error};
 
 pub use crate::consts::*;
+#[cfg(feature="lmdb")]
 pub use crate::env::lmdb::queries::*;
 pub use crate::env::tree_key::*;
 pub use crate::env::write_result::*;

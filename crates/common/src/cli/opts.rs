@@ -59,12 +59,12 @@ impl LinkspaceOpts {
     }
     pub fn fake_eval_ctx(
     ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'static> {
-        crate::eval::std_ctx_v(|| anyhow::bail!("no linkspace instance "), EVAL0_1,false)
+        crate::eval::std_ctx(|| anyhow::bail!("no linkspace instance "), false)
     }
     pub fn eval_ctx(
         &self,
     ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + '_> {
-        crate::eval::std_ctx_v(|| self.runtime_io().context("could not open linkspace instance"), EVAL0_1,self.env)
+        crate::eval::std_ctx(|| self.runtime_io().context("could not open linkspace instance"), self.env)
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.root()?.join("keys"))

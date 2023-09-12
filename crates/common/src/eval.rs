@@ -54,12 +54,12 @@ where
     ctx.scope(rt_scope(rt,enable_env))
 }
 
-pub const fn std_ctx_v<'o, GT>(rt: GT, version: &str,enable_env:bool) -> RTCtx<GT>
+pub const fn std_ctx<'o, GT>(rt: GT,enable_env:bool) -> RTCtx<GT>
 where
     GT: 'o + LKS
 {
     EvalCtx {
-        scope : (linkspace_core::eval::std_ctx_v(version).scope, rt_scope(rt,enable_env)),
+        scope : (linkspace_core::eval::std_ctx().scope, rt_scope(rt,enable_env)),
     }
 }
 

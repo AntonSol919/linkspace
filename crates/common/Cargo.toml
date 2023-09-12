@@ -15,11 +15,11 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["full", "lmdb"]
+default = ["runtime","fs","cli"]
+runtime = ["lmdb"]
 lmdb=["linkspace-core/lmdb"]
 fs=["memmap2", "notify"]
 cli=["clap", "clap/env", "clap/derive", "rpassword"]
-full=["fs", "cli"]
 
 [dependencies]
 abe = { path = "../abe", version = "0.3.1-rc1"}

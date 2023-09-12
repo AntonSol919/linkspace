@@ -5,7 +5,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 pub mod status;
-pub use status::{LkStatus,lk_status_poll,lk_status_set};
+#[cfg(feature="runtime")]
+pub use status::*;
 
 use anyhow::Context;
 use linkspace_common::prelude::EXCHANGE_DOMAIN;
@@ -20,6 +21,7 @@ Requesting too much can add significant overhead.
 
 You can use [lk_status_poll] to determine if a exchange is active
 **/
+#[cfg(feature="runtime")]
 pub fn lk_pull(lk: &Linkspace, query: &Query) -> LkResult<LkHash> {
     let req = lk_pull_req(query)?;
     lk_save(lk, &req)?;
