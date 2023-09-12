@@ -187,7 +187,7 @@ impl IPath {
             ipath_bytes: self.ipath_bytes.to_vec(),
         }
     }
-    pub const EMPTY: &IPath = IPath::from_unchecked(&[]);
+    pub const EMPTY: &'static IPath = IPath::from_unchecked(&[]);
     pub const fn ipath_bytes(&self) -> &[u8] {
         &self.ipath_bytes
     }

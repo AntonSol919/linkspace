@@ -439,7 +439,7 @@ pub struct CheckedSPathIter {
 }
 
 impl CheckedSPathIter {
-    pub const EMPTY: &Self = unsafe { &*ptr::from_raw_parts(ptr::from_ref(SPath::empty()).cast(), 0)};
+    pub const EMPTY: &'static Self = unsafe { &*ptr::from_raw_parts(ptr::from_ref(SPath::empty()).cast(), 0)};
     #[allow(clippy::as_conversions)]
     pub const fn next_sp_c(&self) -> Option<Result<(&SPath, &Self), PathError>> {
         if self.spath.spath_bytes.is_empty() {

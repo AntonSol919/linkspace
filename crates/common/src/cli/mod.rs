@@ -75,9 +75,9 @@ impl std::str::FromStr for WriteDestSpec {
             b"db" => abev!( [0] "db"),
             b"buffer" => abev!([0] "buffer"),
             b"file" if !is_expr => {
-                // it is far to suprising for files with ':' to silently use that as a name.
+                // it is far too suprising for files with ':' to silently use that as a name.
                 // So we do this little dance to treat file:/some:thing:[hash:str] differently then file-expr:[/:./some:thing]:[hash:str]
-                let v = it.as_slice().clone().to_vec();
+                let v = it.as_slice().to_vec();
                 for _i in &mut it {}
                 v
             }

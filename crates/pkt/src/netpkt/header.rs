@@ -54,7 +54,7 @@ impl ToABE for NetPktHeader {
             ubits,
         } = self;
         byte_fmt::abe::abev!( +(prefix.to_abe())
-                : +(U8::new(flags.bits).abe_bits())
+                : +(U8::new(flags.bits()).abe_bits())
                 : +(hop.to_abe())
                 : +(stamp.to_abe())
                 : +(ubits[0].to_abe())
@@ -131,7 +131,7 @@ use bitflags::bitflags;
 
 bitflags! {
     /// Variable flags used in transit
-    #[derive(Serialize,Deserialize)]
+    #[derive(Serialize,Deserialize,Copy,Clone,Debug,Eq,PartialEq,Ord,PartialOrd)]
     pub struct NetFlags: u8 {
         /// Indicate that the chances of anybody interested in this packet are zero.
         /// Implementations can ignore this, mostly useful for importing many datablocks.
@@ -145,7 +145,7 @@ bitflags! {
 }
 impl From<NetFlags> for byte_fmt::endian_types::U8 {
     fn from(val: NetFlags) -> Self {
-        byte_fmt::endian_types::U8::new(val.bits)
+        byte_fmt::endian_types::U8::new(val.bits())
     }
 }
 /// [NetPktHeader] builder.

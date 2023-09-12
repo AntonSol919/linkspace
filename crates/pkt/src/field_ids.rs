@@ -263,7 +263,7 @@ field_val!([
         .as_point()
         .point_header()
         .point_type
-        .bits)),
+        .bits())),
     (SizeF, u16, |pkt: &'o T| (pkt
         .as_point()
         .point_header().size()
@@ -394,7 +394,7 @@ impl FieldEnum {
             FieldEnum::VarUBits3F => out.write_all(&VarUBits3F::get_ptr(pkt).0),
             FieldEnum::PktHashF => out.write_all(&PktHashF::get_ptr(pkt).0),
             FieldEnum::PktTypeF => out.write_all(std::slice::from_ref(
-                &pkt.as_point().point_header_ref().point_type.bits,
+                &pkt.as_point().point_header_ref().point_type.bits(),
             )),
             FieldEnum::SizeF => out.write_all( &U16::from(pkt.size()).0),
             FieldEnum::DataSizeF => out.write_all(&DataSizeF::get_val(pkt).to_be_bytes()),

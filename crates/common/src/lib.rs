@@ -9,7 +9,6 @@
     trait_alias,
     thread_local,
     array_windows,
-    io_error_other,
     ptr_metadata,
     split_as_slice,
     iterator_try_collect,

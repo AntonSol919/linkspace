@@ -68,7 +68,7 @@ impl PointHeader {
             PointTypeFlags::LINK_POINT => len >= size_of::<LinkPointHeader>(),
             PointTypeFlags::KEY_POINT => len >= size_of::<LinkPointHeader>()+size_of::<Signed>(),
             PointTypeFlags::ERROR_POINT => true,
-            e => return Err(Error::UnknownPktType(e.bits)),
+            e => return Err(Error::UnknownPktType(e.bits())),
         };
         if ok {
             Ok(self)

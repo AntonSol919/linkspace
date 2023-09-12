@@ -12,7 +12,6 @@
     exact_size_is_empty,
     pointer_is_aligned,
     ptr_from_ref,
-    io_error_other,
     try_blocks,
     slice_split_at_unchecked,
     doc_notable_trait,
@@ -282,7 +281,7 @@ where
 
 use bitflags::bitflags;
 bitflags! {
-    #[derive(Serialize,Deserialize)]
+    #[derive(Serialize,Deserialize,Copy,Clone,Debug,PartialEq,Eq,Ord,PartialOrd)]
     /// Pkt flag indicating its type.
     ///
     /// Only the _POINT combinations are valid in a packet.
@@ -295,10 +294,10 @@ bitflags! {
         const SIGNATURE = 0b0000_0100;
         const ERROR = 0b1000_0000;
 
-        const DATA_POINT = Self::DATA.bits;
-        const LINK_POINT = Self::DATA.bits | Self::LINK.bits;
-        const KEY_POINT = Self::DATA.bits | Self::LINK.bits | Self::SIGNATURE.bits;
-        const ERROR_POINT = Self::ERROR.bits;
+        const DATA_POINT = Self::DATA.bits();
+        const LINK_POINT = Self::DATA.bits() | Self::LINK.bits();
+        const KEY_POINT = Self::DATA.bits() | Self::LINK.bits() | Self::SIGNATURE.bits();
+        const ERROR_POINT = Self::ERROR.bits();
     }
 }
 impl std::fmt::Display for PointTypeFlags {
@@ -317,7 +316,7 @@ impl PointTypeFlags {
         }
     }
     pub fn unchecked_from(b: u8) -> Self {
-        unsafe {PointTypeFlags::from_bits_unchecked(b)}
+        PointTypeFlags::from_bits(b).unwrap()
     }
 }
 

@@ -10,7 +10,6 @@
     file_create_new,
     let_chains,
     try_blocks,
-    io_error_other,
     const_option_ext,
     const_bigint_helper_methods,
     concat_idents,
