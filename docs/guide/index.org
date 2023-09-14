@@ -21,7 +21,7 @@ If you're better with hands on experience or just want to see it put into practi
 
 Linkspace is built on 4 concepts.
 
-- [[Point]] - Bytes, potentially with a path and links to other points. A point combined with its hash and netheader form a packet.
+- [[Point]] - Bytes, potentially with a spacename and links to other points. A point combined with its hash and netheader form a packet.
 - [[ABE]] - (Byte) templating for convenience.
 - [[Query]] - A list of predicates and options for selecting packets.
 - [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
@@ -146,26 +146,26 @@ lk_eval2str("[hash:str] = [data]", datap)
 :CUSTOM_ID: lk_linkpoint
 :END:
 
-A linkpoint can: hold data, hold links to other points, and can be found with by its path.
+A linkpoint can: hold data, hold links to other points, and can be found with by its spacename.
 
 It consists of these fields:
 
-| Field_{size}      |                                                    |
-|-------------------+----------------------------------------------------|
-| Group_{32}        | the intended recipients.                           |
-| Domain_{16}       | the intended application.                          |
-| Path_{var<240}    | Sequence of bytes. e.g. '/dir1/dir2/thing'         |
-| Stamp_{8}         | Big endian UNIX timestamp in microseconds.         |
-| Links_{48*n}      | A variable length list of (Tag_{16}, Pointer_{32}) |
-| -Link[0]_{48}     |                                                    |
-| -Link[1]_{48}     |                                                    |
-| -Link[2]_{48}     |                                                    |
-| -Link[...]_{48}   |                                                    |
-| Data_{var<2^{16}} |                                                    |
+| Field_{size}        |                                                    |
+|---------------------+----------------------------------------------------|
+| Group_{32}          | the intended recipients.                           |
+| Domain_{16}         | the intended application.                          |
+| Spacename_{var<240} | Sequence of bytes. e.g. '/dir1/dir2/thing'         |
+| Stamp_{8}           | Big endian UNIX timestamp in microseconds.         |
+| Links_{48*n}        | A variable length list of (Tag_{16}, Pointer_{32}) |
+| -Link[0]_{48}       |                                                    |
+| -Link[1]_{48}       |                                                    |
+| -Link[2]_{48}       |                                                    |
+| -Link[...]_{48}     |                                                    |
+| Data_{var<2^{16}}   |                                                    |
 
-Each (Domain,Group) is a 'tree', and each (Domain,Group,Path) is a points 'location'.
+Each (Domain,Group) is a 'tree', and each (Domain,Group,Spacename) is a points 'location'.
 
-All values, including the Path, contain arbitrary bytes.
+All values, including the Spacename, contain arbitrary bytes.
 
 An entire point can be 2^{16}-512 bytes in size. The header is always 4 bytes.
 A data point can hold a maximum of 2^{16}-512-4 bytes.
@@ -189,7 +189,7 @@ By default 'create' is set to the current time ( microseconds since epoch ) and 
 #+begin_sh
 
 The command ~lk link~ builds one or more linkpoint packets and output's it to stdout by default.
-Whenever a cli commands deal with (domain, group, path) tuples, they are set by the first argument: ~DOMAIN:GROUP:PATH~.
+Whenever a cli commands deal with (domain, group, spacename) tuples, they are set by the first argument: ~DOMAIN:GROUP:SPACENAME~.
 Here two links are added with the tags ~first_tag_1~ and ~another_tag~.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
@@ -295,7 +295,7 @@ Fields are not writable because they are included in the hash.
   [attr for attr in dir(lk_linkpoint())  if not "__" in attr]
 #+END_SRC
 
-Where path[0..7] are the path components, 
+Where spacename[0..7] are the spacename components, 
 
 #+BEGIN_VERSE
 Some [[#predicatelist][fields]] we've not seen so far are writable, but they are not relevant for most applications.
@@ -431,13 +431,13 @@ All fields are arbitrary bytes, and lk_encode can print them as ab text
   multiline = """newline
   tab	""".encode() # encode implies utf-8
 
-  lkp = lk_linkpoint(path=[b"hello",b"world/",multiline,b"open [ close ]"])
+  lkp = lk_linkpoint(spacename=[b"hello",b"world/",multiline,b"open [ close ]"])
 
-  print(lk_encode(lkp.path0),"\t",list(lkp.path0))
-  print(lk_encode(lkp.path1),"\t",list(lkp.path1))
-  print(lk_encode(lkp.path2),"\t",list(lkp.path2))
-  print(lk_encode(lkp.path3),"\t",list(lkp.path3))
-  print(lk_encode(lkp.path4),"\t",list(lkp.path4), lkp.path4.decode("utf-8"))
+  print(lk_encode(lkp.comp0),"\t",list(lkp.comp0))
+  print(lk_encode(lkp.comp1),"\t",list(lkp.comp1))
+  print(lk_encode(lkp.comp2),"\t",list(lkp.comp2))
+  print(lk_encode(lkp.comp3),"\t",list(lkp.comp3))
+  print(lk_encode(lkp.comp4),"\t",list(lkp.comp4), lkp.comp4.decode("utf-8"))
 #+end_src
 
 #+end_py
@@ -578,7 +578,7 @@ A scope containing functions resolving to an argument vector.
 
 
 By providing a packet, the packet scope is added to the chain.
-This adds functions such as ~hash~, ~group~, ~path~ etc.
+This adds functions such as ~hash~, ~group~, ~spacename~ etc.
 These are bytes that you can use as arguments.
 
 e.g ~[hash/?b]~ encodes the hash in base 64.
@@ -809,7 +809,7 @@ A query might look like this:
 #+BEGIN_EXAMPLE
 group:=:[#:pub]
 domain:=:example
-path:=:/hello/world
+spacename:=:/hello/world
 pubkey:=:[@:me:local]
 create:>:[now:-1D]
 #+END_EXAMPLE
@@ -845,12 +845,12 @@ The following are shorthand and resolve to one or more of the basic tests.
 The CLI has options that can act as a guide in creating queries by using ~lk print-query --help~.
 
 #+BEGIN_VERSE 
-Many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:path:(?depth)~
-If no depth is set the path_len is constraint by default.
+Many cli commands (e.g. ~print-statemnt~, ~watch~ ) take as the first argument a ~domain:group:spacename:(?depth)~
+If no depth is set the depth is constraint by default.
 Except for ~watch-tree~ which sets the depth to unconstrained by default
 #+END_VERSE 
 
-Here we look for the domain 'my' , the group [#:pub], with path starting at /hello and with one additional path component.
+Here we look for the domain 'my' , the group [#:pub], with spacename starting at /hello and with one additional spacename component.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim :cache no
 lk print-query "my:[#:pub]:/hello:*" --signed
@@ -892,7 +892,7 @@ The full list of predicates and their byte size can be found [[#predicatelist][h
   """
 
   q = lk_query_parse(q,stmt,
-                 "path_len:<:[u8:4]",
+                 "depth:<:[u8:4]",
                  "data_size:<:[0]",argv=[int(10).to_bytes(2)]) 
   lk_query_print(q,True)
 #+END_SRC
@@ -957,7 +957,7 @@ The boolean argument sets whether to create abe expressions or stick to a repres
 #+BEGIN_VERSE
 The ~b2~ function read a binary representation.
 The types are: datapoint=[b2:0000_0001], linkpoint [b2:0000_0011], keypoint [b2:0000_0111].
-Setting 'group', 'domain', 'path', 'links', or 'create' predicates automatically exclude the datapoint type.
+Setting 'group', 'domain', 'spacename', 'links', or 'create' predicates automatically exclude the datapoint type.
 Setting pubkey or signature excludes link and data points.
 #+END_VERSE
 
@@ -966,7 +966,7 @@ Setting pubkey or signature excludes link and data points.
 #+Begin_VERSE
 ~group~ requires 32 bytes but will try to parse base64.
 ~domain~ requires 16 bytes but will prepend '\0' if too few bytes are given
-~path~ and ~prefix~ only take the = op. Their value is the spath bytes ~path:=:[//hello/world]~, but they'll accept ~/hello/world~ as well
+~spacename~ and ~prefix~ only take the = op. Their value is the bytes ~spacename:=:[//hello/world]~, but they'll accept ~/hello/world~ as well
 #+end_VERSE
 
 Besides the fields in a point, predicates also apply to the hash and variable net header fields.
@@ -1049,70 +1049,6 @@ An exchange process will for instance add a ':boomfilter' only it understands.
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim 
  lk print-query --help
 #+end_src
-
-#+RESULTS:
-#+begin_example
-hash         - the point hash e.g. \[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]
-group        - group id e.g. \[#:pub\]
-domain       - domain - if fewer than 16 bytes, prepadded with   e.g. \[a:example\]
-prefix       - path prefix - only accepts '=' op e.g. /hello/world
-path         - exact path - only accepts '=' op e.g. /hello/world
-pubkey       - public key used to sign point e.g. \[@:me:local\]
-create       - the create stamp e.g. \[now:-1H\]
-path_len     - the total number of path components - max 8 e.g. \[u8:0\]
-links_len    - the number of links in a packet e.g. \[u16:0\]
-data_size    - the byte size of the data field e.g. \[u16:0\]
-recv         - the recv time of a packet e.g. \[now:+1D\]
-i_branch     - total packets per uniq (group,domain,path,key) - only applicable during local tree index, ignored otherwise e.g. \[u32:0\]
-i_db         - total packets read from local instance e.g. \[u32:0\]
-i_new        - total newly received packets e.g. \[u32:0\]
-i            - total matched packets e.g. \[u32:0\]
-hop          - (mutable) number of hops e.g. \[u16:5\]
-stamp        - (mutable) variable stamp e.g. \[now\]
-ubits0       - (mutable) user defined bits e.g. \[u32:0\]
-ubits1       - (mutable) user defined bits e.g. \[u32:0\]
-ubits2       - (mutable) user defined bits e.g. \[u32:0\]
-ubits3       - (mutable) user defined bits e.g. \[u32:0\]
-type         - the field type bits - implied by other predicates e.g. \[b2:00000001\]
-netflags     - (mutable) netflags e.g. \[b2:00000000\]
-point_size   - exact point size - (netpkt_size - 32b header - 32b hash) e.g. \[u16:4\]
-
-The following options are available
-
-	:mode
-	:qid
-	:follow
-	:notify-close
-
-
-query - print full query from common aliases
-
-Usage: lk print-query [OPTIONS] [DGPD] [-- <EXPRS>...]
-
-Arguments:
-  [DGPD]      
-  [EXPRS]...  
-
-Options:
-  -p, --print-expr               print the query
-      --print-text               print in ascii-byte-text format (ABE without '{..}' expressions)
-      --mode <MODE>              [default: tree-desc]
-      --private                  enable io of linkpoints in [#:0] [env: LK_PRIVATE=]
-  -b, --bare                     
-      --index                    only match locally indexed pkts           | i_new:=:{u32:0}
-      --new                      only match new unindexed pkts             | i_db:=:{u32:0}
-      --max <MAX>                match upto max packets.                   | i:<:{u32:max}
-      --max-branch <MAX_BRANCH>  match upto max per (dm,grp,path,key) pkts | i:<:{u32:max_branch}
-      --max-index <MAX_INDEX>    match upto max from local index           | i_db:<:{u32:max_index}
-      --max-new <MAX_NEW>        match upto max unindexed pkts             | i_new:<:{u32:max_new}
-      --signed                   match only signed pkts                    | pubkey:>:{@:none}
-      --unsigned                 match only unsigned pkts                  | pubkey:=:{@:none}
-      --watch                    Add :qid option (generates qid)
-      --qid <QID>                set :qid option (implies --watch)
-      --follow                   Add :follow option
-      --ttl <TTL>                add recv:<:{now:+..}
-  -h, --help                     Print help
-#+end_example
 
 #+end_sh
 #+end_ctabs
@@ -1231,7 +1167,7 @@ They provide a standard way for unrelated processes to loosly couple/interface w
 
 Generally they require the caller to also run [[lk_process]] or [[lk_process_while]]
 
-One general conventions is that domains and paths starting with \xff are for meta things such as status queries and packet exchange.
+One general conventions is that domains and spacenames starting with \xff are for meta things such as status queries and packet exchange.
 
 ** lk_status_set
 :PROPERTIES:
@@ -1371,7 +1307,7 @@ An alternative approach would be to use ~lk get-links --write file-expr:[/:/tmp/
 
 
 **** Why Big Endian?
-The tree index is in the expected order when using the numbers as path components.
+The tree index is in the expected order when using the numbers as space components.
 E.g. ~lk linkpoint ::/some/dir/[now]~ will come after ~lk linkpoint ::/some/dir/[now:-1D]~ because ~now > (now - one day)~
 
 **** Every user of my domain app needs X from my server/I want to add advertisements to my domain app.

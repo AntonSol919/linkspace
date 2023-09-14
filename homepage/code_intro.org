@@ -30,17 +30,17 @@ A point can hold just shy of 64kb.
 
 Beyond just data, there are some (optional) additional fields, such as:  
 
-a path:
-#+NAME: point-path
+a spacename:
+#+NAME: point-spacename
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  echo -n some data | lk point ::/my/example/path --data-stdin >> mylog
+  echo -n some data | lk point ::/my/example/spacename --data-stdin >> mylog
 #+END_SRC
 
 a timestamp that defaults to `now`:
 
 #+NAME: point-create
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  lk point ::/my/example/other_path --create-int $(($(date +%s%N)/1000000)) >> mylog
+  lk point ::/my/example/other_space --create-int $(($(date +%s%N)/1000000)) >> mylog
 #+END_SRC
 
 and a signature:
@@ -48,12 +48,12 @@ and a signature:
 #+NAME: point-signed
 #+BEGIN_SRC bash :exports code
   KEY=$(lk key --no-pubkey --no-lk --password 'my secret')
-  lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password 'my secret' >> mylog
+  lk point ::/my/example/spacename/subspace --sign --enckey "$KEY" --password 'my secret' >> mylog
 #+END_SRC
 #+NAME: real-signed
 #+BEGIN_SRC bash :session codeorg :exports none :results output verbatim
   KEY='$argon2d$v=19$m=8,t=1,p=1$tb0anwpH0rSbYe6JLd1Bgtf00QQUAYuhOcBqeSjAgW4$kYAtGyF78cfPjRqcm4Y/s1hgQTRysELK/L910P2u27c'
-  lk point ::/my/example/path/subpath --sign --enckey "$KEY" --password '' >> mylog
+  lk point ::/my/example/spacename/subspace --sign --enckey "$KEY" --password '' >> mylog
 #+END_SRC
 
 
@@ -63,15 +63,15 @@ All points are hashed using Blake3.
 
 #+NAME: pktf
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  cat mylog | lk pktf "The hash: [hash:str] refers to a point with path '[path:str]' and data: '[data]'"
+  cat mylog | lk pktf "The hash: [hash:str] refers to a point with spacename '[spacename:str]' and data: '[data]'"
 #+END_SRC
 
 `filter` to take a subset of points.
-Here we take only the points with a path starting with `/my/example` and 1 additional component
+Here we take only the points with a spacename starting with `/my/example` and 1 additional component
 
 #+NAME: filter
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  cat mylog | lk filter ::/my/example:* | lk pktf "[hash:str] [path:str]"
+  cat mylog | lk filter ::/my/example:* | lk pktf "[hash:str] [spacename:str]"
 #+END_SRC
 
 What makes a supernet is:
@@ -109,7 +109,7 @@ Click here to see a graphical representation of mylog
 
 #+name: make-dot
 #+BEGIN_SRC bash :session codeorg :exports none :results output verbatim :cache yes
-lk p --pkts ./mylog '"p[hash:str]"\[label=" { <hash> [hash/2mini] }  | { signed: [pubkey/2mini] | [path:str] } | data=[data] | [links_len:str] links [/links: | <[i:str]> [tag:str]\: [ptr/2mini] ] "\];
+lk p --pkts ./mylog '"p[hash:str]"\[label=" { <hash> [hash/2mini] }  | { signed: [pubkey/2mini] | [spacename:str] } | data=[data] | [links_len:str] links [/links: | <[i:str]> [tag:str]\: [ptr/2mini] ] "\];
      [/links: "p[hash:str]"\:[i:str] -> "p[ptr:str]"\:hash ;\n ]' ;
 #+END_SRC
 
@@ -118,11 +118,11 @@ lk p --pkts ./mylog '"p[hash:str]"\[label=" { <hash> [hash/2mini] }  | { signed:
 "pYrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk"[label=" { <hash> Yrs7iz::Tk }  | { signed: AAAAAA::AA |  } | data=Hello, Sol!
  | 0 links  "];
      
-"pc77MvXKMDwHuw2DNSa57pW6byDx-CFKC71kJ_jZrp34"[label=" { <hash> c77MvX::34 }  | { signed: AAAAAA::AA | /my/example/path } | data=some data | 0 links  "];
+"pc77MvXKMDwHuw2DNSa57pW6byDx-CFKC71kJ_jZrp34"[label=" { <hash> c77MvX::34 }  | { signed: AAAAAA::AA | /my/example/spacename } | data=some data | 0 links  "];
      
-"pG-soA9GJ-8GPPyqY3EH6ltNspmmxJ86hoeN1ZP-GikQ"[label=" { <hash> G-soA9::kQ }  | { signed: AAAAAA::AA | /my/example/other_path } | data= | 0 links  "];
+"pG-soA9GJ-8GPPyqY3EH6ltNspmmxJ86hoeN1ZP-GikQ"[label=" { <hash> G-soA9::kQ }  | { signed: AAAAAA::AA | /my/example/other_spacename } | data= | 0 links  "];
      
-"pkf3qA7I94kYzgkG6MDdUMBXKUbXuoXUQbndWhGLvcBo"[label=" { <hash> kf3qA7::Bo }  | { signed: tb0anw::W4 | /my/example/path/subpath } | data= | 0 links  "];
+"pkf3qA7I94kYzgkG6MDdUMBXKUbXuoXUQbndWhGLvcBo"[label=" { <hash> kf3qA7::Bo }  | { signed: tb0anw::W4 | /my/example/spacename/subspacename } | data= | 0 links  "];
      
 "pLtlNcYXCdWAzRCXwMrPw0d8Jr6k4p8CXuxF1g13PjLY"[label=" { <hash> LtlNcY::LY }  | { signed: AAAAAA::AA | /my/example/link } | data= | 2 links  | <0> my first link: Yrs7iz::Tk  | <1> other link: Yrs7iz::Tk  "];
       "pLtlNcYXCdWAzRCXwMrPw0d8Jr6k4p8CXuxF1g13PjLY":0 -> "pYrs7iz3VznXh-ogv4aM62VmMNxXFiT4P24tIfVz9sTk":hash ;
@@ -164,7 +164,7 @@ NOTE: linkpoint and keypoint do not read data from stdin by default.
 
 #+NAME: point-stdin
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  echo somedata | lk linkpoint ::/my/other_path --data-stdin | lk pktf "[hash:str] = [data]"
+  echo somedata | lk linkpoint ::/my/other_spacename --data-stdin | lk pktf "[hash:str] = [data]"
 #+END_SRC
 
 Linkspace is primarily its packet format.
@@ -192,7 +192,7 @@ Instead of using `save` you can set a write destinations directly.
 
 The database is useful for two reasons:
 
-- It has an index to quickly lookup by hash or path
+- It has an index to quickly lookup by hash or spacename; specifically by space, i.e. all points starting with a shared spacename prefix.
 - Multiple processes/threads can read, write, and **watch** for new points.
 
 The library API has a user-driven eventloop that uses callbacks ([[./docs/guide/index.html#linkspace][guide]]).
@@ -201,7 +201,7 @@ The commands are `watch-log`, `watch-tree`, `watch-hash`. These are shorthand fo
 
 #+NAME: watchtree
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  lk watch-tree ::/my:** | lk pktf "[path:str]" > ./watching &
+  lk watch-tree ::/my:** | lk pktf "[spacename:str]" > ./watching &
 #+END_SRC
 #+BEGIN_SRC bash :session codeorg :exports none
   sleep 1
@@ -326,14 +326,14 @@ By convention, the public group is:
 #+name: group
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
   PUB=$(echo "Hello, Sol!" | lk data | lk pktf "[hash:str]")
-  lk linkpoint :$PUB:/example_path | lk p "[group:str]"
+  lk linkpoint :$PUB:/example_spacename | lk p "[group:str]"
 #+END_SRC
 
 If no group is specified (like we've been doing) the public group is used.
 
 #+name: group-str
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  lk linkpoint ::/example_path  | lk p "[group:str]"
+  lk linkpoint ::/example_spacename  | lk p "[group:str]"
 #+END_SRC
 
 The other special group is `[0;32]`, also called the private group.
@@ -384,14 +384,14 @@ This keeps your stream compatible with other tools.
 
 
 Linkspace does define some conventions.
-These are functions that encoded creating/watching for point with some predefined pathname, links, and data format.
+These are functions that encoded creating/watching for point with some predefined spacename, links, and data format.
 Conventions enable interoperability between multiple applications and background processes.
 
 One such convention is the `pull` convention. This writes a query as a specific point.
 
 #+name: pull
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  lk pull imageboard::/hello --write stdout | lk p "[path:str]\n\n[data]"
+  lk pull imageboard::/hello --write stdout | lk p "[spacename:str]\n\n[data]"
 #+END_SRC
 
 The goal of `pull` is to allow one process, e.g. an application like [[./docs/tutorial/imageboard.html][imageboard (bash)]] or [[./docs/tutorial/mineweeper-1.html][mineweeper (python)]]

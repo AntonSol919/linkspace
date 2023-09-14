@@ -74,7 +74,7 @@ Having the keys ordered by 'first' might set a bad incentive.
 ## Internals
 
 - `lk` help strings should not evaluate on every run
-- ipath and spath (const) macro's need a rewrite.
+- spacename (const) macro's need a rewrite.
 - lk_pull should register a on_close to overwrite the packet signaled to the exchange.
 - Detangle field_ids abe and ruletype
 - The IPC bus is cross-platform, but maybe slow. Platform specific signals might be better.
@@ -86,10 +86,10 @@ instead of a cmd queue we could do a 'close' as
 WatchEntry{ update_now: RefCell<Result<(),Option<Box<WatchEntry>>>>> ...} and check update_now after pkt_handle is complete
 must clarify nested query open semantics.
 
-- DGPDExpr should impl ABEValidator and be split up into two types. One where the spath length is know and one where it can be dynamic
+- DGPDExpr should impl ABEValidator and be split up into two types. One where the spacename length is know and one where it can be dynamic
 - PktPredicates.index(RuleType) -> &mut dyn FieldPred
 - :mode:hash-* iteration should use uint_set_info
-- Stack spath/ipath - max size is 250bytes. Could impl copy
+- Stack spacename - max size is 250bytes. Could impl copy
 - abe! macro - change macro '{}' into '[]'
 - Making abe 'list_functions' instead be a visitor pattern with &mut cb(Func) could simplify some things. 
 

@@ -1,4 +1,3 @@
-
 :::{.definition}
 Supernet  [ˈsü-pərˌnet]<br>
 A self-referential multi-participant data organization protocol whose primary
