@@ -45,8 +45,6 @@ use linkspace_common::pkt;
 
 pub use prelude::SigningKey;
 
-
-
 pub use point::{lk_datapoint, lk_keypoint, lk_linkpoint};
 pub mod point {
     use std::{borrow::Cow, io};
@@ -54,7 +52,7 @@ pub mod point {
     use super::*;
     /**
 
-    create a datapoint with upto MAX_CONTENT_SIZE bytes and wrap it as a [NetPktBox]
+    create a datapoint with upto MAX_CONTENT_SIZE bytes
 
     ```
     # use linkspace::{*,prelude::*,abe::*};
@@ -125,7 +123,7 @@ pub mod point {
             pkt::NetOpts::Default,
         )?)
     }
-    /// create a keypoint and wrap it as a [NetPktBox]. i.e. a signed [lk_linkpoint]
+    /// create a keypoint, i.e. a signed [lk_linkpoint]
     pub fn lk_keypoint(
         signkey: &SigningKey,
         data: &[u8],

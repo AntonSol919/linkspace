@@ -17,6 +17,7 @@
 pub mod endian_types;
 
 pub use base64 as base64_crate;
+//mod serde;
 use base64_crate::DecodeError;
 use core::ops::{Deref, DerefMut};
 use std::{
@@ -62,11 +63,13 @@ pub use abe::scope::base::{base64,base64_decode,mini_b64};
 
 use bytemuck::{Pod,Zeroable};
 
-#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable)]
+#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable,
+         serde::Serialize,serde::Deserialize)]
 #[repr(transparent)]
 /// newtype around bytes to print/parse [[abe]] text
 pub struct AB<N: ?Sized = Vec<u8>>(pub N);
-#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable)]
+#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable,
+         serde::Serialize,serde::Deserialize)]
 #[repr(transparent)]
 /// newtype around bytes to print/parse b64 (url-safe no-padding)
 pub struct B64<N = [u8; 32]>(pub N);

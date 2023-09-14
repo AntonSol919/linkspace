@@ -93,7 +93,7 @@ pub type Domain = AB<[u8; 16]>;
 pub type Tag = AB<[u8; 16]>;
 
 /// A [Tag] and [LkHash] 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash,Serialize,Deserialize)]
 #[repr(C, align(4))]
 pub struct Link {
     pub tag: Tag,

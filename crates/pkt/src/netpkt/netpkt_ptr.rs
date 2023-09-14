@@ -29,7 +29,6 @@ pub struct NetPktPtr {
     pub(crate) point: PointThinPtr,
 }
 
-
 impl ToOwned for NetPktPtr {
     type Owned = NetPktBox;
 

@@ -10,6 +10,7 @@ pub mod reroute;
 pub mod netpkt_arc;
 pub mod netpkt_parts;
 pub mod netpkt_ptr;
+pub mod serde_impl;
 //pub mod slot;
 
 pub use eval::*;
