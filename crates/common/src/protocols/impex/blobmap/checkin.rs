@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::{dgp::DGP, protocols::impex::blobmap::resolve_spath};
+use crate::{dgs::DGS, protocols::impex::blobmap::resolve_space};
 
 use anyhow::Result;
 use linkspace_core::prelude::*;
@@ -19,7 +19,7 @@ use std::{
 use tracing::instrument;
 
 #[instrument(skip(for_each))]
-pub fn import_blob<F>(mut for_each: F, full_path: &Path, dgs: &DGP) -> Result<LkHash, std::io::Error>
+pub fn import_blob<F>(mut for_each: F, full_path: &Path, dgs: &DGS) -> Result<LkHash, std::io::Error>
 where
     F: FnMut(NetPktParts) -> Result<(), std::io::Error>,
 {
@@ -34,15 +34,15 @@ where
         tag: ab(b"blob"),
         ptr,
     }];
-    let spoint = linkpoint(dgs.group, dgs.domain, &dgs.path, &links, &[], now(), ());
+    let spoint = linkpoint(dgs.group, dgs.domain, &dgs.space, &links, &[], now(), ());
     tracing::debug!(spoint=?spoint,"Ok");
     let hash = spoint.hash();
     for_each(spoint)?;
     Ok(hash)
 }
 
-pub type FSState = HashMap<IPathBuf, LkHash>;
-pub fn encode_now<F>(mut for_each: F, root: &Path, dgs: &DGP) -> anyhow::Result<FSState>
+pub type FSState = HashMap<RootedSpaceBuf, LkHash>;
+pub fn encode_now<F>(mut for_each: F, root: &Path, dgs: &DGS) -> anyhow::Result<FSState>
 where
     F: FnMut(NetPktParts) -> Result<(), std::io::Error>,
 {
@@ -53,13 +53,13 @@ where
             let e = e?;
             let path = e.path();
             if path.is_file() {
-                let spath = match resolve_spath(root, &dgs.path, &path, &[])? {
+                let space = match resolve_space(root, &dgs.space, &path, &[])? {
                     Some(s) => s,
                     None => continue,
                 };
                 tracing::debug!(path=?path,current=?e);
                 let hash = import_blob(&mut for_each, &path, dgs)?;
-                store_state.insert(spath, hash);
+                store_state.insert(space, hash);
                 tracing::debug!(import_result=?hash);
             } else if path.is_dir() {
                 dirs.push(path);
@@ -72,7 +72,7 @@ pub fn checkin_event<F>(
     ev: notify::Event,
     root: &Path,
     mut for_each: F,
-    dgs: &DGP,
+    dgs: &DGS,
 ) -> anyhow::Result<()>
 where
     F: FnMut(NetPktParts) -> Result<(), std::io::Error>,
@@ -80,22 +80,22 @@ where
     match ev.kind {
         EventKind::Access(AccessKind::Close(AccessMode::Write)) => {
             for full_path in ev.paths {
-                let spath = match resolve_spath(root, &dgs.path, &full_path, &[])? {
+                let space = match resolve_space(root, &dgs.space, &full_path, &[])? {
                     Some(s) => s,
                     None => return Ok(()),
                 };
-                tracing::debug!(spath=%spath,full_path=?full_path,"write");
+                tracing::debug!(%space,full_path=?full_path,"write");
                 import_blob(&mut for_each, &full_path, dgs)?;
             }
         }
         EventKind::Remove(RemoveKind::File) => {
             for full_path in ev.paths {
-                let spath = match resolve_spath(root, &dgs.path, &full_path, &[])? {
+                let space = match resolve_space(root, &dgs.space, &full_path, &[])? {
                     Some(s) => s,
                     None => return Ok(()),
                 };
-                tracing::debug!(spath=%spath.as_ref(),"Removing");
-                let spoint = linkpoint(dgs.group, dgs.domain, &dgs.path, &[], &[], now(), ());
+                tracing::debug!(%space,"Removing");
+                let spoint = linkpoint(dgs.group, dgs.domain, &dgs.space, &[], &[], now(), ());
                 for_each(spoint)?;
             }
         }
@@ -107,7 +107,7 @@ where
 pub fn encode_forever(
     mut for_each: impl FnMut(NetPktParts) -> std::io::Result<()>,
     root: PathBuf,
-    base: DGP,
+    base: DGS,
 ) -> anyhow::Result<()> {
     let root = root.canonicalize()?;
     encode_now(&mut for_each, &root, &base)?;

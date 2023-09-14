@@ -34,7 +34,7 @@ pub use linkspace_argon2_identity as identity;
 pub use linkspace_core as core;
 pub use linkspace_pkt as pkt;
 
-pub mod dgp;
+pub mod dgs;
 pub mod thread_local;
 pub mod pkt_reader;
 pub mod pkt_stream_utils;

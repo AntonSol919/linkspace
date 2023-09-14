@@ -21,16 +21,16 @@ pub fn static_pkts() -> Vec<NetPktBox> {
     let mut list = vec![];
     // This is mostly to ensure code never depends on stamps being uniq or within some range.
     for sp_segm in ["hello", "sol"] {
-        let spath = ipath_buf(&[b"staticpkt", sp_segm.as_bytes()]);
+        let rspace = rspace_buf(&[b"staticpkt", sp_segm.as_bytes()]);
         for stamp in [Stamp::ZERO, Stamp::MAX] {
             list.push(
-                linkpoint(PUBLIC, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
+                linkpoint(PUBLIC, ab(b"test"), &rspace, &links, &[], stamp, ()).as_netbox(),
             );
             list.push(
                 keypoint(
                     PUBLIC,
                     ab(b"test"),
-                    &spath,
+                    &rspace,
                     &links,
                     &[],
                     stamp,
@@ -42,7 +42,7 @@ pub fn static_pkts() -> Vec<NetPktBox> {
         }
         for stamp in [Stamp::new(1), Stamp::new(u64::MAX - 1)] {
             list.push(
-                linkpoint(PUBLIC, ab(b"test"), &spath, &links, &[], stamp, ()).as_netbox(),
+                linkpoint(PUBLIC, ab(b"test"), &rspace, &links, &[], stamp, ()).as_netbox(),
             );
         }
     }

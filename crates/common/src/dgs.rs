@@ -21,32 +21,32 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct DGPExpr {
+pub struct DGSExpr {
     pub domain: DomainExpr,
     pub group: HashExpr,
-    pub path: SPathExpr,
+    pub space: SpaceExpr,
 }
-impl DGPExpr {
+impl DGSExpr {
     /// Returns eval, and mutates this value to be statically resolvable
-    pub fn resolve(&mut self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGP> {
-        let dgp = self.eval(ctx)?;
-        *self = DGPExpr {
-            domain: DomainExpr::from_unchecked(dgp.domain.to_abe()),
-            group: HashExpr::from_unchecked(dgp.group.to_abe()),
-            path: SPathExpr::from_unchecked(dgp.path.to_abe()),
+    pub fn resolve(&mut self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGS> {
+        let dgs = self.eval(ctx)?;
+        *self = DGSExpr {
+            domain: DomainExpr::from_unchecked(dgs.domain.to_abe()),
+            group: HashExpr::from_unchecked(dgs.group.to_abe()),
+            space: SpaceExpr::from_unchecked(dgs.space.to_abe()),
         };
-        debug_assert_eq!(self.eval(ctx).unwrap(), dgp);
-        Ok(dgp)
+        debug_assert_eq!(self.eval(ctx).unwrap(), dgs);
+        Ok(dgs)
     }
-    pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGP> {
+    pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGS> {
         let domain = self.domain.eval(ctx);
         let group = self.group.eval(ctx);
-        let path = self.path.eval(ctx)?.try_ipath();
-        match (domain, group, path) {
-            (Ok(domain), Ok(group), Ok(path)) => Ok(DGP {
+        let space = self.space.eval(ctx)?.try_into_rooted();
+        match (domain, group, space) {
+            (Ok(domain), Ok(group), Ok(space)) => Ok(DGS {
                 domain,
                 group,
-                path,
+                space,
             }),
             (d, g, p) => {
                 let ctx = anyhow::anyhow!(
@@ -69,8 +69,8 @@ impl DGPExpr {
                 }
                 if let Err(e) = p {
                     return Err(e)
-                        .context(self.path.to_string())
-                        .context("eval path")
+                        .context(self.space.to_string())
+                        .context("eval space")
                         .context(ctx);
                 }
                 unreachable!()
@@ -78,11 +78,11 @@ impl DGPExpr {
         }
     }
     pub fn as_test_exprs(self) -> impl Iterator<Item = Vec<ABE>> {
-        let DGPExpr { domain, group, path } = self;
+        let DGSExpr { domain, group, space } = self;
         let mut prefix = None;
-        if !path.is_empty() {
+        if !space.is_empty() {
             prefix = Some(
-                abev!("prefix" : "=" : +(path.0))
+                abev!("prefix" : "=" : +(space.0))
             );
         }
         [
@@ -94,15 +94,15 @@ impl DGPExpr {
     }
 }
 #[derive(Debug, Clone, PartialEq)]
-pub struct DGP {
+pub struct DGS {
     pub domain: Domain,
     pub group: GroupID,
-    pub path: IPathBuf,
+    pub space: RootedSpaceBuf,
 }
-impl DGP {
+impl DGS {
     pub fn as_predicates(&self) -> impl Iterator<Item = Predicate> {
         [
-            Predicate::from_slice(RuleType::PrefixPath, TestOp::Equal, self.path.spath_bytes()),
+            Predicate::from_slice(RuleType::SpacePrefix, TestOp::Equal, self.space.space_bytes()),
             Predicate::from_slice(FieldEnum::DomainF, TestOp::Equal, &*self.domain),
             Predicate::from_slice(FieldEnum::GroupIDF, TestOp::Equal, &*self.group),
         ]
@@ -110,7 +110,7 @@ impl DGP {
     }
     pub fn as_predicate_exprs(&self) -> impl Iterator<Item = PredicateExpr> {
         [
-            abe!(<ExtPredicate> "prefix" : "=" : +(self.path.to_abe())),
+            abe!(<ExtPredicate> "prefix" : "=" : +(self.space.to_abe())),
             abe!(<ExtPredicate> "domain" : "=" : +(self.domain.to_abe())),
             abe!(<ExtPredicate> "group"  : "=" : +(self.group.to_abe())),
         ]
@@ -118,48 +118,48 @@ impl DGP {
     }
 }
 
-impl FromStr for DGPExpr {
+impl FromStr for DGSExpr {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
         let ast = parse_abe_strict_b(s.as_bytes())?;
 
-        let (dgp, rest) = try_take_dgp(&ast)?;
+        let (dgp, rest) = try_take_dgs(&ast)?;
         is_empty(rest)?;
         Ok(dgp)
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct DGPDExpr {
-    pub dgp: DGPExpr,
-    pub subsegment_limit: u8,
+pub struct DGSDExpr {
+    pub dgs: DGSExpr,
+    pub depth_limit: u8,
 }
-impl DGPDExpr {
+impl DGSDExpr {
     pub fn predicate_exprs(self) -> anyhow::Result<impl Iterator<Item = Vec<ABE>>> {
         let mut prefix_rule = None;
-        if self.subsegment_limit != MAX_PATH_LEN as u8 && !self.dgp.path.is_empty() && !self.dgp.path.0.iter().any(|v| v.is_fslash()) {
-                        anyhow::bail!("can't use subrange expr with an evaluated spath ( dont know its length ).
-        Must add ':**' and manually set -- path_len ...")
+        if self.depth_limit != MAX_SPACE_DEPTH as u8 && !self.dgs.space.is_empty() && !self.dgs.space.0.iter().any(|v| v.is_fslash()) {
+                        anyhow::bail!("can't use subrange expr with an evaluated space ( dont know its length ).
+        Must add ':**' and manually set -- depth ...")
                     }
 
-        if self.subsegment_limit < MAX_PATH_LEN as u8 {
+        if self.depth_limit < MAX_SPACE_DEPTH as u8 {
             let prefix_len = self
-                .dgp
-                .path
+                .dgs
+                .space
                 .0
                 .iter()
                 .filter(|v| v.is_fslash())
                 .count()
                 .min(8) as u8;
-            let exclude = prefix_len.saturating_add(self.subsegment_limit).min(8) + 1;
-            prefix_rule = Some(abev!("path_len" : "<" : +(U8(exclude).to_abe())));
+            let exclude = prefix_len.saturating_add(self.depth_limit).min(8) + 1;
+            prefix_rule = Some(abev!("depth" : "<" : +(U8(exclude).to_abe())));
         }
-        Ok(self.dgp.as_test_exprs().chain(prefix_rule))
+        Ok(self.dgs.as_test_exprs().chain(prefix_rule))
     }
 }
 
-pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
+pub fn try_take_dgs(ast: &[ABE]) -> anyhow::Result<(DGSExpr, &[ABE])> {
     use abe::*;
     let mut it = ast.split(|v| matches!(v, ABE::Ctr(Ctr::Colon)));
 
@@ -171,33 +171,33 @@ pub fn try_take_dgp(ast: &[ABE]) -> anyhow::Result<(DGPExpr, &[ABE])> {
         &[] => TypedABE::from_unchecked(crate::thread_local::group().to_abe()),
         v => v.try_into()?
     };
-    let path = it.next().unwrap_or_default().try_into()?;
+    let space = it.next().unwrap_or_default().try_into()?;
     Ok((
-        DGPExpr {
+        DGSExpr {
             domain,
             group,
-            path,
+            space,
         },
         it.as_slice(),
     ))
 }
 
-pub fn dgpd(ast: &[ABE]) -> anyhow::Result<DGPDExpr> {
+pub fn dgpd(ast: &[ABE]) -> anyhow::Result<DGSDExpr> {
 
-    let (dgp, rest) = try_take_dgp(ast)?;
+    let (dgs, rest) = try_take_dgs(ast)?;
     let mut subsegment_limit = 0;
     if !rest.is_empty() {
         let (l, rest) = try_take_subsegm_expr(rest)?;
         is_empty(rest)?;
         subsegment_limit = l;
     }
-    Ok(DGPDExpr {
-        dgp,
-        subsegment_limit,
+    Ok(DGSDExpr {
+        dgs,
+        depth_limit: subsegment_limit,
     })
 }
 
-impl FromStr for DGPDExpr {
+impl FromStr for DGSDExpr {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use abe::*;
@@ -226,7 +226,7 @@ pub fn try_take_subsegm_expr(ast: &[ABE]) -> anyhow::Result<(u8, &[ABE])> {
                 b"7" => 7,
                 b"8" => 8,
                 b"*" => 1,
-                b"**" => MAX_PATH_LEN as u8,
+                b"**" => MAX_SPACE_DEPTH as u8,
                 _e => bail!("{} is an invalid depth",e)
             }
         }

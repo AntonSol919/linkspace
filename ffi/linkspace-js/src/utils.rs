@@ -17,8 +17,8 @@ impl From<linkspace_pkt::Error> for JsErr{
     }
 }
 
-impl From<linkspace_pkt::spath::PathError> for JsErr {
-    fn from(value: linkspace_pkt::spath::PathError) -> Self {
+impl From<linkspace_pkt::space::SpaceError> for JsErr {
+    fn from(value: linkspace_pkt::space::SpaceError) -> Self {
         JsErr(Variant::PktErr(value.into()))
     }
 }

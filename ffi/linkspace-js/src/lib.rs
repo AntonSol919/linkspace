@@ -79,7 +79,7 @@ export function set_iter(obj) {
 };
 export function pkt_obj(pkt){
 if (pkt.data == undefined) { console.error("BUG: - the packet was deallocated?");}
-return { group: pkt.group, domain:pkt.domain, path:pkt.path, links:pkt.links_bytes(), create:pkt.create}
+return { group: pkt.group, domain:pkt.domain, spacename:pkt.spacename, links:pkt.links_bytes(), create:pkt.create}
 };
 "#)]
 #[wasm_bindgen]
@@ -93,7 +93,7 @@ extern "C" {
     #[wasm_bindgen(structural, method, getter)]
     pub fn domain(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
-    pub fn path(this: &Fields) -> JsValue;
+    pub fn spacename(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
     pub fn links(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
@@ -102,7 +102,7 @@ extern "C" {
     pub fn identity(val: JsValue) -> Option<jspkt::Link>;
 
 }
-fn common_args(obj: &Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, Stamp)> {
+fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Stamp)> {
     let group = opt_bytelike(&obj.group())?
         .map(|group| {
             GroupID::try_fit_bytes_or_b64(&group)
@@ -119,15 +119,15 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, St
         })
         .transpose()?
         .unwrap_or(AB::default());
-    let path = obj.path();
-    let path = if path.is_falsy() {
-        IPathBuf::new()
-    } else if let Some(st) = path.dyn_ref::<Uint8Array>() {
-        SPathBuf::try_from_inner(st.to_vec())?.ipath()
+    let spacename = obj.spacename();
+    let spacename = if spacename.is_falsy() {
+        RootedSpaceBuf::new()
+    } else if let Some(st) = spacename.dyn_ref::<Uint8Array>() {
+        SpaceBuf::try_from_inner(st.to_vec())?.try_into_rooted()?
     } else {
-        let it = js_sys::try_iter(&path)?.ok_or("unknown format - expected path bytes or array")?;
-        let path = it.map(|b| bytelike(&b?)).try_collect::<Vec<_>>()?;
-        IPathBuf::try_from_iter(path)?
+        let it = js_sys::try_iter(&spacename)?.ok_or("unknown format - expected spacename bytes or array")?;
+        let spacename = it.map(|b| bytelike(&b?)).try_collect::<Vec<_>>()?;
+        RootedSpaceBuf::try_from_iter(spacename)?
     };
     let links = obj.links();
 
@@ -158,17 +158,17 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, IPathBuf, Vec<Link>, St
             .ok()
             .ok_or(ERR)?
     };
-    Ok((group, domain, path, links, create_stamp))
+    Ok((group, domain, spacename, links, create_stamp))
 }
 
 #[wasm_bindgen]
 pub fn lk_linkpoint(data: &JsValue, fields: &Fields) -> Result<Pkt> {
     let data = bytelike(data)?;
-    let (domain, group, path, links, create) = common_args(fields)?;
+    let (domain, group, spacename, links, create) = common_args(fields)?;
     let pkt = linkspace_pkt::try_linkpoint_ref(
         domain,
         group,
-        &path,
+        &spacename,
         &links,
         &data,
         create,
@@ -180,11 +180,11 @@ pub fn lk_linkpoint(data: &JsValue, fields: &Fields) -> Result<Pkt> {
 #[wasm_bindgen]
 pub fn lk_keypoint(key: &SigningKey, data: &JsValue, fields: &Fields) -> Result<Pkt> {
     let data = bytelike(data)?;
-    let (domain, group, path, links, create) = common_args(fields)?;
+    let (domain, group, spacename, links, create) = common_args(fields)?;
     let pkt = linkspace_pkt::try_keypoint_ref(
         domain,
         group,
-        &path,
+        &spacename,
         &links,
         &data,
         create,

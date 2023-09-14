@@ -24,7 +24,7 @@ hash:=:...
 ## Pull-List
 group:=:{group}
 domain:=:{domain}
-path:=:/\f/queries
+spacename:=:/\f/queries
 :follow
 :walk/tag:=:++++++++++++++++
 
@@ -32,7 +32,7 @@ path:=:/\f/queries
 ## Push-list
 group:=:{group}
 domain:=:{domain}
-path:=:/\f/queries
+spacename:=:/\f/queries
 :follow
 
 # make exchange publish it

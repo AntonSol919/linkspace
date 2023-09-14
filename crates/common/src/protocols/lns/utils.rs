@@ -9,7 +9,7 @@ use crate::prelude::*;
 use super::{claim::Claim, name::{Name }, LNS};
 
 pub fn list_all_potential_claims_with_prefix<'o>(reader:&'o ReadTxn,name: &Name) -> impl Iterator<Item=anyhow::Result<Claim>> +'o{
-    let path = name.claim_ipath();
+    let path = name.claim_space();
     let now = now();
     let mut preds = PktPredicates::from_gd(name.claim_group().expect("'file' names don't do claims"), LNS).create_before(now).unwrap();
     let _ = preds.prefix(&**path);

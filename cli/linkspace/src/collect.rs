@@ -80,7 +80,7 @@ pub struct Collector {
     write: Vec<WriteDest>,
     reader: Reader,
     c_opts: Collect,
-    dgs: DGP,
+    dgs: DGS,
 }
 impl Collector {
     pub fn collect(&mut self, common: &CommonOpts) -> anyhow::Result<Option<()>> {

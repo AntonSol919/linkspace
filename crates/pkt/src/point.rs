@@ -10,14 +10,14 @@ use crate::{netpkt::NetPktHeader, *};
 pub struct PointHeader {
     pub reserved: u8,
     pub point_type: PointTypeFlags,
-    /// You surely don't want this raw value - the size of all fields - without the padding between the path and optional signature. 
+    /// You don't want this raw value - the size of all fields - without the padding between the space and optional signature. 
     pub uset_bytes: U16,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(C, align(4))]
 pub struct LinkPointInfo {
-    pub offset_ipath: U16,
+    pub offset_rspace: U16,
     pub offset_data: U16,
 }
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

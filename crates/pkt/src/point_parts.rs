@@ -45,11 +45,11 @@ pub enum PointFields<'a> {
     Unknown(&'a [u8]),
 }
 impl<'a> PointFields<'a> {
-    pub fn common_idx(&self) -> Option<(&LinkPointHeader, &IPath, Option<&PubKey>)> {
+    pub fn common_idx(&self) -> Option<(&LinkPointHeader, &RootedSpace, Option<&PubKey>)> {
         match self {
-            PointFields::LinkPoint(sp) => Some((&sp.head, sp.tail.ipath, None)),
+            PointFields::LinkPoint(sp) => Some((&sp.head, sp.tail.rspace, None)),
             PointFields::KeyPoint(sp,signed) => {
-                Some((&sp.head, sp.tail.ipath, Some(&signed.pubkey)))
+                Some((&sp.head, sp.tail.rspace, Some(&signed.pubkey)))
             }
             _ => None,
         }
@@ -67,7 +67,7 @@ pub struct LinkPoint<'a> {
 pub struct Tail<'a> {
     pub links: &'a [Link],
     pub data: &'a [u8],
-    pub ipath: &'a IPath,
+    pub rspace: &'a RootedSpace,
 }
 
 impl<'a> Tail<'a> {
@@ -80,7 +80,7 @@ impl<'a> Tail<'a> {
         }
     }
     pub fn byte_len(&self) -> usize {
-        self.data.len() + self.ipath.ipath_bytes().len() + self.links_as_bytes().len()
+        self.data.len() + self.rspace.rooted_bytes().len() + self.links_as_bytes().len()
     }
 }
 
@@ -114,7 +114,7 @@ impl<'tail> Point for PointParts<'tail> {
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
-                tail.ipath.ipath_bytes(),
+                tail.rspace.rooted_bytes(),
                 tail.data,
                 padding
             ]),
@@ -122,7 +122,7 @@ impl<'tail> Point for PointParts<'tail> {
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
-                tail.ipath.ipath_bytes(),
+                tail.rspace.rooted_bytes(),
                 tail.data,
                 padding,
                 signed.as_bytes()

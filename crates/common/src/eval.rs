@@ -112,7 +112,7 @@ impl<R:LKS> ReadHash<R> {
                 ));
             }
         }
-        let path = SPath::from_slice(inp.get(2).copied().unwrap_or(&[]))?.try_ipath()?;
+        let space = Space::from_slice(inp.get(2).copied().unwrap_or(&[]))?.try_into_rooted()?;
         let key = inp
             .get(3)
             .map(|v| PubKey::try_fit_bytes_or_b64(v))
@@ -121,7 +121,7 @@ impl<R:LKS> ReadHash<R> {
         let env = self.0.lk()?;
         let reader = env.get_reader();
 
-        let predicates = Query::dgpk(domain, group, path, key).predicates;
+        let predicates = Query::dgsk(domain, group, space, key).predicates;
         let pkt = reader
             .query_tree(query_mode::Order::Desc, &predicates)
             .next()
@@ -168,7 +168,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 },
                 info: ScopeFuncInfo {
                     id:  "read", init_eq: None, argc: 2..=16,to_abe:false,
-                    help:"read but accesses open a pkt by dgpk path and apply args. e.g. [read:mydomain:[#:pub]:[//a/path]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx"
+                    help:"read but accesses open a pkt by dgpk space and apply args. e.g. [read:mydomain:[#:pub]:[//a/space]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx"
                 },
                 to_abe:none
             },

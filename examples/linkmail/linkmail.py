@@ -101,7 +101,7 @@ Use 'help list' for more options
 """
 
 
-list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[path:str] = [data/?a/slice::20/rpad:20: ] [create/us:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
+list_template  = "[/or:[/?:[pubkey]/@]:\\[[pubkey/2mini]\\]]:[spacename:str] = [data/?a/slice::20/rpad:20: ] [create/us:delta/rfixed:18: ]:[hash/2mini] # [links_len:str]([:[/links:[tag:str] [ptr/2mini],]/~rcut:32])"
 class Linkmail(cmd.Cmd):
     intro =intro
     prompt = "> "
@@ -150,8 +150,8 @@ class Linkmail(cmd.Cmd):
         for e in ex_status:
             print(lk_eval2str("([hash/2mini]) [comp2]/[comp3]\\n[data]\\n",e))
 
-    def do_pull(self,path = "",):
-        """Notify the exchange process to start pulling messages (from [path])"""
+    def do_pull(self,spacename= "",):
+        """Notify the exchange process to start pulling messages (from [spacename])"""
         ex_status = get_exchange_status()
         if not ex_status:
             print(f"No exchange running for {args.group} - pull requests will be ignored")
@@ -161,21 +161,21 @@ class Linkmail(cmd.Cmd):
 
         
         q = lk_query(common_q)
-        path_b = lk_eval(f"[/~/mail/{path}]")
+        spacename_b = lk_eval(f"[/~/mail/{spacename}]")
         # we use the path in binary form. Two strings might differ but eval to the same bytes
-        q = lk_query_push(q,"","qid",path_b) 
+        q = lk_query_push(q,"","qid",spacename_b) 
 
-        q = lk_query_push(q,"path","=",path_b)
+        q = lk_query_push(q,"spacename","=",spacename_b)
         q = lk_query_push(q,"","follow",b"")
         lk_pull(lk,q)
         
-    def do_new(self,path):
+    def do_new(self,spacename):
         """write a new mail"""
-        path,*rest =  shlex.split(path or "/")
-        path_b = lk_eval(f"[/~/mail/{path}]")
+        spacename,*rest =  shlex.split(spacename or "/")
+        spacename_b = lk_eval(f"[/~/mail/{spacename}]")
         (data,links,notes) = user_write_mail(self.links,self.notes)
         self.notes = notes
-        pkt = linkmail_keypoint(data=data,links=links,path=path_b)
+        pkt = linkmail_keypoint(data=data,links=links,spacename=spacename_b)
         self.last_shown = pkt
         print(str(pkt))
         if (input("Ok[Y/n]?") or "Y") in "Yy":
@@ -185,21 +185,21 @@ class Linkmail(cmd.Cmd):
             lk_save(lk,pkt)
             self.links=[]
 
-    def do_threads(self,path):
+    def do_threads(self,spacename):
         """List all threads"""
-        path,*rest =  shlex.split(path or "/")
+        spacename,*rest =  shlex.split(spacename or "/")
         q = lk_query(common_q)
-        q = lk_query_parse(q,f"prefix:=:[/~/mail/{path}]","i_branch:=:[u32:0]",*rest)
+        q = lk_query_parse(q,f"prefix:=:[/~/mail/{spacename}]","i_branch:=:[u32:0]",*rest)
         logging.debug(q)
         lst = []
         lk_get_all(lk,q,lambda pkt: lst.append(pkt))
         self.print_list(lst)
  
-    def do_list(self,path):
-        """list all messages [path] [limit] - e.g. list / recv:>:[now:-1D] pubkey:=:[@:alice:nl] create:>:[-2D]"""
-        path,*rest =  shlex.split(path or "/")
+    def do_list(self,spacename):
+        """list all messages [spacename] [limit] - e.g. list / recv:>:[now:-1D] pubkey:=:[@:alice:nl] create:>:[-2D]"""
+        spacename,*rest =  shlex.split(spacename or "/")
         q = lk_query(common_q)
-        q = lk_query_parse(q,f"path:=:[/~/mail/{path}]",*rest)
+        q = lk_query_parse(q,f"spacename:=:[/~/mail/{spacename}]",*rest)
         logging.debug(q)
         lst = []
         lk_get_all(lk,q,lambda pkt: lst.append(pkt))
@@ -209,7 +209,7 @@ class Linkmail(cmd.Cmd):
     def do_open(self,idx):
         pkt = self.lst[int(idx)] if idx else self.last_shown
         self.last_shown = pkt
-        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[path:str]\\n[create/us:str]\\n[data/~utf8]\\n"
+        print_template= "==[hash:str]==\\n[/~?:[pubkey]/@/b]\\n[spacename:str]\\n[create/us:str]\\n[data/~utf8]\\n"
         print(lk_eval2str(print_template,pkt))
         self.lst.clear()
         for link in pkt.links:

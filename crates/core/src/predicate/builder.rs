@@ -10,15 +10,15 @@ use crate::prelude::{TestOp };
 use super::pkt_predicates::PktPredicates;
 
 impl PktPredicates {
-    pub fn from_gdp(group: GroupID, domain: Domain, path: &SPath,exact:bool) -> Self {
+    pub fn from_gdp(group: GroupID, domain: Domain, space: &Space,exact:bool) -> Self {
         let mut r = Self::DEFAULT
             .group(group)
             .unwrap()
             .domain(domain)
             .unwrap();
-        r.prefix(path).unwrap();
+        r.prefix(space).unwrap();
         if exact {
-            r.path_len.try_add(TestOp::Equal, *r.path_prefix.path_len()).unwrap();
+            r.depth.try_add(TestOp::Equal, *r.rspace_prefix.space_depth()).unwrap();
         }
         r
     }
@@ -27,22 +27,22 @@ impl PktPredicates {
     pub fn from_gd(group: GroupID, domain: Domain) -> Self {
         Self::DEFAULT.group(group).unwrap().domain(domain).unwrap()
     }
-    pub fn path(mut self, path: impl AsRef<SPath>) -> anyhow::Result<Self> {
-        self.prefix(path)?;
-        self.path_len.try_add(TestOp::Equal, *self.path_prefix.path_len())?;
+    pub fn space(mut self, space: impl AsRef<Space>) -> anyhow::Result<Self> {
+        self.prefix(space)?;
+        self.depth.try_add(TestOp::Equal, *self.rspace_prefix.space_depth())?;
         Ok(self)
     }
-    pub fn prefix(&mut self, prefix: impl AsRef<SPath>) -> anyhow::Result<()> {
+    pub fn prefix(&mut self, prefix: impl AsRef<Space>) -> anyhow::Result<()> {
         let sp = prefix.as_ref();
-        if self.path_prefix.starts_with(sp) {
-            tracing::trace!(old=%self.path_prefix,new=%sp,"Current prefix already more specific")
-        } else if sp.starts_with(&self.path_prefix) {
-            let sp = sp.try_ipath()?;
-            tracing::trace!(old=%self.path_prefix,new=%sp,new_len=sp.path_len(),"Setting more specific prefix");
-            self.path_prefix = sp;
-            self.path_check()?;
+        if self.rspace_prefix.starts_with(sp) {
+            tracing::trace!(old=%self.rspace_prefix,new=%sp,"Current prefix already more specific")
+        } else if sp.starts_with(&self.rspace_prefix) {
+            let sp = sp.try_into_rooted()?;
+            tracing::trace!(old=%self.rspace_prefix,new=%sp,new_len=sp.space_depth(),"Setting more specific prefix");
+            self.rspace_prefix = sp;
+            self.check_space()?;
         } else {
-            anyhow::bail!("disjoin spath {:?} <> {:?}", sp, &*self.path_prefix);
+            anyhow::bail!("disjoint space {:?} <> {:?}", sp, &*self.rspace_prefix);
         };
         Ok(())
     }

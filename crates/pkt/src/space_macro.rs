@@ -13,7 +13,7 @@ macro_rules! sp_iter_match {
         }
 	  };
 	  ($e:expr,[ .. ]) => {
-		    $e.spath()
+		    $e.space()
 	  };
     ($e:expr,[ $s:ty]) => {
         {
@@ -69,10 +69,9 @@ macro_rules! sp_match {
 }
 #[test]
 fn test() {
-    //if let Some([_,gid,_,_]) = sp_match!(pkt.get_spath(), [b"groups" , GroupID, b"domains",b"read"]){
     use crate::*;
 
-    let buf = spath_buf(&[b"hello", b"world"]);
+    let buf = space_buf(&[b"hello", b"world"]);
     let v: Option<()> = sp_match!(buf, [b"hello", b"world"]);
     assert!(v.is_some());
 
@@ -87,7 +86,7 @@ fn test() {
     let v: Option<([u8; 5], ())> = sp_match!(buf, [[u8; 5], b"world", b"test"]);
     assert!(v.is_none());
 
-    let v: Option<([u8; 5], &SPath)> = sp_match!(buf, [[u8; 5], ..]);
+    let v: Option<([u8; 5], &Space)> = sp_match!(buf, [[u8; 5], ..]);
     let sp = v.unwrap().1;
     assert!(sp_match!(sp, [b"world"]).is_some());
 
@@ -96,10 +95,4 @@ fn test() {
 
     let v: Option<([u8; 5], [u8; 5])> = sp_match!(buf, [[u8; 5], [u8; 5]]);
     assert!(v.is_some());
-    /*
-    let buf = spath_buf(&[b"hello",b"world",&[255;32] as &[u8],&[255;16], &[],&[0;32]]);
-    let v : Option<()> = sp_match!(buf,[b"hello", b"world", &[255;32],&[255;16],&[],&[0;32]]);{
-
-    }
-        */
 }

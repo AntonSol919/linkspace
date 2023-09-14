@@ -24,7 +24,7 @@ else:
 query_string = """
 group:=:[#:pub]
 domain:=:imageboard
-path:=:/[0]
+spacename:=:/[0]
 create:>=:[now:-1D]
 :qid:[0]
 """

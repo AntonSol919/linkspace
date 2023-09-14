@@ -17,7 +17,7 @@ type\\t[type:str]\\n\
 hash\\t[hash:str]\\n\
 group\\t[/~?:[group]/#/b]\\n\
 domain\\t[domain:str]\\n\
-path\\t[path:str]\\n\
+spacename\\t[spacename:str]\\n\
 pubkey\\t[/~?:[pubkey]/@/b]\\n\
 create\\t[create:str]\\n\
 links\\t[links_len:str]\\n\
@@ -82,7 +82,7 @@ impl<'o> PktFmt<'o>{
             e => e.to_abe_str()
         };
         let domain = pkt.get_domain().as_str(true);
-        let path = pkt.get_path().to_string();
+        let space = pkt.get_spacename().to_string();
         let pubkey = pkt.get_pubkey().to_abe_str();
         let create = pkt.get_create_stamp().get();
     
@@ -97,7 +97,7 @@ impl<'o> PktFmt<'o>{
 hash\t{hash}
 group\t{group}
 domain\t{domain}
-path\t{path}
+space\t{space}
 pubkey\t{pubkey}
 create\t{create}
 links\t{links_len}
@@ -136,10 +136,10 @@ links\t{links_len}
         let links_len = pkt.get_links().len();
         let point = pkt.as_point();
         let ptype = point.point_header_ref().point_type.bits();
-        let path_len = pkt.get_path_len();
+        let depth = pkt.get_depth();
         let with_pubkey = pkt.pubkey().map(|e| format!("lk-pubkey='{e}'")).unwrap_or(String::new());
         write!(f,"<div lk-point='{hash}' lk-ptype='{ptype}' class='lk-c{code}' {with_pubkey}
-lk-data-size='{size}' lk-links-len='{links_len}' lk-path-len='{path_len}'>")?;
+lk-data-size='{size}' lk-links-len='{links_len}' lk-depth='{depth}'>")?;
         fmt_b64(pkt.hash_ref(), "hash", f)?;
 
         if let Some(lh) = point.linkpoint_header(){
@@ -154,14 +154,14 @@ lk-data-size='{size}' lk-links-len='{links_len}' lk-path-len='{path_len}'>")?;
             let create = pkt.get_create_stamp();
             write!(f,"<span lk-create='{create}'>{create}</span>")?;
 
-            let path = pkt.get_path();
-            write!(f,"<span lk-path-len='{path_len}' >{path_len}</span>")?;
-            let pathb = B64(path.spath_bytes());
-            writeln!(f,"<ol lk-path='{pathb}' lk-path-len='{path_len}'>")?;
-            for (i,p) in path.iter().enumerate(){
+            let space = pkt.get_spacename();
+            write!(f,"<span lk-depth='{depth}' >{depth}</span>")?;
+            let spaceb = B64(space.space_bytes());
+            writeln!(f,"<ol lk-space='{spaceb}' lk-depth='{depth}'>")?;
+            for (i,p) in space.iter().enumerate(){
                 let pb64= B64(p);
-                let pathc = EscapeHTML( AB(p));
-                write!(f,"<li lk-path{i}='{pb64}'>{pathc}</li>")?;
+                let spacec = EscapeHTML( AB(p));
+                write!(f,"<li lk-space{i}='{pb64}'>{spacec}</li>")?;
             }
             writeln!(f,"</ol>")?;
 

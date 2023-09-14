@@ -15,7 +15,7 @@ type SyncState = BTreeMap<PathBuf, (Stamp, Option<LkHash>)>;
 #[instrument(skip(reader))]
 pub fn checkout_now(
     reader: ReadTxn,
-    dgp: DGP,
+    dgp: DGS,
     mut watch: PktPredicates,
     root: &Path,
     destroy: u8,
@@ -43,12 +43,12 @@ pub fn checkout_now(
         }
     }
     std::fs::create_dir_all(root.parent().unwrap())?;
-    let sp = dgp.path;
+    let sp = dgp.space;
     for pkt in reader.query_tree(query_mode::Order::Desc, &watch) {
-        let p = match resolve_path(&root, &sp, pkt.get_path(), &[])? {
+        let p = match resolve_path(&root, &sp, pkt.get_spacename(), &[])? {
             Some(p) => p,
             None => {
-                tracing::warn!("Ignoring {}", pkt.get_path());
+                tracing::warn!("Ignoring {}", pkt.get_spacename());
                 continue;
             }
         };

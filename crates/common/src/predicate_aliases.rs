@@ -36,7 +36,7 @@ pub struct PredicateAliases {
     #[arg(long)]
     pub max: Option<u32>,
 
-    /// match upto max per (dm,grp,path,key) pkts | i_branch:<:[u32:max_branch]
+    /// match upto max per (dm,grp,space,key) pkts | i_branch:<:[u32:max_branch]
     #[arg(long)]
     pub max_branch: Option<u32>,
     /// match upto max from local index           | i_db:<:[u32:max_index]

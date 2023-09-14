@@ -11,8 +11,8 @@ use abe::{ast::{Ctr,  MatchErrorKind} };
 use anyhow::ensure;
 use linkspace_core::prelude::*;
 
-pub const MAX_LNS_NAME_LEN : usize = MAX_PATH_LEN-1;
-pub const MAX_LNS_NAME_SIZE : usize = MAX_SPATH_SIZE-8;
+pub const MAX_LNS_NAME_LEN : usize = MAX_SPACE_DEPTH-1;
+pub const MAX_LNS_NAME_SIZE : usize = MAX_SPACENAME_SIZE-8;
 
 use thiserror::Error;
 
@@ -28,15 +28,15 @@ pub enum NameError{
     MaxLen,
     #[error("LNS names only allow upto {MAX_LNS_NAME_SIZE}-len() bytes combined")]
     MaxSize,
-    #[error("LNS names are reversed spaths - {0}")]
-    Path(#[from]PathError)
+    #[error("LNS names are reversed spacenames - {0}")]
+    Space(#[from]SpaceError)
 }
 
 pub type NameExpr = TypedABE<Name>;
 
 #[derive(Clone,PartialEq,Eq)]
-/// A reversed spath constrained to fit the lns path
-pub struct Name { spath: SPathBuf,name_type:NameType}
+/// A reversed space constrained to fit lns
+pub struct Name { space: SpaceBuf,name_type:NameType}
 #[derive(Copy,Clone,PartialEq,Eq)]
 pub enum NameType {
     Public,
@@ -55,13 +55,13 @@ impl NameType {
 
 
 impl Name {
-    pub fn root() -> Self { Name{spath: SPathBuf::new(), name_type:NameType::Public}}
-    pub fn local() -> Self { Name{spath: spath_buf(&[b"local"]), name_type:NameType::Local}}
-    pub(crate) fn file_path2(&self) -> anyhow::Result<std::path::PathBuf>{
+    pub fn root() -> Self { Name{space: SpaceBuf::new(), name_type:NameType::Public}}
+    pub fn local() -> Self { Name{space: space_buf(&[b"local"]), name_type:NameType::Local}}
+    pub(crate) fn file_path(&self) -> anyhow::Result<std::path::PathBuf>{
         ensure!(matches!(self.name_type , NameType::File));
 
-        let ipath = self.claim_ipath();
-        let lst = ipath.to_array();
+        let rspace = self.claim_space();
+        let lst = rspace.to_array();
         let piter = lst.iter()
             .map(|s| match std::str::from_utf8(s)?{
                  "claim.pkt" => anyhow::bail!("file keyname can't can't contain the word 'enckey'"),
@@ -72,7 +72,7 @@ impl Name {
             .chain([Ok("claim.pkt")]).try_collect()?;
         Ok(pb)
     }
-    pub fn claim_ipath(&self) -> IPathBuf { CLAIM_PREFIX.ipath().join(&self.spath).ipath()}
+    pub fn claim_space(&self) -> RootedSpaceBuf { CLAIM_PREFIX.into_rooted().join(&self.space).into_rooted()}
     pub fn claim_group(&self) -> Option<GroupID> {
         match self.name_type{
             NameType::Local => Some(PRIVATE),
@@ -80,26 +80,26 @@ impl Name {
             NameType::Public => Some(PUBLIC),
         }
     }
-    pub fn from_spath(path:&SPath) -> Result<Name,NameError>{
-        tracing::debug!(%path,"name from");
-        let rcomps = path.to_array();
+    pub fn from_space(space:&Space) -> Result<Name,NameError>{
+        tracing::debug!(%space,"name from");
+        let rcomps = space.to_array();
         if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
         if rcomps.is_empty(){ return Err(NameError::MinLen)}
         let name_type = NameType::from_tail(rcomps.first().unwrap());
-        if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { spath: path.into_spathbuf() ,name_type})
+        if space.space_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
+        Ok(Name { space: space.into_spacebuf() ,name_type})
     }
     pub fn from(comps: &[&[u8]]) -> Result<Name,NameError>{
         if comps.is_empty(){ return Err(NameError::MinLen)}
         if comps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
         let special = NameType::from_tail(comps.last().unwrap());
         let it = comps.iter().rev();
-        let path = SPathBuf::try_from_iter(it)?;
-        if path.spath_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { spath: path ,name_type: special})
+        let space = SpaceBuf::try_from_iter(it)?;
+        if space.space_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
+        Ok(Name { space ,name_type: special})
     }
-    pub fn spath(&self) -> &SPath {
-        &self.spath
+    pub fn space(&self) -> &Space {
+        &self.space
     }
 
     pub fn name_type(&self) -> NameType {
@@ -118,10 +118,10 @@ impl TryFrom<ABList> for Name {
 }
 impl ToABE for Name {
     fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
-        if self.spath.is_empty(){
+        if self.space.is_empty(){
             return out(ABE::Expr(ast::Expr::Lst(abev!({ "LNS-ROOT" }))))
         }
-        let arr = self.spath.to_array();
+        let arr = self.space.to_array();
         let mut it = arr.iter().rev();
         let first = it.next().unwrap();
         out(ABE::Expr(ast::Expr::Bytes(first.to_vec())));
@@ -152,7 +152,7 @@ impl ABEValidator for Name {
                 ABE::Expr(_) => {},
             }
         }
-        if comp > MAX_LNS_NAME_LEN{ MatchErrorKind::MaxLen { max: MAX_PATH_LEN, has: comp }.at::<()>(b)?;}
+        if comp > MAX_LNS_NAME_LEN{ MatchErrorKind::MaxLen { max: MAX_SPACE_DEPTH, has: comp }.at::<()>(b)?;}
         Ok(())
     }
 }

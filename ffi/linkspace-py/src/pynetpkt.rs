@@ -95,34 +95,35 @@ impl Pkt {
         self.0.group().map(|g| PyBytes::new(py, &g.0))
     }
     #[getter]
-    pub fn path<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.path().map(|p| PyBytes::new(py, p.spath_bytes()))
+    pub fn spacename<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
+        self.0.spacename().map(|p| PyBytes::new(py, p.space_bytes()))
     }
     #[getter]
-    pub fn ipath<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.ipath().map(|p| PyBytes::new(py, p.ipath_bytes()))
+    pub fn rooted_spacename<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
+        self.0.rooted_spacename().map(|p| PyBytes::new(py, p.rooted_bytes()))
     }
-    #[getter]
-    pub fn recv<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.recv().map(|p| PyBytes::new(py, &p.0))
-    }
-    #[getter] pub fn path0<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path0())}
-    #[getter] pub fn path1<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path1())}
-    #[getter] pub fn path2<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path2())}
-    #[getter] pub fn path3<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path3())}
-    #[getter] pub fn path4<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path4())}
-    #[getter] pub fn path5<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path5())}
-    #[getter] pub fn path6<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path6())}
-    #[getter] pub fn path7<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_ipath().path7())}
-    pub fn path_list<'p>(&self, py: Python<'p>) -> Option<Vec<&'p PyBytes>> {
-        self.0.ipath().map(|p| {
-            p.comps_bytes()[0..*p.path_len() as usize]
+    
+    #[getter] pub fn comp0<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp0())}
+    #[getter] pub fn comp1<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp1())}
+    #[getter] pub fn comp2<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp2())}
+    #[getter] pub fn comp3<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp3())}
+    #[getter] pub fn comp4<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp4())}
+    #[getter] pub fn comp5<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp5())}
+    #[getter] pub fn comp6<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp6())}
+    #[getter] pub fn comp7<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp7())}
+    pub fn comp_list<'p>(&self, py: Python<'p>) -> Option<Vec<&'p PyBytes>> {
+        self.0.rooted_spacename().map(|p| {
+            p.comps_bytes()[0..*p.space_depth() as usize]
                 .into_iter()
                 .map(|s| PyBytes::new(py, s))
                 .collect()
         })
     }
 
+    #[getter]
+    pub fn recv<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
+        self.0.recv().map(|p| PyBytes::new(py, &p.0))
+    }
     /*
     #[getter]
     fn links<'p>(&self) -> Option<Vec<Link>>{
@@ -147,14 +148,14 @@ impl Pkt {
     }
     
     #[getter]
-    /// number of components in the path
-    fn path_len<'p>(&self) -> Option<u8> {
-        self.0.path_len().map(|b| *b)
+    /// number of components in the spacename
+    fn depth<'p>(&self) -> Option<u8> {
+        self.0.depth().map(|b| *b)
     }
     #[setter]
     pub fn set_netflags(&mut self, f: u8) {
         self.0.net_header.flags =
-            unsafe { linkspace::prelude::NetFlags::from_bits_unchecked(f) };
+            linkspace::prelude::NetFlags::from_bits(f).unwrap();
     }
     #[setter]
     pub fn set_hop(&mut self, b: [u8; 4]) {

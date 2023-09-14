@@ -93,13 +93,13 @@ fn parsing() {
         assert_eq!(vec, data,"{name}");
     }
     }
-    let spath = ipath_buf(&[b"hello", b"world"]);
+    let space = rspace_buf(&[b"hello", b"world"]);
 
     test(datapoint(b"hello", ()));
     let lp = builder::linkpoint(
         [4; 32].into(),
         [1; 16].into(),
-        &spath,
+        &space,
         &[],
         b"datatest",
         Stamp::new(2),
@@ -111,7 +111,7 @@ fn parsing() {
     let keypoint = builder::keypoint(
         [4; 32].into(),
         [1; 16].into(),
-        &spath,
+        &space,
         &[],
         b"datatest",
         Stamp::new(2),

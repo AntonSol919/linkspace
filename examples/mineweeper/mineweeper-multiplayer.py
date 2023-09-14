@@ -43,9 +43,9 @@ print(game_conf)
 
 # The players are a subset of the members in a group.
 # They must signal what data they want from the group.
-# We make it unambiguous which packets are part of this game by reading/writing to a unique path.
-game_path = spath([b"game", game_pkt.hash])
-# Internally, paths are length separated bytes. Most arguments accept a string like /game/[b:AAAAA....] .
+# We make it unambiguous which packets are part of this game by reading/writing to a unique spacename.
+game_spacename = space([b"game", game_pkt.hash])
+# Internally, spacenames are length separated bytes. Most arguments accept a string like /game/[b:AAAAA....] .
 # In our case we can skip this b64 encoding step.
 
 # Every query has at least the following in common.
@@ -53,8 +53,8 @@ common_q = lk_query_parse(
     lk_query(),
     "domain:=:mineweeper",
     "group:=:[group]",
-    "path:=:[0]",
-    pkt=game_pkt, argv=[game_path]) #provides the [group] and [0] values
+    "spacename:=:[0]",
+    pkt=game_pkt, argv=[game_spacename]) #provides the [group] and [0] values
 
 # To inspect a query use print(lk_query_print(common_q, True))
 
@@ -66,17 +66,17 @@ lk_pull(lk, pull_q)
 
 # If everything is going to plan:
 # An exchange process reads the request, and ensure all players eventually receive packets from others that matches the query.
-# i.e. whenever we save a packet with the path 'game_path', the other players who ran lk_pull receive that packet.
+# i.e. whenever we save a point with the spacename 'game_spacename', the other players who ran lk_pull receive that packet.
 
 # A packet is one of three types. (Or to be exact, a packet is a [netheader,hash,point] and there are three types of points)
 # A datapoint, linkpoint, or keypoint.
 # A datapoint holds: data.
-# A linkpoint holds: data, a path name, and links (tag,hash) to other packets.
+# A linkpoint holds: data, a spacename, and links (tag,hash) to other packets.
 # A keypoint is a linkpoint with a cryptographic signature.
 # For our case we'll only use keypoints.
 
 # Its common to wrap the *point functions when arguments wont change.
-new_keypoint = functools.partial(lk_keypoint, key=signing_key, domain=b"mineweeper", group=game_pkt.group, path=game_path)
+new_keypoint = functools.partial(lk_keypoint, key=signing_key, domain=b"mineweeper", group=game_pkt.group, spacename=game_spacename)
 
 player_count = len(game_conf['players'])
 for i, e in enumerate(game_conf['players']):

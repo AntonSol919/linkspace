@@ -8,12 +8,15 @@ function fin (){
 trap "fin" EXIT
 
 cd $SESSION
+
+# ensure we have a fixed [b:...] repr (lns [#:name] could update between proc calls)
+LK_GROUP=$(lk eval "$LK_GROUP" | lk encode b:32)
+THEIR_KEY=$(lk eval "$THEIR_KEY" | lk encode b:32)
+
 echo SESSION=$SESSION
 echo THEIR_KEY=$THEIR_KEY
 echo LK_GROUP=$LK_GROUP
 
-LK_GROUP="[b:$LK_GROUP]"
-THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
 lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
@@ -27,7 +30,7 @@ export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
 LK_SKIP_HASH=false lk save --new db --new stdout \
-    | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
+    | lk pktf --inspect "RX [domain:str] [spacename:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
               --forward null \

@@ -10,8 +10,8 @@ use crate::{prelude::*, protocols::unicast_group};
 use anyhow::{ensure };
 pub const HANDSHAKE_D: Domain = ab(b"\xFFhandshake");
 
-pub const ID_SENTINAL_SPATH : IPathC<17>= ipath1::<8>(b"sentinal");
-pub const ANONYMOUSE_SPATH : IPathC<18>= ipath1::<9>(b"anonymous");
+pub const ID_SENTINAL_SPACENAME : RootedStaticSpace<17>= rspace1::<8>(b"sentinal");
+pub const ANONYMOUSE_SPACENAME : RootedStaticSpace<18>= rspace1::<9>(b"anonymous");
 
 const MAX_DIFF_SECONDS: usize = 15;
 pub fn valid_stamp_range(stamp: Stamp, max_diff_sec: Option<usize>) -> anyhow::Result<()> {
@@ -40,7 +40,7 @@ pub fn phase0_client_init(id: &SigningKey) -> Phase0 {
         keypoint(
             id.pubkey(),
             HANDSHAKE_D,
-            &ID_SENTINAL_SPATH,
+            &ID_SENTINAL_SPACENAME,
             &[],
             &[],
             now,
@@ -74,7 +74,7 @@ pub fn phase1_server_signs(
         keypoint(
             our_group,
             HANDSHAKE_D,
-            &ID_SENTINAL_SPATH,
+            &ID_SENTINAL_SPACENAME,
             &links,
             &[],
             now(),
@@ -122,14 +122,14 @@ pub fn phase2_client_signs(
         "not in the right group "
     );
     ensure!(
-        theirs.get_ipath() == ID_SENTINAL_SPATH.as_ref(),
-        "wrong spath "
+        theirs.get_rooted_spacename() == ID_SENTINAL_SPACENAME.as_ref(),
+        "wrong spacename"
     );
     let now = now();
     let proof = keypoint(
         our_group,
         HANDSHAKE_D,
-        &ID_SENTINAL_SPATH,
+        &ID_SENTINAL_SPACENAME,
         &[Link::new("signed", *theirs.hash())],
         &[],
         now,
@@ -165,8 +165,8 @@ pub fn phase3_server_verify(
         mine_hash
     );
     ensure!(
-        theirs.get_ipath() == ID_SENTINAL_SPATH.as_ref(),
-        "wrong spath"
+        theirs.get_rooted_spacename() == ID_SENTINAL_SPACENAME.as_ref(),
+        "wrong spacename"
     );
     ensure!(
         theirs.domain() == Some(&HANDSHAKE_D),

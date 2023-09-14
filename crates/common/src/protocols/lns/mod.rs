@@ -24,7 +24,7 @@ use abe::eval::{ ApplyResult};
 use anyhow::{Context, ensure };
 use byte_fmt::{ab, AB};
 use linkspace_argon2_identity::pubkey;
-use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, ipath1, IPathC, Point };
+use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, rspace1, RootedStaticSpace, Point };
 use tracing::instrument;
 
 use crate::runtime::Linkspace;
@@ -44,7 +44,7 @@ pub mod utils;
 pub mod admin;
 
 pub const LNS: Domain = ab(b"lns");
-pub const CLAIM_PREFIX : IPathC<15> = ipath1::<6>(b"claims");
+pub const CLAIM_PREFIX : RootedStaticSpace<15> = rspace1::<6>(b"claims");
 /// tag expected for local claims pointing to a (live) lns:[#:pub] claim
 pub const PUB_CLAIM_TAG : [u8;9] = *b"pub-claim";
 pub const PUBKEY_TAG : [u8;7] = *b"pubkey@";
@@ -55,7 +55,7 @@ pub const ENCKEY_TAG : [u8;6] = *b"enckey";
 pub const BY_CLAIM_TAG : Tag = ab(b"by-claim");
 pub const VOTE_TAG : Tag = ab(b"vote");
 
-pub const BY_TAG_P : linkspace_pkt::IPathC<15> = linkspace_pkt::ipath1::<6>(b"by-tag");
+pub const BY_TAG_P : linkspace_pkt::RootedStaticSpace<15> = linkspace_pkt::rspace1::<6>(b"by-tag");
 pub static BY_GROUP_TAG : [&[u8];2] = [b"by-tag",&GROUP_TAG];
 pub static BY_PUBKEY_TAG : [&[u8];2] = [b"by-tag",&PUBKEY_TAG];
 
@@ -87,8 +87,8 @@ pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandle
         NameType::File => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&mut [Link::DEFAULT],&[]).unwrap())),
         NameType::Local => todo!(),
         NameType::Public => {
-            let (parent,_val) = name.spath().pop();
-            let name = Name::from_spath(parent).ok().unwrap_or_else(Name::root);
+            let (parent,_val) = name.space().pop();
+            let name = Name::from_space(parent).ok().unwrap_or_else(Name::root);
             Ok(lookup_live_chain(lk, &name, issue_handler)?.map(|p| p.claim).map_err(|p|p.claim))
         },
     }
@@ -107,7 +107,7 @@ fn dummy_root(name:&Name) -> LiveClaim{
 pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
     match name.name_type(){
         NameType::File => {
-            let path = name.file_path2()?;
+            let path = name.file_path()?;
             let claim : anyhow::Result<Claim>= try {
                 let pbytes = match lk.env().files_data(&path, false)?{
                     Some(p) => p,
@@ -135,7 +135,7 @@ pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) 
              }
         }
         // The admin process doesn't exist yet so we walk the chain for now
-        NameType::Public => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.spath().iter(), issue_handler),
+        NameType::Public => public_claim::walk_live_claims(&lk.get_reader(), public_claim::root_claim(), &mut name.space().iter(), issue_handler),
     }
 }
 
@@ -193,7 +193,7 @@ pub fn setup_special_keyclaim(
     let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: ab(&PUBKEY_TAG),ptr:pubkey}], enckey.as_bytes())?;
     match sp {
         NameType::Local => {
-            if claim.name.spath().to_array().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
+            if claim.name.space().to_array().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
             local_claim::setup_local_keyclaim(lk, claim,None)?;
         },
         NameType::File => file_claim::setup(lk,claim,overwrite)?,

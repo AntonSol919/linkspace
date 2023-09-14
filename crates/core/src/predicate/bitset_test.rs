@@ -4,11 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use super::{SetValueInfo, TestSet};
-use linkspace_pkt::MAX_PATH_LEN;
+use linkspace_pkt::MAX_SPACE_DEPTH;
 use std::{fmt::Debug, str::FromStr};
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct BitTestSet<const MAX: u8 = 8>(pub u32);
-pub type SPLenTestSet = BitTestSet<{ MAX_PATH_LEN as u8 }>;
+pub type SPLenTestSet = BitTestSet<{ MAX_SPACE_DEPTH as u8 }>;
 impl Default for BitTestSet {
     fn default() -> Self {
         Self::ALL
@@ -56,7 +56,7 @@ impl<const MAX: u8> BitTestSet<MAX> {
         }
     }
     pub fn from_rules(t: &TestSet<u8>) -> Self {
-        BitTestSet::from_el_iter((0..=MAX_PATH_LEN as u8).filter(|v| t.test(*v)))
+        BitTestSet::from_el_iter((0..=MAX_SPACE_DEPTH as u8).filter(|v| t.test(*v)))
     }
     pub fn contains_min(self, depth: u8) -> bool {
         self.contains(depth) || self.next_depth(depth).is_some() // This is inefficient

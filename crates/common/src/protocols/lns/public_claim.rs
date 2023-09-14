@@ -45,14 +45,14 @@ pub enum Issue{
 
 
 #[instrument(ret,skip(reader,issue_handler))]
-pub fn walk_live_claims(reader: &ReadTxn, parent:LiveClaim, name_comps: &mut &SPathIter, issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
+pub fn walk_live_claims(reader: &ReadTxn, parent:LiveClaim, name_comps: &mut &SpaceIter, issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
     let sub = match name_comps.next(){
         Some(v) => v,
         None => return Ok(Ok(parent)),
     };
-    let ipath = parent.claim.pkt.get_ipath().into_ipathbuf().append(sub);
-    let mut predicates = Query::dgpk(LNS, *parent.claim.pkt.get_group(), ipath,B64([255;32])).predicates;
-    predicates.path_len.add(crate::core::prelude::TestOp::Equal, 2);
+    let rspace = parent.claim.pkt.get_rooted_spacename().into_buf().append(sub);
+    let mut predicates = Query::dgsk(LNS, *parent.claim.pkt.get_group(), rspace,B64([255;32])).predicates;
+    predicates.depth.add(crate::core::prelude::TestOp::Equal, 2);
     let mut claim_votes : LkHashMap<(Option<Claim>,Vec<RecvPkt>)>= Default::default();
     let mut _count = 0;
     let max_required_votes = (parent.claim.authorities().count()+1)/2;

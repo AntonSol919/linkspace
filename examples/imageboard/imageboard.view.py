@@ -22,7 +22,7 @@ group = lk_eval(group_expr)
 query_string = """
 domain:=:imageboard
 group:=:[0]
-path:=:/[1]
+spacename:=:/[1]
 create:>=:[2/u64]
 """
 query = lk_query_parse(lk_query(),query_string,argv=[group_expr,boardname,str(create_stamp)])
@@ -37,10 +37,10 @@ query = lk_query_push(query,"create",">=",create_b)
 
 # The query merges overlapping predicates, and errors on conflicting predicates
 
-# Query parsing is somewhat forgiving in that it allows Group, Domain, and Path two syntax's
+# Query parsing is somewhat forgiving in that it allows alternative encodings for Group, Domain, and Space. 
 # Group can take the b64 no-pad string
 # Domain is 16 bytes but does not have to prepend '\0'
-# Path takes either a '/' delimited expression, or the 'spath' bytes ( as given by the spath function or pkt.spath value )
+# Space takes either a '/' delimited expression, or the 'space' bytes ( as given by the spacename function or pkt.spacename value )
 # The other values require the exact number of bytes, in big endian when a number.
 
 # Its worth understanding why these two work. Checkout the guide

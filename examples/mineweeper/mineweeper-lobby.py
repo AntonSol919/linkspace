@@ -44,18 +44,18 @@ print("Press enter to refresh or enter 'w' to await for change")
 # Because we'll be using 'input()' we dont't have asynchronous feedback.
 # In a better program we would use a thread for the user interface.
 
-get_lobbies = lk_query_parse(common_q,"prefix:=:/host","path_len:=:[u8:2]","create:>:[now:-10m]",":qid:lobbies")
+get_lobbies = lk_query_parse(common_q,"prefix:=:/host","depth:=:[u8:2]","create:>:[now:-10m]",":qid:lobbies")
 lk_pull(lk,lk_query_parse(get_lobbies,":follow"))
 
 host_lobby = None
 lobbies:Dict[Tuple[bytes,bytes],Lobby] = dict()
 def insert(p:Pkt):
-    lobby = lobbies.get((p.path1,p.pubkey),Lobby())
+    lobby = lobbies.get((p.comp1,p.pubkey),Lobby())
     if not len(p.links):
         lobby.create_pkt = p
     else:
         lobby.start_pkt = p
-    lobbies[(p.path1,p.pubkey)] = lobby
+    lobbies[(p.comp1,p.pubkey)] = lobby
 
 
 lk_watch(lk,get_lobbies,insert)
@@ -79,11 +79,11 @@ while host_lobby is None or host_lobby.create_pkt is None:
             game_name = ""
             while not game_name:
                 game_name = input("Game name > ")
-            host_path = lk_eval("[//host/[0]]",argv=[game_name])
-            create = keypoint(path=host_path)
+            host_space = lk_eval("[//host/[0]]",argv=[game_name])
+            create = keypoint(space=host_space)
             lk_save(lk,create)
             lk_process(lk)
-            host_lobby = lobbies[(create.path1,create.pubkey)]
+            host_lobby = lobbies[(create.comp1,create.pubkey)]
         else:
             lobby = opts[i]
             host_lobby = lobby[1]
@@ -91,7 +91,7 @@ while host_lobby is None or host_lobby.create_pkt is None:
     except Exception as e :
         print(e)
 
-print("Using lobby",host_lobby.create_pkt.path1.decode("utf-8"), " designated admin: ",lk_encode(host_lobby.create_pkt.pubkey,"@/b"))
+print("Using lobby",host_lobby.create_pkt.comp1.decode("utf-8"), " designated admin: ",lk_encode(host_lobby.create_pkt.pubkey,"@/b"))
 
 player_name = ""
 while not player_name:
@@ -104,9 +104,9 @@ get_lobby = lk_query_parse(
 
 def lobby_pkt(p:Pkt):
     global host_lobby
-    if p.path2 == b"chat":
+    if p.comp2 == b"chat":
         host_lobby.chat.append(p)
-    elif p.path2 == b"":
+    elif p.comp2 == b"":
         latest = host_lobby.players.get(p.pubkey)
         if latest and latest.create > p.create:
             return
@@ -114,11 +114,11 @@ def lobby_pkt(p:Pkt):
     else:
         print("unknown msg",p)
 
-lobby_path = lk_eval("[//lobby/[hash]]",pkt=host_lobby.create_pkt)
-join_pkt = keypoint(path=lobby_path,data=player_name)
+lobby_space = lk_eval("[//lobby/[hash]]",pkt=host_lobby.create_pkt)
+join_pkt = keypoint(space=lobby_space,data=player_name)
 # Its important to understand we used the hash bytes directly.
 # There is no encoding to b64.
-# host.create_pkt.hash == join_pkt.path1 and b64(host.create_pkt.hash) == b64(join_pkt.path1)
+# host.create_pkt.hash == join_pkt.comp1 and b64(host.create_pkt.hash) == b64(join_pkt.comp1)
 
 
 lk_save(lk,join_pkt)
@@ -157,22 +157,22 @@ while not host_lobby.start_pkt:
             rows = int(input("rows (10) > ") or "10")
             mine_rate = float(input("mine_rate (0.2) > ")or "0.2")
             data = json.dumps({"columns":cols,"rows":rows,"mine_rate":mine_rate,"players":players})
-            start_pkt = keypoint(path=host_lobby.create_pkt.path,data=data,links=[Link("create",host_lobby.create_pkt.hash)])
+            start_pkt = keypoint(spacename=host_lobby.create_pkt.spacename,data=data,links=[Link("create",host_lobby.create_pkt.hash)])
             lk_save(lk,start_pkt)
             lk_process(lk)
         except Exception as e:
             print(e)
 
     elif cmd == "/leave":
-        lk_save(lk,keypoint(path=lobby_path))
+        lk_save(lk,keypoint(space=lobby_space))
         if me_host:
-            leave_pkt = keypoint(path=host_lobby.create_pkt.path,links=[Link("create",host_lobby.create_pkt.hash)]) # no data means we closed the lobby.
+            leave_pkt = keypoint(spacename=host_lobby.create_pkt.spacename,links=[Link("create",host_lobby.create_pkt.hash)]) # no data means we closed the lobby.
             lk_save(lk,leave_pkt)
             print("host left ",leave_pkt)
         lk_process(lk)
         exit("We left.")
     else:
-        lk_save(lk,keypoint(path=lobby_path + lk_eval("[//chat]"),data=cmd))
+        lk_save(lk,keypoint(space=lobby_space + lk_eval("[//chat]"),data=cmd))
         lk_process(lk)
 
 if not len(host_lobby.start_pkt.data):

@@ -99,7 +99,7 @@ macro_rules! fid  {
 impl FieldEnum {
     pub fn try_to_abe(self, abl: abe::eval::ABList) -> Option<Vec<abe::ABE>> {
         match self {
-            FieldEnum::PathLenF => U8::try_from(abl).ok().map(|v| v.to_abe()),
+            FieldEnum::DepthF => U8::try_from(abl).ok().map(|v| v.to_abe()),
 
             FieldEnum::PktTypeF | FieldEnum::VarNetFlagsF => {
                 U8::try_from(abl).ok().map(|v| v.abe_bits())
@@ -119,17 +119,17 @@ impl FieldEnum {
                 U16::try_from(abl).ok().map(|v| v.to_abe())
             }
             FieldEnum::DomainF => Domain::try_from(abl).ok().map(|v| v.to_abe()),
-            FieldEnum::PathComp0F
-            | FieldEnum::PathComp1F
-            | FieldEnum::PathComp2F
-            | FieldEnum::PathComp3F
-            | FieldEnum::PathComp4F
-            | FieldEnum::PathComp5F
-            | FieldEnum::PathComp6F
-            | FieldEnum::PathComp7F
-            | FieldEnum::PathF => SPathBuf::try_from(abl).ok().map(|v| v.to_abe()),
+            FieldEnum::SpaceComp0F
+            | FieldEnum::SpaceComp1F
+            | FieldEnum::SpaceComp2F
+            | FieldEnum::SpaceComp3F
+            | FieldEnum::SpaceComp4F
+            | FieldEnum::SpaceComp5F
+            | FieldEnum::SpaceComp6F
+            | FieldEnum::SpaceComp7F
+            | FieldEnum::SpaceNameF => SpaceBuf::try_from(abl).ok().map(|v| v.to_abe()),
 
-            FieldEnum::IPathF => IPathBuf::try_from(abl).ok().map(|v| v.to_abe()),
+            FieldEnum::RSpaceNameF => RootedSpaceBuf::try_from(abl).ok().map(|v| v.to_abe()),
             FieldEnum::SignatureF => Signature::try_from(abl).ok().map(|v| v.to_abe()),
             FieldEnum::DataF => Some(abl.into()),
         }
@@ -181,19 +181,19 @@ fid! {[
     (GroupIDF,b'g',"group",PointTypeFlags::LINK),
     (DomainF,b'd',"domain",PointTypeFlags::LINK),
     (CreateF,b'c',"create",PointTypeFlags::LINK),
-    (PathLenF,b'x',"path_len",PointTypeFlags::LINK),
+    (DepthF,b'x',"depth",PointTypeFlags::LINK),
     (LinksLenF,b'l',"links_len",PointTypeFlags::LINK),
     (DataSizeF,b'B',"data_size",PointTypeFlags::DATA),
-    (PathF,b'p',"path",PointTypeFlags::LINK),
-    (IPathF,b'P',"ipath",PointTypeFlags::LINK),
-    (PathComp0F,b'0',"path0",PointTypeFlags::LINK),
-    (PathComp1F,b'1',"path1",PointTypeFlags::LINK),
-    (PathComp2F,b'2',"path2",PointTypeFlags::LINK),
-    (PathComp3F,b'3',"path3",PointTypeFlags::LINK),
-    (PathComp4F,b'4',"path4",PointTypeFlags::LINK),
-    (PathComp5F,b'5',"path5",PointTypeFlags::LINK),
-    (PathComp6F,b'6',"path6",PointTypeFlags::LINK),
-    (PathComp7F,b'7',"path7",PointTypeFlags::LINK),
+    (SpaceNameF,b'p',"spacename",PointTypeFlags::LINK),
+    (RSpaceNameF,b'P',"rspacename",PointTypeFlags::LINK),
+    (SpaceComp0F,b'0',"comp0",PointTypeFlags::LINK),
+    (SpaceComp1F,b'1',"comp1",PointTypeFlags::LINK),
+    (SpaceComp2F,b'2',"comp2",PointTypeFlags::LINK),
+    (SpaceComp3F,b'3',"comp3",PointTypeFlags::LINK),
+    (SpaceComp4F,b'4',"comp4",PointTypeFlags::LINK),
+    (SpaceComp5F,b'5',"comp5",PointTypeFlags::LINK),
+    (SpaceComp6F,b'6',"comp6",PointTypeFlags::LINK),
+    (SpaceComp7F,b'7',"comp7",PointTypeFlags::LINK),
     (DataF,b'b',"data",PointTypeFlags::DATA)
 ]}
 
@@ -288,44 +288,44 @@ field_val!([
         .as_point()
         .get_signature())
     .into()),
-    (PathLenF, u8, |pkt: &'o T| *pkt.as_point().get_path_len())
+    (DepthF, u8, |pkt: &'o T| *pkt.as_point().get_depth())
 ]);
 
 field_ptr!([
-    (IPathF, IPath, |pkt: &'o T| pkt.as_point().get_ipath()),
-    (PathF, SPath, |pkt: &'o T| pkt.as_point().get_path()),
-    (PathComp0F, [u8], |pkt: &'o T| pkt
+    (RSpaceNameF, RootedSpace, |pkt: &'o T| pkt.as_point().get_rooted_spacename()),
+    (SpaceNameF, Space, |pkt: &'o T| pkt.as_point().get_spacename()),
+    (SpaceComp0F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path0()),
-    (PathComp1F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp0()),
+    (SpaceComp1F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path1()),
-    (PathComp2F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp1()),
+    (SpaceComp2F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path2()),
-    (PathComp3F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp2()),
+    (SpaceComp3F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path3()),
-    (PathComp4F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp3()),
+    (SpaceComp4F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path4()),
-    (PathComp5F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp4()),
+    (SpaceComp5F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path5()),
-    (PathComp6F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp5()),
+    (SpaceComp6F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path6()),
-    (PathComp7F, [u8], |pkt: &'o T| pkt
+        .get_rooted_spacename()
+        .comp6()),
+    (SpaceComp7F, [u8], |pkt: &'o T| pkt
         .as_point()
-        .get_ipath()
-        .path7()),
+        .get_rooted_spacename()
+        .comp7()),
     (VarNetFlagsF, NetFlags, |pkt: &'o T| &pkt
         .net_header_ref()
         .flags),
@@ -349,13 +349,13 @@ field_ptr!([
     (SignatureF, Signature, |pkt: &'o T| pkt
         .as_point()
         .get_signature()),
-    (PathLenF, u8, |pkt: &'o T| pkt.as_point().get_path_len())
+    (DepthF, u8, |pkt: &'o T| pkt.as_point().get_depth())
 ]);
 
 impl FieldEnum {
     pub fn fixed_size(self) -> Option<usize> {
         let v = match self {
-            FieldEnum::PathLenF | FieldEnum::PktTypeF | FieldEnum::VarNetFlagsF => 1,
+            FieldEnum::DepthF | FieldEnum::PktTypeF | FieldEnum::VarNetFlagsF => 1,
             FieldEnum::LinksLenF | FieldEnum::DataSizeF | FieldEnum::SizeF => 2,
             FieldEnum::VarHopF
             | FieldEnum::VarUBits0F
@@ -367,16 +367,16 @@ impl FieldEnum {
             FieldEnum::GroupIDF | FieldEnum::PubKeyF | FieldEnum::PktHashF => 32,
             FieldEnum::SignatureF => 64,
             FieldEnum::DataF
-            | FieldEnum::PathComp0F
-            | FieldEnum::PathComp1F
-            | FieldEnum::PathComp2F
-            | FieldEnum::PathComp3F
-            | FieldEnum::PathComp4F
-            | FieldEnum::PathComp5F
-            | FieldEnum::PathComp6F
-            | FieldEnum::PathComp7F
-            | FieldEnum::IPathF
-            | FieldEnum::PathF => return None,
+            | FieldEnum::SpaceComp0F
+            | FieldEnum::SpaceComp1F
+            | FieldEnum::SpaceComp2F
+            | FieldEnum::SpaceComp3F
+            | FieldEnum::SpaceComp4F
+            | FieldEnum::SpaceComp5F
+            | FieldEnum::SpaceComp6F
+            | FieldEnum::SpaceComp7F
+            | FieldEnum::RSpaceNameF
+            | FieldEnum::SpaceNameF => return None,
         };
         Some(v)
     }
@@ -400,19 +400,19 @@ impl FieldEnum {
             FieldEnum::DataSizeF => out.write_all(&DataSizeF::get_val(pkt).to_be_bytes()),
             FieldEnum::LinksLenF => out.write_all(&LinksLenF::get_val(pkt).to_be_bytes()),
             FieldEnum::DomainF => out.write_all(&DomainF::get_ptr(pkt).0),
-            FieldEnum::PathF => out.write_all(PathF::get_ptr(pkt).spath_bytes()),
-            FieldEnum::IPathF => out.write_all(IPathF::get_ptr(pkt).ipath_bytes()),
-            FieldEnum::PathLenF => {
-                out.write_all(std::slice::from_ref(pkt.as_point().get_path_len()))
+            FieldEnum::SpaceNameF => out.write_all(SpaceNameF::get_ptr(pkt).space_bytes()),
+            FieldEnum::RSpaceNameF => out.write_all(RSpaceNameF::get_ptr(pkt).rooted_bytes()),
+            FieldEnum::DepthF => {
+                out.write_all(std::slice::from_ref(pkt.as_point().get_depth()))
             }
-            FieldEnum::PathComp0F => out.write_all(PathComp0F::get_ptr(pkt)),
-            FieldEnum::PathComp1F => out.write_all(PathComp1F::get_ptr(pkt)),
-            FieldEnum::PathComp2F => out.write_all(PathComp2F::get_ptr(pkt)),
-            FieldEnum::PathComp3F => out.write_all(PathComp3F::get_ptr(pkt)),
-            FieldEnum::PathComp4F => out.write_all(PathComp4F::get_ptr(pkt)),
-            FieldEnum::PathComp5F => out.write_all(PathComp5F::get_ptr(pkt)),
-            FieldEnum::PathComp6F => out.write_all(PathComp6F::get_ptr(pkt)),
-            FieldEnum::PathComp7F => out.write_all(PathComp7F::get_ptr(pkt)),
+            FieldEnum::SpaceComp0F => out.write_all(SpaceComp0F::get_ptr(pkt)),
+            FieldEnum::SpaceComp1F => out.write_all(SpaceComp1F::get_ptr(pkt)),
+            FieldEnum::SpaceComp2F => out.write_all(SpaceComp2F::get_ptr(pkt)),
+            FieldEnum::SpaceComp3F => out.write_all(SpaceComp3F::get_ptr(pkt)),
+            FieldEnum::SpaceComp4F => out.write_all(SpaceComp4F::get_ptr(pkt)),
+            FieldEnum::SpaceComp5F => out.write_all(SpaceComp5F::get_ptr(pkt)),
+            FieldEnum::SpaceComp6F => out.write_all(SpaceComp6F::get_ptr(pkt)),
+            FieldEnum::SpaceComp7F => out.write_all(SpaceComp7F::get_ptr(pkt)),
             FieldEnum::GroupIDF => out.write_all(&GroupIDF::get_ptr(pkt).0),
             FieldEnum::CreateF => out.write_all(&CreateF::get_ptr(pkt).0),
             FieldEnum::PubKeyF => out.write_all(&PubKeyF::get_ptr(pkt).0),
@@ -435,17 +435,17 @@ impl FieldEnum {
             FieldEnum::DataSizeF => write!(out, "{}", DataSizeF::get_val(pkt)),
             FieldEnum::LinksLenF => write!(out, "{}", LinksLenF::get_val(pkt)),
             FieldEnum::DomainF => write!(out, "{}", DomainF::get_ptr(pkt).as_str(true)),
-            FieldEnum::PathF => write!(out, "{}", PathF::get_ptr(pkt)),
-            FieldEnum::IPathF => write!(out, "{}", IPathF::get_ptr(pkt).spath()),// TODO might be wrong
-            FieldEnum::PathLenF => write!(out, "{}", PathLenF::get_ptr(pkt)),
-            FieldEnum::PathComp0F => write!(out, "{}", AB(PathComp0F::get_ptr(pkt))),
-            FieldEnum::PathComp1F => write!(out, "{}", AB(PathComp1F::get_ptr(pkt))),
-            FieldEnum::PathComp2F => write!(out, "{}", AB(PathComp2F::get_ptr(pkt))),
-            FieldEnum::PathComp3F => write!(out, "{}", AB(PathComp3F::get_ptr(pkt))),
-            FieldEnum::PathComp4F => write!(out, "{}", AB(PathComp4F::get_ptr(pkt))),
-            FieldEnum::PathComp5F => write!(out, "{}", AB(PathComp5F::get_ptr(pkt))),
-            FieldEnum::PathComp6F => write!(out, "{}", AB(PathComp6F::get_ptr(pkt))),
-            FieldEnum::PathComp7F => write!(out, "{}", AB(PathComp7F::get_ptr(pkt))),
+            FieldEnum::SpaceNameF => write!(out, "{}", SpaceNameF::get_ptr(pkt)),
+            FieldEnum::RSpaceNameF => write!(out, "{}", RSpaceNameF::get_ptr(pkt).space()),// TODO might be wrong
+            FieldEnum::DepthF => write!(out, "{}", DepthF::get_ptr(pkt)),
+            FieldEnum::SpaceComp0F => write!(out, "{}", AB(SpaceComp0F::get_ptr(pkt))),
+            FieldEnum::SpaceComp1F => write!(out, "{}", AB(SpaceComp1F::get_ptr(pkt))),
+            FieldEnum::SpaceComp2F => write!(out, "{}", AB(SpaceComp2F::get_ptr(pkt))),
+            FieldEnum::SpaceComp3F => write!(out, "{}", AB(SpaceComp3F::get_ptr(pkt))),
+            FieldEnum::SpaceComp4F => write!(out, "{}", AB(SpaceComp4F::get_ptr(pkt))),
+            FieldEnum::SpaceComp5F => write!(out, "{}", AB(SpaceComp5F::get_ptr(pkt))),
+            FieldEnum::SpaceComp6F => write!(out, "{}", AB(SpaceComp6F::get_ptr(pkt))),
+            FieldEnum::SpaceComp7F => write!(out, "{}", AB(SpaceComp7F::get_ptr(pkt))),
             FieldEnum::GroupIDF => write!(out, "{}", GroupIDF::get_ptr(pkt)),
             FieldEnum::CreateF => write!(out, "{}", CreateF::get_ptr(pkt)),
             FieldEnum::PubKeyF => write!(out, "{}", PubKeyF::get_ptr(pkt)),
@@ -473,17 +473,17 @@ impl FieldEnum {
             FieldEnum::PktTypeF => print_abe(U8::new(PktTypeF::get_val(pkt)).abe_bits()),
             FieldEnum::SizeF => U16::from(SizeF::get_val(pkt)).to_abe_str(),
             FieldEnum::DomainF => DomainF::get_ptr(pkt).to_abe_str(),
-            FieldEnum::IPathF => PathF::get_ptr(pkt).to_abe_str(), // TODO might be the wrong choice
-            FieldEnum::PathF => PathF::get_ptr(pkt).to_abe_str(),
-            FieldEnum::PathLenF => U8::new(PathLenF::get_val(pkt)).to_abe_str(),
-            FieldEnum::PathComp0F => AB(PathComp0F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp1F => AB(PathComp1F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp2F => AB(PathComp2F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp3F => AB(PathComp3F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp4F => AB(PathComp4F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp5F => AB(PathComp5F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp6F => AB(PathComp6F::get_ptr(pkt)).to_abe_str(),
-            FieldEnum::PathComp7F => AB(PathComp7F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::RSpaceNameF => SpaceNameF::get_ptr(pkt).to_abe_str(), // TODO might be the wrong choice
+            FieldEnum::SpaceNameF => SpaceNameF::get_ptr(pkt).to_abe_str(),
+            FieldEnum::DepthF => U8::new(DepthF::get_val(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp0F => AB(SpaceComp0F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp1F => AB(SpaceComp1F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp2F => AB(SpaceComp2F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp3F => AB(SpaceComp3F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp4F => AB(SpaceComp4F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp5F => AB(SpaceComp5F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp6F => AB(SpaceComp6F::get_ptr(pkt)).to_abe_str(),
+            FieldEnum::SpaceComp7F => AB(SpaceComp7F::get_ptr(pkt)).to_abe_str(),
             FieldEnum::GroupIDF => GroupIDF::get_ptr(pkt).to_abe_str(),
             FieldEnum::CreateF => CreateF::get_ptr(pkt).to_abe_str(),
             FieldEnum::PubKeyF => PubKeyF::get_ptr(pkt).to_abe_str(),
@@ -499,13 +499,13 @@ impl FieldEnum {
 #[test]
 fn fields(){
     use abe::scope::*;
-    let ipath = ipath_buf(&[b"hello",b"world"]);
-    let p = linkpoint([1;32].into(), [2;16].into(), &ipath, &[], &[], now(), ());
-    let abe = abe::parse_abe("[path]").unwrap();
-    let path = abe::eval::eval(&pkt_ctx(core_ctx(), &p),&abe).unwrap().into_exact_bytes().unwrap();
+    let rspace = rspace_buf(&[b"hello",b"world"]);
+    let p = linkpoint([1;32].into(), [2;16].into(), &rspace, &[], &[], now(), ());
+    let abe = abe::parse_abe("[spacename]",false).unwrap();
+    let space = abe::eval::eval(&pkt_ctx(core_ctx(), &p),&abe).unwrap().into_exact_bytes().unwrap();
     let pbox = p.as_netbox();
-    let path1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
-    assert_eq!(path,ipath.spath_bytes());
-    assert_eq!(path,path1)
+    let space1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
+    assert_eq!(space,rspace.space_bytes());
+    assert_eq!(space,space1)
 }
 

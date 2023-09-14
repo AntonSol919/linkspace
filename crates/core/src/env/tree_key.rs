@@ -22,14 +22,14 @@ impl TreeKey {
         group: GroupID,
         domain: Domain,
         sp_segm: u8,
-        sp: &SPath,
+        sp: &Space,
         key: Option<&PubKey>,
     ) -> TreeKey<Vec<u8>> {
         let mut btree_key: Vec<u8> = vec![];
         btree_key.extend_from_slice(&group.0);
         btree_key.extend_from_slice(&domain.0);
         btree_key.push(sp_segm);
-        btree_key.extend_from_slice(sp.spath_bytes());
+        btree_key.extend_from_slice(sp.space_bytes());
         btree_key.extend_from_slice(&key.unwrap_or(&B64([0; 32])).0);
         TreeKey(btree_key)
     }
@@ -48,7 +48,7 @@ pub type TreeValueBytes = [u8; size_of::<TreeValue>()];
 impl TreeEntry {
     pub fn from_pkt(rstamp: Stamp, pkt: impl NetPkt) -> Option<Self> {
         let fields = pkt.as_point().fields();
-        let (sp, spath, key) = fields.common_idx()?;
+        let (sp, space, key) = fields.common_idx()?;
         let val = TreeValue {
             create: sp.create_stamp,
             hash: pkt.hash(),
@@ -57,7 +57,7 @@ impl TreeEntry {
             data_size: U16::new(pkt.data().len() as u16)
         };
         Some(TreeEntry {
-            btree_key: TreeKey::from_fields(sp.group, sp.domain, *spath.path_len(), spath, key),
+            btree_key: TreeKey::from_fields(sp.group, sp.domain, *space.space_depth(), space, key),
             val: unsafe { *(&val as *const TreeValue as *const TreeValueBytes) },
         })
     }
@@ -134,7 +134,7 @@ impl<B: AsRef<[u8]>> TreeKey<B> {
     #[track_caller]
     pub fn new(b: B) -> TreeKey<B> {
         let r = TreeKey(b);
-        r.spath().check_components().unwrap();
+        r.space().check_components().unwrap();
         r
     }
     pub fn pop_key(&self) -> (&[u8], PubKey) {
@@ -142,11 +142,10 @@ impl<B: AsRef<[u8]>> TreeKey<B> {
         let (pre, key) = self.as_bytes().split_at(b.len() - size_of::<PubKey>());
         (pre, PubKey::try_fit_slice(key).unwrap())
     }
-    pub fn spath_and_key(&self) -> (&SPath, PubKey) {
+    pub fn space_and_key(&self) -> (&Space, PubKey) {
         let (bytes, key) = self.pop_key();
-        let spath = SPath::from_unchecked(&bytes[size_of::<KeyFixedHead>()..]);
-        //debug_assert!(spath.iter().count() == self.spath_segments() as usize );
-        (spath, key)
+        let space = Space::from_unchecked(&bytes[size_of::<KeyFixedHead>()..]);
+        (space, key)
     }
     pub fn fixed_head(&self) -> KeyFixedHead {
         unsafe { std::ptr::read_unaligned(self.as_bytes().as_ptr() as *const KeyFixedHead) }
@@ -154,8 +153,8 @@ impl<B: AsRef<[u8]>> TreeKey<B> {
     pub fn pubkey(&self) -> PubKey {
         self.pop_key().1
     }
-    pub fn spath(&self) -> &SPath {
-        self.spath_and_key().0
+    pub fn space(&self) -> &Space {
+        self.space_and_key().0
     }
     pub fn as_ref(&self) -> TreeKey<&[u8]> {
         TreeKey(self.0.as_ref())
@@ -163,12 +162,12 @@ impl<B: AsRef<[u8]>> TreeKey<B> {
     pub fn take(self) -> B {
         self.0
     }
-    pub fn fields(&self) -> (GroupID, Domain, u8, &SPath, PubKey) {
+    pub fn fields(&self) -> (GroupID, Domain, u8, &Space, PubKey) {
         (
             self.group(),
             self.domain(),
-            self.spath_segments(),
-            self.spath(),
+            self.space_segments(),
+            self.space(),
             self.pubkey(),
         )
     }
@@ -178,7 +177,7 @@ impl<B: AsRef<[u8]>> TreeKey<B> {
     pub fn group(&self) -> GroupID {
         self.fixed_head().group
     }
-    pub fn spath_segments(&self) -> u8 {
+    pub fn space_segments(&self) -> u8 {
         self.fixed_head().sp_len
     }
     pub fn as_bytes(&self) -> &[u8] {
@@ -195,15 +194,15 @@ impl<K: AsRef<[u8]>, V: AsRef<[u8]>> std::fmt::Debug for TreeEntry<K, V> {
 impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (g, d, spd, sp, k) = self.fields();
-        let spath = sp
+        let space = sp
             .check_components()
             .map(|_| format!("{sp}"))
-            .map_err(|_e| format!("Invalid{:?}", sp.spath_bytes()));
+            .map_err(|_e| format!("Invalid{:?}", sp.space_bytes()));
         f.debug_tuple("Key")
             .field(&g)
             .field(&d)
             .field(&spd)
-            .field(&spath)
+            .field(&space)
             .field(&k.b64_mini())
             .finish()
     }
@@ -229,13 +228,13 @@ pub const fn treekey_checked(r:RuleType) -> bool {
             FieldEnum::GroupIDF => true,
             FieldEnum::DomainF => true,
             FieldEnum::CreateF => true,
-            FieldEnum::PathLenF => true,
+            FieldEnum::DepthF => true,
             FieldEnum::LinksLenF => true,
             FieldEnum::DataSizeF => true,
             _ => false,
         },
         RuleType::RecvStamp => true,
-        RuleType::PrefixPath => true,
+        RuleType::SpacePrefix => true,
         RuleType::Limit(_) => false,
     }
 }

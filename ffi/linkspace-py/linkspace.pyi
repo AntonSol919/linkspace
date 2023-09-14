@@ -35,16 +35,18 @@ class LkInfo:
 
 """An linkspace packet: netheader, hash, and point - all fields are in (big endian) bytes"""
 class Pkt:
-    path: bytes
-    """The path bytes in spath encoding format. Use path0 up to path7 or path_list() to get each components."""
-    path0: bytes
-    path1: bytes
-    path2: bytes
-    path3: bytes
-    path4: bytes
-    path5: bytes
-    path6: bytes
-    path7: bytes
+    spacename: bytes
+    """The space bytes in space encoding format. Use comp0 up to comp7 or comp_list() to get each components."""
+    comp0: bytes
+    comp1: bytes
+    comp2: bytes
+    comp3: bytes
+    comp4: bytes
+    comp5: bytes
+    comp6: bytes
+    comp7: bytes
+    rooted_spacename:bytes
+    """spacename with 8 byte prefix to index the components"""
     create: bytes
     data: bytes
     domain: bytes
@@ -53,7 +55,7 @@ class Pkt:
     hop: bytes
     links: bytes
     netflags: bytes
-    path_len: bytes
+    depth: bytes
     pkt_type: bytes
     pubkey: bytes
     recv: bytes
@@ -69,7 +71,7 @@ class Pkt:
     """ [u16:0] - the size of the packet as it would be using lk_write"""
     size: bytes
     
-    def path_list(self) -> list[bytes]: ...
+    def comp_list(self) -> list[bytes]: ...
     def __eq__(self, other) -> bool: ...
     def __ge__(self, other) -> bool: ...
     def __getitem__(self, index) -> Any: ...
@@ -81,11 +83,11 @@ class Pkt:
 
 
 def lk_datapoint(data:bytes) -> Pkt: ...
-def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|list[bytes|str]|None=None,
+def lk_linkpoint(group:bytes|None=None,domain:bytes|str|None=None,spacename:bytes|str|list[bytes|str]|None=None,
                  links:list[Link] | None=None,data:bytes |str| None=None,
                  create:bytes | None =None) -> Pkt: ...
 def lk_keypoint(key: SigningKey,
-                group:bytes|None=None,domain:bytes|str|None=None,path:bytes|str|list[bytes|str]|None=None,
+                group:bytes|None=None,domain:bytes|str|None=None,spacename:bytes|str|list[bytes|str]|None=None,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
@@ -377,9 +379,9 @@ def lk_read(bytes:bytes,validate:bool=True,allow_private:bool=False) -> tuple[Pk
     ...
 
 def b64(bytes:bytes) -> str: ...
-def spath(components:list[bytes]) -> Any:
+def space(components:list[bytes]) -> Any:
     """
-    Encode a list of components in the SPath byte format (the same as Pkt.path).
+    Encode a list of components in the Space byte format (the same as Pkt.spacename).
     """
     ...
 

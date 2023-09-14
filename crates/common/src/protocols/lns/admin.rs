@@ -32,14 +32,14 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         .filter(|_| old_claim_grp != new_claim.group().cloned())// we can skip this step if they new_ptr pkt will overwrite anyways
         .and_then(|grp| ptr_lookup_entry(&read, &GROUP_TAG,grp , admin_k).into_opt())
         .transpose()?
-        .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_ipath(), old_chash, None, admin, now));
+        .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_rooted_spacename(), old_chash, None, admin, now));
 
     tracing::debug!(?drop_old_group);
     let mut add_new_group = None;
     if let Some(grp) = new_claim.group(){
         let p = ptr_lookup_entry(&read, &GROUP_TAG, *grp, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
-        let path = BY_TAG_P.into_spathbuf().push(GROUP_TAG).push(grp).ipath();
+        let path = BY_TAG_P.into_spacebuf().push(GROUP_TAG).push(grp).into_rooted();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_group = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }
@@ -52,7 +52,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         .filter(|_| old_claim_pubkey != new_claim.pubkey().cloned())// we can skip this step if they new_ptr pkt will overwrite anyways
         .and_then(|pubkey| ptr_lookup_entry(&read, &PUBKEY_TAG,pubkey , admin_k).into_opt())
         .transpose()?
-        .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_ipath(),  old_chash, None, admin, now));
+        .map(|old| mut_ptrlookup_entry(old.get_links(), old.get_rooted_spacename(),  old_chash, None, admin, now));
 
     tracing::debug!(?drop_old_pubkey);
 
@@ -60,7 +60,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
     if let Some(pubkey) = new_claim.pubkey(){
         let p = ptr_lookup_entry(&read, &PUBKEY_TAG, *pubkey, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
-        let path = BY_TAG_P.into_spathbuf().push(PUBKEY_TAG).push(pubkey).ipath();
+        let path = BY_TAG_P.into_spacebuf().push(PUBKEY_TAG).push(pubkey).into_rooted();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_pubkey = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }
@@ -90,8 +90,8 @@ pub fn ptr_lookup(reader: &ReadTxn, tag: &[u8], ptr: LkHash,admin:Option<PubKey>
 }
 #[instrument(ret,skip(reader),level="debug")]
 pub fn ptr_lookup_entry<'o>(reader: &'o ReadTxn, tag: &[u8], ptr: LkHash,admin:Option<PubKey>) -> ApplyResult<RecvPktPtr<'o>> {
-    let path = BY_TAG_P.into_spathbuf().push(tag).push(ptr);
-    let mut preds = PktPredicates::from_gd(PRIVATE, LNS).path(path)?.create_before(now()).unwrap();
+    let path = BY_TAG_P.into_spacebuf().push(tag).push(ptr);
+    let mut preds = PktPredicates::from_gd(PRIVATE, LNS).space(path)?.create_before(now()).unwrap();
     // entries have the form /by-tag/TAG/PTR
     if let Some(v) = admin {
         preds.pubkey.add(TestOp::Equal, v.into())
@@ -110,11 +110,11 @@ fn read_claims<'o>(reader: &'o ReadTxn,pkt: &'o impl NetPkt,valid_at:Stamp) -> i
 }
 
 pub fn list_ptr_lookups<'o>(reader: &'o ReadTxn, tag: AB<[u8; 16]>,ptr:Option<LkHash>,admin:Option<PubKey>) -> impl Iterator<Item=Vec<TaggedClaim>> +'o {
-    let path = BY_TAG_P.into_spathbuf().push(tag);
+    let path = BY_TAG_P.into_spacebuf().push(tag);
     let path = if let Some(p) = ptr { path.push(*p)} else { path}; 
     let mut preds = PktPredicates::from_gd(PRIVATE, LNS).create_before(now()).unwrap();
     preds.prefix(path).unwrap();
-    preds.path_len.add(TestOp::Equal,3);
+    preds.depth.add(TestOp::Equal,3);
     preds.state.i_branch.add(TestOp::Equal,0);
     if let Some(v) = admin {
         preds.pubkey.add(TestOp::Equal, v.into())
@@ -127,7 +127,7 @@ pub fn list_ptr_lookups<'o>(reader: &'o ReadTxn, tag: AB<[u8; 16]>,ptr:Option<Lk
 
 
 #[instrument(ret,level="trace")]
-pub fn mut_ptrlookup_entry(links:&[Link],path:&IPath,remove:Option<LkHash>,add_link_first:Option<(bool,Link)>,admin:Option<&SigningKey>,now:Stamp) -> NetPktBox{
+pub fn mut_ptrlookup_entry(links:&[Link],path:&RootedSpace,remove:Option<LkHash>,add_link_first:Option<(bool,Link)>,admin:Option<&SigningKey>,now:Stamp) -> NetPktBox{
     let (pre,post) = match add_link_first {
         Some((true,link)) => (Some(link),None),
         Some((false,link)) => (None,Some(link)),

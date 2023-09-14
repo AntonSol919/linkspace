@@ -227,7 +227,7 @@ pub fn build() {
     let sp = linkpoint(
         B64([0; 32]),
         AB([0; 16]),
-        &ipath_buf(&[b"yo"]),
+        &rspace_buf(&[b"yo"]),
         &[],
         b"ok",
         now(),

@@ -410,7 +410,7 @@ Queries are designed such that joining two query strings the result is the commo
 #+END_SRC
 #+name: q2
 #+BEGIN_SRC bash :session codeorg :exports both :results output verbatim
-  lk print-query example::/ok -- "path:=:/not_ok"
+  lk print-query example::/ok -- "spacename:=:/not_ok"
 #+END_SRC
 
 That's it for this quick introduction.

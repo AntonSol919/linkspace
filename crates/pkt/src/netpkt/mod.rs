@@ -199,12 +199,12 @@ pub fn basic() {
 #[test]
 pub fn calc_len() {
     use crate::NetPkt;
-    let spath = crate::ipath_buf(&[b"hello", b"world"]);
+    let space = crate::rspace_buf(&[b"hello", b"world"]);
     let links = [crate::Link::new("test", [2u8; 32])];
     let sp = crate::linkpoint(
         [0; 32].into(),
         [0; 16].into(),
-        &spath,
+        &space,
         &links,
         b"ok",
         crate::now(),

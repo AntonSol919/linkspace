@@ -82,7 +82,7 @@ impl Claim {
         ensure!(link_stamp == Stamp::ZERO || link_stamp == until,
                 "links[0].tag[..8] is used for until - currently holds {} (wants {})",links[0],AB(until.0) );
         links[0].tag[0..8].copy_from_slice(&until.0);
-        let path = name.claim_ipath();
+        let path = name.claim_space();
         let group = name.claim_group().unwrap_or(PRIVATE);
         let pkt = linkpoint(group, LNS, &path, links, &data, Stamp::ZERO, ()).as_netbox(); 
         ensure!(*pkt.get_create_stamp() < until);
@@ -99,13 +99,13 @@ impl Claim {
     pub fn from(pkt: impl NetPkt)-> anyhow::Result<Self>{
         tracing::trace!(p=%PktFmtDebug(&pkt),"reading claim");
         ensure!(pkt.is_linkpoint(),"claim is always a linkpoint");
-        let spath = pkt.get_path();
-        ensure!(spath.starts_with(&CLAIM_PREFIX));
+        let spacename = pkt.get_spacename();
+        ensure!(spacename.starts_with(&CLAIM_PREFIX));
         ensure!(*pkt.get_domain() == LNS);
-        let mut it = spath.iter();
+        let mut it = spacename.iter();
         it.next().unwrap();
-        let namep= it.spath();
-        let name = Name::from_spath(namep)?;
+        let namep= it.space();
+        let name = Name::from_space(namep)?;
         ensure!(*pkt.get_group() == name.claim_group().unwrap_or(PRIVATE),
                 "claim point {name} ({:?}) in the wrong group ({})",
                 name.claim_group(),pkt.get_group());
@@ -124,7 +124,7 @@ impl Claim {
 pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetPktBox)>{
     let key = linkspace_argon2_identity::pubkey(encrypted)?;
     let pkt = if private {
-        linkpoint(PRIVATE, LNS, IPath::empty(), &[], encrypted.as_bytes(), Stamp::ZERO, ()).as_netbox()
+        linkpoint(PRIVATE, LNS, RootedSpace::empty(), &[], encrypted.as_bytes(), Stamp::ZERO, ()).as_netbox()
     } else {
         datapoint(encrypted.as_bytes(), ()).as_netbox()
     };
@@ -134,5 +134,5 @@ pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetP
 
 pub fn vote(claim: &Claim,key: &SigningKey,data:&[u8])-> anyhow::Result<NetPktBox>{
     let vote_link = [Link::new("vote",claim.pkt.hash())];
-    Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_ipath(), &vote_link, &data, now(), key, ()).as_netbox())
+    Ok(keypoint(claim.name.claim_group().unwrap(), LNS, claim.pkt.get_rooted_spacename(), &vote_link, &data, now(), key, ()).as_netbox())
 }

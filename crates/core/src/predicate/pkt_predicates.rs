@@ -3,7 +3,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-/* this stuff requires an overhaul. It should accept path_components. parts should be boxed for sized, and it can be made Copy*/
+
+/* this stuff requires an overhaul. It should accept space components. parts should be boxed for sized, and it can be made Copy*/
 
 use linkspace_pkt::{abe::eval::ABList, *};
 
@@ -36,14 +37,14 @@ pub struct PktPredicates {
 
     pub data_size: TestSet<u16>,
     pub links_len: TestSet<u16>,
-    pub path_len: TestSet<u8>,
     pub create: TestSet<u64>,
 
     pub recv_stamp: Bound<u64>,
 
     pub state: StatePredicates,
 
-    pub path_prefix: IPathBuf,
+    pub rspace_prefix: RootedSpaceBuf,
+    pub depth: TestSet<u8>,
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -85,7 +86,7 @@ impl Default for PktPredicates {
 impl PktPredicates {
     pub const DEFAULT: PktPredicates = PktPredicates {
         pkt_types: TestSet::DEFAULT,
-        path_prefix: IPathBuf::DEFAULT,
+        rspace_prefix: RootedSpaceBuf::DEFAULT,
         var_flags: TestSet::DEFAULT,
         var_hop: TestSet::DEFAULT,
         var_stamp: TestSet::DEFAULT,
@@ -97,7 +98,7 @@ impl PktPredicates {
         size: TestSet::DEFAULT,
         data_size: TestSet::DEFAULT,
         links_len: TestSet::DEFAULT,
-        path_len: TestSet::DEFAULT,
+        depth: TestSet::DEFAULT,
         create: TestSet::DEFAULT,
         recv_stamp: Bound::DEFAULT,
         state: StatePredicates {
@@ -130,18 +131,18 @@ fn as_rules_it2<X, Y: Into<ABList>>(
     })
 }
 impl PktPredicates {
-    pub(crate) fn path_check(&mut self) -> anyhow::Result<()> {
-        if let Some(i) = self.path_prefix.path_len().checked_sub(1) {
-            self.path_len.try_add(TestOp::Greater, i)?;
+    pub(crate) fn check_space(&mut self) -> anyhow::Result<()> {
+        if let Some(i) = self.rspace_prefix.space_depth().checked_sub(1) {
+            self.depth.try_add(TestOp::Greater, i)?;
         }
         ensure!(
-            self.path_len
-                .info(*self.path_prefix.path_len())
+            self.depth
+                .info(*self.rspace_prefix.space_depth())
                 .val
                 .is_some(),
-            "path '{}' incompatible with path_len predicates '{:?}'",
-            self.path_prefix,
-            self.path_len
+            "space '{}' incompatible with depth predicates '{:?}'",
+            self.rspace_prefix,
+            self.depth
         );
         Ok(())
     }
@@ -159,8 +160,8 @@ impl PktPredicates {
             pubkey,
             hash,
             size,
-            path_prefix,
-            path_len,
+            rspace_prefix,
+            depth,
             recv_stamp,
             create,
             state,
@@ -198,8 +199,8 @@ impl PktPredicates {
                 pubkey.map(|v| -> PubKey { v.into() }).rules(),
                 id,
             ))
-            .chain((!path_prefix.is_empty()).then(|| {
-                Predicate::from(RuleType::PrefixPath, TestOp::Equal, path_prefix.ablist())
+            .chain((!rspace_prefix.is_empty()).then(|| {
+                Predicate::from(RuleType::SpacePrefix, TestOp::Equal, rspace_prefix.ablist())
             }))
             .chain(as_rules_it2(
                 PktHashF,
@@ -209,7 +210,7 @@ impl PktPredicates {
             .chain(as_rules_it2(SizeF, size.rules(), U16::new))
             .chain(as_rules_it2(DataSizeF, data_size.rules(), U16::new))
             .chain(as_rules_it2(LinksLenF, links_len.rules(), U16::new))
-            .chain(as_rules_it2(PathLenF, path_len.rules(), U8::new))
+            .chain(as_rules_it2(DepthF, depth.rules(), U8::new))
             .chain(as_rules_it2(
                 RuleType::RecvStamp,
                 recv_stamp.iter(),
@@ -259,20 +260,20 @@ impl PktPredicates {
                     FieldEnum::DomainF => self
                         .domain
                         .try_add(op, Domain::try_from(val)?.uint().get())?,
-                    FieldEnum::PathF => {
-                        ensure!(op == TestOp::Equal, "path only supports equallity");
-                        let path: IPathBuf = SPathBuf::try_from(val)?.try_ipath()?;
-                        self.path_len.try_add(TestOp::Equal, path.len() as u8)?;
+                    FieldEnum::SpaceNameF => {
+                        ensure!(op == TestOp::Equal, "space only supports equallity");
+                        let rspace: RootedSpaceBuf = SpaceBuf::try_from(val)?.try_into_rooted()?;
+                        self.depth.try_add(TestOp::Equal, rspace.depth() as u8)?;
                         ensure!(
-                            path.starts_with(&self.path_prefix),
-                            "prefix conflicting with path"
+                            rspace.starts_with(&self.rspace_prefix),
+                            "space prefix conflict"
                         );
-                        self.path_prefix = path;
-                        self.path_check()?;
+                        self.rspace_prefix = rspace;
+                        self.check_space()?;
                     }
-                    FieldEnum::PathLenF => {
-                        self.path_len.try_add(op, U8::try_from(val)?.0)?;
-                        self.path_check()?;
+                    FieldEnum::DepthF => {
+                        self.depth.try_add(op, U8::try_from(val)?.0)?;
+                        self.check_space()?;
                     }
                     FieldEnum::GroupIDF => {
                         self.group.try_add(op, GroupID::try_from(val)?.into())?
@@ -300,15 +301,15 @@ impl PktPredicates {
                     FieldEnum::VarUBits3F => {
                         self.var_ubits[3].try_add(op, U32::try_from(val)?.get())?
                     }
-                    FieldEnum::IPathF => todo!(),
-                    FieldEnum::PathComp0F => todo!(),
-                    FieldEnum::PathComp1F => todo!(),
-                    FieldEnum::PathComp2F => todo!(),
-                    FieldEnum::PathComp3F => todo!(),
-                    FieldEnum::PathComp4F => todo!(),
-                    FieldEnum::PathComp5F => todo!(),
-                    FieldEnum::PathComp6F => todo!(),
-                    FieldEnum::PathComp7F => todo!(),
+                    FieldEnum::RSpaceNameF => todo!(),
+                    FieldEnum::SpaceComp0F => todo!(),
+                    FieldEnum::SpaceComp1F => todo!(),
+                    FieldEnum::SpaceComp2F => todo!(),
+                    FieldEnum::SpaceComp3F => todo!(),
+                    FieldEnum::SpaceComp4F => todo!(),
+                    FieldEnum::SpaceComp5F => todo!(),
+                    FieldEnum::SpaceComp6F => todo!(),
+                    FieldEnum::SpaceComp7F => todo!(),
                     FieldEnum::DataSizeF => {
                         self.data_size.try_add(op, U16::try_from(val)?.get())?
                     }
@@ -318,9 +319,9 @@ impl PktPredicates {
                 }
             }
             RuleType::RecvStamp => self.recv_stamp.try_add(op, U64::try_from(val)?.get())?,
-            RuleType::PrefixPath => {
+            RuleType::SpacePrefix => {
                 ensure!(op == TestOp::Equal, "prefix only supports equallity ");
-                let sp = SPathBuf::try_from(val)?;
+                let sp = SpaceBuf::try_from(val)?;
                 self.prefix(sp)?;
             },
             RuleType::Limit(l) => {
@@ -336,8 +337,8 @@ impl PktPredicates {
         Ok(TreeKeys {
             domain: self.domain,
             group: self.group,
-            ipath: self.path_prefix.clone(),
-            depth: BitTestSet::from_rules(&self.path_len),
+            rspace: self.rspace_prefix.clone(),
+            depth: BitTestSet::from_rules(&self.depth),
             cstamp,
             pubkey: self.pubkey,
         })

@@ -8,7 +8,7 @@ use crate::prelude::*;
 
 
 pub(crate) fn setup(lk:&Linkspace,claim: Claim,overwrite:bool) -> anyhow::Result<()>{
-    let path = claim.name.file_path2()?;
+    let path = claim.name.file_path()?;
     lk.env().set_files_data(path,claim.pkt.as_netpkt_bytes(),overwrite)?;
     if let Some(g) = claim.group() {
         lk.env().set_files_data(format!("by-group/{g}"), claim.name.to_string().as_bytes(), true)?;
@@ -24,7 +24,7 @@ pub(crate) fn setup(lk:&Linkspace,claim: Claim,overwrite:bool) -> anyhow::Result
 
 
 pub fn list_claims(root:&Path,name: &Name) -> anyhow::Result<Vec<anyhow::Result<Claim>>>{
-    let mut path = name.file_path2()?;
+    let mut path = name.file_path()?;
     path.pop(); // remove claim.pkt
     let mut path = root.join(&path);
     let mut lst = vec![];
@@ -38,7 +38,7 @@ fn traverse_claims(path:&mut PathBuf, claims: &mut Vec<anyhow::Result<Claim>>) -
         let p = try {
             let p = read_pkt(&b, true)?; 
             let claim = Claim::from(&*p)?;
-            match claim.name.file_path2(){
+            match claim.name.file_path(){
                 Err(e) => return Err(e.context(anyhow::anyhow!("{path:?} is invalid claim"))),
                 Ok(c) => ensure!(path.ends_with(c),"{path:?} has a wrong claim?")
             };

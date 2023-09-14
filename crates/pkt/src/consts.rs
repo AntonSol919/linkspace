@@ -19,11 +19,11 @@ pub const MAX_CONTENT_SIZE: usize = MAX_POINT_SIZE - size_of::<PointHeader>();
 pub const MAX_DATA_SIZE: usize = MAX_CONTENT_SIZE;
 pub const MAX_LINKPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<LinkPointHeader>();
 pub const MAX_KEYPOINT_DATA_SIZE: usize = MAX_CONTENT_SIZE - size_of::<Signed>();
-pub const MAX_LINKS_LEN: usize = (MAX_POINT_SIZE - MAX_SPATH_SIZE) / size_of::<Link>();
-pub const MAX_SPATH_SIZE: usize = 242;
-pub const MAX_IPATH_SIZE: usize = MAX_SPATH_SIZE + 8;
-pub const MAX_SPATH_COMPONENT_SIZE: usize = 200;
-pub const MAX_PATH_LEN: usize = 8;
+pub const MAX_LINKS_LEN: usize = (MAX_POINT_SIZE - MAX_SPACENAME_SIZE) / size_of::<Link>();
+pub const MAX_SPACENAME_SIZE: usize = 242;
+pub const MAX_ROOTED_SPACENAME_SIZE: usize = MAX_SPACENAME_SIZE + 8;
+pub const MAX_SPACENAME_COMPONENT_SIZE: usize = 200;
+pub const MAX_SPACE_DEPTH: usize = 8;
 
 pub static TEST_GROUP_PKT: LazyLock<NetPktBox> =
     LazyLock::new(|| datapoint(b"Test Group", NetPktHeader::EMPTY).as_netbox());
@@ -34,7 +34,7 @@ pub static SINGLE_LINK_PKT: LazyLock<NetPktBox> = LazyLock::new(|| {
     linkpoint(
         PRIVATE,
         ab(b""),
-        IPath::empty(),
+        RootedSpace::empty(),
         &[Link {
             tag: ab(b""),
             ptr: B64([0; 32]),

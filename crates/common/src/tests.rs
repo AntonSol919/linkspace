@@ -10,17 +10,17 @@ fn btree_sanity<S:SyncDB>(store: BTreeStore<S>) -> anyhow::Result<()>{
     assert!(store.get_reader().partial_matches(PartialHash::min()).next().is_none(),"is_empty");
     {
         let domain1 = as_domain(b"a");
-        let spath = spath_str("/hello").expect("parse spath");
-        let a1 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(10),());
-        let a2 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(11),());
+        let space = space_str("/hello").expect("parse space");
+        let a1 = spoint_ref(PUBLIC,domain1,&space,&[],Stamp::new(10),());
+        let a2 = spoint_ref(PUBLIC,domain1,&space,&[],Stamp::new(11),());
         store.get_writer().write_many_iter([a1,a2])?;
     }
     assert_eq!(store.get_reader().dump().count(),2," has two spoints");
     {
         let domain1 = as_domain(b"b");
-        let spath = spath_str("/hello").expect("parse spath");
-        let a1 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(10),());
-        let a2 = spoint_ref(PUBLIC,domain1,&spath,&[],Stamp::new(11),());
+        let space = space_str("/hello").expect("parse space");
+        let a1 = spoint_ref(PUBLIC,domain1,&space,&[],Stamp::new(10),());
+        let a2 = spoint_ref(PUBLIC,domain1,&space,&[],Stamp::new(11),());
         store.get_writer().write_many_iter([a1,a2])?;
     }
 

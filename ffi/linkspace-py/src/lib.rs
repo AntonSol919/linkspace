@@ -11,6 +11,7 @@
 )]
 
 use anyhow::{Context, anyhow};
+use linkspace_rs::runtime::cb::StopReason;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::{Duration, Instant}};
 
 use ::linkspace as linkspace_rs;
@@ -20,7 +21,7 @@ use pyo3::{
     types::{PyBytes,  PyTuple},
 };
 mod pynetpkt;
-use pynetpkt::*;
+use pynetpkt::{Pkt};
 
 #[cfg(any(PyPy, Py_3_11))]
 fn call_ctx(py: Python) -> (String, i32) {
@@ -51,7 +52,7 @@ struct PyPktStreamHandler {
     on_err: Option<PyFunc>
 }
 
-impl PktHandler for PyPktStreamHandler {
+impl runtime::cb::PktHandler for PyPktStreamHandler {
     fn handle_pkt(
         &mut self,
         pkt: &dyn NetPkt,
@@ -91,7 +92,7 @@ impl PktHandler for PyPktStreamHandler {
         &mut self,
         _query: linkspace_rs::Query,
         _lk: &linkspace_rs::Linkspace,
-        _reason: misc::StopReason,
+        _reason: StopReason,
         _total: u32,
         _new: u32,
     ) {
@@ -118,23 +119,23 @@ fn domain_arg(domain:Option<&[u8]>) -> anyhow::Result<Domain>{
 fn common_args(
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
-    path: Option<&PyAny>,
+    space: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     create_stamp: Option<&[u8]>,
-) -> anyhow::Result<(GroupID, Domain, IPathBuf, Vec<Link>, Option<Stamp>)> {
+) -> anyhow::Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Option<Stamp>)> {
     let group = grp_arg(group)?;
     let domain = domain_arg(domain)?;
-    let path = match path {
-        None => IPathBuf::new(),
+    let space = match space {
+        None => RootedSpaceBuf::new(),
         Some(p) => {
             if let Ok(p) = p.downcast::<PyBytes>(){
-                SPath::from_slice(p.as_bytes())?.into_spathbuf().try_ipath()?
+                Space::from_slice(p.as_bytes())?.into_spacebuf().try_into_rooted()?
             }else {
-                let path = p
+                let space = p
                     .iter()?
                     .map(|i| i.and_then(bytelike))
                     .try_collect::<Vec<_>>()?;
-                IPathBuf::try_from_iter(path)?
+                RootedSpaceBuf::try_from_iter(space)?
             }
         }
     };
@@ -147,7 +148,7 @@ fn common_args(
         })
         .collect();
     let create_stamp = create_stamp.map(|p| Stamp::try_from(p)).transpose()?;
-    Ok((group, domain, path, links, create_stamp))
+    Ok((group, domain, space, links, create_stamp))
 }
 
 #[pyclass]
@@ -196,13 +197,13 @@ pub fn lk_linkpoint(
     data: Option<&PyAny>,
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
-    path: Option<&PyAny>,
+    spacename: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
-    let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
-    let pkt = linkspace_rs::point::lk_linkpoint_ref(data,domain, group, &*path, &*links, create)?;
+    let (group, domain, spacename, links, create) = common_args(group, domain, spacename, links, create)?;
+    let pkt = linkspace_rs::point::lk_linkpoint_ref(data,domain, group, &*spacename, &*links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
@@ -211,14 +212,14 @@ pub fn lk_keypoint(
     data: Option<&PyAny>,
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
-    path: Option<&PyAny>,
+    spacename: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     create: Option<&[u8]>,
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
-    let (group, domain, path, links, create) = common_args(group, domain, path, links, create)?;
+    let (group, domain, space, links, create) = common_args(group, domain, spacename, links, create)?;
     let pkt =
-        linkspace_rs::point::lk_keypoint_ref(&key.0,data,domain, group, &*path, &*links, create)?;
+        linkspace_rs::point::lk_keypoint_ref(&key.0,data,domain, group, &*space, &*links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 
@@ -474,13 +475,13 @@ pub fn lk_status_set(
         qid
     };
     tracing::info!("setup status {:?}",status_ctx);
-    lk_status_set(&lk.0, status_ctx, move |_lk, domain, group, path, link| {
+    lk_status_set(&lk.0, status_ctx, move |_lk, domain, group, space, link| {
         tracing::info!("get gil status");
         Python::with_gil(|py| {
             let val = callback.call0(py)?;
             let bytes = bytelike(val.as_ref(py))?;
 
-            let pkt = linkspace_rs::lk_linkpoint(bytes, domain, group, path, &[link], None);
+            let pkt = linkspace_rs::lk_linkpoint(bytes, domain, group, space, &[link], None);
             tracing::info!("Status result {:?}",pkt);
             pkt
         })
@@ -606,7 +607,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::spath, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::space, m)?)?;
     m.add_function(wrap_pyfunction!(crate::blake3_hash, m)?)?;
     m.add_function(wrap_pyfunction!(crate::bytes2uniform, m)?)?;
 
@@ -632,13 +633,13 @@ pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
     if mini{b.b64_mini()} else{b.to_string()}
 }
 #[pyfunction]
-pub fn spath<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
-    let path = components
+pub fn space<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyBytes> {
+    let space = components
         .iter()?
         .map(|i| i.and_then(PyAny::extract::<&[u8]>))
         .try_collect::<Vec<_>>()?;
-    let sp = linkspace_rs::prelude::spath_buf(&path);
-    Ok(PyBytes::new(py, &sp.spath_bytes()))
+    let sp = linkspace_rs::prelude::space_buf(&space);
+    Ok(PyBytes::new(py, &sp.space_bytes()))
 }
 #[pyfunction]
 pub fn blake3_hash<'p>(py: Python<'p>,bytes:&PyAny) -> anyhow::Result<&'p PyBytes>{

@@ -423,6 +423,9 @@ mod collect {
     } 
 }
 
+
+/// parse a string into abe. With parse_unencoded true, bytes outside the printable ascii range (0x20..0xfe) 
+
 pub fn parse_abe(st: impl AsRef<[u8]>,parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseError> {
     parse_abe_b(st.as_ref(),parse_unencoded)
 }
@@ -431,6 +434,7 @@ pub fn parse_abe_b(st: &[u8],parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseE
     else { parse_abe_strict_b(st)}
 }
 
+/// ALl bytes must be valid ABE. 
 pub fn parse_abe_strict_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
@@ -472,6 +476,7 @@ pub fn parse_abe_strict_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
         }
     }
 }
+
 
 /// In contrast to [[parse_abe_strict_b]] this function does not error bytes outside the range 0x20..0xfe, but reads them as-is. 
 pub fn parse_abe_with_unencoded_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {

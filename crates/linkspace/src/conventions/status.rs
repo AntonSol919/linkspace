@@ -36,7 +36,7 @@ A reply is accepted if it was made now-timeout.
 This might change
 **/
 use crate::{*};
-pub const STATUS_PATH: IPathC<16> = ipath1::<7>(concat_bytes!([255], b"status"));
+pub const STATUS_SPACE: RootedStaticSpace<16> = rspace1::<7>(concat_bytes!([255], b"status"));
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -62,31 +62,31 @@ impl<'o> std::fmt::Debug for LkStatus<'o>{
     }
 }
 #[doc(hidden)]
-pub fn lk_status_path(status: LkStatus) -> LkResult<IPathBuf> {
-    let mut path = STATUS_PATH.into_ipathbuf();
-    path.try_append_component(&*status.group)?;
-    path.try_append_component(status.objtype)?;
+pub fn lk_status_space(status: LkStatus) -> LkResult<RootedSpaceBuf> {
+    let mut space = STATUS_SPACE.into_buf();
+    space.try_append_component(&*status.group)?;
+    space.try_append_component(status.objtype)?;
     if let Some(v) = status.instance {
-        path.try_append_component(v)?;
+        space.try_append_component(v)?;
     }
-    Ok(path)
+    Ok(space)
 }
 
 /// A query that returns both requests and updates
 pub fn lk_status_request(status:LkStatus) -> LkResult<NetPktBox>{
-    lk_linkpoint(&[],status.domain, PRIVATE, &lk_status_path(status)?,&[], None)
+    lk_linkpoint(&[],status.domain, PRIVATE, &lk_status_space(status)?,&[], None)
 }
 
 /// A query that returns both requests and updates
 pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
     let LkStatus { domain,  ..} = status;
-    let path = lk_status_path(status)?;
+    let space = lk_status_space(status)?;
     let mut q = lk_query(&Q);
     let create_after = now().saturating_sub(max_age);
     q = lk_query_push(q, "group", "=", &*PRIVATE)?;
     q = lk_query_push(q, "domain", "=", &*domain)?;
     q = lk_query_push(q, "create", ">", &*create_after)?;
-    q = lk_query_push(q, "prefix", "=", path.spath_bytes())?;
+    q = lk_query_push(q, "prefix", "=", space.space_bytes())?;
     Ok(q)
 }
 
@@ -132,10 +132,10 @@ pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
     Ok(ok)
 }
 
-pub fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<()>{
+pub fn is_status_reply(status:LkStatus,rspace:&RootedSpace,pkt:&NetPktPtr) -> LkResult<()>{
     anyhow::ensure!(*pkt.get_domain() == status.domain
                     && *pkt.get_group() == PRIVATE
-                    && pkt.get_ipath() == path
+                    && pkt.get_rooted_spacename() == rspace
                     && !pkt.get_links().is_empty()
                     && !pkt.data().is_empty()
                     ,"invalid status update");
@@ -144,7 +144,7 @@ pub fn is_status_reply(status:LkStatus,path:&IPath,pkt:&NetPktPtr) -> LkResult<(
 
 /// Insert a callback that is triggered on a request. Must yield a valid response. Don't forget to process
 #[cfg(feature="runtime")]
-pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linkspace,Domain,GroupID,&IPath,Link) -> LkResult<NetPktBox> +'static)-> LkResult<()>{
+pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linkspace,Domain,GroupID,&RootedSpace,Link) -> LkResult<NetPktBox> +'static)-> LkResult<()>{
     use tracing::debug_span;
     use linkspace_common::prelude::{U16, U32};
     use crate::runtime::{lk_watch2};
@@ -156,30 +156,30 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
     let objtype = objtype.to_vec();
     let instance = instance.or(Some(b"default")).map(Vec::from);
     let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype, qid};
-    let path = lk_status_path(status)?;
+    let space = lk_status_space(status)?;
     let link = Link{tag:ab(b"init"),ptr:PRIVATE};
-    let initpkt = update(lk,status.domain, PRIVATE, &path,link)?;
-    is_status_reply(status, &path, &initpkt)?;
+    let initpkt = update(lk,status.domain, PRIVATE, &space,link)?;
+    is_status_reply(status, &space, &initpkt)?;
     let mut prev = initpkt.hash();
     tracing::debug!(?initpkt,"init status");
     lk_save(lk,&initpkt )?;
     std::mem::drop(initpkt);
 
     let mut q = lk_query(&Q);
-    let prefix = lk_status_path(LkStatus { instance:None, ..status})?;
+    let prefix = lk_status_space(LkStatus { instance:None, ..status})?;
     q = lk_query_push(q, "data_size", "=", &*U16::ZERO)?;
     q = lk_query_push(q, "links_len", "=", &*U16::ZERO)?;
-    q = lk_query_push(q, "prefix", "=", prefix.spath_bytes())?;
+    q = lk_query_push(q, "prefix", "=", prefix.space_bytes())?;
     // We only care about new packets. Worst case a request was received and timeout between our init and this cb.
     q = lk_query_push(q, "i_db", "<", &*U32::ZERO)?;
     q = lk_query_push(q, "", "qid", qid)?;
     lk_watch2(lk, &q, try_cb(move |pkt:&dyn NetPkt, lk:&Linkspace| -> LkResult<()>{
         let status = LkStatus { instance: instance.as_deref(), domain , group, objtype:&objtype,qid:&[]};
-        let p = pkt.get_ipath();
-        if p.len() == path.len() && p.spath() != path.as_ref() { return Ok(())}
+        let p = pkt.get_rooted_spacename();
+        if p.depth() == space.depth() && p.space() != space.as_ref() { return Ok(())}
         let link = Link{tag:ab(b"prev"),ptr:prev};
-        let reply = update(lk,status.domain,PRIVATE,&path,link)?;
-        is_status_reply(status, &path, &reply)?;
+        let reply = update(lk,status.domain,PRIVATE,&space,link)?;
+        is_status_reply(status, &space, &reply)?;
         prev  = reply.hash();
         tracing::debug!(?reply,"Reply status");
         lk_save(lk,&reply)?;

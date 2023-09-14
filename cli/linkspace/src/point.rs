@@ -38,7 +38,7 @@ pub struct PointOpts {
     #[command(flatten,next_help_heading="Sign Options")]
     pub key: KeyOpts,
 
-    pub dgs: DGPExpr,
+    pub dgs: DGSExpr,
 
     #[arg(last=true)]
     pub link: Vec<LinkExpr>,
@@ -47,7 +47,7 @@ pub struct PointOpts {
 pub fn build<'o>(
     common: &CommonOpts,
     build_opts: &'o PointOpts,
-    dgs: &'o DGP,
+    dgs: &'o DGS,
     links: &'o [Link],
     data: &'o [u8],
 ) -> anyhow::Result<NetPktParts<'o>> {
@@ -67,7 +67,7 @@ pub fn build<'o>(
     Ok(point(
         dgs.group,
         dgs.domain,
-        &dgs.path,
+        &dgs.space,
         links,
         data,
         stamp,
@@ -79,13 +79,13 @@ pub fn build<'o>(
 pub fn build_with_reader<'o>(
     common: &CommonOpts,
     build_opts: &'o PointOpts,
-    dgs: &'o DGP,
+    dgs: &'o DGS,
     links: &'o [Link],
     data_buf: &'o mut Vec<u8>,
     reader: &mut Reader,
 ) -> anyhow::Result<Option<NetPktParts<'o>>> {
     let ctx = common.eval_ctx();
-    let freespace : usize = calc_free_space(&dgs.path, links, &[], build_opts.sign).try_into()?;
+    let freespace : usize = calc_free_space(&dgs.space, links, &[], build_opts.sign).try_into()?;
     match reader.read_next_data(&ctx.dynr(),freespace, data_buf)?{
         Some(_) => Ok(Some(build(common, build_opts, dgs, links, data_buf)?)),
         None => Ok(None),
@@ -142,7 +142,7 @@ pub struct GenPointOpts {
     pub read: DataReadOpts,
     #[command(flatten,next_help_heading="Sign Options")]
     pub key: KeyOpts,
-    pub dgs: Option<DGPExpr>,
+    pub dgs: Option<DGSExpr>,
     #[arg(last=true)]
     pub link: Vec<LinkExpr>,
 }

@@ -24,7 +24,7 @@ pub fn get_private_claims<'o>(
     exact:bool,
     admin: Option<PubKey>
 ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'o>>> {
-    let path = name.claim_ipath();
+    let path = name.claim_space();
     let mut preds = PktPredicates::from_gdp(PRIVATE, LNS, &path,exact).create_before(now())?;
     preds.state.i_branch = TestSet::new_eq(0);
     if let Some(v) = admin {

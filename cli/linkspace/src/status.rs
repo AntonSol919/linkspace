@@ -6,7 +6,7 @@
 use std::ops::ControlFlow;
 
 use anyhow::Context;
-use linkspace::misc::{ try_cb};
+use linkspace::runtime::cb::{ try_cb};
 use linkspace::{ lk_process_while };
 use linkspace_common::cli::reader::DataReadOpts;
 use linkspace_common::cli::{clap };
@@ -69,11 +69,11 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
 
     let mut reader = readopts.open_reader(false, &ctx)?;
     let mut buf = vec![];
-    lk_status_set(&lk, status, move |_,domain,group,path,link| {
+    lk_status_set(&lk, status, move |_,domain,group,space,link| {
         buf.clear();
-        let freespace : usize = calc_free_space(path, &[link], &[], false).try_into()?;
+        let freespace : usize = calc_free_space(space, &[link], &[], false).try_into()?;
         reader.read_next_data(&c.eval_ctx().dynr(),freespace,&mut buf)?.context("no more data")?;
-        lk_linkpoint(&buf,domain, group, path, &[link], None)
+        lk_linkpoint(&buf,domain, group, space, &[link], None)
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;
 

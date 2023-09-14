@@ -15,6 +15,6 @@ lk handshake --max-diff-secs 6000 \
           --forward file:$SESSION/handshake.in \
           $MODE >&4
 
-export THEIR_KEY=$(cat $SESSION/handshake.in | lk filter --bare --signed --max-new 1 | lk pktf "[pubkey:str]")
+export THEIR_KEY=$(cat $SESSION/handshake.in | lk filter --bare --signed --max-new 1 | lk pktf "[pubkey/?:b]")
 echo Connected $THEIR_ADDR - Their Key : $THEIR_KEY 1>&2 
 exec ${@:2} 

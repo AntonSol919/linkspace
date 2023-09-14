@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use std::{ops::Range, str::FromStr};
 use thiserror::Error;
 
-impl SPath {
+impl Space {
     pub fn ablist(&self) -> ABList {
         self.iter().fold(ABList::default(), |s, a| {
             s.push_ctr(abe::ast::Ctr::FSlash).push_bytes(a)
@@ -34,58 +34,58 @@ impl SPath {
 
 use crate::*;
 #[derive(Error, Debug)]
-pub enum SPathExprErr {
-    #[error("spath expr must start with '/' and can't contain ':', or '\\n'")]
+pub enum SpaceExprError {
+    #[error("space expr must start with '/' and can't contain ':', or '\\n'")]
     BadCtr(Option<Ctr>),
-    #[error("SPath error {0}")]
-    SPath(#[from] PathError),
+    #[error("Space error {0}")]
+    Space(#[from] SpaceError),
     #[error("{}",.0)]
     Custom(String),
 }
 
-pub type SPathExpr = TypedABE<SPathBuf>;
-pub type IPathExpr = TypedABE<IPathBuf>;
-impl TryFrom<ABList> for IPathBuf {
-    type Error = SPathExprErr;
+pub type SpaceExpr = TypedABE<SpaceBuf>;
+pub type RootedSpaceExpr = TypedABE<RootedSpaceBuf>;
+impl TryFrom<ABList> for RootedSpaceBuf {
+    type Error = SpaceExprError;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        Ok(SPathBuf::try_from(value)?.try_ipath()?)
+        Ok(SpaceBuf::try_from(value)?.try_into_rooted()?)
     }
 }
-impl From<SPathBuf> for ABList {
-    fn from(val: SPathBuf) -> Self {
+impl From<SpaceBuf> for ABList {
+    fn from(val: SpaceBuf) -> Self {
         val.ablist()
     }
 }
-impl ABEValidator for IPathBuf {
+impl ABEValidator for RootedSpaceBuf {
     fn check(b: &[ABE]) -> Result<(), MatchError> {
-        SPathBuf::check(b)
+        SpaceBuf::check(b)
     }
 }
 
-impl SPathBuf {
-    pub fn try_from_ablist(mut ablist: ABList) -> Result<Self, SPathExprErr> {
+impl SpaceBuf {
+    pub fn try_from_ablist(mut ablist: ABList) -> Result<Self, SpaceExprError> {
         match ablist.first(){
-            None => return Ok(SPathBuf::new()),
+            None => return Ok(SpaceBuf::new()),
             Some((ctr,bytes)) if *ctr != Some(Ctr::FSlash) && bytes.is_empty() => { ablist.pop_front(); }
             _ => {}
         }
         if let Ok(b) = ablist.as_exact_bytes() {
-            return Ok(SPath::from_slice(b)?.into_spathbuf());
+            return Ok(Space::from_slice(b)?.into_spacebuf());
         }
         let v : Vec<_> = ablist.unwrap().into_iter()
-            .map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Err(SPathExprErr::BadCtr(ctr))} else { Ok(b)})
+            .map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Err(SpaceExprError::BadCtr(ctr))} else { Ok(b)})
             .try_collect()?;
-        return Ok(SPathBuf::try_from_iter(v)?);
+        return Ok(SpaceBuf::try_from_iter(v)?);
     }
 }
-impl TryFrom<ABList> for SPathBuf {
-    type Error = SPathExprErr;
+impl TryFrom<ABList> for SpaceBuf {
+    type Error = SpaceExprError;
     fn try_from(ablist: ABList) -> Result<Self, Self::Error> {
-        SPathBuf::try_from_ablist(ablist)
+        SpaceBuf::try_from_ablist(ablist)
     }
 }
 
-impl ABEValidator for SPathBuf {
+impl ABEValidator for SpaceBuf {
     fn check(mut b: &[ABE]) -> Result<(), MatchError> {
         if b.len() == 1 {
             abe::ast::as_expr(&b[0])?;
@@ -99,38 +99,23 @@ impl ABEValidator for SPathBuf {
     }
 }
 
-/*
-pub fn spath_eval(ctx: &EvalCtx<impl Env,impl Func>, abe: impl AsRef<[ABE]>) -> Result<SPathBuf, SPathExprErr>{
-    let abe = abe.as_ref();
-    let mut it = abe.split(|v| v == &ABE::Ctr(Ctr::FSlash));
-    let spath = SPathBuf::new();
-    match it.next(){
-        Some(v) => if !v.is_empty(){ return Err(SPathExprErr::Custom(format!("SPath starts with '/' got {:?}",abe)))},
-        None => return Ok(spath),
-    }
-    let lst = it.map(|abe| eval(ctx,abe)?.into_exact_bytes().map_err(SPathExprErr::SegmentContainsCtr))
-        .collect::<Result<Vec<Vec<u8>>,SPathExprErr>>()?;
-    return Ok(SPathBuf::try_from(lst)?)
-}
-*/
-
-pub fn spath_str(v: &str) -> Result<SPathBuf, ABEError<SPathExprErr>> {
-    v.parse::<SPathExpr>()?.eval(&EvalCtx {
+pub fn space_str(v: &str) -> Result<SpaceBuf, ABEError<SpaceExprError>> {
+    v.parse::<SpaceExpr>()?.eval(&EvalCtx {
         scope: core_scope(),
     })
 }
-impl FromStr for IPathBuf {
-    type Err = ABEError<SPathExprErr>;
+impl FromStr for RootedSpaceBuf {
+    type Err = ABEError<SpaceExprError>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        spath_str(s)?
-            .try_ipath()
+        space_str(s)?
+            .try_into_rooted()
             .map_err(|e| ABEError::TryFrom(e.into()))
     }
 }
-impl FromStr for SPathBuf {
-    type Err = ABEError<SPathExprErr>;
+impl FromStr for SpaceBuf {
+    type Err = ABEError<SpaceExprError>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        spath_str(s)
+        space_str(s)
     }
 }
 pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
@@ -148,7 +133,7 @@ pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
     Ok(())
 }
 
-impl ToABE for SPath {
+impl ToABE for Space {
     fn to_abe(&self) -> Vec<ABE> {
         let mut v = vec![];
         for seg in self.iter() {
@@ -164,7 +149,7 @@ impl ToABE for SPath {
         v
     }
 }
-impl SPath {
+impl Space {
     pub fn display_fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for seg in self.iter() {
             fmt_segm2(seg, f)?;
@@ -173,53 +158,53 @@ impl SPath {
     }
 }
 
-impl Display for SPath {
+impl Display for Space {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.display_fmt(f)
     }
 }
-impl<X> Display for IPathBytes<X>
+impl<X> Display for RootedSpaceBytes<X>
 where
-    Self: AsRef<IPath>,
+    Self: AsRef<RootedSpace>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.as_ref().spath(), f)
+        Display::fmt(self.as_ref().space(), f)
     }
 }
 
-impl Debug for SPath {
+impl Debug for Space {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let it = self.iter();
         f.debug_list().entries(it).finish()
     }
 }
-impl Debug for IPath {
+impl Debug for RootedSpace {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self.spath(), f)
+        Debug::fmt(self.space(), f)
     }
 }
-impl Display for SPathBuf {
+impl Display for SpaceBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.as_spath().display_fmt(f)
+        self.as_space().display_fmt(f)
     }
 }
-impl Display for IPathBuf {
+impl Display for RootedSpaceBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.spath().display_fmt(f)
+        self.space().display_fmt(f)
     }
 }
-impl Debug for SPathBuf {
+impl Debug for SpaceBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self.as_spath(), f)
+        Debug::fmt(self.as_space(), f)
     }
 }
-impl Debug for IPathBuf {
+impl Debug for RootedSpaceBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self.spath(), f)
+        Debug::fmt(self.space(), f)
     }
 }
 
-impl Serialize for SPath {
+impl Serialize for Space {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -228,28 +213,28 @@ impl Serialize for SPath {
             let v: Vec<_> = self.iter().map(as_abtxt).collect();
             v.serialize(serializer)
         } else {
-            self.spath_bytes().serialize(serializer)
+            self.space_bytes().serialize(serializer)
         }
     }
 }
-impl Serialize for IPath {
+impl Serialize for RootedSpace {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.spath().serialize(serializer)
+        self.space().serialize(serializer)
     }
 }
-impl Serialize for IPathBuf {
+impl Serialize for RootedSpaceBuf {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.spath().serialize(serializer)
+        self.space().serialize(serializer)
     }
 }
 
-impl<'de> Deserialize<'de> for &IPath {
+impl<'de> Deserialize<'de> for &RootedSpace {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -261,7 +246,7 @@ impl<'de> Deserialize<'de> for &IPath {
         }
     }
 }
-impl<'de> Deserialize<'de> for IPathBuf {
+impl<'de> Deserialize<'de> for RootedSpaceBuf {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -274,11 +259,11 @@ impl<'de> Deserialize<'de> for IPathBuf {
     }
 }
 #[cfg(test)]
-fn generate_valid() -> Vec<SPathBuf> {
+fn generate_valid() -> Vec<SpaceBuf> {
     vec![
-        SPathBuf::new(),
-        SPathBuf::from_iter(&[b"hello", b"world"]),
-        SPathBuf::from_iter(&[b"hello" as &[u8], &[255; MAX_SPATH_COMPONENT_SIZE]]),
+        SpaceBuf::new(),
+        SpaceBuf::from_iter(&[b"hello", b"world"]),
+        SpaceBuf::from_iter(&[b"hello" as &[u8], &[255; MAX_SPACENAME_COMPONENT_SIZE]]),
     ]
 }
 #[cfg(test)]
@@ -286,7 +271,7 @@ fn generate_valid() -> Vec<SPathBuf> {
 fn string_fmt() {
     for sp in generate_valid() {
         let st = sp.to_string();
-        let parsed: SPathBuf = st.parse().unwrap();
+        let parsed: SpaceBuf = st.parse().unwrap();
         assert_eq!(sp, parsed)
     }
 }
@@ -295,25 +280,25 @@ fn string_fmt() {
 fn test_encode() {
     #[track_caller]
     fn eq(st: &str, r: &[&[u8]]) {
-        let x = spath_str(st).unwrap();
-        let b = SPathBuf::from_iter(r);
+        let x = space_str(st).unwrap();
+        let b = SpaceBuf::from_iter(r);
         assert_eq!(x, b)
     }
-    assert!(spath_str("noopen").is_err());
+    assert!(space_str("noopen").is_err());
     eq("/ok", &[b"ok"]);
-    assert!(spath_str("/trail/").is_err());
-    assert!(spath_str(r#"/kk[kk"#).is_err());
+    assert!(space_str("/trail/").is_err());
+    assert!(space_str(r#"/kk[kk"#).is_err());
     eq("/\\[k", &[b"[k"]);
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct PathFE;
+pub struct SpaceFE;
 
-impl EvalScopeImpl for PathFE {
+impl EvalScopeImpl for SpaceFE {
     fn about(&self) -> (String, String) {
         (
-            "path".into(),
-            r"path utils. Usually [//some/path] is the most readable".into(),
+            "space".into(),
+            r"space utils. Usually [//some/space] is the most readable".into(),
         )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -325,36 +310,36 @@ impl EvalScopeImpl for PathFE {
                 .transpose()?
                 .unwrap_or(start + 1)
                 .max(9);
-            ensure!(start <= 8 ,"paths only have upto 8 components");
+            ensure!(start <= 8 ,"space max depth is 8");
             ensure!(end >= start ,"end < start");
             Ok(start..end)
         }
-        fn encode_sp(_:&PathFE,b:&[u8],_:&[ABE]) -> ApplyResult<String>{
-           SPath::from_slice(b).ok().map(|p|format!("[/{p}]")).into()
+        fn encode_sp(_:&SpaceFE,b:&[u8],_:&[ABE]) -> ApplyResult<String>{
+           Space::from_slice(b).ok().map(|p|format!("[/{p}]")).into()
         }
         
         crate::abe::fncs!([
-            ("?p", 1..=1, "decode path", |_, i: &[&[u8]]| Ok(
-                SPath::from_slice(i[0])?.to_string().into_bytes()
+            ("?space", 1..=1, "decode space", |_, i: &[&[u8]]| Ok(
+                Space::from_slice(i[0])?.to_string().into_bytes()
             )),
             (
-                "path_idx",
+                "si",
                 2..=3,
-                "path idx [start,?end]",
+                "space idx [start,?end]",
                 |_, i: &[&[u8]]| {
-                    Ok(SPath::from_slice(i[0])?
-                        .ipath()
+                    Ok(Space::from_slice(i[0])?
+                        .into_rooted()
                         .range(parse_range(i)?)
-                        .spath_bytes()
+                        .space_bytes()
                         .to_vec())
                 }
             ),
             (@C
-                "p",
+                "s",
                 1..=8,
                 None,
-                "build path from arguments",
-                |_, i: &[&[u8]],_,_| { Ok(SPathBuf::try_from_iter(i)?.spath_bytes().to_vec()) },
+                "build space from arguments - alternative to [//some/path] syntax",
+                |_, i: &[&[u8]],_,_| { Ok(SpaceBuf::try_from_iter(i)?.space_bytes().to_vec()) },
                 encode_sp
             )
         ])
@@ -364,16 +349,16 @@ impl EvalScopeImpl for PathFE {
             ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
-                    let p = SPathBuf::try_from(lst)?;
+                    let p = SpaceBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
-                info: ScopeMacroInfo { id: "", help: "the 'empty' eval for encoding paths . i.e. [//some/spath/val] creates the byte for /some/spath/val" }
+                info: ScopeMacroInfo { id: "", help: "the 'empty' eval for encoding space. i.e. [//some/space/val] creates the byte for /some/space/val" }
             },
             ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
                     let mut lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
                     lst.get_mut().retain(|v|  !v.1.is_empty());
-                    let p = SPathBuf::try_from(lst)?;
+                    let p = SpaceBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
                 info: ScopeMacroInfo { id: "~", help: "similar to '//' but forgiving on empty components" }

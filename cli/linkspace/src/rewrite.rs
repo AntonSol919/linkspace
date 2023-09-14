@@ -21,7 +21,7 @@ use anyhow::{Context,  ensure};
 /** rewrite link and key points with alternative fields.
 
 Note that options are expressions with the current packet in scope.
-rewrite --path "[hash]/[group]"
+rewrite --space "[hash]/[group]"
 rewrite --create "[create:+1D]"
 
 **/
@@ -34,7 +34,7 @@ pub struct Rewrite {
     #[arg(short, long)]
     pub domain: Option<DomainExpr>,
     #[arg(short, long)]
-    pub path: Option<IPathExpr>,
+    pub space: Option<RootedSpaceExpr>,
     #[arg(long, alias = "u")]
     pub create: Option<StampExpr>,
     #[arg(short,long)]
@@ -80,13 +80,13 @@ pub fn rewrite_pkt(
         .map(|v| v.eval(ctx))
         .transpose()?
         .unwrap_or(h.domain);
-    let path = opts.path.as_ref().map(|v| v.eval(ctx)).transpose()?;
-    let path = path.as_deref().unwrap_or(t.ipath);
+    let space = opts.space.as_ref().map(|v| v.eval(ctx)).transpose()?;
+    let space = space.as_deref().unwrap_or(t.rspace);
     let mut buf = vec![];
     let data :&[u8]= match data {
         Either::Left(d) => d,
         Either::Right(reader) => {
-            let freespace : usize = calc_free_space(path, t.links, &[], key.is_some()).try_into()?;
+            let freespace : usize = calc_free_space(space, t.links, &[], key.is_some()).try_into()?;
             reader.read_next_data(&ctx.dynr(),freespace, &mut buf)?.context("No data provided")?;
             &buf
         },
@@ -95,7 +95,7 @@ pub fn rewrite_pkt(
     let pkt = try_point(
         group,
         domain,
-        path,
+        space,
         t.links,
         data,
         opts.create

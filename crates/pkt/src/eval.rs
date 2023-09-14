@@ -297,7 +297,7 @@ fn pktfmt() {
     let pkt = datapoint(b"hello", ());
     let ctx = core_ctx();
     let ctx = pkt_ctx(ctx, &pkt);
-    let abe = abe::parse_abe("[pkt] [data]").unwrap();
+    let abe = abe::parse_abe("[pkt] [data]",false).unwrap();
     let st = eval(&ctx,&abe).unwrap().concat();
     let _v = std::str::from_utf8(&st).unwrap();
 }

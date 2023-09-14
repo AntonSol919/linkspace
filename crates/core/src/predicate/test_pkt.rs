@@ -60,19 +60,19 @@ impl PktStreamTest for [Box<dyn PktStreamTest>] {
 }
 
 #[derive(Debug)]
-pub struct SPathPrefix(SPathBuf);
-impl PktStreamTest for SPathPrefix {
+pub struct SpacePrefix(SpaceBuf);
+impl PktStreamTest for SpacePrefix {
     fn test(&self, pkt: &NetPktPtr) -> bool {
-        // FIXME: impl ipath starts_with and replace this
-        pkt.path().map(|p| p.starts_with(&self.0)).unwrap_or(false)
+        // FIXME: impl rspace starts_with and replace this
+        pkt.spacename().map(|p| p.starts_with(&self.0)).unwrap_or(false)
     }
     fn get_field(&self) -> RuleType {
-        RuleType::PrefixPath
+        RuleType::SpacePrefix
     }
 
     fn as_rules(&self) -> Box<(dyn Iterator<Item = Predicate> + 'static)> {
         Box::new(std::iter::once(Predicate::from(
-            RuleType::PrefixPath,
+            RuleType::SpacePrefix,
             TestOp::Equal,
             self.0.ablist(),
         )))
@@ -111,8 +111,8 @@ pub fn compile_predicates(
         pubkey,
         hash,
         size,
-        path_prefix,
-        path_len,
+        rspace_prefix,
+        depth,
         create,
         links_len,
         data_size,
@@ -140,12 +140,12 @@ pub fn compile_predicates(
         .chain(into_tests::<SizeF, _>(size))
         .chain(into_tests::<DataSizeF, _>(data_size))
         .chain(into_tests::<LinksLenF, _>(links_len))
-        .chain(into_tests::<PathLenF, _>(path_len))
+        .chain(into_tests::<DepthF, _>(depth))
         //.chain( into_tests::<LinksLenF,_>(&links))
-        .chain(is_some(path_prefix.clone()).map(|v| {
+        .chain(is_some(rspace_prefix.clone()).map(|v| {
             (
-                Box::new(SPathPrefix(v.spath().to_owned())) as Box<dyn PktStreamTest>,
-                RuleType::PrefixPath,
+                Box::new(SpacePrefix(v.space().to_owned())) as Box<dyn PktStreamTest>,
+                RuleType::SpacePrefix,
             )
         }));
     (it, *recv_stamp)

@@ -11,7 +11,6 @@
     lazy_cell,
     control_flow_enum,
     type_alias_impl_trait,
-    io_error_other,
     exit_status_error,
     unix_sigpipe
 )]
@@ -200,7 +199,7 @@ enum Command {
         #[command(flatten)]
         watch: watch::CLIQuery,
     },
-    /// runtime - watch all packets with the same locaiton prefix. alias for: watch --mode tree-desc 'dom:grp:path:**'
+    /// runtime - watch all packets with the same space prefix. alias for: watch --mode tree-desc 'dom:grp:space:**'
     WatchTree {
         #[arg(short, long)]
         asc: bool,

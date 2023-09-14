@@ -105,7 +105,7 @@ fn main() -> LkResult<()> {
             pkt: pkt.into(),
         });
         pkt_list.push(node.clone());
-        root.get(&p.comps_bytes()[..*p.path_len() as usize])
+        root.get(&p.comps_bytes()[..*p.depth() as usize])
             .packets
             .push(node);
         true

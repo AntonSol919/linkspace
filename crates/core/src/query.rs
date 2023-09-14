@@ -13,7 +13,7 @@ use linkspace_pkt::{
         eval::{eval, ABList, EvalCtx, EvalScopeImpl, Scope, ScopeFunc},
         fncs, abconf::ABConf,
     },
-    Domain, GroupID, IPathBuf, PubKey, AB,
+    Domain, GroupID, RootedSpaceBuf, PubKey, AB,
 };
 use tracing::debug_span;
 
@@ -158,11 +158,11 @@ impl Query {
         q
     }
     /// does not restrict depth
-    pub fn dgpk(domain: Domain, group: GroupID, prefix: IPathBuf, key: PubKey) -> Self {
+    pub fn dgsk(domain: Domain, group: GroupID, prefix: RootedSpaceBuf, key: PubKey) -> Self {
         let mut predicates = PktPredicates::default();
         predicates.domain.add(TestOp::Equal, domain.into());
         predicates.group.add(TestOp::Equal, group.into());
-        predicates.path_prefix = prefix;
+        predicates.rspace_prefix = prefix;
         predicates.pubkey.add(TestOp::Equal, key.into());
         Query {
             predicates,

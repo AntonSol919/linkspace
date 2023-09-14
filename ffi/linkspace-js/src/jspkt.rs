@@ -99,28 +99,28 @@ impl Pkt {
         self.0.group().map(|g| g.0.into())
     }
     #[wasm_bindgen(getter)]
-    pub fn path(&self) -> Option<Box<[u8]>> {
-        self.0.path().map(|p| p.spath_bytes().into())
+    pub fn spacename(&self) -> Option<Box<[u8]>> {
+        self.0.spacename().map(|p| p.space_bytes().into())
     }
     #[wasm_bindgen(getter)]
-    pub fn ipath(&self) -> Option<Box<[u8]>> {
-        self.0.ipath().map(|p| p.ipath_bytes().into())
+    pub fn rooted_spacename(&self) -> Option<Box<[u8]>> {
+        self.0.rooted_spacename().map(|p| p.rooted_bytes().into())
     }
     #[wasm_bindgen(getter)]
     pub fn recv(&self) -> Option<Box<[u8]>> {
         self.0.recv().map(|p| p.0.into())
     }
-    #[wasm_bindgen(getter)] pub fn path0(&self) -> Box<[u8]> {self.0.get_ipath().path0().into()}
-    #[wasm_bindgen(getter)] pub fn path1(&self) -> Box<[u8]> {self.0.get_ipath().path1().into()}
-    #[wasm_bindgen(getter)] pub fn path2(&self) -> Box<[u8]> {self.0.get_ipath().path2().into()}
-    #[wasm_bindgen(getter)] pub fn path3(&self) -> Box<[u8]> {self.0.get_ipath().path3().into()}
-    #[wasm_bindgen(getter)] pub fn path4(&self) -> Box<[u8]> {self.0.get_ipath().path4().into()}
-    #[wasm_bindgen(getter)] pub fn path5(&self) -> Box<[u8]> {self.0.get_ipath().path5().into()}
-    #[wasm_bindgen(getter)] pub fn path6(&self) -> Box<[u8]> {self.0.get_ipath().path6().into()}
-    #[wasm_bindgen(getter)] pub fn path7(&self) -> Box<[u8]> {self.0.get_ipath().path7().into()}
-    pub fn path_list(&self) -> Option<js_sys::Array> {
-        self.0.ipath().map(|p| {
-            p.comps_bytes()[0..*p.path_len() as usize]
+    #[wasm_bindgen(getter)] pub fn comp0(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp0().into()}
+    #[wasm_bindgen(getter)] pub fn comp1(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp1().into()}
+    #[wasm_bindgen(getter)] pub fn comp2(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp2().into()}
+    #[wasm_bindgen(getter)] pub fn comp3(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp3().into()}
+    #[wasm_bindgen(getter)] pub fn comp4(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp4().into()}
+    #[wasm_bindgen(getter)] pub fn comp5(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp5().into()}
+    #[wasm_bindgen(getter)] pub fn comp6(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp6().into()}
+    #[wasm_bindgen(getter)] pub fn comp7(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp7().into()}
+    pub fn comp_list(&self) -> Option<js_sys::Array> {
+        self.0.rooted_spacename().map(|p| {
+            p.comps_bytes()[0..p.depth()]
                 .iter()
                 .map(|s| -> js_sys::Uint8Array { (*s).into()})
                 .collect()
@@ -137,8 +137,8 @@ impl Pkt {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn path_len(&self) -> Option<u8> {
-        self.0.path_len().copied()
+    pub fn depth(&self) -> Option<u8> {
+        self.0.depth().copied()
     }
     #[wasm_bindgen(getter)]
     pub fn size(&self) -> u16 {

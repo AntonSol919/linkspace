@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use anyhow::{ensure, Context};
 use clap::Parser;
-use linkspace_core::prelude::{IPathBuf, SPath, AB};
+use linkspace_core::prelude::{RootedSpaceBuf, Space, AB};
 
 use crate::cli::clap;
 use std::{
@@ -32,17 +32,17 @@ pub struct FsSyncOpts {
     pub r#async: bool,
     #[command(subcommand)]
     pub mode: Mode,
-    /// modify the mapping between paths and spaths.
+    /// modify the mapping between paths and spacenames.
     #[arg(long)]
     pub modify: Vec<PathMod>,
 }
 
-pub fn resolve_spath(
+pub fn resolve_space(
     abs_root: &Path,
-    root_sp: &SPath,
+    root_sp: &Space,
     abs_target: &Path,
     modify: &[PathMod],
-) -> anyhow::Result<Option<IPathBuf>> {
+) -> anyhow::Result<Option<RootedSpaceBuf>> {
     let relative = abs_target.strip_prefix(abs_root)?;
     let rest = relative
         .components()
@@ -62,18 +62,18 @@ pub fn resolve_spath(
         }
     }
     tracing::trace!(segments=?segments,"Ok");
-    Ok(Some(IPathBuf::try_from_iter(segments)?))
+    Ok(Some(RootedSpaceBuf::try_from_iter(segments)?))
 }
 
 pub fn resolve_path(
     abs_root: &Path,
-    root_sp: &SPath,
-    abs_target: &SPath,
+    root_space: &Space,
+    abs_target: &Space,
     modify: &[PathMod],
 ) -> anyhow::Result<Option<PathBuf>> {
     let mut p = abs_root.to_owned();
     let relative = abs_target
-        .strip_prefix(root_sp)
+        .strip_prefix(root_space)
         .context("Out of prefix scope?")?;
     let mut relative = relative.iter().collect::<Vec<_>>();
     for modify in modify.iter().rev() {
@@ -103,19 +103,19 @@ pub fn resolve_path(
 impl FsSyncOpts {
     /// take absolute path, returns  absolute & modify
     #[instrument(skip(self),fields(modify = ?self.modify))]
-    pub fn into_spath(
+    pub fn into_space(
         &self,
-        spath_root: &SPath,
+        space: &Space,
         target_absolute: &Path,
-    ) -> anyhow::Result<Option<IPathBuf>> {
-        resolve_spath(&self.root, spath_root, target_absolute, &self.modify)
+    ) -> anyhow::Result<Option<RootedSpaceBuf>> {
+        resolve_space(&self.root, space, target_absolute, &self.modify)
     }
     pub fn into_path(
         &self,
-        spath_root: &SPath,
-        target_absolute: &SPath,
+        space: &Space,
+        target_absolute: &Space,
     ) -> anyhow::Result<Option<PathBuf>> {
-        resolve_path(&self.root, spath_root, target_absolute, &self.modify)
+        resolve_path(&self.root, space, target_absolute, &self.modify)
     }
 }
 

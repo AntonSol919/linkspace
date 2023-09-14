@@ -15,8 +15,7 @@ pub fn should_mmap(file_size:u64) -> bool {
 }
 pub static EMPTY_DATA_PKT : LazyLock<NetPktBox> = LazyLock::new(||datapoint(b"", NetPktHeader::EMPTY).as_netbox());
 pub static EMPTY_DATA_HASH : LazyLock<LkHash> = LazyLock::new(|| EMPTY_DATA_PKT.hash());
-//spath!(pub const BLOB_SP = [b"\0blob"]);
-pub const BLOB_SP: ConstSPath<6> = ConstSPath::from_raw(*b"\x05\0blob");
+pub const BLOB_SP: StaticSpace<6> = StaticSpace::from_raw(*b"\x05\0blob");
 
 use thiserror::Error;
 
@@ -108,8 +107,8 @@ where
         return O::from_output(links[0].ptr);
     }
     let blob_hash = hasher.finalize();
-    let mut spath = BLOB_SP.to_owned().try_ipath().unwrap();
-    spath
+    let mut space = BLOB_SP.to_owned().try_into_rooted().unwrap();
+    space
         .extend_from_iter([blob_hash.as_bytes() as &[u8], b"part"])
         .unwrap();
     let mut links: &mut [Link] = &mut links;
@@ -118,7 +117,7 @@ where
             let part = linkpoint(
                 group,
                 domain,
-                &spath,
+                &space,
                 &links[..MAX_LINKS_LEN],
                 &[],
                 Stamp::ZERO,
@@ -133,7 +132,7 @@ where
             ptr: part_hash,
         };
     }
-    let bloblist = linkpoint(group, domain, &spath, links, &[], Stamp::ZERO, ());
+    let bloblist = linkpoint(group, domain, &space, links, &[], Stamp::ZERO, ());
     let hash = bloblist.hash();
     for_each(bloblist)?;
     O::from_output(hash)

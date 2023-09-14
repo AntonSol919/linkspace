@@ -43,7 +43,7 @@ impl<'txn> TreeKeysIter<'txn> {
         let mut jump: Vec<u8> = vec![];
         loop {
             jump.clear();
-            let (group, domain, path_len, key) = {
+            let (group, domain, depth, key) = {
                 let (group, domain, sp_len, _, key) = at.btree_key.fields();
                 tracing::trace!(?at, "Fields");
                 (
@@ -53,10 +53,10 @@ impl<'txn> TreeKeysIter<'txn> {
                     self.req.pubkey.info(key.into()),
                 )
             };
-            let prefix_ok = at.btree_key.spath().starts_with(&self.req.ipath);
-            tracing::trace!(at=%at.btree_key.spath(), req=%self.req.ipath, prefix_ok,"PrefixOk ");
-            tracing::trace!(group=?group.into::<GroupID>(),dom=?domain.into::<Domain>(),?path_len,?prefix_ok,?key,"Scope Jump");
-            if key.in_set && path_len.in_set && prefix_ok && domain.in_set && group.in_set {
+            let prefix_ok = at.btree_key.space().starts_with(&self.req.rspace);
+            tracing::trace!(at=%at.btree_key.space(), req=%self.req.rspace, prefix_ok,"PrefixOk ");
+            tracing::trace!(group=?group.into::<GroupID>(),dom=?domain.into::<Domain>(),?depth,?prefix_ok,?key,"Scope Jump");
+            if key.in_set && depth.in_set && prefix_ok && domain.in_set && group.in_set {
                 match self.next_stamp_match(&mut at) {
                     Ok(_) => {
                         tracing::trace!("Match found");
@@ -84,14 +84,14 @@ impl<'txn> TreeKeysIter<'txn> {
                 if domain.val.is_none() {
                     jump.push(255);
                 } else if domain.in_set {
-                    match (path_len.in_set, prefix_ok, key.in_set) {
+                    match (depth.in_set, prefix_ok, key.in_set) {
                         (true, true, true) => unreachable!(),
                         (false, _, _) => {
-                            tracing::trace!(?path_len, "Pathlen OOB, setting next depth");
+                            tracing::trace!(?depth, "Depth OOB, setting next depth");
                             jump.push(
                                 self.req
                                     .depth
-                                    .next_depth(path_len.val.unwrap_or(255))
+                                    .next_depth(depth.val.unwrap_or(255))
                                     .unwrap_or(255),
                             );
                         }
@@ -99,14 +99,14 @@ impl<'txn> TreeKeysIter<'txn> {
                             jump.push(
                                 self.req
                                     .depth
-                                    .next_depth(path_len.val.unwrap_or(255))
+                                    .next_depth(depth.val.unwrap_or(255))
                                     .unwrap_or(255),
                             );
                             tracing::trace!("Prefix OOB, extinding with lowerbound ");
                         }
                         (true, true, false) => {
-                            jump.push(path_len.val.unwrap_or(255));
-                            jump.extend_from_slice(at.btree_key.spath().spath_bytes());
+                            jump.push(depth.val.unwrap_or(255));
+                            jump.extend_from_slice(at.btree_key.space().space_bytes());
                             jump.extend_from_slice(
                                 &key.val.map(|v| v.to_be_bytes::<32>()).unwrap_or([255; 32]),
                             );

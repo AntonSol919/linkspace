@@ -13,7 +13,7 @@ fn build() {
     let pkt = linkpoint(
         B64([0; 32]),
         AB([0; 16]),
-        &ipath_buf(&[b"a"]),
+        &rspace_buf(&[b"a"]),
         &[],
         b"ok",
         Stamp::ZERO,
@@ -44,21 +44,21 @@ fn sanity() {
     }
     let parts = datablk.as_netparts();
     assert_eq!(parts.hash(), datablk.hash());
-    let spath = ipath_buf(&[b"hello", b"world"]);
+    let space = rspace_buf(&[b"hello", b"world"]);
     let linkpoint = builder::linkpoint(
         [4; 32].into(),
         [1; 16].into(),
-        &spath,
+        &space,
         &[],
         b"datatest",
         Stamp::new(2),
         (),
     );
 
-    assert_eq!(linkpoint.get_ipath(), &*spath);
+    assert_eq!(linkpoint.get_rooted_spacename(), &*space);
     assert_eq!(linkpoint.data(), b"datatest");
     let bytes = linkpoint.as_netbox();
-    assert_eq!(bytes.get_ipath(), &*spath);
+    assert_eq!(bytes.get_rooted_spacename(), &*space);
     assert_eq!(bytes.data(), b"datatest");
     bytes.check(true).unwrap();
 
@@ -74,17 +74,17 @@ fn sanity() {
     let keypoint = builder::keypoint(
         [4; 32].into(),
         [1; 16].into(),
-        &spath,
+        &space,
         &[],
         b"datatest",
         Stamp::new(2),
         &signkey,
         (),
     );
-    assert_eq!(keypoint.get_ipath(), &*spath);
+    assert_eq!(keypoint.get_rooted_spacename(), &*space);
     assert_eq!(keypoint.data(), b"datatest");
     let bytes = keypoint.as_netbox();
-    assert_eq!(bytes.get_ipath(), &*spath);
+    assert_eq!(bytes.get_rooted_spacename(), &*space);
     assert_eq!(bytes.data(), b"datatest");
     bytes.check(true).unwrap();
 
@@ -158,8 +158,8 @@ pub fn access_test() {
     let key = public_testkey();
 
     let dp = datapoint(b"hello", ()).as_netbox();
-    let lk = linkpoint(B64([1;32]),ab(b"ok"),IPath::empty(),&[],&[],Stamp::ZERO,()).as_netbox();
-    let sp = keypoint(B64([1;32]),ab(b"ok"),IPath::empty(),&[],&[],Stamp::ZERO,&key,()).as_netbox();
+    let lk = linkpoint(B64([1;32]),ab(b"ok"),RootedSpace::empty(),&[],&[],Stamp::ZERO,()).as_netbox();
+    let sp = keypoint(B64([1;32]),ab(b"ok"),RootedSpace::empty(),&[],&[],Stamp::ZERO,&key,()).as_netbox();
 
     assert_eq!(_domain_access_1(&dp),_domain_access_2(&dp));
     assert_eq!(_domain_access_1(&lk),_domain_access_2(&lk));

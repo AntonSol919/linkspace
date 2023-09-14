@@ -73,7 +73,11 @@ impl LinkspaceOpts {
         crate::static_env::open_linkspace_dir(self.dir.as_deref(), self.init)
     }
     pub fn runtime(&self) -> anyhow::Result<Linkspace> {
-        self.runtime_io().context("error opening runtime")
+        self.runtime_io()
+            .with_context(||format!(
+                "Error opening runtime {:?}",
+                crate::static_env::find_linkspace(self.dir.as_deref())
+            ))
     }
     pub fn env_io(&self) -> io::Result<&BTreeEnv> {
         crate::static_env::get_env(&self.root()?, self.init)

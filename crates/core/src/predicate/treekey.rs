@@ -22,7 +22,7 @@ use super::{bitset_test::BitTestSet, TestSet, UInt};
 pub struct TreeKeys {
     pub domain: TestSet<u128>,
     pub group: TestSet<U256>,
-    pub ipath: IPathBuf,
+    pub rspace: RootedSpaceBuf,
     pub depth: BitTestSet,
     pub pubkey: TestSet<U256>,
     pub cstamp: StampRange,
@@ -31,24 +31,24 @@ pub struct TreeKeys {
 impl TreeKeys {
     pub fn lower_bound(&self) -> anyhow::Result<Vec<u8>> {
         let mut btree_key = vec![];
-        let (group, domain, depth, spath, pubkey) = (
+        let (group, domain, depth, rspace, pubkey) = (
             self.group.info(UInt::MIN).val.context("Empty group set")?,
             self.domain
                 .info(UInt::MIN)
                 .val
                 .context("Empty domain set")?,
             self.depth.info(0).val.context("Empty depthset")?,
-            &self.ipath,
+            &self.rspace,
             self.pubkey
                 .info(UInt::MIN)
                 .val
                 .context("Empty pubkey set")?,
         );
-        tracing::trace!(?group,?domain,?depth,%spath,?pubkey, "lowerbounds");
+        tracing::trace!(?group,?domain,?depth,%rspace,?pubkey, "lowerbounds");
         btree_key.extend_from_slice(&group.to_be_bytes::<32>());
         btree_key.extend_from_slice(&Domain::from(domain).0);
         btree_key.push(depth);
-        btree_key.extend(spath.spath_bytes());
+        btree_key.extend(rspace.space_bytes());
         btree_key.extend_from_slice(&pubkey.to_be_bytes::<32>());
         Ok(btree_key)
     }

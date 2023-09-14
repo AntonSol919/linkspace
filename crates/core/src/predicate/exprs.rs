@@ -204,7 +204,7 @@ impl ToABE for Predicate {
 }
 
 use crate::eval::*;
-use linkspace_pkt::{FieldEnum, SPathBuf, AB};
+use linkspace_pkt::{FieldEnum, SpaceBuf, AB};
 use parse_display::{Display, FromStr};
 
 use crate::predicate::TestOp;
@@ -230,7 +230,7 @@ pub enum RuleType {
     #[display("recv")]
     RecvStamp,
     #[display("prefix")]
-    PrefixPath,
+    SpacePrefix,
     #[display("{0}")]
     Limit(QScope),
 }
@@ -239,7 +239,7 @@ impl RuleType {
         FieldEnum::LIST
             .map(RuleType::Field)
             .into_iter()
-            .chain([RuleType::RecvStamp, RuleType::PrefixPath])
+            .chain([RuleType::RecvStamp, RuleType::SpacePrefix])
             .chain(QSCOPES.map(RuleType::Limit))
     }
 
@@ -247,7 +247,7 @@ impl RuleType {
         match self {
             RuleType::Field(f) => f.try_to_abe(abl).ok_or(anyhow::anyhow!("Field to abe err")),
             RuleType::RecvStamp => Ok(linkspace_pkt::Stamp::try_from(abl)?.to_abe()),
-            RuleType::PrefixPath => Ok(SPathBuf::try_from(abl)?.to_abe()),
+            RuleType::SpacePrefix => Ok(SpaceBuf::try_from(abl)?.to_abe()),
             RuleType::Limit(_) => Ok(linkspace_pkt::U32::try_from(abl)?.to_abe()),
         }
     }
@@ -259,7 +259,7 @@ impl RuleType {
         match self {
             RuleType::Field(f) => f.fixed_size(),
             RuleType::RecvStamp => Some(8),
-            RuleType::PrefixPath => None,
+            RuleType::SpacePrefix => None,
             RuleType::Limit(_) => Some(4),
         }
     }

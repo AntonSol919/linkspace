@@ -31,10 +31,10 @@ pub mod prelude {
         byte_fmt::{endian_types, AB, B64},
         core::env::RecvPktPtr,
         pkt::{
-            ab, as_abtxt_c, ipath1, ipath_buf, now, repr::PktFmt, spath_buf, try_ab, Domain,
-            Error as PktError, GroupID, IPath, IPathBuf, IPathC, Link, LkHash, NetFlags, NetPkt,
-            NetPktArc, NetPktBox, NetPktExt, NetPktHeader, NetPktParts, NetPktPtr, PathError,
-            Point, PointExt, PointTypeFlags, PubKey, SPath, SPathBuf, SigningExt, SigningKey,
+            ab, as_abtxt_c, rspace1, rspace_buf, now, repr::PktFmt, space_buf, try_ab, Domain,
+            Error as PktError, GroupID, RootedSpace, RootedSpaceBuf, RootedStaticSpace, Link, LkHash, NetFlags, NetPkt,
+            NetPktArc, NetPktBox, NetPktExt, NetPktHeader, NetPktParts, NetPktPtr, SpaceError,
+            Point, PointExt, PointTypeFlags, PubKey, Space, SpaceBuf, SigningExt, SigningKey,
             Stamp, Tag,
         },
         thread_local::{domain, group, set_domain, set_group},
@@ -78,14 +78,14 @@ pub mod point {
     # fn main() -> LkResult{
 
     let datap = lk_datapoint(b"this is a datapoint")?;
-    let path = ipath_buf(&[b"hello",b"world"]);
+    let space = rspace_buf(&[b"hello",b"world"]);
     let links = [
         Link{tag: ab(b"a datapoint"),ptr:datap.hash()},
         Link{tag: ab(b"another tag"),ptr:PUBLIC}
     ];
     let data = b"extra data for the linkpoint";
     let create = Some(U64::new(0)); // None == Some(now()).
-    let linkpoint = lk_linkpoint(ab(b"mydomain"),PUBLIC,&path,&links,data,create)?;
+    let linkpoint = lk_linkpoint(ab(b"mydomain"),PUBLIC,&space,&links,data,create)?;
 
     assert_eq!(linkpoint.hash().to_string(), "zvyWklJrmEHBQfYBLxYh7Gh-3YOTCFRgyuXaGl6-xt8");
     assert_eq!(linkpoint.data(), data);
@@ -99,24 +99,24 @@ pub mod point {
         data: &[u8],
         domain: Domain,
         group: GroupID,
-        path: &IPath,
+        spacename: &RootedSpace,
         links: &[Link],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktBox> {
-        lk_linkpoint_ref(data, domain, group, path, links, create_stamp).map(|v| v.as_netbox())
+        lk_linkpoint_ref(data, domain, group, spacename, links, create_stamp).map(|v| v.as_netbox())
     }
     pub fn lk_linkpoint_ref<'o>(
         data: &'o [u8],
         domain: Domain,
         group: GroupID,
-        path: &'o IPath,
+        spacename: &'o RootedSpace,
         links: &'o [Link],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktParts<'o>> {
         Ok(pkt::try_linkpoint_ref(
             group,
             domain,
-            path,
+            spacename,
             links,
             data,
             create_stamp.unwrap_or_else(pkt::now),
@@ -129,11 +129,11 @@ pub mod point {
         data: &[u8],
         domain: Domain,
         group: GroupID,
-        path: &IPath,
+        spacename: &RootedSpace,
         links: &[Link],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktBox> {
-        lk_keypoint_ref(signkey, data, domain, group, path, links, create_stamp)
+        lk_keypoint_ref(signkey, data, domain, group, spacename, links, create_stamp)
             .map(|v| v.as_netbox())
     }
     pub fn lk_keypoint_ref<'o>(
@@ -141,7 +141,7 @@ pub mod point {
         data: &'o [u8],
         domain: Domain,
         group: GroupID,
-        path: &'o IPath,
+        spacename: &'o RootedSpace,
         links: &'o [Link],
         create_stamp: Option<Stamp>,
     ) -> LkResult<NetPktParts<'o>> {
@@ -149,7 +149,7 @@ pub mod point {
         Ok(pkt::try_keypoint_ref(
             group,
             domain,
-            path,
+            spacename,
             links,
             data,
             create_stamp,
@@ -244,7 +244,7 @@ pub mod abe {
     let result = lk_eval( "You can provide an argv [0] [1]" , &[b"like" as &[u8], b"this"])?;
     assert_eq!(result,   b"You can provide an argv like this");
 
-    let lp : NetPktBox = lk_linkpoint(ab(b"mydomain"),PUBLIC,IPath::empty(),&[],&[],None)?;
+    let lp : NetPktBox = lk_linkpoint(ab(b"mydomain"),PUBLIC,RootedSpace::empty(),&[],&[],None)?;
     let pkt: &dyn NetPkt = &lp;
 
     assert_eq!( lk_eval( "[hash]" , pkt)?,&*pkt.hash());
@@ -525,15 +525,15 @@ pub mod query {
     let query_str = [
       "group:=:[#:pub]",
       "domain:=:[a:hello]",
-      "prefix:=:/some/path",
+      "prefix:=:/some/space",
       ":qid:default"
     ];
     query = lk_query_parse(query,&query_str,())?;
     // Optionally with user data such as an argv
-    query = lk_query_parse(query,&["prefix:=:/some/[0]"],&[b"path" as &[u8]])?;
+    query = lk_query_parse(query,&["prefix:=:/some/[0]"],&[b"space" as &[u8]])?;
 
     // conflicting predicates return an error
-    let result = lk_query_parse(lk_query(&query), &["path_len:=:[u8:0]"],());
+    let result = lk_query_parse(lk_query(&query), &["depth:=:[u8:0]"],());
     assert!( result.is_err());
 
     // You can add a single statement directly
@@ -559,6 +559,7 @@ pub mod query {
     }
     use std::ops::ControlFlow;
 
+    use anyhow::Context;
     pub use linkspace_common::core::predicate::predicate_type::PredicateType;
     pub use linkspace_common::core::query::KnownOptions;
     use linkspace_common::prelude::{ExtPredicate, PktPredicates};
@@ -585,8 +586,8 @@ pub mod query {
             return Ok(query);
         }
         let epre = ExtPredicate {
-            kind: field.parse()?,
-            op: test.parse()?,
+            kind: field.parse().with_context(|| format!("Field={field}"))?,
+            op: test.parse().with_context(|| format!("Operator={test}"))?,
             val: val.to_vec().into(),
         };
         query.0.predicates.add_ext_predicate(epre)?;
@@ -885,14 +886,9 @@ pub mod runtime {
 
         use std::ops::{ControlFlow, Try};
 
-        pub use linkspace_common::core::env::tree_key::TreeEntry;
-        pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
-        pub use linkspace_common::pkt::read;
-        pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
-        pub use linkspace_common::pkt::FieldEnum;
         use linkspace_common::prelude::{NetPkt };
 
-        /// Callbacks stored in a [Linkspace] instance. use [misc::cb] to impl from function
+        /// Callbacks stored in a [Linkspace] instance. use [runtime::cb] to impl from function
         pub trait PktHandler {
             // if returns some, periodically check to see if the handler can be closed.
             //fn checkup(&mut self) -> Option<ControlFlow<()>>{None}
@@ -998,7 +994,12 @@ pub mod consts {
     pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC, TEST_GROUP};
 }
 pub mod misc {
-    #![allow(clippy::type_complexity)]
+    pub use linkspace_common::core::env::tree_key::TreeEntry;
+    pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
+    pub use linkspace_common::pkt::read;
+    pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
+    pub use linkspace_common::pkt::FieldEnum;
+
     use linkspace_common::prelude::B64;
 
     /// Blake3 hash

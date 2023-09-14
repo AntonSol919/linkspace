@@ -141,7 +141,7 @@ impl PointThinPtr {
                     // signed.is_some(
                     point_size -= size_of::<Signed>() as u16;
                 }
-                let isp_offset = header.info.offset_ipath.get();
+                let isp_offset = header.info.offset_rspace.get();
                 let data_offset = header.info.offset_data.get();
                 if data_offset > point_size {
                     return Err(Error::DataOffsetIncompatible);
@@ -159,7 +159,7 @@ impl PointThinPtr {
                 if link_size % u16::try_from(size_of::<Link>()).unwrap() != 0 {
                     return Err(Error::IndivisableLinkbytes);
                 }
-                unsafe { self.unchecked_tail() }.ipath.check_components()?;
+                unsafe { self.unchecked_tail() }.rspace.check_components()?;
                 padding
             }
             BarePointFields::Error { padding, .. } => padding,
@@ -232,7 +232,7 @@ impl PointThinPtr {
         let ptr = self.self_ptr();
         let p = &*{ ptr.add(size_of::<PointHeader>()).cast::<LinkPointHeader>() };
         let start = size_of::<PointHeader>() + size_of::<LinkPointHeader>();
-        let is_offset = usize::from(p.info.offset_ipath.get());
+        let is_offset = usize::from(p.info.offset_rspace.get());
         let data_offset = usize::from(p.info.offset_data.get());
         let mut size = self.point_header().upoint_size();
         if self.0.point_type.contains(PointTypeFlags::SIGNATURE) {
@@ -245,10 +245,10 @@ impl PointThinPtr {
         let links: &[Link] = core::slice::from_ptr_range(start..end);
         let isp_bytes = core::slice::from_ptr_range(ptr.add(is_offset)..ptr.add(data_offset));
         let data = core::slice::from_ptr_range(ptr.add(data_offset)..ptr.add(size.into()));
-        let spath_idx = IPath::from_unchecked(isp_bytes);
-        debug_assert!(spath_idx.check_components().is_ok(), "{spath_idx:?}");
+        let rspace = RootedSpace::from_unchecked(isp_bytes);
+        debug_assert!(rspace.check_components().is_ok(), "{rspace:?}");
         Tail {
-            ipath: spath_idx,
+            rspace,
             data,
             links,
         }

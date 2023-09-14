@@ -35,24 +35,24 @@ use core::ops::Deref;
 use core::slice::from_raw_parts;
 use core::fmt::Display;
 use serde::{Deserialize, Serialize};
-pub use spath::*;
-pub use spath_fmt::*;
+pub use space::*;
+pub use space_fmt::*;
 
 pub mod byte_segments;
 pub mod eval;
 pub mod consts;
 pub mod exprs;
 pub mod field_ids;
-pub mod ipath;
 pub mod link;
 pub mod netpkt;
 pub mod point;
 pub mod point_parts;
 pub mod point_ptr;
 pub mod repr;
-pub mod spath;
-pub mod spath_fmt;
-pub mod spath_macro;
+pub mod space;
+pub mod space_fmt;
+pub mod space_macro;
+pub mod rooted_space;
 pub mod utils;
 pub mod read;
 mod builder;
@@ -67,15 +67,15 @@ pub use endian_types::*;
 pub use eval::*;
 pub use exprs::*;
 pub use field_ids::*;
-pub use ipath::*;
+pub use rooted_space::*;
 pub use linkspace_cryptography::SigningKey;
 pub use netpkt::*;
 pub use point::*;
 pub use point_parts::*;
 pub use point_ptr::*;
 pub use repr::*;
-pub use spath::*;
-pub use spath_fmt::*;
+pub use space::*;
+pub use space_fmt::*;
 pub use stamp::*;
 pub use builder::*;
 
@@ -233,32 +233,32 @@ where
         self.pubkey().unwrap_or(&B64([0; 32]))
     }
 
-    fn ipath(&self) -> Option<&IPath> {
-        self.tail().map(|v| v.ipath)
+    fn rooted_spacename(&self) -> Option<&RootedSpace> {
+        self.tail().map(|v| v.rspace)
     }
 
-    fn path(&self) -> Option<&SPath> {
-        self.tail().map(|v| v.ipath.spath())
+    fn spacename(&self) -> Option<&Space> {
+        self.tail().map(|v| v.rspace.space())
     }
 
     fn links(&self) -> Option<&[Link]> {
         self.tail().map(|v| v.links)
     }
 
-    fn path_len(&self) -> Option<&u8> {
-        self.tail().map(|t| t.ipath.path_len())
+    fn depth(&self) -> Option<&u8> {
+        self.tail().map(|t| t.rspace.space_depth())
     }
 
-    fn get_path_len(&self) -> &u8 {
-        self.path_len().unwrap_or(&0)
+    fn get_depth(&self) -> &u8 {
+        self.depth().unwrap_or(&0)
     }
 
-    fn get_ipath(&self) -> &IPath {
-        self.ipath().unwrap_or(IPath::EMPTY)
+    fn get_rooted_spacename(&self) -> &RootedSpace {
+        self.rooted_spacename().unwrap_or(RootedSpace::EMPTY)
     }
 
-    fn get_path(&self) -> &SPath {
-        self.path().unwrap_or_else(|| SPath::empty())
+    fn get_spacename(&self) -> &Space {
+        self.spacename().unwrap_or_else(|| Space::empty())
     }
 
     fn get_data_str(&self) -> Result<&str, core::str::Utf8Error> {
@@ -342,8 +342,8 @@ pub enum Error {
     UnknownPktType(u8),
     #[error("the packet length does not agree with tail lengths")]
     TailLength,
-    #[error("invalid path")]
-    SPath(#[from] crate::spath::PathError),
+    #[error("invalid spacename")]
+    Space(#[from] crate::space::SpaceError),
     #[error("signed invalid pkt type")]
     SignedInvalidPkt,
     #[error("the signed and unsigned header do not agree on length")]
