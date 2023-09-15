@@ -328,7 +328,7 @@ impl EvalScopeImpl for SpaceFE {
                 "space idx [start,?end]",
                 |_, i: &[&[u8]]| {
                     Ok(Space::from_slice(i[0])?
-                        .into_rooted()
+                        .rooted()
                         .range(parse_range(i)?)
                         .space_bytes()
                         .to_vec())

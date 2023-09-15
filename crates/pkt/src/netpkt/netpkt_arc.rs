@@ -15,6 +15,8 @@ use triomphe::{Arc, HeaderSlice};
 /// Send + Sync + cheap Clone, [super::NetPktHeader] is immutable
 // see [Reroute] for mutating netheader.
 pub struct NetPktArc(pub(crate) Arc<HeaderSlice<NetPktPtr, [u8]>>);
+
+
 impl From<&dyn NetPkt> for NetPktArc {
     fn from(value: &dyn NetPkt) -> Self {
         value.as_netarc()

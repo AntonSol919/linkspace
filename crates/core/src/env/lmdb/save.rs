@@ -1,10 +1,9 @@
 
-use std::fmt::Display;
+use std::{fmt::Display};
 
-use linkspace_pkt::{NetPkt, now,  NetPktExt};
+use linkspace_pkt::{NetPkt, now,  NetPktExt,tree_order::{TreeEntry,TreeValueBytes}};
 use lmdb::{RwCursor ,  WriteFlags, Transaction};
 
-use crate::env::{ tree_key::{TreeEntry, TreeValueBytes}};
 
 use super::{  db::LMDBEnv};
 
@@ -33,9 +32,9 @@ impl Display for SaveState{
 }
 
 
-
 impl LMDBEnv{
-    pub fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> lmdb::Result<(u64,usize)>{
+    /// return first stamp used and last stamp. If first == last then nothing was written.
+    pub fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> lmdb::Result<(u64,u64)>{
         use lmdb::Error;
         use lmdb_sys::*;
 
@@ -85,7 +84,7 @@ impl LMDBEnv{
         let total_new = at-start;
         tracing::trace!(total_new,at,"hashes inserted");
 
-        if total_new == 0 { return Ok((at,0));}
+        if total_new == 0 { return Ok((start,at))};
         at = start;
         for (pkt,state) in pkts.iter() {
             if matches!(state,SaveState::Pending){
@@ -136,6 +135,6 @@ impl LMDBEnv{
         tracing::trace!("tree entries ok");
 
         txn.commit()?;
-        Ok((at-1, total_new as usize))
+        Ok((start,at-1))
     }
 }

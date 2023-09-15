@@ -1,6 +1,7 @@
-use linkspace_pkt::{GroupID, Domain};
+use linkspace_pkt::{GroupID, Domain,
+                   tree_order::{TreeEntryRef, TreeValueBytes, TreeKey}};
 
-use crate::{prelude::treekey::{TreeKeys }, env::tree_key::{TreeEntryRef, TreeValueBytes, TreeKey}, stamp_range::IterCmp};
+use crate::{prelude::treekey::{TreeKeys },  stamp_range::IterCmp};
 
 use super::db::IterDup;
 

@@ -7,6 +7,7 @@
 
 
 
+use linkspace_pkt::tree_order::TreeValueBytes;
 use ::lmdb::{self, *};
 use ffi::MDB_NEXT_NODUP;
 use lmdb_sys as ffi;
@@ -14,7 +15,6 @@ use std::io;
 use std::io::{ErrorKind, Result};
 use std::{fmt::Debug, io::Write, marker::PhantomData, path::Path };
 
-use crate::{ prelude::TreeValueBytes};
 
 pub use lmdb::Error;
 

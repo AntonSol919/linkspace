@@ -683,7 +683,7 @@ impl<'o> Track<'o> {
 
 impl Space {
     #[track_caller]
-    pub fn into_rooted(&self) -> RootedSpaceBuf {
+    pub fn rooted(&self) -> RootedSpaceBuf {
         self.try_into_rooted().unwrap()
     }
     pub fn try_into_rooted(&self) -> Result<RootedSpaceBuf, SpaceError> {

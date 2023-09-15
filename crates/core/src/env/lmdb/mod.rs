@@ -7,7 +7,7 @@ use lmdb_sys::MDB_envinfo;
 use tracing::instrument;
 use crate::{LNS_ROOTS};
 
-use self::{queries::{ ReadTxn}, save::SaveState, db::LMDBEnv, db_info::{DbInfo, LMDBVersion}};
+use self::{queries::{ ReadTxn}, save::{SaveState }, db::LMDBEnv, db_info::{DbInfo, LMDBVersion}};
 
 pub mod db;
 pub mod misc;
@@ -99,14 +99,13 @@ impl BTreeEnv {
         Stamp::new(v)
     }
 
-    fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> io::Result<usize>{
-        if pkts.is_empty() { return Ok(0);}
-        let (last_idx, total) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
-        tracing::trace!(last_idx,total,"save ok");
-        if total > 0 {
-            let _ = self.0.log_head.emit(last_idx);
+    fn save<P:NetPkt>(&self, pkts: &mut [(P,SaveState)]) -> io::Result<(u64,u64)>{
+        let (start,end) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
+        tracing::trace!(start,end,new=end-start,"save ok");
+        if start == end{
+            let _ = self.0.log_head.emit(end);
         }
-        Ok(total)
+        Ok((start,end))
     }
     pub fn real_disk_size(&self) -> io::Result<u64> {
         self.0.lmdb.real_disk_size()
@@ -123,10 +122,10 @@ impl BTreeEnv {
 }
 
 
-pub fn save_ptr(env: &BTreeEnv,pkts:&mut [(&NetPktPtr,SaveState)]) -> io::Result<usize>{
+pub fn save_ptr(env: &BTreeEnv,pkts:&mut [(&NetPktPtr,SaveState)]) -> io::Result<(u64,u64)>{
     env.save(pkts)
 }
-pub fn save_dyn(env: &BTreeEnv,pkts:&mut [(&dyn NetPkt,SaveState)]) -> io::Result<usize>{
+pub fn save_dyn(env: &BTreeEnv,pkts:&mut [(&dyn NetPkt,SaveState)]) -> io::Result<(u64,u64)>{
     env.save(pkts)
 }
 pub fn save_ptr_one(env:&BTreeEnv,pkt:&NetPktPtr) -> io::Result<SaveState>{
@@ -139,12 +138,12 @@ pub fn save_dyn_one(env:&BTreeEnv,pkt:&dyn NetPkt) -> io::Result<SaveState>{
     save_dyn(env,&mut o)?;
     Ok(o[0].1)
 }
-pub fn save_ptr_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o NetPktPtr>) -> io::Result<usize>{
+pub fn save_ptr_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o NetPktPtr>) -> io::Result<(u64,u64)>{
     let mut lst = smallvec::SmallVec::<[(&NetPktPtr,SaveState);8]>::new_const();
     lst.extend(it.map(|o|(o,SaveState::Pending)));
     save_ptr(env,&mut lst)
 }
-pub fn save_dyn_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o dyn NetPkt>) -> io::Result<usize>{
+pub fn save_dyn_iter<'o>(env: &BTreeEnv, it : impl Iterator<Item=&'o dyn NetPkt>) -> io::Result<(u64,u64)>{
     let mut lst = smallvec::SmallVec::<[(&dyn NetPkt,SaveState);8]>::new_const();
     lst.extend(it.map(|o|(o,SaveState::Pending)));
     save_dyn(env,&mut lst)

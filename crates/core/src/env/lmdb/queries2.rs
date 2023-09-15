@@ -10,9 +10,8 @@ Currently:
 A PktPredicates struct is big and has a lot of usless fields.
 compile_predicates turns each [TestSet] into a [NetPktPredicate<A,B,C>] that holds only relevant fields and the type impls [PkStreamTest].
 NetPktPredicate ensures a field to test is only request once or never.
-But now everything is Boxed
-
-Two options come to mind:
+FIXME: At the moment everything is boxed
+Two alternatives come to mind:
 - An arena allocator
 - A Small stack machine. Something like  (Mem:[u8;256]) ++ vec![Enum{ChangeField, (TestOp,&[u8])}]
 
@@ -21,6 +20,7 @@ Two options come to mind:
 use crate::pkt::field_ids::FieldEnum;
 use crate::predicate::pkt_predicates::PktPredicates;
 use either::Either;
+use linkspace_pkt::tree_order::TreeEntryRef;
 use linkspace_pkt::{Stamp, B64, U256 };
 
 use crate::prelude::TestSet;
@@ -29,7 +29,6 @@ use crate::{
         exprs::RuleType,
         test_pkt::{compile_predicates, PktStreamTest},
     },
-    prelude::{TreeEntryRef}
 };
 
 use crate::env::query_mode::{Mode, Order, Table};

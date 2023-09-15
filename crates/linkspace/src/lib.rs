@@ -697,7 +697,7 @@ pub mod runtime {
 
     use std::time::Instant;
 
-    use linkspace_common::{prelude::QueryIDRef, saturating_cast, saturating_neg_cast};
+    use linkspace_common::{prelude::{QueryIDRef }, saturating_cast, saturating_neg_cast};
     use cb::PktHandler;
     use tracing::debug_span;
 
@@ -731,7 +731,13 @@ pub mod runtime {
         linkspace_common::core::env::lmdb::save_dyn_one(&mut lk.0.env(), pkt).map(|o| o.is_new())
     }
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
-        linkspace_common::core::env::lmdb::save_dyn_iter(&mut lk.0.env(), pkts.iter().copied())
+        let (start,excl) = lk_save_all_ext(lk, pkts)?;
+        Ok((excl.get()-start.get()) as usize)
+    }
+    /// returns the range of recv stampes used to save new packets. total_new = r.1-r.0
+    pub fn lk_save_all_ext(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<(Stamp,Stamp)> {
+        let (s,e) = linkspace_common::core::env::lmdb::save_dyn_iter(&mut lk.0.env(), pkts.iter().copied())?;
+        Ok((s.into(),e.into()))
     }
 
     /// Run callback for every match for the query in the database.
@@ -994,8 +1000,10 @@ pub mod consts {
     pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC, TEST_GROUP};
 }
 pub mod misc {
-    pub use linkspace_common::core::env::tree_key::TreeEntry;
+    pub use linkspace_common::pkt_stream_utils::QuickDedup;
+    pub use linkspace_common::pkt::tree_order::TreeEntry;
     pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
+    pub use linkspace_common::pkt::netpkt::cmp::PktCmp;
     pub use linkspace_common::pkt::read;
     pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
     pub use linkspace_common::pkt::FieldEnum;

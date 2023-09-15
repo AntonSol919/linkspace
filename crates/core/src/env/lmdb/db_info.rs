@@ -5,7 +5,6 @@ use linkspace_pkt::{Stamp, NetPktExt, LkHash, PRIVATE, B64};
 use lmdb::Transaction;
 use lmdb_sys::{ MDB_stat};
 pub use lmdb_sys::MDB_envinfo;
-use crate::env::tree_key::TreeEntry;
 
 use super::{db::LMDBEnv, BTreeEnv};
 
@@ -101,7 +100,7 @@ impl BTreeEnv{
                 is_ok=?o.pkt.check(false),
                 recv=%o.recv,
                 hash=%o.pkt.hash(),
-                tree=%TreeEntry::from_pkt(o.recv, &o.pkt).map(|o|o.to_string()).unwrap_or(String::new()),
+                tree=%linkspace_pkt::tree_order::TreeEntry::from_pkt(o.recv, &o.pkt).map(|o|o.to_string()).unwrap_or(String::new()),
                 address=?o.pkt.as_netpkt_bytes().as_ptr(),
             )
             )

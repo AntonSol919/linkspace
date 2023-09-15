@@ -39,7 +39,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
     if let Some(grp) = new_claim.group(){
         let p = ptr_lookup_entry(&read, &GROUP_TAG, *grp, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
-        let path = BY_TAG_P.into_spacebuf().push(GROUP_TAG).push(grp).into_rooted();
+        let path = BY_TAG_P.into_spacebuf().push(GROUP_TAG).push(grp).rooted();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_group = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }
@@ -60,7 +60,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
     if let Some(pubkey) = new_claim.pubkey(){
         let p = ptr_lookup_entry(&read, &PUBKEY_TAG, *pubkey, admin_k).into_ok()?;
         let links = p.as_ref().map(|v|v.get_links()).unwrap_or(&[]);
-        let path = BY_TAG_P.into_spacebuf().push(PUBKEY_TAG).push(pubkey).into_rooted();
+        let path = BY_TAG_P.into_spacebuf().push(PUBKEY_TAG).push(pubkey).rooted();
         let new_link = Link{tag: stamp_tag(new_claim.until(),[0;8]),ptr:new_claim.pkt.hash()};
         add_new_pubkey = Some(mut_ptrlookup_entry(links, &path, old_chash, Some((priority,new_link)), admin, now));
     }

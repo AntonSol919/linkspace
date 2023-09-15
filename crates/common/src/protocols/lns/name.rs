@@ -72,7 +72,7 @@ impl Name {
             .chain([Ok("claim.pkt")]).try_collect()?;
         Ok(pb)
     }
-    pub fn claim_space(&self) -> RootedSpaceBuf { CLAIM_PREFIX.into_rooted().join(&self.space).into_rooted()}
+    pub fn claim_space(&self) -> RootedSpaceBuf { CLAIM_PREFIX.rooted().join(&self.space).rooted()}
     pub fn claim_group(&self) -> Option<GroupID> {
         match self.name_type{
             NameType::Local => Some(PRIVATE),
