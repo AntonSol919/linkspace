@@ -44,7 +44,7 @@ bytes = "=1.4.0"
 bitflags = {version="=2.4.0",features=["serde"]}
 blake3 = "=1.4.1"
 bstr = {version = "1.5.0" ,default-features=false}
-vergen = "=8.2.4"
+vergen = "=8.2.5"
 smallvec = {version="1.10.0",features=["const_new","const_generics","write"]}
 
 libc = "0.2.147"
