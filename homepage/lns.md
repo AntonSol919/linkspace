@@ -1,10 +1,10 @@
 # LNS{#LNS}
 
-LNS is a convention to for naming things in linkspace.
+LNS is an experimental convention to name things in linkspace.
 
 It writes points in the lns domain to be exact.  
 
-Things like groups and public keys are 32 bytes. They look like `[b:HrwlM8KNA25F2nkjLzU6exrKdXcI3TCH5ZseeSyIMrI]`.
+Things like groups and public keys are 32 bytes. They look like `b:HrwlM8KNA25F2nkjLzU6exrKdXcI3TCH5ZseeSyIMrI`.
 This is unreadable for humans.
 
 With LNS they can be assigned names.
@@ -25,12 +25,6 @@ Both publicly by registering, and privately for your own convenience.
 
 The top level names :local, :file , :env, and :pub are special.
 You can take a look on how it integrates with linkspace in the [guide](./docs/guide/index.html#ABELNS).
-
-:::{.container .warn}
-LNS is only partially operational, and not yet useful.
-
-Public registration are a way to show your support for the project.
-:::
 
 ### What does a registration do?
 

@@ -110,10 +110,10 @@ pub struct KeyGenOpts {
     #[arg(long)]
     no_check: bool,
     /// if a key already exists return an error
-    #[arg(long)]
+    #[arg(long,alias="create-new")]
     error_some: bool,
     /// if a key does not exists return an error
-    #[arg(long)]
+    #[arg(long,alias="open")]
     error_none: bool,
 
     /// do not use a linkspace instance. Won't save or get.

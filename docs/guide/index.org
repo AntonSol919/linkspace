@@ -4,14 +4,13 @@
 
 #+SETUPFILE: ../utils.org
 
+
 #+BEGIN_VERSE
 This document is kept up to date on a best effort basis.
 Sometimes the Rust [[../cargo-doc/linkspace/index.html][linkspace]] docs is ahead of this guide.
 #+END_VERSE
 
-This is a technical document describing the linkspace packet format, and software library to create, query, and process those packets.
-You should be familiar with either the [[../../code_intro.html][quick start]] or the [[../../why.html][why]].
-If you're better with hands on experience or just want to see it put into practice check out the [[../tutorial/index.html][tutorials]].
+This is a technical document describing the linkspace packet format, and software library to create, query, and process packets.
 
 #+BEGIN_SRC bash :session cli0 :exports both :results output verbatim
   lk --version
@@ -19,12 +18,17 @@ If you're better with hands on experience or just want to see it put into practi
 
 * Introduction
 
-Linkspace is built on 4 concepts.
+Linkspace is a open-source library and protocol to build event-driven applications using a distributed log as a source of truth.
+The linkspace packet format is designed to be extremely fast to read, write, and interpret.
+Depending on your use case, you can limit yourself to just those functions and write the rest of your network from scratch.
+The rest are tools to make developing increasingly complex systems much easier. 
 
-- [[Point]] - Bytes, potentially with a spacename and links to other points. A point combined with its hash and netheader form a packet.
-- [[ABE]] - (Byte) templating for convenience.
+The library is structured around 4 concepts.
+
+- [[Point]] - Plain bytes in any format, optionally with a spacename and links to other points. 
+- [[ABE]] - Language agnostic (byte) templating for convenience.
 - [[Query]] - A list of predicates and options for selecting packets.
-- [[#linkspace][Linkspace]] - A multi-reader single-writer database for saving, and to query for existing and reacting to new packets.
+- [[#runtime][Runtime]] - A runtime around a multi-reader single-writer database for saving and querying.
 
 With that foundation, common challenges are addressed by a set of [[Conventions]].
 
@@ -37,7 +41,7 @@ This guide uses Python and (Bash) CLI snippets.
 
 ** Binary
 
-The [[https://github.com/AntonSol919/linkspace/releases][zip]] contains the CLI and python library and the examples used in this document.
+The [[https://github.com/AntonSol919/linkspace/releases][download]] contains the CLI and python library and the examples used in this document.
 
 ** Package manager
 
@@ -62,16 +66,17 @@ The [[https://github.com/AntonSol919/linkspace/releases][zip]] contains the CLI 
 :CUSTOM_ID: api
 :END:
 
-The linkspace API is a small set of functions that is mostly stable.
+The linkspace API is the Packet struct and a small set of functions.
 It is available as a Rust crate ~linkspace~ and binding for other languages follow the same API.
 
-It consists of the following functions:
+It consists of the following:
 
-- [[Point]] creation
+- [[Point]] 
   - [[#lk_datapoint][lk_datapoint]]
   - [[#lk_linkpoint][lk_linkpoint]]
   - [[lk_keypoint]]
-
+  - [[lk_write and lk_read]]
+    
 - [[ABE]] - (Byte) templating for convenience
   - [[lk_eval]]
   - [[lk_encode]]
@@ -82,7 +87,7 @@ It consists of the following functions:
   - [[lk_query_push]]
   - [[lk_query_print]]
 
-- [[Linkspace]] - A runtime to save and query for old and new packets.
+- [[Runtime]] - A database to save packets and user-driven event loop to query for old and new packets.
   - [[lk_open]]
   - [[lk_save]]
   - [[lk_get]]
@@ -112,6 +117,8 @@ They carry data, link to other points, and might contain information about the w
 There are 3 kinds of points. datapoints, linkpoints, and keypoints.
 A point has a maximum size of 2^{16}-512 bytes.
 
+The library exposes fields as properties.
+
 The functions automatically generate the hash and prepend a netheader when you build a point.
 The result is a packet. For simplicity sake, all functions in the library deal only with packets.
 
@@ -131,10 +138,11 @@ echo "Hello, Sol!" | lk data | lk pktf "[hash:str]\n[data]"
 
 #+begin_py
 
-#+begin_src python :session lkpy :exports both :results value verbatim
-from linkspace import *
-datap = lk_datapoint(b"Hello, Sol!\n")
-lk_eval2str("[hash:str] = [data]", datap)
+#+begin_src python :session lkpy :exports both :results output verbatim
+  from linkspace import *
+  datap = lk_datapoint(b"Hello, Sol!\n")
+  print(f'Packed data {datap.data.decode()} into a packet with hash {b64(datap.hash)}')
+  print(lk_eval2str("Or use abe, a language agnostic template, like this: [hash:str] = [data]", datap))
 #+END_SRC
 
 #+end_py
@@ -170,7 +178,8 @@ All values, including the Spacename, contain arbitrary bytes.
 An entire point can be 2^{16}-512 bytes in size. The header is always 4 bytes.
 A data point can hold a maximum of 2^{16}-512-4 bytes.
 This space is shared between the links and data so beware that too much data and links won't fit into a single packet
-[fn::To overcome this, create multiple points and link them in a new linkpoint].
+To overcome this, create multiple points and link them in a new linkpoint.
+These limits ensure there is only a single level of fragmentation to deal with.
 
 #+BEGIN_VERSE
 Point hashes, GroupID's, and public keys are 32 bytes.
@@ -369,7 +378,9 @@ The CLI automatically reads and writes in packet format from the relevant pipes.
 
 #+end_ctabs
 
-Unless you're writing an exchange process, a developer shouldn't have to deal with this level of IO.
+Linkspace can be used in two general ways. A classic client/server where you control the entire network. 
+Or in full distributed mode where each user manages their own runtime.
+In the latter, an application does not have to deal with IO sockets directly.
 
 * ABE
 :PROPERTIES:
@@ -380,17 +391,17 @@ Unless you're writing an exchange process, a developer shouldn't have to deal wi
 [[../cargo-doc/linkspace/abe/index.html][Rust docs]]
 #+END_VERSE
 
-ABE (Ascii-Byte-Expr) is a tiny byte templating language.
-A stringly representation of delimited bytes ( of the type: ~[ ( [u8], delimiter ) ]~ ).
-Its primary purpose is to make it easy for developers to read and write sequences of bytes (0..=255) in plain ascii, including the ~null~ (0) byte.
+ABE (Ascii-Byte-Expr) is a tiny language-agnostic byte templating engine.
+Its core structure is a stringly representation of delimited bytes ( of the type: ~[ ( [u8], delimiter ) ]~ ).
+Its primary purpose is to make it easy (for developers) to read and write sequences of bytes (0..=255) in plain ascii, including the ~null~ (0) byte.
 In addition, it supports evaluation of functions that act as shorthand for long sequences of bytes. 
 
-Linkspace has no concept of encoding.
-Fields have a fixed length or prefix their exact length.
+Linkspace packets have no concept of encoding formats.
+All fields are fixed length or prefix their exact length.
 
 ABE is used for things like [[Query]], [[DEFAULT_FMT][printing]], and in most arguments for the cli.
 
-ABE is not meant to be a proramming language!
+ABE is not meant to be a programming language!
 It's primarily meant to read and write arbitrary bytes in some context and quickly beat them into a desired shape.
 Some things are limited by design.
 If there is no obvious way to do something use a general purpose language to deal with your use-case.
@@ -614,9 +625,9 @@ It evaluates the inner scope for each link with setting the ~tag~ and ~ptr~ func
 #+end_py
 #+end_ctabs
 
-**** Linkspace
+**** Runtime
 
-Having a linkspace instance in the scope gives you access to functions like:
+Having a linkspace runtime in the scope gives you access to functions like:
 
 - ~#~ and ~@~ ( see [[LNS]] ) for named groups, keys, and other data
 - ~readhash~
@@ -1066,9 +1077,9 @@ If you expect the value to be known locally [[lk_get_hash]] is faster.
 
 
 
-* Linkspace
+* Runtime
 :PROPERTIES:
-:CUSTOM_ID: linkspace
+:CUSTOM_ID: runtime 
 :END:
 #+BEGIN_VERSE
 [[../cargo-doc/linkspace/linkspace/index.html][Rust docs]]
@@ -1078,8 +1089,7 @@ You can open/create a instance with [[lk_open]].
 If given no directory it opens $LK_DIR or $HOME/linkspace.
 
 An instance is a handle to a multi-reader, single-writer database. 
-The instance is thread local, for each new thread or process you want to use it in
-use [[lk_open]]
+The instance is thread local. Each thread or process requires calling [[lk_open]].
 
 An application can save to the database ([[lk_save]]).
 To read from the database you can directly get a packet by hash ([[lk_get_hash]]) or using a query ([[lk_get]], [[lk_get_all]]).
@@ -1092,12 +1102,10 @@ Whenever any thread saves a new packet all other threads receive a signal.
 
 By default nothing happens.
 A thread does not see the new packets untill its read transaction is updated.
-#+BEING_VERSE
-This includes all ~lk_get*~ and ~lk_watch~.  
-#+END_VERSE
+This includes calls to ~lk_get*~ and ~lk_watch~.  
 
-To do so you tell the instance to process all the new packets ([[lk_process]],[[lk_process_while]]).
-This runs all functions registered as a watch. 
+Update the transaction and process all the new packets ([[lk_process]],[[lk_process_while]]).
+This runs all functions registered as a watch.
 Only after that is the thread's view of the database updated to the latest state.
 
 The [[../cargo-doc/linkspace/linkspace/index.html][Rust docs]] are currently the most up to date, but the python package has most functions typed and commented as well.
@@ -1315,6 +1323,7 @@ Hardcode a public key into the app and combine it with a group exchange service.
 Either use an existing group, or use the group: their-key XOR your-key for personalized stuff
 
 **** I'm not in control of the user! / Anybody in my group can leak data from it!?
+If this is news to you, you're suffering from security-theater.
 I don't make the rules, I just make them obvious.
 
 **** A domain application can write outside its own domain space.

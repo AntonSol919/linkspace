@@ -1,80 +1,54 @@
+# Linkspace 
 
-# Linkspace - a general purpose supernet
+Linkspace is a open-source MPL-2.0 library and protocol to build event-driven applications using a distributed log with bindings for Python, JS/Wasm, and Rust.
 
-> Supernet  [ˈsü-pərˌnet]
-> A self-referential multi-participant data organization protocol whose primary
-> addressing method uses hashes instead of endpoint identifiers.
-> e.g. git, bitcoin, linkspace
+--- 
 
+Using a log of events as the source of truth is good design. 
+As evident by the success of tools like Kafka and Git, and its proliferation in the backend of databases & filesystems.
 
-In a supernet anybody can talk _about_ data, instead of talking _at_ a server.
+Properly used: Events creation can be distributed, algorithms/structures are made order-irrelevant and idempotent, and thus state becomes reproducable. 
 
-A supernet is ideal when multiple participants want to control and administrate (part of) a digital system.
-In multi-party systems: there is no total ordering of events, and messages should stay authenticated when passed along.
-For this, supernets provide a better abstraction then building on top of streams of data such as TCP/IP.
+Many log systems operate behind closed walls by necessity. 
+Each event producer is trusted and event authenticity is implied. 
+In linkspace these properties are explicit.
 
-Furthermore, supernets can be an alternative to the status quo in which users communicate through a host that is given total administrative rights over their experience.
+Linkspace uses Blake3 to hash events, optionally signed with Taproot Schnorr, 
+and events support linking to multiple other events. 
+This provides basic authenticity that can be expanded upon by an application.
 
-Linkspace is a supernet with the following highlights:
+Furthermore, linkspace has a novel group:domain separation, is fast, and is designed to have a small API.
 
-- Small API
-- Fast packet processing (Blake3, no JSON/Base64 encoding, well aligned fields)
-- Path (URL like) addressing
-- Group/Domain split
+The goal is to expand the log paradigm into the front-end and across organizational boundaries.
 
-Linkspace is not an end-user application. 
-It is a packet format, and a software library (and command line tools) to build more powerful and useful applications.
+## Project status
 
-If you're comfortable reading bash then [Quick Start](https://www.linkspace.dev/code_intro.html) is a good place to start.   
-If you're not, or prefer a more high level description, begin at the [why](https://linkspace.dev/why.html) page. 
-The [tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some practical examples.  
+The packet format is fixed and will stay readable in all future versions.
+The API is mostly stable but will likely have small breaking changes. 
+The documentation and examples are a work in progress.
+
+Any questions, feedback, or contributions are welcome!
+
+## Links
+
+See [Quick Start](https://www.linkspace.dev/code_intro.html) for a bash introduction to the packet format and using the cli.
 The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more depth on the API and technical design.
+[Tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some annotated examples.
 
 [Download](https://github.com/AntonSol919/linkspace/releases) the latest release or clone from [GitHub](https://github.com/AntonSol919/linkspace)
-to give it a try.
 
 
+## Using linkspace
 
-Linkspace is currently in **beta**.
+You can use linkspace through 
 
-The packet format is stable. Packets created now will be readable in all future versions.
+- The `lk` CLI 
+- The Rust library with `linkspace = {git = "https://github.com/AntonSol919/linkspace"}` (disable default features to compile to wasm)
+- Python [bindings](https://pypi.org/project/linkspace/) with `pip install linkspace`. 
+- Javascript bindings in `ffi/linkspace-js` (WIP: Is missing the runtime api)
 
-The API is mostly stable but can break now and then.
-There are some big features missing:
+For building from source see [Guide#setup](https://www.linkspace.dev/docs/guide/index.html#setup) or the README.md's.
 
-- No API for deleting.
-- The only group exchange process is a bash script.
-- LNS only works 'manually'
-
-### Using linkspace
-
-The 3 primary ways of using linkspace are:
-
-- The `lk` CLI [cli/linkspace](./cli/linkspace)
-- The Rust library with `linkspace = {git = "https://github.com/AntonSol919/linkspace"}`
-- The python [bindings](https://pypi.org/project/linkspace/) with `pip install linkspace`. 
-
-Initial bindings for wasm can be found in [ffi/linkspace-js](./ffi/linkspace-js).
-For building from source see [Guide#setup](https://www.linkspace.dev/docs/guide/index.html#setup) or the various README.md's.
-
-You can try out some examples by cloning / downloading and using:
-
-```bash
-./join-testexchange
-```
-
-Run an application like linkmail to say hi:
-
-```bash
-source ./activate
-linkmail.py
-```
-
-## Development
-
-For a list of todo's and other notes see the dev folder. 
-
-Feel free to send me feedback or ideas!
-
-You open an issue or can contact me directly at <AntonSol919@gmail.com>.
+[Clone & build](https://github.com/AntonSol919/linkspace) or [Downloading](https://github.com/AntonSol919/linkspace/releases) prebuild binaries to give it a try.
+Check out the `./emulate` folder for running locally or try and connect to a public test instance with the `./join-testexchange` script. 
 
