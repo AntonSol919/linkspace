@@ -6,7 +6,7 @@
 use anyhow::Context;
 use linkspace_common::{
     cli::{clap, clap::Parser, keys::KeyOpts, opts::CommonOpts,  WriteDest, reader::{DataReadOpts, Reader}},
-    prelude::*,
+    prelude::*, dgs::{DGSExpr, DGS},
 };
 
 #[derive(Parser, Debug,Default)]

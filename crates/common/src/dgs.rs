@@ -140,7 +140,7 @@ impl DGSDExpr {
         let mut prefix_rule = None;
         if self.depth_limit != MAX_SPACE_DEPTH as u8 && !self.dgs.space.is_empty() && !self.dgs.space.0.iter().any(|v| v.is_fslash()) {
                         anyhow::bail!("can't use subrange expr with an evaluated space ( dont know its length ).
-        Must add ':**' and manually set -- depth ...")
+        Must add ':**' or manually set -- depth ...")
                     }
 
         if self.depth_limit < MAX_SPACE_DEPTH as u8 {

@@ -9,7 +9,7 @@ documentation = "https://www.linkspace.dev/docs/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 categories = ["database","network-programming","asynchronous"]
 keywords = ["linkspace", "supernet"]
-description = "linkspace - a general purpose supernet"
+description = "an open-source library and protocol to build event-driven applications using a distributed log."
 
 
 

@@ -521,7 +521,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             for (pkt,state) in &pkts {
                 println!("{} {}",pkt.hash_ref(),state)
             }
-            println!("read {} - new {i}",pkts.len());
+            println!("read {} - {i:?}",pkts.len());
         },
     }
     Ok(())

@@ -13,7 +13,7 @@ use crate::{point::PointOpts };
 use linkspace_common::{
     cli::{clap, clap::Parser, opts::{CommonOpts }, tracing, WriteDest, WriteDestSpec, reader::{Reader, PktReadOpts, check_stdin}},
     core::stamp_fmt::DurationStr,
-    prelude::*,
+    prelude::*, dgs::DGS,
 };
 
 #[derive(Parser)]

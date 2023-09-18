@@ -6,7 +6,7 @@
 use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing, Out, WriteDestSpec},
     predicate_aliases::{ExtWatchCLIOpts },
-    prelude::{query_mode::Mode,  *},
+    prelude::{query_mode::Mode,  *}, dgs::DGSDExpr,
 };
 
 #[derive(Debug, Args, Clone,Default)]
