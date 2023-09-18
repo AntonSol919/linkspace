@@ -32,7 +32,7 @@ hex = "=0.4.3"
 base64 ="=0.21"
 tracing = {version = "=0.1.37",features=["release_max_level_info"]}
 tracing-subscriber = "=0.3.17"
-thiserror =  "=1.0.44"
+thiserror =  "=1.0.48"
 rand = "=0.8.5"
 rand_core = "=0.6.4"
 clap = "=4.3.21"
