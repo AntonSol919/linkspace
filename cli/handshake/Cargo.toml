@@ -10,7 +10,7 @@ documentation.workspace = true
 repository.workspace = true
 
 categories = ["command-line-utilities","database","network-programming","asynchronous"]
-keywords = ["linkspace", "supernet"]
+keywords = ["linkspace"]
 description = "a stdio implementation for a linkspace handshake"
 
 

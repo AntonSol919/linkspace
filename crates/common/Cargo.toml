@@ -22,11 +22,11 @@ fs=["memmap2", "notify"]
 cli=["clap", "clap/env", "clap/derive", "rpassword"]
 
 [dependencies]
-abe = { path = "../abe", version = "0.3.1-rc1"}
-byte-fmt = { path = "../byte-fmt", version = "0.3.1-rc1"}
-linkspace-pkt = { path = "../pkt", version = "0.3.1-rc1"}
-linkspace-core= { path = "../core",default-features=false, version = "0.3.1-rc1"}
-linkspace-argon2-identity = { path = "../argon2-identity", version = "0.3.1-rc1"}
+abe = { path = "../abe", version = "0.4.0"}
+byte-fmt = { path = "../byte-fmt", version = "0.4.0"}
+linkspace-pkt = { path = "../pkt", version = "0.4.0"}
+linkspace-core= { path = "../core",default-features=false, version = "0.4.0"}
+linkspace-argon2-identity = { path = "../argon2-identity", version = "0.4.0"}
 
 anyhow={workspace=true}
 serde={workspace=true,features=["derive"]}
