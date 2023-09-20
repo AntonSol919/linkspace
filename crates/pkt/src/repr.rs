@@ -17,7 +17,7 @@ type\\t[type:str]\\n\
 hash\\t[hash:str]\\n\
 group\\t[/~?:[group]/#/b]\\n\
 domain\\t[domain:str]\\n\
-spacename\\t[spacename:str]\\n\
+space\\t[spacename:str]\\n\
 pubkey\\t[/~?:[pubkey]/@/b]\\n\
 create\\t[create:str]\\n\
 links\\t[links_len:str]\\n\
