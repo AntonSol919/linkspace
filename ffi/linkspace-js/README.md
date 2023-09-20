@@ -1,1 +1,1 @@
-[www.linkspace.dev](www.linkspace.dev)
+js bindings for [linkspace](https://www.linkspace.dev)

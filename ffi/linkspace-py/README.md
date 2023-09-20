@@ -1,6 +1,6 @@
 
 # linkspace-py
-Python bindings to [linkspace](www.linkspace.dev)
+Python bindings to [linkspace](https://www.linkspace.dev)
 
 Build with `make`
 And use with `source .env/bin/activate`
