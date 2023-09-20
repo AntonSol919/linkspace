@@ -1,3 +1,10 @@
+# v0.4.0
+
+- Rename 'pathname' to 'spacename'
+- Make runtime a feature flag - allows wasm compilation of rust library
+- ABE: Add option to read UTF8 as plain bytes.
+- CLI: Allow UTF8 for templates
+
 # v0.3.1
 
 ### General 
