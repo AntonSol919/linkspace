@@ -20,8 +20,8 @@ This is a technical document describing the linkspace packet format, and softwar
 
 Linkspace is a open-source library and protocol to build event-driven applications using a distributed log as a source of truth.
 The linkspace packet format is designed to be extremely fast to read, write, and interpret.
-Depending on your use case, you can limit yourself to just those functions and write the rest of your network from scratch.
-The rest are tools to make developing increasingly complex systems much easier. 
+Depending on your use case, you can limit yourself to just those functions and write your event streams and network from scratch.
+The library has various tools to make developing increasingly complex systems much easier. 
 
 The library is structured around 4 concepts.
 
@@ -66,7 +66,7 @@ The [[https://github.com/AntonSol919/linkspace/releases][download]] contains the
 :CUSTOM_ID: api
 :END:
 
-The linkspace API is the Packet struct and a small set of functions.
+The linkspace API is the Packet type and a small set of functions.
 It is available as a Rust crate ~linkspace~ and binding for other languages follow the same API.
 
 It consists of the following:
@@ -1052,8 +1052,8 @@ The full list of options and predicates:
 Current set of [[../cargo-doc/linkspace/query/enum.PredicateType.html][predicates]] and 
 [[../cargo-doc/linkspace/query/enum.KnownOptions.html][options]].
 
-Predicates must be known, unknown options are added but ignored.
-An exchange process will for instance add a ':boomfilter' only it understands.
+Unknown options are added but ignored by most library functions.
+This allows other processes to add additional options it understands.
 #+end_rs
 
 #+begin_sh
