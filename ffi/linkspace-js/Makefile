@@ -14,3 +14,10 @@ watch_str:
 setup_env:
 	rustup target add wasm32-unknown-unknown
 	cargo install wasm-pack
+
+pack:
+	rm -r ./pkg
+	wasm-pack build
+	jq '.files = ["*"]' ./pkg/package.json > ./pkg/tmp.json
+	mv ./pkg/tmp.json ./pkg/package.json
+	wasm-pack pack

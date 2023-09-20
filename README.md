@@ -36,15 +36,15 @@ The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more dept
 
 ## Using linkspace
 
-[Download](https://github.com/AntonSol919/linkspace/releases) the latest binary package to try out some examples. 
+[Download](https://github.com/AntonSol919/linkspace/releases) the latest binary package to try out some examples.
 
 ### As a library 
 
 All bindings follow the same basic API explained in the [Guide](https://www.linkspace.dev/docs/guide/index.html)
 
-- `cargo add linkspace --git "https://github.com/AntonSol919/linkspace"` (disable default features to include in a wasm app, e.g. with egui)
-- `pip install linkspace` [bindings](https://pypi.org/project/linkspace/) (or build source in the ffi/linkspace-py).
-- Not yet available through npm - clone and use `wasm-pack` in the ffi/linkspace-js directory.
+- `cargo add linkspace --git "https://github.com/AntonSol919/linkspace"` - disable default features to compile for --target wasm32-unknown-unknown
+- `pip install linkspace`
+- `npm add linkspace-js` - Minimal JS bindings to read/write packets (including enckeys)
 
 
 
