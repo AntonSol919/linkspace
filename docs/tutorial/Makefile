@@ -6,8 +6,8 @@ PAGES := $(patsubst ./%.md,./%.html,$(MD_PAGES)) $(patsubst ./%.org,./%.html,$(O
 
 all : $(PAGES) 
 
-%.html: %.org template.pml
-	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-pandoc-export-to-html5))"
+%.html: %.org 
+	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-html-export-to-html))"
 
 %.html: %.md
 	pandoc --embed-resources --standalone $< > $@

@@ -409,5 +409,5 @@ Queries are designed such that joining two query strings the result is the commo
 #+END_SRC
 
 That's it for this quick introduction.
-Some notes on high level algorithm [design](https://www.linkspace.dev/docs/tutorial/application-design.html) are worth a read.  
+Some notes on high level algorithm [[https://www.linkspace.dev/docs/tutorial/application-design.html][design]] are worth a read.  
 For a more in-depth technical guide or the library API see the [[./docs/guide/index.html][Guide]].

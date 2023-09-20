@@ -15,7 +15,7 @@ Si([e1,e2,e3]) == Si([e2,e3,e1]) == Si([e3,e1,e2]) == ...
 
 Where Si is a function processing a list of events. 
 
-Note that this property is transitive[^name].
+Note that this property is transitive.
 i.e. if this is true for the result of Si then it is true for F(Si([..])) and G(F(Si([..]))) given that F and G are pure functions.
 
 In other words, it can be built by using intermediary states built with such a function.
@@ -44,12 +44,12 @@ A peer does not automatically know if its missing any packets. One solution is t
 Note that in this 'single summarizing peer' setup the effect is similar to how the current web works. 
 A central host administrates what is part of their platform and what is not.
 
-# Ev Loop 
+# Event loops 
 For most applications you want a strict split between gui/interface state and the organization/process state encoded in packets.
 
 I've found a good approach is to:
 
 - have a single function process packets to update a the process' state.
-- the gui only reads the process' state, and modifies it by creating packets to be processed.
+- Limit the gui to reading the process' state. Any modifications should be made by creating packets.
 
 You can use different threads, but a simple single-thread alternative is to have the gui thread call lk_process.
