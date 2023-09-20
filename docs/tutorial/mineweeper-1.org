@@ -29,7 +29,7 @@ In linkspace, the responsibilities for things are different to what we're used t
 An application developer has drastically fewer responsibilities.
 Things like networking, servers, registration, users, groups, and read/write access are all outside the scope of what an application has to deal with. 
 The developer doesn't think about managing sockets, but only about:
-bytes, linking to bytes, and reading bytes by link or a query such as path names.
+bytes, linking to bytes, and reading bytes by link or a query such as spacenames.
 
 This tutorial is about that developer, not about the user or the group.
 
@@ -113,7 +113,7 @@ Made worse by selling one of his livers to pay the AWS bill.
 Developing linkspace application boils down to:
 
 - Gather some bytes you want into a **point**.
-- Optionally: set a path, add one or more links to other bytes/packets, sign your point.
+- Optionally: set a spacename, add one or more links to other bytes/packets, sign your point.
 - Save the point.
 - Build a query (i.e. a list of predicates) defining the set of packets you want to process.
 - React to packets matching your query - either from your disk or as a background process gathers them from a group of peers.
@@ -155,7 +155,7 @@ type	LinkPoint
 hash	VJPxHigyCAmXvPojLxAQzHGYOiZDHP46ztaPZzMm6to
 group	[#:test]
 domain	mineweeper
-path	
+spacename
 pubkey	[@:none]
 create	1682062494375521
 links	0

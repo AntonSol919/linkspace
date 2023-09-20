@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-11 Tue 11:57 -->
+<!-- 2023-09-20 Wed 12:26 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Tips &amp; Tricks</title>
@@ -26,37 +26,37 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org29664af">layout for the 'tree' btreemap</a></li>
-<li><a href="#org65daa3f">dot graph</a></li>
-<li><a href="#org7bb2fa6">Reading/Writing large files</a></li>
-<li><a href="#org21f2043">A poor man's REPL</a></li>
-<li><a href="#org447da79">Single thread performance:</a></li>
+<li><a href="#orgb2e4c13">layout for the 'tree' btreemap</a></li>
+<li><a href="#orgd4b4332">dot graph</a></li>
+<li><a href="#orgb986c5a">Reading/Writing large files</a></li>
+<li><a href="#orgf7c3345">A poor man's REPL</a></li>
+<li><a href="#orgabd7821">Single thread performance:</a></li>
 </ul>
 </div>
 </nav>
 
-<div id="outline-container-org29664af" class="outline-2">
-<h2 id="org29664af">layout for the 'tree' btreemap</h2>
-<div class="outline-text-2" id="text-org29664af">
+<div id="outline-container-orgb2e4c13" class="outline-2">
+<h2 id="orgb2e4c13">layout for the 'tree' btreemap</h2>
+<div class="outline-text-2" id="text-orgb2e4c13">
 <pre class="example">
-lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [depth:str] [spacename:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 </pre>
 </div>
 </div>
 
-<div id="outline-container-org65daa3f" class="outline-2">
-<h2 id="org65daa3f">dot graph</h2>
-<div class="outline-text-2" id="text-org65daa3f">
+<div id="outline-container-orgd4b4332" class="outline-2">
+<h2 id="orgd4b4332">dot graph</h2>
+<div class="outline-text-2" id="text-orgd4b4332">
 <pre class="example">
-lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [depth:str] [spacename:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 </pre>
 </div>
 </div>
 
 
-<div id="outline-container-org7bb2fa6" class="outline-2">
-<h2 id="org7bb2fa6">Reading/Writing large files</h2>
-<div class="outline-text-2" id="text-org7bb2fa6">
+<div id="outline-container-orgb986c5a" class="outline-2">
+<h2 id="orgb986c5a">Reading/Writing large files</h2>
+<div class="outline-text-2" id="text-orgb986c5a">
 <pre class="example">
 export FILE=$2
 export CHAN=${3:-default}
@@ -78,9 +78,9 @@ lk --env watch "blobs:$LK_GROUP:/[env:CHAN]/[env:FILE]" --max 1 | \
 
 
 
-<div id="outline-container-org21f2043" class="outline-2">
-<h2 id="org21f2043">A poor man's REPL</h2>
-<div class="outline-text-2" id="text-org21f2043">
+<div id="outline-container-orgf7c3345" class="outline-2">
+<h2 id="orgf7c3345">A poor man's REPL</h2>
+<div class="outline-text-2" id="text-orgf7c3345">
 <pre class="example">
 lk eval [argv:-1] argv -D'\n' --data-eval --data-stdin 
 </pre>
@@ -102,9 +102,9 @@ prints <code>The value of [1] = hello world</code>
 </div>
 </div>
 
-<div id="outline-container-org447da79" class="outline-2">
-<h2 id="org447da79">Single thread performance:</h2>
-<div class="outline-text-2" id="text-org447da79">
+<div id="outline-container-orgabd7821" class="outline-2">
+<h2 id="orgabd7821">Single thread performance:</h2>
+<div class="outline-text-2" id="text-orgabd7821">
 <p>
 FIXME: The debug build is significant slower - especially for keypoint:
 </p>
@@ -123,7 +123,7 @@ lk keypoint :: --password "my secret" --data-reads 1000 --create-int 0 --multi -
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-11 Tue 11:57</p>
+<p class="date">Created: 2023-09-20 Wed 12:26</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

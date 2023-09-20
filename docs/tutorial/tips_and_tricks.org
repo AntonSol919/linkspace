@@ -5,13 +5,13 @@
 
 **** layout for the 'tree' btreemap
 #+BEGIN_SRC 
-  lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+  lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [depth:str] [spacename:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 #+END_SRC
 
 **** dot graph 
 
 #+BEGIN_SRC 
-  lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [path_len:str] [path:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
+  lk --private watch --bare --mode ${2:-tree-desc} --no-new --write "stdout-expr:[group:str] [domain:str] [depth:str] [spacename:str] [pubkey:str] :: { [create:str] [hash:str] [recv:str] }"
 #+END_SRC
 
 

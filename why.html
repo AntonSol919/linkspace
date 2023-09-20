@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Linkspace - a general purpose supernet</title>
+		<title>Linkspace</title>
 		 <link rel="icon" type="image/x-icon" href="./images/logo.png">
 		 <link rel="stylesheet" href="./style.css"/>
      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Code Pro">
 	<body>
 		 <a id="name" href="./index.html">
        <img id="logo" src="./images/logo.svg"/>Linkspace</a>
-		<div id="tagline">a general purpose supernet</div>
+		<div id="tagline"></div>
     
 
     <nav>
@@ -18,25 +18,22 @@
       <li>
         <a href="./code_intro.html">Quick start</a>
       </li>
-      <li>
-        <a href="./why.html">Why</a>
-      </li>
-      <li>
-        <a href="./lns.html">LNS</a>
-      </li>
+
+
       <li >
         <a href="./about.html">About</a>
       </li>
+
       <hr>
       <li>
-        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
+        <a href="./docs/tutorial/index.html" target="_blank">Tutorials</a>
       </li>
-
       <li>
         <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
+
       <li>
-        <a href="./docs/tutorial/index.html" target="_blank">Tutorials</a>
+        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
       </li>
       <li>
         <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
@@ -247,12 +244,15 @@
       </tbody>
       </table>
       </div>
-      <p>The “image/BrokenMachine.jpg” is called a <strong>path</strong>
-      and maps to (image data). So far this should look familiar as it
-      is similar to files in directories. I’ll refer to each entry as a
-      <strong>point</strong>, and multiple entries as a
-      <strong>set</strong>. The example shown has two sets
-      <strong>merging</strong>. The result is a new set with 3
+      <p>The “image/BrokenMachine.jpg” is called a
+      <strong>spacename</strong> and maps to (image data). So far this
+      should look familiar as it is similar to files in directories. A
+      spacename is similar to a pathname<a href="#fn4"
+      class="footnote-ref" id="fnref4"
+      role="doc-noteref"><sup>4</sup></a> or event channel. In linkspace
+      each entry is called a <strong>point</strong>, and i’ll refer to
+      multiple entries as a <strong>set</strong>. The example shown has
+      two sets <strong>merging</strong>. The result is a new set with 3
       messages.</p>
       <p>One of the most useful aspects of linkspace is a way to talk
       and think about digital communication in terms of a set of points
@@ -272,8 +272,8 @@
       <p>This is relatively straight forward, but it has downsides.</p>
       <p>A host can get disconnected, you can’t (re)share and (re)use
       your copy of the data, there is a misconception on what an address
-      is<a href="#fn4" class="footnote-ref" id="fnref4"
-      role="doc-noteref"><sup>4</sup></a>, and there is no standard on
+      is<a href="#fn5" class="footnote-ref" id="fnref5"
+      role="doc-noteref"><sup>5</sup></a>, and there is no standard on
       what happens when two people create two different
       <code>image/BrokenMachine.jpg</code> but with different
       pictures.</p>
@@ -286,10 +286,10 @@
       such as an unambiguous way to address things.</p>
       <p>In linkspace there is no such thing as a ‘real’ copy on a
       single host.</p>
-      <p>Every path can refer to multiple points, and every point is
-      hashed. There is a 32 byte number that uniquely addresses the
-      exact content of that point<a href="#fn5" class="footnote-ref"
-      id="fnref5" role="doc-noteref"><sup>5</sup></a>. (which I’ll show
+      <p>Every spacename can refer to multiple points, and every point
+      is hashed. There is a 32 byte number that uniquely addresses the
+      exact content of that point<a href="#fn6" class="footnote-ref"
+      id="fnref6" role="doc-noteref"><sup>6</sup></a>. (which I’ll show
       as <span id="hh0">[HASH_0]</span> instead of typing out).</p>
       <p>It doesn’t matter when or where sets are merged, a set only
       ever has a single copy of a point. It doesn’t matter how you
@@ -381,11 +381,11 @@
       </table>
       </div>
       <p>Anyone can uniquely address a specific point by its <span
-      id="hh0">[HASH_0]</span>, or multiple entries through a path
+      id="hh0">[HASH_0]</span>, or multiple entries through a spacename
       “/thread/Tabs or spaces/msg”.</p>
       <p>This might seem more trouble than existing solutions like a
-      filesystem or HTTP. In those, a request using a path gets you a
-      single result. But this is not the case.</p>
+      filesystem or HTTP. In those, a request using a spacename gets you
+      a single result. But this is not the case.</p>
       <p>In linkspace points have a ‘create’ timestamp and can be signed
       by a public key (which i’ll refer to with [@:…keyname]).</p>
       <p>The single result HTTP or a filesystem provides is an
@@ -394,8 +394,8 @@
       assumption - that can break to disastrous effects.</p>
       <p>In so far as that having a single result is simple; the same
       thing is achieved in linkspace by requesting only ‘the latest
-      point with path X’ or ‘the latest point with path X signed by
-      someone you trust’.</p>
+      point with spacename X’ or ‘the latest point with spacename X
+      signed by someone you trust’.</p>
       <p>The effects of the second option is worth considering for a
       moment: When an application limits itself to points created (or
       linked) by a specific key, then that key has a administrative
@@ -563,8 +563,8 @@
       <thead>
       <tr class="header">
       <th></th>
-      <th>Field<a href="#fn6" class="footnote-ref" id="fnref6"
-      role="doc-noteref"><sup>6</sup></a></th>
+      <th>Field<a href="#fn7" class="footnote-ref" id="fnref7"
+      role="doc-noteref"><sup>7</sup></a></th>
       <th>Purpose</th>
       <th>IP Packet Analogue</th>
       </tr>
@@ -597,7 +597,7 @@
       <td></td>
       </tr>
       <tr class="even">
-      <td>PATH</td>
+      <td>SPACENAME</td>
       <td>Key to look up</td>
       <td></td>
       </tr>
@@ -628,8 +628,8 @@
       <p>There are some nuances and various advanced topics. However,
       this should be enough to reason about the basics:</p>
       <p>A single unit in linkspace is a point, addressable by hash and
-      path, and links to other points. Domain applications provide a
-      user interface to read and write points. Users generate their
+      spacename, and links to other points. Domain applications provide
+      a user interface to read and write points. Users generate their
       identity and form groups to exchange points.</p>
       <p>The result is that <em>conceptually</em> an application only
       needs to process its view of a shared space.</p>
@@ -658,8 +658,8 @@
       authentication to control access, wire up business logic, or log
       ‘who’ did ‘what’ and ‘when’. Take the parts you want and leave the
       rest.</p>
-      <p>It even runs in the browser<a href="#fn7" class="footnote-ref"
-      id="fnref7" role="doc-noteref"><sup>7</sup></a>, so you can reuse
+      <p>It even runs in the browser<a href="#fn8" class="footnote-ref"
+      id="fnref8" role="doc-noteref"><sup>8</sup></a>, so you can reuse
       more code logic and tools.</p>
       <p>Finally, there is a lot of potential for a ‘network effect’.
       e.g. a support-ticket references the exact IoT event, a sale can
@@ -670,8 +670,8 @@
       <p>I build linkspace so I could:</p>
       <ul>
       <li>define, prototype, build, and run real-serverless<a
-      href="#fn8" class="footnote-ref" id="fnref8"
-      role="doc-noteref"><sup>8</sup></a> apps quickly.</li>
+      href="#fn9" class="footnote-ref" id="fnref9"
+      role="doc-noteref"><sup>9</sup></a> apps quickly.</li>
       <li>build an application without having to decide how to
       administrate for everyone that uses it - that responsibility sits
       with the (group of) users.</li>
@@ -741,9 +741,9 @@
       <p>Yes.</p>
       <p>The height of what we build is set by the weakest foundation.
       Technically supernets better model the reality of multi party
-      communication - asynchronous and authenticated<a href="#fn9"
-      class="footnote-ref" id="fnref9"
-      role="doc-noteref"><sup>9</sup></a> In the long run it could end
+      communication - asynchronous and authenticated<a href="#fn10"
+      class="footnote-ref" id="fnref10"
+      role="doc-noteref"><sup>10</sup></a> In the long run it could end
       up with less moving parts and with fewer configurations.</p>
       <p>And finally, I believe it can do some <a
       href="#idea">good</a>.</p>
@@ -787,8 +787,8 @@
       <li>Large ‘packets’ - a hash might refer to gigabytes. This
       requires multiple levels to deal with fragmentation in multiple
       ways.</li>
-      <li>Its hashes, without including paths. Linkspace has both as a
-      property of a ‘point’.</li>
+      <li>Its hashes, without including spacename (i.e. paths, channel,
+      etc) . Linkspace has both as a property of a ‘point’.</li>
       <li>Too slow. Packet routing/parsing should be doable in just a
       few instructions - ideally possible in an integrated circuit. It
       should be fast enough to stream video without using a secondary
@@ -809,7 +809,7 @@
       <p>I think the two things that set linkspace apart from similar
       systems are:</p>
       <ul>
-      <li>First class pathnames allow (part of) existing designs to be
+      <li>First class spacenames allow (part of) existing designs to be
       copied ‘as is’.</li>
       <li>All the things it doesn’t do. Linkspace is primarily its point
       format, and secondarily an ecosystem of tools to make it easy to
@@ -838,36 +838,42 @@
       new. But I believe linkspace is a simple synthesis compared to
       previous attempts (see <a href="#alts">alts</a>).<a href="#fnref3"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn4"><p>The perception is created that the address
+      <li id="fn4"><p>Where a ‘path’ (used to) refer to walking a
+      filesystem’s directories, the spacename is fixed together with the
+      content of a point. Consequently searching through a set of points
+      in a space, i.e. with a common spacename prefix, is cheap compared
+      to walking through each directories.<a href="#fnref4"
+      class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+      <li id="fn5"><p>The perception is created that the address
       ‘http://www.some_platform.com/image/BrokenMachine.jpg’ is
       addressing ‘(image data)’ - this is wrong. The address is used for
       your request to find where it needs to go, this address then
       usually replies with ‘(image data)’. A subtle but consequental
       difference. Linkspace does not have this discrepency.<a
-      href="#fnref4" class="footnote-back"
-      role="doc-backlink">↩︎</a></p></li>
-      <li id="fn5"><p>Unique for all intents and purposes.<a
       href="#fnref5" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn6"><p>Both TCP/IP packets and linkspace packets have
+      <li id="fn6"><p>Unique for all intents and purposes.<a
+      href="#fnref6" class="footnote-back"
+      role="doc-backlink">↩︎</a></p></li>
+      <li id="fn7"><p>Both TCP/IP packets and linkspace packets have
       control fields that are irrelevant to a vast majority of
-      developers.<a href="#fnref6" class="footnote-back"
+      developers.<a href="#fnref7" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn7"><p>Currently only the reading, processing and writing
+      <li id="fn8"><p>Currently only the reading, processing and writing
       packets API is supported. With the rest put on the TODO list.<a
-      href="#fnref7" class="footnote-back"
+      href="#fnref8" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn8"><p>It bugs me that a marketing department ruined the
+      <li id="fn9"><p>It bugs me that a marketing department ruined the
       word ‘serverless’. I’m talking about: a networked application that
       works without any critically important lines of communication or
-      hosts.<a href="#fnref8" class="footnote-back"
+      hosts.<a href="#fnref9" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn9"><p>Authenticated as in: cryptographicaly proven that
+      <li id="fn10"><p>Authenticated as in: cryptographicaly proven that
       messages were created by a user of a public key regardless how you
       got the message - I call this ‘the reality’ because a wire-dump of
       an HTTPS session is also proof that the keyholder send the
       message. It’s just not a property easy to use right now.<a
-      href="#fnref9" class="footnote-back"
+      href="#fnref10" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
       </ol>
       </aside>

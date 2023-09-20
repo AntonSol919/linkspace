@@ -1,6 +1,10 @@
 .PHONY: all 
 
-pages: index.html why.html lns.html about.html code_intro.html
+MD_PAGES := $(wildcard ./*.md)
+ORG_PAGES := $(wildcard ./*.org)
+PAGES := $(patsubst ./%.md,./%.html,$(MD_PAGES)) $(patsubst ./%.org,./%.html,$(ORG_PAGES)) 
+
+pages: $(PAGES) 
 
 %.html: %.org template.pml
 	emacsclient --eval "(progn (switch-to-buffer (find-file-noselect \"./$<\")) (org-pandoc-export-to-html5))"

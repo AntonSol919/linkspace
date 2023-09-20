@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>application-design</title>
+  <style>
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+background-color: #1a1a1a;
+border: none;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<p>Some notes on application level algorithm design. i.e. how to build
+something with linkspace.</p>
+<h1 id="associative-state-transition-functions">Associative state
+transition functions</h1>
+<p>‘State’ in this context refers to any mutating variable.</p>
+<p>The challenge of building a program for a distributed log is creating
+an algorithm that, regardless of the <em>order</em> of events received,
+the state is equal to any other order.</p>
+<p>I.e. A+(B+C) == (A+B)+C.</p>
+<p>or in a more practical and common syntax .</p>
+<p>Si([e1,e2,e3]) == Si([e2,e3,e1]) == Si([e3,e1,e2]) == …</p>
+<p>Where Si is a function processing a list of events.</p>
+<p>Note that this property is transitive. i.e. if this is true for the
+result of Si then it is true for F(Si([..])) and G(F(Si([..]))) given
+that F and G are pure functions.</p>
+<p>In other words, it can be built by using intermediary states built
+with such a function.</p>
+<p>For example (and a useful starting point) is the linkspace database.
+The hash index and the tree index both have this property.</p>
+<p>Inserting into the hash index is by definition a associative state
+transition function<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<p>The tree is index ordered by the tuple: ( group, domain, space_depth,
+spacename, pubkey, create stamp, hash )</p>
+<p>This is also obviously equal regardless of insertion order.</p>
+<p>Another intermediary state is a ‘reverse-link’ table, i.e. a
+Map&lt;Hash,Vec<Pkt>&gt;, to find all Pkts with a link to Hash. (This is
+not included in the database because the overhead was chosen to be too
+expensive.)</p>
+<p>Practically this means you can choose to create a function that reads
+the database and creates a state. Then watch for packets that
+<em>could</em> update the final state and rerun the function. This is
+not always the fastest but its simple, correct for any client, and fast
+enough for most use cases.</p>
+<p>Its still up to the application to add additional guarantees about
+the state across the network. A peer does not automatically know if its
+missing any packets. One solution is to have a single peer create a
+(signed) summary every now and then with a list of hashes the packets
+they acknowledge. The CAP theorem limits will always limit a distributed
+system to a ‘best effort’ solution.</p>
+<p>Note that in this ‘single summarizing peer’ setup the effect is
+similar to how the current web works. A central host administrates what
+is part of their platform and what is not.</p>
+<h1 id="event-loops">Event loops</h1>
+<p>For most applications you want a strict split between gui/interface
+state and the organization/process state encoded in packets.</p>
+<p>I’ve found a good approach is to:</p>
+<ul>
+<li>have a single function process packets to update a the process’
+state.</li>
+<li>Limit the gui to reading the process’ state. Any modifications
+should be made by creating packets.</li>
+</ul>
+<p>You can use different threads, but a simple single-thread alternative
+is to have the gui thread call lk_process.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>while the hashes don’t collide - which is taken for
+granted with 2^256 bits.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+</body>
+</html>

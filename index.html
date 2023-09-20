@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Linkspace - a general purpose supernet</title>
+		<title>Linkspace</title>
 		 <link rel="icon" type="image/x-icon" href="./images/logo.png">
 		 <link rel="stylesheet" href="./style.css"/>
      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Code Pro">
 	<body>
 		 <a id="name" href="./index.html">
        <img id="logo" src="./images/logo.svg"/>Linkspace</a>
-		<div id="tagline">a general purpose supernet</div>
+		<div id="tagline"></div>
     
 
     <nav>
@@ -18,25 +18,22 @@
       <li>
         <a href="./code_intro.html">Quick start</a>
       </li>
-      <li>
-        <a href="./why.html">Why</a>
-      </li>
-      <li>
-        <a href="./lns.html">LNS</a>
-      </li>
+
+
       <li >
         <a href="./about.html">About</a>
       </li>
+
       <hr>
       <li>
-        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
+        <a href="./docs/tutorial/index.html" target="_blank">Tutorials</a>
       </li>
-
       <li>
         <a href="./docs/guide/index.html" target="_blank">Guide</a>
       </li>
+
       <li>
-        <a href="./docs/tutorial/index.html" target="_blank">Tutorials</a>
+        <a href="https://github.com/AntonSol919/linkspace/releases">Download</a>
       </li>
       <li>
         <a href="https://github.com/AntonSol919/linkspace" target="_blank">Git</a>
@@ -45,47 +42,56 @@
     </nav>
     
     <div id="main">
-      <div class="definition">
-      <p>Supernet [ˈsü-pərˌnet]<br> A self-referential multi-participant
-      data organization protocol whose primary addressing method uses
-      hashes instead of endpoint identifiers.<br></p>
-      <p>e.g. git, bitcoin, linkspace</p>
-      </div>
-      <p>In a supernet anybody can talk <em>about</em> data, instead of
-      talking <em>at</em> a server.</p>
-      <p>A supernet is ideal when multiple participants want to control
-      and administrate (part of) a digital system. In multi-party
-      systems: there is no total ordering of events, and messages should
-      stay authenticated when passed along. For this, a supernet is a
-      better tool then our current systems.</p>
-      <p>Furthermore, supernets can be an alternative to the status quo
-      in which users communicate through a host that has final
-      administrative say over the user’s experience.</p>
-      <p>Linkspace is a supernet with the following highlights:</p>
-      <ul>
-      <li>Small API</li>
-      <li>Fast packet processing (Blake3, no JSON/Base64 encoding, well
-      aligned fields)</li>
-      <li>Path (URL like) addressing</li>
-      <li>Group/Domain split</li>
-      </ul>
-      <p>Linkspace is not an end-user application. It is a packet
-      format, and a software library (and command line tools) to build
-      more powerful and useful applications.</p>
-      <p>If you’re comfortable reading bash then <a
-      href="./code_intro.html">Quick Start</a> is a good place to
-      start.<br />
-      If you’re not, or prefer a more high level description, begin at
-      the <a href="why.html">why</a> page. The <a
-      href="https://www.linkspace.dev/docs/tutorial/index.html">tutorials</a>
-      has some practical examples.<br />
-      The <a
+      <h1 id="linkspace">Linkspace</h1>
+      <p>Linkspace is a open-source MPL-2.0 library and protocol to
+      build event-driven applications using a distributed log with
+      bindings for Python, JS/Wasm, and Rust.</p>
+      <hr />
+      <p>Using a log of events as the source of truth is good design. As
+      evident by the success of tools like Kafka and Git, and its
+      proliferation in the backend of databases &amp; filesystems.</p>
+      <p>Properly used: Events creation can be distributed,
+      algorithms/structures are made to consider what network conditions
+      they can handle, and state becomes reproducable.</p>
+      <p>Many log systems operate behind closed walls by necessity. Each
+      event producer must be trusted and event authenticity is implied.
+      In linkspace these properties are explicit.</p>
+      <p>Linkspace uses Blake3 to hash events, optionally signed with
+      Taproot Schnorr, and can link to older events. This creates per
+      event authenticity, that can expand, relate, and combine with
+      other authenticity semantics required by an application.</p>
+      <p>Finally, events are partitioned by group (the set of
+      recipients) and domain (the type of application).</p>
+      <p>The goal is to expand the log paradigm into the front-end and
+      across organizational boundaries.</p>
+      <h2 id="project-status">Project status</h2>
+      <p>The packet format is stable and stays readable in all future
+      versions. The API is mostly stable but can have small breaking
+      changes between versions.</p>
+      <p>Any questions, feedback, or contributions are welcome!</p>
+      <h2 id="links">Links</h2>
+      <p>See <a href="https://www.linkspace.dev/code_intro.html">Quick
+      Start</a> for a bash introduction to the packet format and using
+      the cli. The <a
       href="https://www.linkspace.dev/docs/guide/index.html">Guide</a>
-      goes into more depth on the API and technical design.</p>
+      goes into more depth on the API and technical design. <a
+      href="https://www.linkspace.dev/docs/tutorial/index.html">Tutorials</a>
+      has some annotated examples.</p>
+      <h2 id="using-linkspace">Using linkspace</h2>
       <p><a
       href="https://github.com/AntonSol919/linkspace/releases">Download</a>
-      the latest release or build from source by cloning the <a
-      href="https://github.com/AntonSol919/linkspace">git</a> repo.</p>
+      the latest binary package to try out some examples.</p>
+      <h3 id="as-a-library">As a library</h3>
+      <p>All bindings follow the same basic API explained in the <a
+      href="https://www.linkspace.dev/docs/guide/index.html">Guide</a></p>
+      <ul>
+      <li><code>cargo add linkspace --git "https://github.com/AntonSol919/linkspace"</code>
+      - disable default features to compile for –target
+      wasm32-unknown-unknown</li>
+      <li><code>pip install linkspace</code></li>
+      <li><code>npm add linkspace-js</code> - Minimal JS bindings to
+      read/write packets (including enckeys)</li>
+      </ul>
     </div>
     </body>
 </html>

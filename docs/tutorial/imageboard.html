@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-11 Tue 11:57 -->
+<!-- 2023-09-20 Wed 12:26 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Imageboard</title>
@@ -27,8 +27,8 @@
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples<br>
 </p>
 
-<div class="ctabs" id="org443e0b5">
-<div class="sh" id="orge2ebc56">
+<div class="ctabs" id="org51580a8">
+<div class="sh" id="orgfff52df">
 <p>
 
 </p>
@@ -48,15 +48,17 @@ IMG_FILE=$1; BOARD=$2; X=$3; Y=$4;
 shift 4
 
 IMG_HASH=$(\
-    cat "$IMG_FILE" \
-        | lk data --write db --write stdout \
-        | lk pktf "[hash:str]")
+           cat "$IMG_FILE" \
+               | lk data --write db --write stdout \
+               | lk pktf "[hash:str]")
 TAG=$(printf "%08d%08d" "$X" "$Y")
 
 lk link "imageboard:$LK_GROUP:/$BOARD" \
    -l "$TAG":"$IMG_HASH" "$@" \
    --write db --write stdout \
     | lk pktf
+
+echo PIDS $(jobs -p)
 </pre>
 </div>
 
@@ -122,7 +124,7 @@ lk watch --new-only "imageboard:$LK_GROUP:/$BOARD" | \
 </div>
 
 
-<div class="py" id="org1d71a26">
+<div class="py" id="org356b0d7">
 <p>
 This is a straight-up translation of the bash script.
 It works, but it could be done better by having only a single python instance running.
@@ -201,7 +203,7 @@ group = lk_eval(group_expr)
 query_string = """
 domain:=:imageboard
 group:=:[0]
-path:=:/[1]
+spacename:=:/[1]
 create:&gt;=:[2/u64]
 """
 query = lk_query_parse(lk_query(),query_string,argv=[group_expr,boardname,str(create_stamp)])
@@ -216,10 +218,10 @@ query = lk_query_push(query,"create","&gt;=",create_b)
 
 # The query merges overlapping predicates, and errors on conflicting predicates
 
-# Query parsing is somewhat forgiving in that it allows Group, Domain, and Path two syntax's
+# Query parsing is somewhat forgiving in that it allows alternative encodings for Group, Domain, and Space. 
 # Group can take the b64 no-pad string
 # Domain is 16 bytes but does not have to prepend '\0'
-# Path takes either a '/' delimited expression, or the 'spath' bytes ( as given by the spath function or pkt.spath value )
+# Space takes either a '/' delimited expression, or the 'space' bytes ( as given by the spacename function or pkt.spacename value )
 # The other values require the exact number of bytes, in big endian when a number.
 
 # Its worth understanding why these two work. Checkout the guide
@@ -302,7 +304,7 @@ else:
 query_string = """
 group:=:[#:pub]
 domain:=:imageboard
-path:=:/[0]
+spacename:=:/[0]
 create:&gt;=:[now:-1D]
 :qid:[0]
 """
@@ -330,7 +332,7 @@ lk_process_while(lk)
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-11 Tue 11:57</p>
+<p class="date">Created: 2023-09-20 Wed 12:26</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

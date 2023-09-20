@@ -32,8 +32,16 @@ nav {
     margin-right: auto;
 }
 
-nav>hr {
+nav > hr {
     margin: 0px;
+}
+
+#main > hr{
+    height: .25em;
+    padding: 0;
+    margin: 24px 0;
+    background-color: rgb(208, 215, 222);
+    border: 0;
 }
 
 

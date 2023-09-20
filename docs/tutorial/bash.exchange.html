@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2023-07-18 Tue 14:36 -->
+<!-- 2023-09-20 Wed 12:26 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A bash exchange example</title>
@@ -27,8 +27,8 @@
 Available in the <a href="https://github.com/AntonSol919/linkspace/releases">pkg</a> or in repository/examples/<br>
 </p>
 
-<div class="ctabs" id="orgde2777e">
-<div class="info" id="org70ff9ff">
+<div class="ctabs" id="orgaf8c96a">
+<div class="info" id="org0159cb8">
 <p class="verse">
 Available in the repo/examples/<br>
 See repo/dev/exchange.md for some open design issues/notes.<br>
@@ -41,7 +41,7 @@ It does no pruning before sending or receiving.
 </p>
 
 </div>
-<div class="sh" id="orgd2c93f0">
+<div class="sh" id="orgf1c10d1">
 <p>
 
 </p>
@@ -75,12 +75,15 @@ function fin (){
 trap "fin" EXIT
 
 cd $SESSION
+
+# ensure we have a fixed [b:...] repr (lns [#:name] could update between proc calls)
+LK_GROUP=$(lk eval "$LK_GROUP" | lk encode b:32)
+THEIR_KEY=$(lk eval "$THEIR_KEY" | lk encode b:32)
+
 echo SESSION=$SESSION
 echo THEIR_KEY=$THEIR_KEY
 echo LK_GROUP=$LK_GROUP
 
-LK_GROUP="[b:$LK_GROUP]"
-THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
 lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
@@ -94,7 +97,7 @@ export LK_SKIP_HASH=true
 
 # save reads from stdin, ie. the server 
 LK_SKIP_HASH=false lk save --new db --new stdout \
-    | lk pktf --inspect "RX [domain:str] [path:str] [hash:str]" \
+    | lk pktf --inspect "RX [domain:str] [spacename:str] [hash:str]" \
     | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
               --min-interval 1m \
               --forward null \
@@ -145,7 +148,7 @@ lk handshake --max-diff-secs 6000 \
           --forward file:$SESSION/handshake.in \
           $MODE &gt;&amp;4
 
-export THEIR_KEY=$(cat $SESSION/handshake.in | lk filter --bare --signed --max-new 1 | lk pktf "[pubkey:str]")
+export THEIR_KEY=$(cat $SESSION/handshake.in | lk filter --bare --signed --max-new 1 | lk pktf "[pubkey/?:b]")
 echo Connected $THEIR_ADDR - Their Key : $THEIR_KEY 1&gt;&amp;2 
 exec ${@:2} 
 </pre>
@@ -195,12 +198,15 @@ function fin (){
 trap "fin" EXIT
 
 cd $SESSION
+
+# ensure we have a fixed [b:...] repr (lns [#:name] could update between proc calls)
+LK_GROUP=$(lk eval "$LK_GROUP" | lk encode b:32)
+THEIR_KEY=$(lk eval "$THEIR_KEY" | lk encode b:32)
+
 echo SESSION=$SESSION 
 echo THEIR_KEY=$THEIR_KEY
 echo LK_GROUP=$LK_GROUP
 echo PID=$PID
-LK_GROUP="[b:$LK_GROUP]"
-THEIR_KEY="[b:$THEIR_KEY]"
 
 lk link --create [u64:0] ":[#:0]:/rxlog/$THEIR_KEY" --write db
 lk link --create [u64:0] ":[#:0]:/txlog/$THEIR_KEY" --write db
@@ -212,7 +218,7 @@ export LK_SKIP_HASH=true
 # save reads from std. i.e. what the client is sending
 LK_SKIP_HASH=false lk save --new db --new stdout \
         --old file:&gt;( lk pktf "$PID Ignored [hash:str] (old)" &gt;&amp;2 ) \
-   | lk pktf --inspect "$PID RX [domain:str] [path:str] [hash:str]" \
+   | lk pktf --inspect "$PID RX [domain:str] [spacename:str] [hash:str]" \
    | lk --private collect ":[#:0]:/rxlog/$THEIR_KEY" \
         --min-interval 1m \
         --forward null \
@@ -236,7 +242,7 @@ wait -n
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2023-07-18 Tue 14:36</p>
+<p class="date">Created: 2023-09-20 Wed 12:26</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

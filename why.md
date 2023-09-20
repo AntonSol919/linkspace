@@ -126,10 +126,13 @@ To understand what each field does lets start with a simple example of a message
 :::
 
 
-The "image/BrokenMachine.jpg" is called a **path** and maps to (image data).
+The "image/BrokenMachine.jpg" is called a **spacename** and maps to (image data).
 So far this should look familiar as it is similar to files in directories.
-I'll refer to each entry as a **point**, and multiple entries as a **set**.
+A spacename is similar to a pathname[^pathname] or event channel.
+In linkspace each entry is called a **point**, and i'll refer to multiple entries as a **set**.
 The example shown has two sets **merging**. The result is a new set with 3 messages.
+
+[^pathname]: Where a 'path' (used to) refer to walking a filesystem's directories, the spacename is fixed together with the content of a point. Consequently searching through a set of points in a space, i.e. with a common spacename prefix, is cheap compared to walking through each directories.
 
 One of the most useful aspects of linkspace is a way to talk and think about digital communication in terms of a set of points instead of connections.
 
@@ -139,7 +142,6 @@ Online platforms have dubbed different words for actions you can take:
 '_creating posts_', '_uploading image_', '_upvote/like a post_', '_stream a video_', etc.
 Fundamentally they can be understood as a frontend application providing an interface to merge sets of points.
 Either on your device or "in the ☁cloud☁️️" (i.e. on their device).
-
 
 The internet in use today has a single host design. 
 For instance, a web-browser or app contacts `http://www.some_platform.com`
@@ -161,7 +163,7 @@ Consequently, every device/server has slightly different semantics on how it dea
 
 In linkspace there is no such thing as a 'real' copy on a single host.
 
-Every path can refer to multiple points, and every point is hashed.
+Every spacename can refer to multiple points, and every point is hashed.
 There is a 32 byte number that uniquely addresses the exact content of that point[^uniq]. (which I'll show as <span id="hh0" >[HASH_0]</span> instead of typing out).
 
 [^uniq]: Unique for all intents and purposes.
@@ -205,17 +207,17 @@ It doesn't matter how you received a message or how you send it; If you create a
 :::
 
 Anyone can uniquely address a specific point by its <span id="hh0">[HASH_0]</span>,
-or multiple entries through a path "/thread/Tabs or spaces/msg".
+or multiple entries through a spacename "/thread/Tabs or spaces/msg".
 
 This might seem more trouble than existing solutions like a filesystem or HTTP.
-In those, a request using a path gets you a single result. But this is not the case.
+In those, a request using a spacename gets you a single result. But this is not the case.
 
 In linkspace points have a 'create' timestamp and can be signed by a public key (which i'll refer to with [@:...keyname]).
 
 The single result HTTP or a filesystem provides is an incomplete abstraction.
 It is unable to capture events over time, scaling is impractical, and a valid & consistent results is an assumption - that can break to disastrous effects.
 
-In so far as that having a single result is simple; the same thing is achieved in linkspace by requesting only 'the latest point with path X' or 'the latest point with path X signed by someone you trust'.
+In so far as that having a single result is simple; the same thing is achieved in linkspace by requesting only 'the latest point with spacename X' or 'the latest point with spacename X signed by someone you trust'.
 
 The effects of the second option is worth considering for a moment:
 When an application limits itself to points created (or linked) by a specific key, then that key has a administrative 'include/exclude' power, but it 
@@ -291,7 +293,7 @@ Instead, a point in linkspace has a list of [links](./docs/guide/index.html#lk_l
 +                     +----------------------+-------------------------------+--------------------+
 |                     | TIMESTAMP            | Microseconds since 1970-01-01 |                    |
 +                     +----------------------+-------------------------------+--------------------+
-|                     | PATH                 | Key to look up                |                    |
+|                     | SPACENAME            | Key to look up                |                    |
 +                     +----------------------+-------------------------------+--------------------+
 |                     | LINKS[]              | list of (Tag, Hash)           |                    |
 +                     +----------------------+-------------------------------+--------------------+
@@ -320,7 +322,7 @@ For the full specification of creating and writing points see the [guide](./docs
 There are some nuances and various advanced topics.
 However, this should be enough to reason about the basics:
 
-A single unit in linkspace is a point, addressable by hash and path, and links to other points.
+A single unit in linkspace is a point, addressable by hash and spacename, and links to other points.
 Domain applications provide a user interface to read and write points.
 Users generate their identity and form groups to exchange points.
 
@@ -457,7 +459,7 @@ Other supernet-like systems are limited in some way or simply choose a different
 
 - Too specialized. E.g. Git has a lot of plumbing for diffing text.
 - Large 'packets' - a hash might refer to gigabytes. This requires multiple levels to deal with fragmentation in multiple ways.
-- Its hashes, without including paths. Linkspace has both as a property of a 'point'.
+- Its hashes, without including spacename (i.e. paths, channel, etc) . Linkspace has both as a property of a 'point'.
 - Too slow. Packet routing/parsing should be doable in just a few instructions - ideally possible in an integrated circuit. It should be fast enough to stream video without using a secondary protocol to hand off to. That means no json or base64.
 - No Groups. Setting who you share with and how is not supported, or its little more than 'run multiple instances'.
 - No domains. Everything becomes one app with premature-bureaucracy and an ever expanding set of compatibility requirements that grinds development/experiments to a halt.
@@ -470,7 +472,7 @@ Different systems have different strong points.
 
 I think the two things that set linkspace apart from similar systems are:
 
-- First class pathnames allow (part of) existing designs to be copied 'as is'.
+- First class spacenames allow (part of) existing designs to be copied 'as is'.
 - All the things it doesn't do. Linkspace is primarily its point format, and secondarily an ecosystem of tools to make it easy to build complex things with those points. 
 
 Linkspace is free and open source under the MPL-2.0. 

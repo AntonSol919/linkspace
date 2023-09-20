@@ -5,6 +5,11 @@ title:  Tutorials
 These are some tutorials and code examples.
 Most are a work in progress - but mineweeper can be read as is.
 
+# Misc
+
+- [Application Design](./application-design.html)
+- [Tips&Tricks](./tips_and_tricks.html)
+
 # Applications
 
 - [mineweeper 1](./mineweeper-1.html)
@@ -16,6 +21,3 @@ Most are a work in progress - but mineweeper can be read as is.
 
 - [bash.exchange](./bash.exchange.html)
 
-# Misc
-
-- [Tips&Tricks](./tips_and_tricks.html)
