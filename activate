@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# A 'activate' script is available in the source and binary pkg.
-# This is the source version.
+# A 'activate' script is available for both the pkg and git version.
+# This is the git version.
 REPO=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 make -C "$REPO" build-debug
 
 export PATH="$REPO/target/debug/":$PATH
 export PATH=$(find $REPO/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH
 export PATH="$REPO/emulate":$PATH
-export PYTHONPATH="$REPO/target/python/"
+export PYTHONPATH="$REPO/target/python/:$PYTHONPATH"
 
 export LK_DIR=${LK_DIR:-"$REPO/private"}
 export LK_GROUP=${LK_GROUP:-[#:test]}

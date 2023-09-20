@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# A 'activate' script is available in the source and binary pkg.
-# This is the version compatible with the binary pkg.
+# A 'activate' script is available for both the pkg and git version.
+# This is the git version.
 
 PKG_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-export PYTHONPATH=$PKG_DIR/python
-export PATH=$PKG_DIR/bin:$PATH
-export PATH=$(find $PKG_DIR/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH
+export PYTHONPATH="$PKG_DIR/python:$PYTHONPATH"
+export PATH="$PKG_DIR/bin:$PATH"
+export PATH="$(find $PKG_DIR/examples -maxdepth 1 -mindepth 1 -type d | tr '\n' : ):$PATH"
 
 export LK_DIR=${LK_DIR:-"$PKG_DIR/linkspace"}
 export LK_GROUP=${LK_GROUP:-[#:test]}

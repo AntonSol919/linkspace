@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 source "$(dirname -- "$0")/../activate"
 cmd=${cmd:-anyhost.connect.sh}
@@ -18,3 +17,5 @@ tmux -S tmux-socket new-session -s $name -n $name \; \
      send-keys "lk --private watch :: --bare --new-only | lk pktf" C-m \; \
      split-window -v \; \
      send-keys "$cmd" C-m 
+
+rm tmux-socket
