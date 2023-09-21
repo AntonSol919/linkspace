@@ -46,6 +46,10 @@ pub struct PktFmtOpts {
     /// ABE expression to evaluate per packet - use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
     #[arg(action = clap::ArgAction::Append, env="LK_PKTF")]
     fmt: Vec<String>,
+
+    /// Use the default formatting function without evaluation.
+    #[arg(short,long,conflicts_with("fmt"))]
+    fast: bool
 }
 
 pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()> {
@@ -59,6 +63,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
         join_delimiter,
         no_parse_unencoded,
         pkt_in,
+        fast,
     } = popts;
     let parse_unencoded = !no_parse_unencoded;
     let write_private = common.write_private().unwrap_or(true);
@@ -99,44 +104,52 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
     let mut forward = common.open(&forward)?;
     let inp = common.inp_reader(&pkt_in)?;
     let mut first = true;
+
+
     for p in inp {
         let pkt = p?;
         if !write_private && pkt.group() == Some(&PRIVATE) {
             continue;
         }
 
-        let abe = match pkt.as_point().point_header_ref().point_type {
-            PointTypeFlags::DATA_POINT => &datap_fmt,
-            PointTypeFlags::LINK_POINT => &linkp_fmt,
-            PointTypeFlags::KEY_POINT => &keyp_fmt,
-            _ => todo!(),
-        };
-        let ctx = pkt_ctx(common.eval_ctx(), &**pkt);
-        match eval(&ctx, abe).with_context(|| print_abe(abe)) {
-            Ok(b) => {
-                if join_delimiter && !first {
-                    out.write_all(&delimiter)?
-                };
-                out.write_all(&b.concat())?;
+        let mut write = |bytes:&[u8]| -> std::io::Result<()> {
+            if join_delimiter && !first {
+                out.write_all(&delimiter)?
+            };
+            out.write_all(&bytes)?;
+            if !join_delimiter {
+                out.write_all(&delimiter)?;
             }
-            Err(e) => {
-                if let Some(err_fmt) = &error {
-                    if join_delimiter && !first {
-                        out.write_all(&delimiter)?
-                    };
-                    out.write_all(err_fmt)?;
-                } else {
-                    Err(e)?
+            out.flush()?;
+            tracing::trace!(hash=?pkt.hash(),"Flush OK");
+            common.write_multi_dest(&mut forward, &**pkt, None)?;
+            first = false;
+            Ok(())
+        };
+
+        if fast {
+            write(PktFmt(&**pkt).to_string().as_bytes())?;
+        }else {
+            let abe = match pkt.as_point().point_header_ref().point_type {
+                PointTypeFlags::DATA_POINT => &datap_fmt,
+                PointTypeFlags::LINK_POINT => &linkp_fmt,
+                PointTypeFlags::KEY_POINT => &keyp_fmt,
+                _ => todo!(),
+            };
+            let ctx = pkt_ctx(common.eval_ctx(), &**pkt);
+            match eval(&ctx, abe).with_context(|| print_abe(abe)) {
+                Ok(b) =>  write(&b.concat())?,
+                Err(e) => {
+                    if let Some(err_fmt) = &error {
+                        write(&err_fmt)?;
+                    } else {
+                        Err(e)?
+                    }
                 }
             }
         }
-        if !join_delimiter {
-            out.write_all(&delimiter)?;
-        }
-        out.flush()?;
-        tracing::trace!(hash=?pkt.hash(),"Flush OK");
-        common.write_multi_dest(&mut forward, &**pkt, None)?;
-        first = false;
+
+        
     }
     Ok(())
 }
