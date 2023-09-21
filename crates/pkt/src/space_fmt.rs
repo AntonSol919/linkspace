@@ -73,7 +73,7 @@ impl SpaceBuf {
             return Ok(Space::from_slice(b)?.into_spacebuf());
         }
         let v : Vec<_> = ablist.unwrap().into_iter()
-            .map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Err(SpaceExprError::BadCtr(ctr))} else { Ok(b)})
+            .filter_map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Some(Err(SpaceExprError::BadCtr(ctr)))} else if b.is_empty(){ None} else {Some(Ok(b))})
             .try_collect()?;
         return Ok(SpaceBuf::try_from_iter(v)?);
     }
