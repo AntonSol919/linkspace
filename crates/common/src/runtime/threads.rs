@@ -11,7 +11,7 @@ use futures::{
     task::{LocalSpawnExt, SpawnError},
     Future, StreamExt,
 };
-use linkspace_core::env::lmdb::BTreeEnv;
+use linkspace_core::prelude::lmdb::BTreeEnv;
 use std::rc::Rc;
 
 pub fn attach(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {

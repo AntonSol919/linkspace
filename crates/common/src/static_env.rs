@@ -1,3 +1,4 @@
+
 use linkspace_core::prelude::lmdb::BTreeEnv;
 
 // Copyright Anton Sol
@@ -18,10 +19,10 @@ static ENV: OnceLock<BTreeEnv> = OnceLock::new();
 
 #[thread_local]
 pub (crate) static LINKSPACE: OnceCell<Linkspace> = OnceCell::new();
+
 pub fn get_env(root: &Path, mkdir: bool) -> io::Result<&'static BTreeEnv> {
     ENV.get_or_try_init(|| -> io::Result<BTreeEnv> {
-        let mut env = BTreeEnv::open(root.to_owned(), mkdir)?;
-        Arc::get_mut(&mut env.0).unwrap().log_head.init();
+        let env = BTreeEnv::open(root.to_owned(), mkdir)?;
         ROOT_PATH.set(root.canonicalize()?).unwrap();
         Ok(env)
     })
@@ -59,7 +60,6 @@ pub fn open_linkspace_dir(root: Option<&Path>, new: bool) -> io::Result<Linkspac
         .get_or_try_init(|| {
             let env = get_env(&path, new)?;
             let rt = Linkspace::new_opt_rt(env.clone(), Default::default());
-            rt.env().0.log_head.init();
             Ok(rt)
         })
         .map(|r| r.clone())

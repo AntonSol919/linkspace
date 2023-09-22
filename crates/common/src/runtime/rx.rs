@@ -7,7 +7,7 @@ use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopRea
 use anyhow::{bail, Context};
 pub use async_executors::{Timer, TimerExt};
 pub use futures::task::{LocalSpawn, LocalSpawnExt};
-use linkspace_core::prelude::{*, lmdb::{BTreeEnv  }};
+use linkspace_core::prelude::{*, lmdb::BTreeEnv };
 use linkspace_pkt::reroute::ShareArcPkt;
 use std::{
     borrow::{Borrow, Cow},
@@ -152,15 +152,6 @@ impl Linkspace {
             }
         }
     }
-    pub fn run(&self) -> ! {
-        loop {
-            if let Some(v) = self.env().0.log_head.next_d(None) {
-                if self.rt_log_head().get() < v {
-                    self.process();
-                }
-            }
-        }
-    }
 
     fn watch_status(&self,id:&QueryIDRef) -> Option<WatchStatus>{
         let cbs = self.exec.cbs.borrow();
@@ -254,7 +245,7 @@ impl Linkspace {
             };
 
             tracing::debug!(wakeup=?d(next_check), "waiting for new event");
-            self.env().0.log_head.next_d(Some(next_check));
+            self.env().next_deadline(Some(next_check));
         }
     }
 

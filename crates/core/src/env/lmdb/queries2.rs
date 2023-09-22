@@ -35,7 +35,7 @@ use crate::env::query_mode::{Mode, Order, Table};
 use crate::env::tree_key::treekey_checked;
 
 use crate::env::RecvPktPtr;
-use super::queries::ReadTxn;
+use super::queries::{ReadTxn, read_pkt};
 use super::tree_iter::TreeKeysIter;
 
 
@@ -138,7 +138,7 @@ impl<'txn> ReadTxn<'txn> {
         let it = self
             .query_tree_entries(predicates, ord)
             .map(move |v| {
-                crate::prelude::read_pkt(&c1, v.local_log_ptr())
+                super::queries::read_pkt(&c1, v.local_log_ptr())
                     .map_err(|e|("Btree Error - tree query",v.local_log_ptr(),e))
                     .unwrap()
                     .ok_or_else(||("BTree inconsistent - cant find",v.local_log_ptr()))
@@ -223,7 +223,7 @@ impl<'txn> ReadTxn<'txn> {
         let it = self
             .query_hash_entries(rules.hash, ord)
             .map(move |v| {
-                crate::prelude::read_pkt(&c1, v)
+                read_pkt(&c1, v)
                     .expect("BTree Is inconsistent")
                     .expect("BTree Is inconsistent")
             })

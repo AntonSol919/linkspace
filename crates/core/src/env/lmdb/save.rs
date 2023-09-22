@@ -1,35 +1,15 @@
 
-use std::{fmt::Display};
 
 use linkspace_pkt::{NetPkt, now,  NetPktExt,tree_order::{TreeEntry,TreeValueBytes}};
 use lmdb::{RwCursor ,  WriteFlags, Transaction};
 
 
+use crate::env::save_state::SaveState;
+
 use super::{  db::LMDBEnv};
 
 
-#[derive(Debug,Default,Copy,Clone,PartialEq)]
-#[repr(u32)]
-pub enum SaveState {
-    #[default]
-    Pending = 0 ,
-    Error   = 0b001,
-    Exists  = 0b010,
-    Written = 0b110,
-}
-impl SaveState {
-    pub fn is_new(&self) -> bool { matches!(self,SaveState::Written)}
-}
-impl Display for SaveState{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self{
-            SaveState::Pending => f.write_str("pending"),
-            SaveState::Error => f.write_str("error"),
-            SaveState::Exists => f.write_str("exists"),
-            SaveState::Written => f.write_str("written"),
-        }
-    }
-}
+
 
 
 impl LMDBEnv{

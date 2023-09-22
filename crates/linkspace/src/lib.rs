@@ -728,7 +728,7 @@ pub mod runtime {
 
     /// save a packet. Returns true if new and false if its old.
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
-        linkspace_common::core::env::lmdb::save_dyn_one(&mut lk.0.env(), pkt).map(|o| o.is_new())
+         lk.0.env().save_dyn_one(pkt).map(|o| o.is_new())
     }
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
         let (start,excl) = lk_save_all_ext(lk, pkts)?;
@@ -736,7 +736,7 @@ pub mod runtime {
     }
     /// returns the range of recv stampes used to save new packets. total_new = r.1-r.0
     pub fn lk_save_all_ext(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<(Stamp,Stamp)> {
-        let (s,e) = linkspace_common::core::env::lmdb::save_dyn_iter(&mut lk.0.env(), pkts.iter().copied())?;
+        let (s,e) = lk.0.env().save_dyn_iter(pkts.iter().copied())?;
         Ok((s.into(),e.into()))
     }
 

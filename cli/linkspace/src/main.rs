@@ -526,7 +526,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
                     std::borrow::Cow::Owned(_) => todo!(),
                 }
             }
-            let i = save_ptr(env, &mut pkts)?;
+            let i = env.save_ptr( &mut pkts)?;
             for (pkt,state) in &pkts {
                 println!("{} {}",pkt.hash_ref(),state)
             }

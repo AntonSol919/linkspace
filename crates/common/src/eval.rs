@@ -71,8 +71,8 @@ impl<R: LKS> EvalScopeImpl for FileEnv<R> {
         (
             "filesystem env".into(),
             format!(
-                "read files from {:?}/files ",
-                self.0.lk().map(|v| v.env().dir().to_owned())
+                "read files from {:?}",
+                self.0.lk().map(|v| v.env().files_path())
             ),
         )
     }

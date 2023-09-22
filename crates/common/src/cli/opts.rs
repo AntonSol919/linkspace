@@ -15,7 +15,7 @@ use crate::{
 };
 use anyhow::Context;
 use clap::Parser;
-use linkspace_core::prelude::lmdb::{BTreeEnv };
+use linkspace_core::prelude::lmdb::BTreeEnv;
 
 use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
 #[derive(Parser, Debug, Clone)]
@@ -205,7 +205,7 @@ impl CommonOpts {
         };
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
-                lmdb::save_dyn_one(self.linkspace.env_io()?,pkt)?;
+                self.linkspace.env_io()?.save_dyn_one(pkt)?;
                 return Ok(())
             },
             super::Out::Fd(f) => f,

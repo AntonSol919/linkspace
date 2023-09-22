@@ -136,7 +136,7 @@ impl ProcBus {
     pub fn val(&self) -> u64 {
         self.0.val.load(Ordering::SeqCst)
     }
-    pub fn next_d(&self, deadline: Option<Instant>) -> Option<u64> {
+    pub fn next_deadline(&self, deadline: Option<Instant>) -> Option<u64> {
         tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Waiting");
         match deadline {
             Some(d) => {

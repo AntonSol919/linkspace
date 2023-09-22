@@ -8,7 +8,7 @@
 
 use crate::{prelude::*, protocols::lns::{GROUP_TAG, LNS, BY_TAG_P, PUBKEY_TAG, stamp_tag}};
 
-use linkspace_core::prelude::{query_mode::Order, RecvPktPtr, lmdb::save_dyn_iter};
+use linkspace_core::prelude::{query_mode::Order, RecvPktPtr };
 use tracing::instrument;
 
 use super::{claim::Claim, as_stamp_tag};
@@ -79,7 +79,7 @@ pub(crate) fn save_private_claim(lk: &Linkspace,new_claim:&Claim,admin:Option<&S
         .chain(as_p(&drop_old_pubkey))
         .chain(as_p(&add_new_pubkey))
         .chain(and.iter().copied());
-    save_dyn_iter(lk.env(), it)?;
+    lk.env().save_dyn_iter(it)?;
     Ok(true)
 }
 
