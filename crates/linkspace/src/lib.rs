@@ -213,7 +213,7 @@ pub mod abe {
     Optionally add a `pkt` as a context.
     ':' and '/' outside of '[' and ']' read as plain bytes.
     Set parse_unencoded to true to read bytes outside the range 0x20..0xfe as-is. i.e. useful for contemplating with newlines and utf8.
-    See [lk_split_abe] for different delimiter behavior
+    See [lk_tokenize_abe] for different delimiter behavior
 
     ```
     # use linkspace::{*,prelude::*,abe::*};
@@ -278,9 +278,9 @@ pub mod abe {
     The callback is called with (ctrl, contains_brackets, bytes ) where ctrl is 0 | ':' | '/'
     Only the first ctrl can be '\0'.
     ```
-    # use linkspace::abe::lk_split_abe;
+    # use linkspace::abe::lk_tokenize_abe;
     let mut v = vec![];
-    lk_split_abe("this:is/the:example[::]\n[::]newline[:/]",b"/",|expr,has_brackets,ctr| { v.push((expr,has_brackets,ctr)); true} );
+    lk_tokenize_abe("this:is/the:example[::]\n[::]newline[:/]",b"/",|expr,has_brackets,ctr| { v.push((expr,has_brackets,ctr)); true} );
     assert_eq!(v,&[(0,false,"this"), (b':',false,"is/the"), (b':',true,"example[::]"),(b'\n',true,"[::]newline[:/]")])
     ```
      **/
@@ -571,7 +571,7 @@ pub mod query {
     pub fn lk_query(copy_from: &Query) -> Query {
         Query(copy_from.0.clone())
     }
-    /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count. See [lk_get_hash] if you don't care to watch the db.
+    /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count. See [runtime::lk_get_hash] if you don't care to watch the db.
     pub fn lk_hash_query(hash: LkHash) -> Query {
         Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
