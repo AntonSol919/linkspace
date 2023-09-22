@@ -7,8 +7,6 @@ use linkspace_core::prelude::{GroupID, PubKey};
 
 pub mod handshake;
 
-#[cfg(feature="fs")]
-pub mod impex;
 
 #[cfg(feature="runtime")]
 pub mod lns;
