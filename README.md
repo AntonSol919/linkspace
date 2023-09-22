@@ -30,8 +30,8 @@ Any questions, feedback, or contributions are welcome!
 ## Links
 
 See [Quick Start](https://www.linkspace.dev/code_intro.html) for a bash introduction to the packet format and using the cli.
-The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more depth on the API and technical design.
-[Tutorials](https://www.linkspace.dev/docs/tutorial/index.html) has some annotated examples.
+The [Guide](https://www.linkspace.dev/guide/index.html) goes into more depth on the API and technical design.
+[Tutorials](https://www.linkspace.dev/tutorial/index.html) has some annotated examples.
 
 
 ## Using linkspace
@@ -40,7 +40,7 @@ The [Guide](https://www.linkspace.dev/docs/guide/index.html) goes into more dept
 
 ### As a library 
 
-All bindings follow the same basic API explained in the [Guide](https://www.linkspace.dev/docs/guide/index.html)
+All bindings follow the same basic API explained in the [Guide](https://www.linkspace.dev/guide/index.html)
 
 - `cargo add linkspace --git "https://github.com/AntonSol919/linkspace"` - disable default features to compile for --target wasm32-unknown-unknown
 - `pip install linkspace`

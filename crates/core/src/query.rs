@@ -32,10 +32,9 @@ impl From<PktPredicates> for Query {
     }
 }
 /**
-See the (guide#query)[./guide/index.html].
 A set of predicates and options.
 Create with linkspace::lk_query, extend with lk_query_append, and stringify with lk_query_str
-Argument to lk_get and lk_watch.
+Argument to lk_get* and lk_watch.
 **/
 /*
 internally this is a wrapper around ABConf that intercepts all options not starting with ':'.

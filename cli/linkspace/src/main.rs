@@ -161,13 +161,13 @@ enum Command {
     #[command(alias = "e")]
     /** abe - eval ABE expression
 
-    The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
+    The abe syntax can be found in the guide (https://www.linkspace.dev/guide/index.html#ABE)
     Use "[help]" for a list of functions.
     */
     Eval(eval::EvalOpts),
     /** abe   - eval expression for each pkt from stdin 
 
-    The abe syntax can be found in the guide (https://www.linkspace.dev/docs/guide/index.html#ABE)
+    The abe syntax can be found in the guide (https://www.linkspace.dev/guide/index.html#ABE)
     */
     #[command(alias="p",before_long_help=&*PKT_HELP)]
     Pktf(pktf::PktFmtOpts),
