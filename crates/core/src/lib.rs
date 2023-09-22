@@ -46,8 +46,6 @@ pub mod partial_hash;
 pub mod predicate;
 pub mod prelude;
 
-#[cfg(feature="lmdb")]
-pub mod pull;
 pub mod query;
 pub mod stamp_fmt;
 pub mod stamp_range;

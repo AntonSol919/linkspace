@@ -35,10 +35,6 @@ pub enum StopReason {
 }
 
 pub trait PktStreamHandler {
-    /// if returns some, periodcially check to see if the handler can be closed.
-    fn checkup(&mut self) -> Option<ControlFlow<()>> {
-        None
-    }
     /// Handles an event.
     fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
     /// Called when break, finished, or replaced

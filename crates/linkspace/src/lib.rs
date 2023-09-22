@@ -371,6 +371,7 @@ pub mod abe {
         #[allow(clippy::large_enum_variant)]
         pub(crate) enum InlineCtx<'o> {
             Std(StdCtx<'o>),
+            Dyn(&'o dyn Scope),
             // TODO UserCb
             Core,
             Empty,
@@ -407,6 +408,7 @@ pub mod abe {
                 }
             }
         }
+
 
         impl<'o, const N: usize> From<&'o [&'o [u8]; N]> for UserData<'o> {
             fn from(inp: &'o [&'o [u8]; N]) -> Self {
@@ -501,7 +503,12 @@ pub mod abe {
                         scope: &linkspace_common::prelude::scope::EVAL_SCOPE,
                     },
                     InlineCtx::Empty => EvalCtx { scope: &() },
+                    InlineCtx::Dyn(scope) => EvalCtx{scope},
                 }
+            }
+            #[doc(hidden)]
+            pub fn from_dyn(sdyn: &'o dyn Scope) -> Self{
+                LkCtx(InlineCtx::Dyn(sdyn))
             }
         }
     }
@@ -896,8 +903,6 @@ pub mod runtime {
 
         /// Callbacks stored in a [Linkspace] instance. use [runtime::cb] to impl from function
         pub trait PktHandler {
-            // if returns some, periodically check to see if the handler can be closed.
-            //fn checkup(&mut self) -> Option<ControlFlow<()>>{None}
             /// Handles an event.
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
             /// Called when break, finished, or replaced

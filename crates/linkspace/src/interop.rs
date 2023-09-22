@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::Query;
-use linkspace_common::core::query::Query as QueryImpl;
+use linkspace_common::{core::query::Query as QueryImpl };
 #[doc(hidden)]
 impl From<crate::Query> for QueryImpl {
     fn from(val: crate::Query) -> Self {
@@ -29,15 +29,15 @@ impl crate::Query {
     }
 }
 
+
+
+
 #[cfg(feature = "runtime")]
 pub mod rt_interop {
     use std::ops::ControlFlow;
 
-    use linkspace_common::{
-        prelude::NetPkt,
-        runtime::{handlers::StopReason},
-    };
     pub use linkspace_common::runtime::Linkspace as LinkspaceImpl;
+    use linkspace_common::{prelude::NetPkt, runtime::handlers::StopReason};
     #[doc(hidden)]
     impl From<LinkspaceImpl> for crate::Linkspace {
         fn from(value: LinkspaceImpl) -> Self {
@@ -63,9 +63,8 @@ pub mod rt_interop {
 
     // Wrapper to hide PktStreamHandler and its type arguments
     pub(crate) struct Handler<T: PktHandler + ?Sized>(pub(crate) T);
-    
 
-    use crate::{Linkspace, runtime::cb::PktHandler, Query};
+    use crate::{runtime::cb::PktHandler, Linkspace, Query};
     impl<T: PktHandler + ?Sized> linkspace_common::runtime::handlers::PktStreamHandler for Handler<T> {
         fn handle_pkt(&mut self, pkt: &dyn NetPkt, rx: &LinkspaceImpl) -> ControlFlow<()> {
             let rx = unsafe { &*(rx as *const LinkspaceImpl as *const Linkspace) };
@@ -83,4 +82,5 @@ pub mod rt_interop {
                 .stopped(query, rx, reason, watch.nth_query, watch.nth_new)
         }
     }
+
 }

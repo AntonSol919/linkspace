@@ -8,7 +8,6 @@ use std::thread::JoinHandle;
 use anyhow::{ Context};
 use linkspace_common::{
     cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
-    core::pull::read_pull_pkt,
     prelude::{*, scope::core_ctx},
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
@@ -79,7 +78,7 @@ pub fn setup_watch(
     } else {
         core.dynr()
     };
-    read_pull_pkt(&mut query, pkt, &rx.get_reader(), ctx)?;
+    query.parse(pkt.data(), &ctx)?;
     
     let mut ok = mv.constraint.or.is_empty();
     for opt in mv.constraint.or.iter(){
