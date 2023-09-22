@@ -38,8 +38,8 @@ Practically this means you can choose to create a function that reads the databa
 Then watch for packets that _could_ update the final state and rerun the function.
 This is not always the fastest but its simple, correct for any client, and fast enough for most use cases.
 
-Its still up to the application to add additional guarantees about the state across the network. 
-A peer does not automatically know if its missing any packets. One solution is to have a single peer create a (signed) summary every now and then with a list of hashes the packets they acknowledge. The CAP theorem limits will always limit a distributed system to a 'best effort' solution. 
+Its still up to the application to add additional guarantees about authenticity and order across the network. 
+A peer does not automatically know its missing any packets. One solution is to have a single peer create a (signed) summary every now and then with a list of hashes the packets they acknowledge. The CAP theorem limits will always limit a distributed system to a 'best effort' solution. 
 
 Note that in this 'single summarizing peer' setup the effect is similar to how the current web works. 
 A central host administrates what is part of their platform and what is not.
@@ -53,3 +53,5 @@ I've found a good approach is to:
 - Limit the gui to reading the process' state. Any modifications should be made by creating packets.
 
 You can use different threads, but a simple single-thread alternative is to have the gui thread call lk_process.
+
+
