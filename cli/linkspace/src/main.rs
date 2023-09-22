@@ -36,7 +36,7 @@ use linkspace_common::{
     prelude::{
         predicate_type::PredInfo,
         query_mode::{Mode, Order, Table},
-        *, lmdb::{save_ptr, save::SaveState}, 
+        *, 
     }, predicate_aliases::ExtWatchCLIOpts,
 };
 use point::{PointOpts, GenPointOpts};

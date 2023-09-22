@@ -9,7 +9,6 @@ use super::db::LMDBTxn;
 use super::db::PktLogCursor;
 use super::misc::IterDirection;
 use crate::env::RecvPktPtr;
-use crate::partial_hash::PartialHash;
 use crate::stamp_range::StampRange;
 use either::Either;
 use linkspace_pkt::*;
@@ -99,53 +98,5 @@ impl<'env> ReadTxn<'env> {
         let c = self.0.pkt_cursor();
         idx.filter_map(move |p| c.read_uniq(&p.get()).ok().flatten())
             .map(as_netpkt)
-    }
-    pub fn partial_hashes_entries(
-        &self,
-        starts_with: PartialHash,
-    ) -> impl Iterator<Item = RecvPktPtr> {
-        let c1 = self.0.pkt_cursor();
-        self.partial_hashes(starts_with).map(move |(_, ptr)| {
-            read_pkt(&c1, Stamp::new(ptr))
-                .expect("BTree Is inconsistent")
-                .expect("BTree Is inconsistent")
-        })
-    }
-    pub fn uniq_partial(
-        &self,
-        starts_with: PartialHash,
-    ) -> Option<std::result::Result<RecvPktPtr, Vec<LkHash>>> {
-        let mut it = self.partial_hashes_entries(starts_with);
-        match it.next() {
-            None => None,
-            Some(first) => match it.next() {
-                Some(sec) => {
-                    let mut lst = vec![first.hash(), sec.hash()];
-                    lst.extend(it.map(|p| p.hash()));
-                    Some(Err(lst))
-                }
-                None => Some(Ok(first)),
-            },
-        }
-    }
-    pub fn partial_hashes(&self, starts_with: PartialHash) -> impl Iterator<Item = (&LkHash, u64)> {
-        let _g = tracing::trace_span!("Partial Matching",partial=%starts_with.0.as_str()).entered();
-        let start = starts_with.aprox_btree_idx();
-        tracing::trace!(start=?start, start_b64=%starts_with, "start at");
-        self.0
-            .hash_cursor()
-            .range_uniq(&start)
-            .map(|(k, v)| (k, v, base64(k as &[u8])))
-            .skip_while(move |(_, _, b64)| {
-                let skip = b64.as_str() < starts_with.0.as_str();
-                tracing::trace!(skip=?skip,b64=%b64);
-                skip
-            })
-            .take_while(move |(_, _, b64)| {
-                let cont = b64.starts_with(starts_with.0.as_str());
-                tracing::trace!(whiel=%cont,b64=%b64);
-                cont
-            })
-            .map(|(h, idx, _)| (B64::from_ref(h), idx))
     }
 }
