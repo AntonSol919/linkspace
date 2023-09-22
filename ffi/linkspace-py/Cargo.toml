@@ -8,7 +8,7 @@ license.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 repository.workspace = true
-build = "../../build_env.rs"
+build = "build.rs"
 
 [lib]
 name = "linkspace"

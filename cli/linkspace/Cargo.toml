@@ -11,8 +11,8 @@ repository.workspace = true
 
 categories = ["command-line-utilities","database","network-programming","asynchronous"]
 keywords = ["linkspace", "event-driven","distributed","log"]
-description = "'lk' - the linkspace cli"
-build = "../../build_env.rs"
+description = "lk - the linkspace cli"
+build = "build.rs"
 
 [[bin]]
 name = "lk"

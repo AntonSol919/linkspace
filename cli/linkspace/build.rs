@@ -3,11 +3,9 @@ use vergen::EmitBuilder;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Emit the instructions
-    /*
     EmitBuilder::builder()
         .all_git()
         .all_rustc()
         .emit()?;
-    */
     Ok(())
 }

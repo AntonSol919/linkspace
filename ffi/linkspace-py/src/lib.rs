@@ -620,8 +620,16 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("TEST_GROUP", PyBytes::new(py, &**consts::TEST_GROUP))?;
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
     m.add("DEFAULT_PKT", abe::DEFAULT_PKT)?;
-    linkspace_pkt::build_info!();
-    m.add("VERSION",BUILD_INFO)?;
+
+    pub static BUILD_INFO : &'static str = concat!(
+        env!("CARGO_PKG_NAME")," - ",
+        env!("CARGO_PKG_VERSION")," - ",
+        env!("VERGEN_GIT_BRANCH")," - ",
+        env!("VERGEN_GIT_DESCRIBE"), " - ", 
+        env!("VERGEN_RUSTC_SEMVER")
+    );
+
+    m.add("BUILD_INFO",BUILD_INFO)?;
 
     Ok(())
 }

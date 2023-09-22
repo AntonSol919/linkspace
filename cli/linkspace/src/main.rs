@@ -84,7 +84,15 @@ static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
     let v = eval(&pctx, &abev!({ "help" })).unwrap().concat();
     String::from_utf8(v).unwrap()
 });
-build_info!();
+
+pub static BUILD_INFO : &'static str = concat!(
+    env!("CARGO_PKG_NAME")," - ",
+    env!("CARGO_PKG_VERSION")," - ",
+    env!("VERGEN_GIT_BRANCH")," - ",
+    env!("VERGEN_GIT_DESCRIBE"), " - ", 
+    env!("VERGEN_RUSTC_SEMVER")
+);
+
 
 /**
 linkspace-cli exposes most library functions as well as some utility functions.
@@ -96,6 +104,7 @@ lk link :: --write db --write stdout --write stderr --write file:./file
 
 Most commands are used in a pipeline and read packets from stdin.
 **/
+
 #[derive(Parser)]
 #[command(author, about,version,long_version=BUILD_INFO)]
 struct Cli {

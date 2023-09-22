@@ -294,8 +294,15 @@ pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {
     Box::new(*blake3::hash(bytes).as_bytes())
 }
 
-build_info!();
 #[wasm_bindgen]
 pub fn build_info() -> String {
+    static BUILD_INFO : &'static str = concat!(
+        env!("CARGO_PKG_NAME")," - ",
+        env!("CARGO_PKG_VERSION")," - ",
+        env!("VERGEN_GIT_BRANCH")," - ",
+        env!("VERGEN_GIT_DESCRIBE"), " - ", 
+        env!("VERGEN_RUSTC_SEMVER")
+    );
+    
     BUILD_INFO.to_string()
 }

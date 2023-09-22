@@ -1,5 +1,11 @@
-fn main() {
-	  // Calling `build_info_build::build_script` collects all data and makes it available to `build_info::build_info!`
-	  // and `build_info::format!` in the main program.
-	  build_info_build::build_script();
+use std::error::Error;
+use vergen::EmitBuilder;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // Emit the instructions
+    EmitBuilder::builder()
+        .all_git()
+        .all_rustc()
+        .emit()?;
+    Ok(())
 }
