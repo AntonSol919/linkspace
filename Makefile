@@ -18,28 +18,3 @@ build-debug:
 	mkdir -p "$(R)/target/python"
 	ln -s "$(R)/target/debug/liblinkspace.so" "$(R)/target/python/linkspace.so" 
 	ln -s "$(R)/ffi/linkspace-py/linkspace.pyi"  "$(R)/target/python/linkspace.pyi" 
-
-rust-docs: 
-	cargo +nightly doc -p linkspace --target-dir ./build --no-deps
-	rsync -rvkP ./build/doc/ ./docs/cargo-doc
-
-tutorials:
-	make -C ./docs/tutorial/
-
-# This requires the latest `lk` to be in path - for my setup build-debug is sufficient
-guide: build-debug 
-	make -C ./docs/guide/
-
-docs: guide tutorials rust-docs
-
-homepage:
-	make -C ./homepage
-
-git-checkin: homepage docs
-	cargo +nightly check
-
-publish: git-checkin
-	rsync -rvkP --exclude "./homepage/.gitignore" ./homepage/ ./build/homepage
-	git checkout publish
-	rsync -rvkP ./build/homepage/ ./
-

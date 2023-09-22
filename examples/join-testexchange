@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-source ./activate
+source ../activate
 lk init
 
 echo "Opening key ${LK_KEYNAME:-me:local}"

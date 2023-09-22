@@ -48,7 +48,7 @@ pub struct PktFmtOpts {
     fmt: Vec<String>,
 
     /// Use the default formatting function without evaluation.
-    #[arg(short,long,conflicts_with("fmt"))]
+    #[arg(long,conflicts_with("fmt"))]
     fast: bool
 }
 
