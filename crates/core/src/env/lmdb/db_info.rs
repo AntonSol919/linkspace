@@ -94,7 +94,7 @@ impl LMDBEnv{
 
 impl BTreeEnv{
     pub fn linkspace_info(&self) -> anyhow::Result<()>{
-        let reader = self.get_reader()?;
+        let reader = self.new_read_txn()?;
         let log : Vec<(u64,LkHash)> = reader.local_pkt_log(Stamp::ZERO)
             .inspect(|o| tracing::trace!(
                 is_ok=?o.pkt.check(false),

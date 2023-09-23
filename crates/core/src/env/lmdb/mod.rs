@@ -116,7 +116,7 @@ impl BTreeEnv {
         }
     }
     #[track_caller]
-    pub fn get_reader(&self) -> anyhow::Result<ReadTxn> {
+    pub fn new_read_txn(&self) -> anyhow::Result<ReadTxn> {
         Ok(ReadTxn(self.0.lmdb.read_txn()?))
     }
 

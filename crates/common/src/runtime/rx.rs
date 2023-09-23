@@ -14,7 +14,7 @@ use std::{
     cell::{Cell, OnceCell, RefCell},
     ops::{ ControlFlow},
     rc::{Rc },
-    time::{Duration, Instant}, path::Path,
+    time::{Duration, Instant}, path::{Path, PathBuf},
 };
 use tracing::{warn, Span, debug_span, instrument};
 
@@ -25,12 +25,18 @@ pub type RxEntry = linkspace_core::matcher::WatchEntry<PktStream>;
 
 #[derive(Clone)]
 #[must_use = "Linkspace runtime does nothing unless processed"]
-pub struct Linkspace {
-    exec: Rc<Executor>,
+pub struct Linkspace(Rc<Inner>);
+
+pub struct Inner {
+    exec: Executor,
+    files : Option<PathBuf>,
+    spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
+
+
 impl std::fmt::Debug for Linkspace {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Runtime").field("exec", &"todo").finish()
+        f.debug_struct("Linkspace").field("todo", &"todo").finish()
     }
 }
 enum Pending {
@@ -49,52 +55,38 @@ struct Executor {
     process_upto: Cell<Stamp>,
     is_reading: Cell<usize>,
     is_running: Cell<bool>,
-    spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
 
 impl Linkspace {
     pub fn get_reader<'env:'txn,'txn>(&'env self) -> Rc<ReadTxn<'txn>> {
-        self.exec.process_txn.borrow().clone()
+        self.0.exec.process_txn.borrow().clone()
     }
     
     pub fn env(&self) -> &BTreeEnv {
-        &self.exec.env
+        &self.0.exec.env
     }
     pub fn spawner(&self) -> &OnceCell<Rc<dyn LocalAsync>> {
-        &self.exec.spawner
+        &self.0.spawner
     }
-    pub fn dir(&self) -> Option<&Path>{
-        Some(self.exec.env.dir())
+    pub fn files(&self) -> Option<&Path>{
+        self.0.files.as_deref()
     }
 
-    fn rt_log_head(&self) -> Stamp {
-        self.exec.process_upto.get()
-    }
-    /** return when next to process.
-     Ok(None) means immediatly, Ok(Some(stamp)) means at stamp a watch can be dropped, Err means no current watches
-    **/
-    #[instrument(skip(self),ret)]
-    fn next_work(&self) -> Result<Option<Stamp>, ()> {
-        if self.exec.is_running.get() {
-            tracing::warn!("has_work called during work");
-            panic!();
-            //return true;
-        }
-        if !self.exec.pending.borrow().is_empty() {
-            return Ok(None);
-        };
-        self.exec.callbacks.borrow_mut().gc(now()).ok_or(()).map(Some)
-    }
+    
+    
     pub fn new(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         Self::new_opt_rt(env, OnceCell::from(spawner))
     }
 
     pub fn new_opt_rt(env: BTreeEnv, spawner: OnceCell<Rc<dyn LocalAsync>>) -> Linkspace {
-        let reader : ReadTxn<'_>= env.get_reader().unwrap();
+        let reader : ReadTxn<'_>= env.new_read_txn().unwrap();
         let reader : ReadTxn<'static> = unsafe { std::mem::transmute(reader)};
         let at = reader.log_head();
-        Linkspace {
-            exec: Rc::new(Executor {
+        Linkspace(Rc::new(Inner{
+
+            spawner,
+            files:None,
+            exec: Executor {
                 env,
                 written: Cell::new(false),
                 callbacks: Default::default(),
@@ -103,20 +95,19 @@ impl Linkspace {
                 process_upto: at.into(),
                 is_running: Cell::new(false),
                 is_reading: Cell::new(0),
-                spawner,
                 //subroutines:RefCell::new(Registry::new())
-            }),
-        }
+            }}))
     }
 
-    pub fn insert_watch(&self, watch_entry: RxEntry) {
-        match self.exec.callbacks.try_borrow_mut() {
+    fn insert_watch(&self, watch_entry: RxEntry) {
+        match self.0.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
                 if let Some(w) = lk.register(watch_entry) {
                     drop_watch(w, self, StopReason::Replaced)
                 }
             }
             Err(_) => self
+                .0
                 .exec
                 .pending
                 .borrow_mut()
@@ -124,7 +115,7 @@ impl Linkspace {
         };
     }
     pub fn drain_pending(&self, lk: &mut Matcher) {
-        for cmd in self.exec.pending.borrow_mut().drain(..) {
+        for cmd in self.0.exec.pending.borrow_mut().drain(..) {
             match cmd {
                 Pending::NewWatch { watch_entry } => {
                     if let Some(w) = lk.register(watch_entry) {
@@ -140,7 +131,7 @@ impl Linkspace {
     pub async fn poll(&self) -> Stamp {
         loop {
             self.process();
-            let rt_head = self.rt_log_head();
+            let rt_head = self.0.exec.process_upto.get();
             let env_head = self.env().log_head().await;
             if env_head == rt_head {
                 return env_head;
@@ -149,7 +140,7 @@ impl Linkspace {
     }
 
     fn watch_status(&self,id:&QueryIDRef) -> Option<WatchStatus>{
-        let cbs = self.exec.callbacks.borrow();
+        let cbs = self.0.exec.callbacks.borrow();
         Some(cbs.get(id)?.status())
     }
 
@@ -165,10 +156,11 @@ impl Linkspace {
         last_step: Option<Instant>,
         user_qid: Option<&QueryIDRef>
     ) -> anyhow::Result<isize> {
-        if self.exec.is_running.get() {
+        let exec = &self.0.exec;
+        if exec.is_running.get() {
             bail!("already running")
         }
-        if self.exec.is_reading.get() > 0  {
+        if exec.is_reading.get() > 0  {
             tracing::warn!("Using a process_while nested in read txn can eat up memory. it might become an error in the future");
         }
         tracing::trace!(
@@ -213,7 +205,7 @@ impl Linkspace {
                 next_check = next_check.min(last_step_constraint);
             }
 
-            match self.next_work() {
+            match exec.next_work() {
                 Ok(Some(next_oob)) => {
                     if next_oob != Stamp::MAX {
                         match next_oob.get().checked_sub(now().get()) {
@@ -247,10 +239,11 @@ impl Linkspace {
     /// check the log for new packets and execute callbacks
     #[instrument(skip(self))]
     pub fn process(&self) -> Stamp {
-        self.exec.written.set(false);
+        let exec = &self.0.exec;
+        exec.written.set(false);
         let (txn, from, upto): (Rc<ReadTxn>, Stamp, Stamp) = {
-            let mut txn = self.exec.process_txn.borrow_mut();
-            let rx_last = self.exec.process_upto.get();
+            let mut txn = exec.process_txn.borrow_mut();
+            let rx_last = exec.process_upto.get();
             match Rc::get_mut(&mut txn) {
                 Some(txn) => {
                     tracing::trace!(?rx_last, "refresh txn");
@@ -260,7 +253,7 @@ impl Linkspace {
                     tracing::warn!("holding a read txn across callbacks!");
                     // the transmute sets the lifetime which is correct. 
                     // the real danger is that the open txn eats up memory
-                    *txn = Rc::new(unsafe{std::mem::transmute(self.exec.env.get_reader().unwrap())});
+                    *txn = Rc::new(unsafe{std::mem::transmute(exec.env.new_read_txn().unwrap())});
                 }
             }
             let txn_last = txn.log_head();
@@ -273,9 +266,9 @@ impl Linkspace {
         let _g = tracing::error_span!("Processing txn", ?from, ?upto).entered();
         let txn = txn;
         tracing::trace!("Lock cbs");
-        let mut lock = self.exec.callbacks.borrow_mut();
+        let mut lock = exec.callbacks.borrow_mut();
         self.drain_pending(&mut lock);
-        self.exec.is_running.set(true);
+        exec.is_running.set(true);
         let i = 0;
         let mut count = Rc::strong_count(&txn);
         let mut validate = || {
@@ -316,10 +309,10 @@ impl Linkspace {
         tracing::debug!(npkts = i, "Updated Finished");
         self.drain_pending(&mut lock);
         
-        self.exec.is_running.set(false);
-        self.exec.process_upto.set(upto);
+        exec.is_running.set(false);
+        exec.process_upto.set(upto);
         std::mem::drop((txn, lock));
-        if !self.exec.written.get() { return upto};
+        if !exec.written.get() { return upto};
 
         tracing::trace!("Written true");
         self.process()
@@ -392,6 +385,7 @@ impl Linkspace {
         start: Option<LkHash>,
         span: Span,
     ) -> anyhow::Result<i32> {
+        let exec = &self.0.exec;
         if start.is_some() {
             panic!("todo")
         }
@@ -403,7 +397,7 @@ impl Linkspace {
             let local_span = tracing::debug_span!(parent: &span, "DB Callback").entered();
             tracing::trace!(?mode);
             let reader = self.get_reader();
-            self.exec.is_reading.update(|i| i+1);
+            exec.is_reading.update(|i| i+1);
             let r = reader
                 .query(mode, &q.predicates, &mut counter)?
                 .try_for_each(|dbp| {
@@ -414,10 +408,10 @@ impl Linkspace {
 
             let strong_count = Rc::strong_count(&reader);
             if strong_count > 2{
-                if self.exec.is_reading.get() > 0 || self.exec.is_running.get(){ tracing::debug!("Assuming open txn is on purpose")}
+                if exec.is_reading.get() > 0 || exec.is_running.get(){ tracing::debug!("Assuming open txn is on purpose")}
                 else {warn!(strong_count,"Holding txn open")};
             }
-            self.exec.is_reading.update(|i|i-1);
+            exec.is_reading.update(|i|i-1);
             tracing::debug!(?r,"Done with DB");
             if matches!(r, ControlFlow::Break(_)) {
                 return Ok(crate::saturating_cast(counter))
@@ -434,26 +428,26 @@ impl Linkspace {
     }
 
     pub fn close(&self, id: impl AsRef<QueryIDRef>) {
-        match self.exec.callbacks.try_borrow_mut() {
+        match self.0.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.deregister(id.as_ref(), false, |w| {
                     drop_watch(w, self, StopReason::Closed)
                 });
             }
-            Err(_) => self.exec.pending.borrow_mut().push(Pending::Close {
+            Err(_) => self.0.exec.pending.borrow_mut().push(Pending::Close {
                 id: id.as_ref().to_vec(),
                 range: false,
             }),
         }
     }
     pub fn close_range(&self, prefix: impl AsRef<QueryIDRef>) {
-        match self.exec.callbacks.try_borrow_mut() {
+        match self.0.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
                 lk.deregister(prefix.as_ref(), true, |w| {
                     drop_watch(w, self, StopReason::Closed)
                 });
             }
-            Err(_) => self.exec.pending.borrow_mut().push(Pending::Close {
+            Err(_) => self.0.exec.pending.borrow_mut().push(Pending::Close {
                 id: prefix.as_ref().to_vec(),
                 range: true,
             }),
@@ -461,9 +455,27 @@ impl Linkspace {
     }
     /// Will panic if called during execution
     pub fn dbg_watches(&self) -> std::cell::Ref<Matcher> {
-        self.exec.callbacks.borrow()
+        self.0.exec.callbacks.borrow()
     }
 }
+impl Executor{
+    /** return when next to process.
+    Ok(None) means immediatly, Ok(Some(stamp)) means at stamp a watch can be dropped, Err means no current watches
+     **/
+    #[instrument(skip(self),ret)]
+    fn next_work(&self) -> Result<Option<Stamp>, ()> {
+        if self.is_running.get() {
+            tracing::warn!("has_work called during work");
+            panic!();
+            //return true;
+        }
+        if !self.pending.borrow().is_empty() {
+            return Ok(None);
+        };
+        self.callbacks.borrow_mut().gc(now()).ok_or(()).map(Some)
+    }
+}
+
 
 fn drop_watch(w: RxEntry, rt: &Linkspace, reason: StopReason) {
     let (mut handler, entry) = w.map(());
@@ -482,7 +494,7 @@ impl LocalSpawn for Linkspace {
         &self,
         future: futures::future::LocalFutureObj<'static, ()>,
     ) -> Result<(), futures::task::SpawnError> {
-        self.exec
+        self.0
             .spawner
             .get()
             .expect("No Spawner Set")
@@ -490,7 +502,7 @@ impl LocalSpawn for Linkspace {
     }
 
     fn status_local(&self) -> Result<(), futures::task::SpawnError> {
-        self.exec
+        self.0
             .spawner
             .get()
             .expect("No Spawner set")
@@ -499,6 +511,6 @@ impl LocalSpawn for Linkspace {
 }
 impl Timer for Linkspace {
     fn sleep(&self, dur: std::time::Duration) -> futures::future::BoxFuture<'static, ()> {
-        self.exec.spawner.get().expect("No Spawner Set").sleep(dur)
+        self.0.spawner.get().expect("No Spawner Set").sleep(dur)
     }
 }
