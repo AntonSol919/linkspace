@@ -186,11 +186,12 @@ fn main() -> anyhow::Result<()> {
         Cmd::Ls { name } => {
             let ctx = common.eval_ctx();
             let name = name.eval(&ctx)?;
-            let rt = common.env()?;
-            let reader = rt.get_reader()?;
+            let lk = common.runtime()?;
+            let reader = lk.get_reader();
             match name.name_type(){
                 NameType::File => {
-                    let claims = list_claims(&mut rt.files_path(), &name)?;
+                    let mut dir = common.dir()?.join("files");
+                    let claims = list_claims(&mut dir, &name)?;
                     for c_ok in claims{
                         match c_ok{
                             Result::Ok(o) => println!("{o}"),
@@ -221,8 +222,8 @@ fn main() -> anyhow::Result<()> {
 fn ls_tag(common:&CommonOpts,tag:&[u8],ptr:Option<PExpr>) -> anyhow::Result<()>{
     let ctx = common.eval_ctx();
     let ptr = ptr.map(|g|g.eval(&ctx)).transpose()?;
-    let rt = common.env()?;
-    let reader = rt.get_reader()?;
+    let lk = common.runtime()?;
+    let reader = lk.get_reader();
     for c_ok in lns::utils::list_all_reverse_lookups(&reader,tag,ptr){
         for (_,el) in c_ok{
             match el {
