@@ -22,8 +22,6 @@ pub type PktStream = Box<dyn PktStreamHandler + 'static>;
 pub type Matcher = linkspace_core::matcher::Matcher<PktStream>;
 /// [WatchEntry] with an associated callback (Box<dyn [PktStreamHandler]>)
 pub type RxEntry = linkspace_core::matcher::WatchEntry<PktStream>;
-pub type PostTxnHandler = Box<dyn FnMut(Stamp, &Linkspace) -> ControlFlow<()>>;
-pub type PostTxnList = Vec<(PostTxnHandler, Span)>;
 
 #[derive(Clone)]
 #[must_use = "Linkspace runtime does nothing unless processed"]
@@ -36,7 +34,6 @@ impl std::fmt::Debug for Linkspace {
     }
 }
 enum Pending {
-    PostWatch { cb: PostTxnHandler, span: Span },
     NewWatch { watch_entry: RxEntry },
     Close { id: QueryID, range: bool },
 }
@@ -50,8 +47,9 @@ impl Borrow<BTreeEnv> for Linkspace {
 pub(crate) struct Executor {
     env: BTreeEnv,
     written: Cell<bool>,
-    cbs: RefCell<(Matcher, PostTxnList)>,
+    callbacks: RefCell<Matcher>,
     pending: RefCell<Vec<Pending>>,
+    // This is a fake lifetime
     process_txn: RefCell<Rc<ReadTxn<'static>>>,
     process_upto: Cell<Stamp>,
     is_reading: Cell<usize>,
@@ -87,7 +85,7 @@ impl Linkspace {
         if !self.exec.pending.borrow().is_empty() {
             return Ok(None);
         };
-        self.exec.cbs.borrow_mut().0.gc(now()).ok_or(()).map(Some)
+        self.exec.callbacks.borrow_mut().gc(now()).ok_or(()).map(Some)
     }
     pub fn new(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         Self::new_opt_rt(env, OnceCell::from(spawner))
@@ -101,7 +99,7 @@ impl Linkspace {
             exec: Rc::new(Executor {
                 env,
                 written: Cell::new(false),
-                cbs: Default::default(),
+                callbacks: Default::default(),
                 pending: Default::default(),
                 process_txn: RefCell::new(Rc::new(reader)),
                 process_upto: at.into(),
@@ -114,9 +112,9 @@ impl Linkspace {
     }
 
     pub fn insert_watch(&self, watch_entry: RxEntry) {
-        match self.exec.cbs.try_borrow_mut() {
+        match self.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
-                if let Some(w) = lk.0.register(watch_entry) {
+                if let Some(w) = lk.register(watch_entry) {
                     drop_watch(w, self, StopReason::Replaced)
                 }
             }
@@ -127,18 +125,17 @@ impl Linkspace {
                 .push(Pending::NewWatch { watch_entry }),
         };
     }
-    pub fn drain_pending(&self, lk: &mut (Matcher, PostTxnList)) {
+    pub fn drain_pending(&self, lk: &mut Matcher) {
         for cmd in self.exec.pending.borrow_mut().drain(..) {
             match cmd {
                 Pending::NewWatch { watch_entry } => {
-                    if let Some(w) = lk.0.register(watch_entry) {
+                    if let Some(w) = lk.register(watch_entry) {
                         drop_watch(w, self, StopReason::Replaced)
                     }
                 }
                 Pending::Close { id, range } => {
-                    lk.0.deregister(&id, range, |w| drop_watch(w, self, StopReason::Closed));
+                    lk.deregister(&id, range, |w| drop_watch(w, self, StopReason::Closed));
                 }
-                Pending::PostWatch { cb, span } => lk.1.push((cb, span)),
             }
         }
     }
@@ -154,8 +151,8 @@ impl Linkspace {
     }
 
     fn watch_status(&self,id:&QueryIDRef) -> Option<WatchStatus>{
-        let cbs = self.exec.cbs.borrow();
-        Some(cbs.0.get(id)?.status())
+        let cbs = self.exec.callbacks.borrow();
+        Some(cbs.get(id)?.status())
     }
 
     /**
@@ -253,7 +250,6 @@ impl Linkspace {
     #[instrument(skip(self))]
     pub fn process(&self) -> Stamp {
         self.exec.written.set(false);
-        let this = self.clone();
         let (txn, from, upto): (Rc<ReadTxn>, Stamp, Stamp) = {
             let mut txn = self.exec.process_txn.borrow_mut();
             let rx_last = self.exec.process_upto.get();
@@ -279,7 +275,7 @@ impl Linkspace {
         let _g = tracing::error_span!("Processing txn", ?from, ?upto).entered();
         let txn = txn;
         tracing::trace!("Lock cbs");
-        let mut lock = self.exec.cbs.borrow_mut();
+        let mut lock = self.exec.callbacks.borrow_mut();
         self.drain_pending(&mut lock);
         self.exec.is_running.set(true);
         let i = 0;
@@ -302,7 +298,7 @@ impl Linkspace {
                 pkt,
             };
 
-            lock.0.trigger(
+            lock.trigger(
                 *pkt,
                 |p| {
                     let r = p.handle_pkt(&pkt, self);
@@ -321,16 +317,7 @@ impl Linkspace {
         }
         tracing::debug!(npkts = i, "Updated Finished");
         self.drain_pending(&mut lock);
-        // We don't do any setup in post_funcs
-        lock.1.retain_mut(|(func, span)| {
-            let _ = span.enter();
-            {
-                let cont = func(from, &this);
-                tracing::info!(?cont, "PostTxn");
-                validate();
-                cont.is_continue()
-            }
-        });
+        
         self.exec.is_running.set(false);
         self.exec.process_upto.set(upto);
         std::mem::drop((txn, lock));
@@ -448,24 +435,10 @@ impl Linkspace {
         Ok(crate::saturating_neg_cast(counter))
     }
 
-    /// Add a function to be run after a txn.
-    /// Will run during _this_ transaction.
-    /// But any further mutations are ignored this transaction.
-    pub fn add_post_txn(&self, cb: PostTxnHandler, span: Span) {
-        match self.exec.cbs.try_borrow_mut() {
-            Ok(mut lk) => lk.1.push((cb, span)),
-            Err(_) => self
-                .exec
-                .pending
-                .borrow_mut()
-                .push(Pending::PostWatch { cb, span }),
-        }
-    }
-    
     pub fn close(&self, id: impl AsRef<QueryIDRef>) {
-        match self.exec.cbs.try_borrow_mut() {
+        match self.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
-                lk.0.deregister(id.as_ref(), false, |w| {
+                lk.deregister(id.as_ref(), false, |w| {
                     drop_watch(w, self, StopReason::Closed)
                 });
             }
@@ -476,9 +449,9 @@ impl Linkspace {
         }
     }
     pub fn close_range(&self, prefix: impl AsRef<QueryIDRef>) {
-        match self.exec.cbs.try_borrow_mut() {
+        match self.exec.callbacks.try_borrow_mut() {
             Ok(mut lk) => {
-                lk.0.deregister(prefix.as_ref(), true, |w| {
+                lk.deregister(prefix.as_ref(), true, |w| {
                     drop_watch(w, self, StopReason::Closed)
                 });
             }
@@ -489,8 +462,8 @@ impl Linkspace {
         }
     }
     /// Will panic if called during execution
-    pub fn dbg_watches(&self) -> std::cell::Ref<(Matcher, PostTxnList)> {
-        self.exec.cbs.borrow()
+    pub fn dbg_watches(&self) -> std::cell::Ref<Matcher> {
+        self.exec.callbacks.borrow()
     }
 }
 
