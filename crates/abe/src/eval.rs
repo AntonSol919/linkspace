@@ -478,6 +478,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
         AR::NoValue
     }
 }
+/// Wrapped in a EScope implements Scope trait
 pub trait EvalScopeImpl {
     fn about(&self) -> (String, String) {
         (String::new(), String::new())
@@ -649,6 +650,7 @@ impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
             .or_else(|| self.1.try_encode(id, options, bytes))
             .or_else(|| self.2.try_encode(id, options, bytes))
     }
+
 }
 
 #[derive(Copy, Clone, Default)]
