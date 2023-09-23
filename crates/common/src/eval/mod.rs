@@ -1,3 +1,5 @@
+pub mod file;
+
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -13,6 +15,8 @@ use linkspace_core::prelude::*;
 use crate::{
     runtime::Linkspace, protocols::lns::eval::{NetLNS, PrivateLNS}, 
 };
+
+use self::file::FileEnv;
 pub trait LKS  where Self: Fn() -> anyhow::Result<Linkspace> + Sized + Copy{
     fn lk(self) -> anyhow::Result<Linkspace>{ (self)()}
 }
@@ -28,6 +32,7 @@ pub type RTScope<GT> = (
     (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>,Option<EScope<OSEnv>>),
 );
 pub type RTCtx<GT> = EvalCtx<(EvalStd, RTScope<GT>)>;
+
 
 pub const fn rt_scope<'o, GT>(rt: GT,enable_env:bool) -> RTScope<GT>
 where
@@ -63,36 +68,7 @@ where
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct FileEnv<R>(R);
 
-impl<R: LKS> EvalScopeImpl for FileEnv<R> {
-    fn about(&self) -> (String, String) {
-        (
-            "filesystem env".into(),
-            format!(
-                "read files from {:?}",
-                self.0.lk().map(|v| v.env().files_path())
-            ),
-        )
-    }
-    fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
-        &[ScopeFunc {
-            apply: |this: &Self, inp: &[&[u8]], _, _scope| {
-                let p = std::str::from_utf8(inp[0])?;
-                Ok(this.0.lk()?.env().files_data(p,true)?.unwrap()).into()
-            },
-            info: ScopeFuncInfo {
-                id: "files",
-                init_eq: None,
-                argc: 1..=1,
-                to_abe: false,
-                help: "read a file from the LK_DIR/files directory",
-            },
-            to_abe: none,
-        }]
-    }
-}
 
 #[derive(Copy, Clone)]
 pub struct ReadHash<GT>(GT);

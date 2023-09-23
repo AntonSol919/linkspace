@@ -44,9 +44,7 @@ impl Debug for BTreeEnv {
     }
 }
 impl BTreeEnv {
-    pub fn dir(&self) -> &Path {
-        &self.0.location
-    }
+    
     pub fn open(path: PathBuf, make_dir: bool) -> io::Result<BTreeEnv> {
         let lmdb = db::open(&path, make_dir)?;
         let location = path.canonicalize()?;
@@ -138,6 +136,9 @@ impl BTreeEnv {
             let _ = self.0.log_head.emit(end);
         }
         Ok((start, end))
+    }
+    pub fn dir(&self) -> &Path {
+        &self.0.location
     }
     pub fn real_disk_size(&self) -> io::Result<u64> {
         self.0.lmdb.real_disk_size()

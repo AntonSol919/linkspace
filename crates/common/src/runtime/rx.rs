@@ -10,7 +10,7 @@ pub use futures::task::{LocalSpawn, LocalSpawnExt};
 use linkspace_core::prelude::{*, lmdb::BTreeEnv };
 use linkspace_pkt::reroute::ShareArcPkt;
 use std::{
-    borrow::{Borrow, Cow},
+    borrow::{Cow},
     cell::{Cell, OnceCell, RefCell},
     ops::{ ControlFlow},
     rc::{Rc },
@@ -26,7 +26,7 @@ pub type RxEntry = linkspace_core::matcher::WatchEntry<PktStream>;
 #[derive(Clone)]
 #[must_use = "Linkspace runtime does nothing unless processed"]
 pub struct Linkspace {
-    pub(crate) exec: Rc<Executor>,
+    exec: Rc<Executor>,
 }
 impl std::fmt::Debug for Linkspace {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -38,13 +38,8 @@ enum Pending {
     Close { id: QueryID, range: bool },
 }
 
-impl Borrow<BTreeEnv> for Linkspace {
-    fn borrow(&self) -> &BTreeEnv {
-        self.env()
-    }
-}
 
-pub(crate) struct Executor {
+struct Executor {
     env: BTreeEnv,
     written: Cell<bool>,
     callbacks: RefCell<Matcher>,
@@ -54,7 +49,7 @@ pub(crate) struct Executor {
     process_upto: Cell<Stamp>,
     is_reading: Cell<usize>,
     is_running: Cell<bool>,
-    pub spawner: OnceCell<Rc<dyn LocalAsync>>,
+    spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
 
 impl Linkspace {

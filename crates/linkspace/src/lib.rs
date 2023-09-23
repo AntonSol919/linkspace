@@ -880,7 +880,7 @@ pub mod runtime {
         lk.0.run_while(timeout, qid)
     }
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
-        for el in lk.0.dbg_watches().0.entries() {
+        for el in lk.0.dbg_watches().entries() {
             cb(&el.query_id, Query::from_impl(&el.query))
         }
     }
