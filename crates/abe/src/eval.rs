@@ -5,6 +5,8 @@ use std::cell::LazyCell;
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::ops::{Try, ControlFlow, Deref};
+use std::rc::Rc;
+use std::sync::Arc;
 
 use anyhow::{ anyhow};
 use bstr::BStr;
@@ -418,6 +420,7 @@ pub type Describer<'cb> = &'cb mut dyn FnMut(
     &mut dyn Iterator<Item = ScopeFuncInfo>,
     &mut dyn Iterator<Item = ScopeMacroInfo>,
 );
+
 pub trait Scope {
     fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
         ApplyResult::NoValue
@@ -611,6 +614,37 @@ impl<A: Scope> Scope for &A {
         (**self).try_encode(id, options, bytes)
     }
 }
+impl<A: Scope> Scope for Rc<A> {
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_macro(id, abe, scopes)
+    }
+
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, ctx)
+    }
+    fn describe(&self, cb: Describer) {
+        (**self).describe(cb)
+    }
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        (**self).try_encode(id, options, bytes)
+    }
+}
+impl<A: Scope> Scope for Arc<A> {
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_macro(id, abe, scopes)
+    }
+
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, ctx)
+    }
+    fn describe(&self, cb: Describer) {
+        (**self).describe(cb)
+    }
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        (**self).try_encode(id, options, bytes)
+    }
+}
+
 impl<A: Scope, B: Scope> Scope for (A, B) {
     fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
         self.0

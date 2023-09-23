@@ -35,7 +35,8 @@ pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
         new.push(WriteDest::stdout());
         old.push(WriteDest::stdout());
     }
-    let env = common.env()?;
+    let lk = common.runtime()?;
+    let env = lk.env();
     let inp = common.inp_reader(&pkt_in)?;
     let mut new = common.open(&new)?;
     let mut old = common.open(&old)?;

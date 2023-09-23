@@ -682,8 +682,7 @@ pub mod runtime {
     The linkspace runtime.
 
     It connects to a database and a IPC event source
-    Open or create with [lk_open].
-    This can be called multiple times across threads and processes.
+    Open/create with [lk_open].
     save with [lk_save].
     Use [lk_process] or [lk_process_while] to update the reader
     and get packets with [lk_get], [lk_get_all], and [lk_watch].
@@ -703,13 +702,14 @@ pub mod runtime {
     use super::*;
     /// open a linkspace runtime.
     ///
-    /// will look at `path` or $LK_DIR or '$HOME'
-    /// and open 'PATH/linkspace' unless the basename of PATH is linkspacel 'linkspace'
+    /// will look at `path` | $LK_DIR | '$HOME/linkspace'
     ///
     /// A runtime is used in many arguments.
     /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
-    /// You can open the same instance in multiple threads (sharing their db session & ipc ) and across multiple processes.
-    /// moving an open linkspace across threads is not supported.
+    /// The database is shared across threads and processes.
+    /// The runtime (i.e. lk_watch) is not. 
+    /// The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
+    /// Moving an open runtime across threads is not supported.
     pub fn lk_open(dir: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
         let rt = linkspace_common::static_env::open_linkspace_dir(dir, create)?;
         let mut eval_ctx = crate::abe::ctx::LK_EVAL_CTX_RT.borrow_mut();

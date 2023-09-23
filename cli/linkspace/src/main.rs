@@ -515,7 +515,8 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::DbImport { file } => {
             let file = std::fs::File::open(file)?;
             let mmap = unsafe { memmap2::Mmap::map(&file)? };
-            let env = common.env()?;
+            let lk = common.runtime()?;
+            let env = lk.env();
             let mut bytes = mmap.as_ref();
             let mut pkts : Vec<(&NetPktPtr,SaveState)> = vec![];
             while !bytes.is_empty(){

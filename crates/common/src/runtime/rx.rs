@@ -14,7 +14,7 @@ use std::{
     cell::{Cell, OnceCell, RefCell},
     ops::{ ControlFlow},
     rc::{Rc },
-    time::{Duration, Instant},
+    time::{Duration, Instant}, path::Path,
 };
 use tracing::{warn, Span, debug_span, instrument};
 
@@ -62,6 +62,9 @@ impl Linkspace {
     }
     pub fn spawner(&self) -> &OnceCell<Rc<dyn LocalAsync>> {
         &self.exec.spawner
+    }
+    pub fn dir(&self) -> Option<&Path>{
+        Some(self.exec.env.dir())
     }
 
     fn rt_log_head(&self) -> Stamp {

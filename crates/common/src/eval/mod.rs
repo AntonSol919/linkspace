@@ -35,6 +35,7 @@ pub type LkScope<GT> = (
     ),
 );
 
+
 pub const fn lk_scope<'o, GT>(rt: GT,enable_env:bool) -> LkScope<GT>
 where
     GT: 'o + LKS

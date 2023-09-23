@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{
     io::{self },
-    path::PathBuf, 
+    path::{PathBuf, Path},  sync::OnceLock, 
 };
 
 use crate::{
@@ -15,7 +15,6 @@ use crate::{
 };
 use anyhow::Context;
 use clap::Parser;
-use linkspace_core::prelude::lmdb::BTreeEnv;
 
 use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
 #[derive(Parser, Debug, Clone)]
@@ -48,15 +47,25 @@ pub struct LinkspaceOpts {
     pub init: bool,
     #[arg(long,help="enable [env:OS_VAR] abe scope",default_value_t)]
     pub env: bool,
+
+
+    #[arg(skip)]
+    pub open_dir: OnceLock<PathBuf>,
 }
 impl LinkspaceOpts {
-    pub fn root(&self) -> io::Result<PathBuf> {
-        crate::static_env::find_linkspace(self.dir.as_deref())
+    pub fn dir(&self) -> io::Result<&Path> {
+        self.open_dir.get_or_try_init(|| crate::static_env::lk_dir(self.dir.as_deref()))
+            .map(|o| o.as_path())
     }
-    #[deprecated]
-    pub fn eval(&self, v: &str) -> anyhow::Result<ABList> {
-        Ok(eval(&self.eval_ctx(), &parse_abe_strict_b(v.as_bytes())?)?)
+    
+
+    pub fn runtime_io(&self) -> io::Result<Linkspace> {
+        crate::static_env::get_lk(self.dir.as_deref(), self.init)    
     }
+
+
+
+    
     pub fn fake_eval_ctx(
     ) -> impl Scope {
         crate::eval::lk_scope(|| anyhow::bail!("no linkspace instance "), false)
@@ -64,31 +73,25 @@ impl LinkspaceOpts {
     pub fn eval_ctx(
         &self,
     ) -> impl Scope + '_{
-        crate::eval::lk_scope(|| self.runtime_io().context("could not open linkspace instance"), self.env)
+        crate::eval::lk_scope(
+            || self.runtime_io().context("could not open linkspace instance"),
+            self.env)
     }
     pub fn eval_pkt_ctx<'o>(&'o self,pkt:&'o impl NetPkt) -> impl Scope+'o{
         (self.eval_ctx(),pkt_scope(pkt))
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
-        Ok(self.root()?.join("keys"))
+        Ok(self.dir()?.join("keys"))
     }
-    pub fn runtime_io(&self) -> io::Result<Linkspace> {
-        crate::static_env::open_linkspace_dir(self.dir.as_deref(), self.init)
-    }
+    
     pub fn runtime(&self) -> anyhow::Result<Linkspace> {
         self.runtime_io()
             .with_context(||format!(
                 "Error opening runtime {:?}",
-                crate::static_env::find_linkspace(self.dir.as_deref())
+                crate::static_env::lk_dir(self.dir.as_deref())
             ))
     }
-    pub fn env_io(&self) -> io::Result<&BTreeEnv> {
-        crate::static_env::get_env(&self.root()?, self.init)
-    }
-    pub fn env(&self) -> anyhow::Result<&BTreeEnv> {
-        self.env_io()
-            .context("missing env. try opening with --init or set the --root")
-    }
+    
 }
 
 #[derive(Parser, Debug, Clone,Copy)]
@@ -208,7 +211,7 @@ impl CommonOpts {
         };
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
-                self.linkspace.env_io()?.save_dyn_one(pkt)?;
+                self.linkspace.runtime_io()?.env().save_dyn_one(pkt)?;
                 return Ok(())
             },
             super::Out::Fd(f) => f,

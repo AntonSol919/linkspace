@@ -177,7 +177,11 @@ def lk_enckey(key:SigningKey, password:bytes) -> str: ...
 def lk_list_watches(*args, **kwargs) -> Any: ...
 def lk_open(dir:str|None = None,create:bool=False) -> Linkspace:
     """
-    Open a linkspace instance.
+    A runtime is used in many arguments.
+    Most notable to [lk_save], [lk_get], and [lk_watch] packets.
+    The database is shared across threads and processes.
+    The runtime (i.e. lk_watch) is not. 
+    The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
 
     Args:
         dir: $LK_DIR | $HOME/linkspace
