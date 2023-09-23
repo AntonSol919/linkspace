@@ -1,3 +1,4 @@
+use std::cell::LazyCell;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -651,7 +652,60 @@ impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
             .or_else(|| self.1.try_encode(id, options, bytes))
             .or_else(|| self.2.try_encode(id, options, bytes))
     }
+}
 
+
+impl<T:Scope> Scope for LazyCell<T>{
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_macro(id, abe, scopes)
+    }
+
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, ctx)
+    }
+    fn describe(&self, cb: Describer) {
+        (**self).describe(cb)
+    }
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        (**self).try_encode(id, options, bytes)
+    }
+}
+impl<A: Scope> Scope for anyhow::Result<A> {
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        inpt_and_args: &[&[u8]],
+        init: bool,
+        ctx: &dyn Scope,
+    ) -> ApplyResult {
+        match &self{
+            Ok(scope) => scope.try_apply_func(id, inpt_and_args, init, ctx),
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+        }
+    }
+    fn describe(&self, cb: Describer) {
+        match self {
+            Ok(s) => s.describe(cb),
+            Err(e)=> cb(
+                &format!("{} Err({e})", std::any::type_name::<A>()),
+                "",
+                &mut std::iter::empty(),
+                &mut std::iter::empty(),
+            ),
+        }
+    }
+    fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
+        match &self{
+            Ok(scope) => scope.try_apply_macro(id, abe, scopes),
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+        }
+    }
+    fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
+        match &self{
+            Ok(scope) => scope.try_encode(id, options, bytes),
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+        }
+    }
 }
 
 
