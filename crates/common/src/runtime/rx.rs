@@ -82,10 +82,13 @@ impl Linkspace {
         let reader : ReadTxn<'_>= env.new_read_txn().unwrap();
         let reader : ReadTxn<'static> = unsafe { std::mem::transmute(reader)};
         let at = reader.log_head();
+        // TODO make this an option
+        let files = Some(env.location().join("files"));
+
         Linkspace(Rc::new(Inner{
 
             spawner,
-            files:None,
+            files,
             exec: Executor {
                 env,
                 written: Cell::new(false),

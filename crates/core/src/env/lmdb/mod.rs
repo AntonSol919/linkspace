@@ -1,16 +1,14 @@
 use std::{
     fmt::Debug,
-    io::{self, Write},
+    io::{self },
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use crate::LNS_ROOTS;
-use anyhow::Context;
 pub use ipcbus::ProcBus;
-use linkspace_pkt::{NetPkt, NetPktPtr, Stamp, AB, PUBLIC_GROUP_PKT};
+use linkspace_pkt::{NetPkt, NetPktPtr, Stamp, PUBLIC_GROUP_PKT};
 use lmdb_sys::MDB_envinfo;
-use tracing::instrument;
 
 use self::{
     db::LMDBEnv,
@@ -65,56 +63,7 @@ impl BTreeEnv {
         }
         Ok(env)
     }
-
-    /// get the 'files' directory - read with [file:] abe functions - use [[files_data]] and [[set_files_data]] to guard against path traversal attacks.
-    pub fn files_path(&self) -> PathBuf {
-        self.dir().join("files")
-    }
-
-    #[instrument(ret, skip(bytes))]
-    pub fn set_files_data(
-        &self,
-        path: impl AsRef<std::path::Path> + std::fmt::Debug,
-        bytes: &[u8],
-        overwrite: bool,
-    ) -> anyhow::Result<()> {
-        tracing::trace!(bytes=%AB(bytes));
-        let path = self.dir().join("files").join(check_path(path.as_ref())?);
-        let r: anyhow::Result<()> = try {
-            std::fs::create_dir_all(path.parent().unwrap())?;
-            let mut file = if overwrite {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .truncate(true)
-                    .open(&path)?
-            } else {
-                std::fs::OpenOptions::new()
-                    .create_new(true)
-                    .write(true)
-                    .open(&path)?
-            };
-            file.write_all(bytes)?;
-        };
-        r.with_context(|| anyhow::anyhow!("Target {}", path.to_string_lossy()))
-    }
-    #[instrument(ret)]
-    // notfound_err simplifies context errors
-    pub fn files_data(
-        &self,
-        path: impl AsRef<std::path::Path> + std::fmt::Debug,
-        notfound_err: bool,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = self.dir().join("files").join(check_path(path.as_ref())?);
-        use std::io::ErrorKind::*;
-        match std::fs::read(&path) {
-            Ok(k) => Ok(Some(k)),
-            Err(e) if !notfound_err && e.kind() == NotFound => Ok(None),
-            Err(e) => {
-                Err(e).with_context(|| anyhow::anyhow!("could not open {}", path.to_string_lossy()))
-            }
-        }
-    }
+    pub fn location(&self) -> &Path { &self.0.location}
     #[track_caller]
     pub fn new_read_txn(&self) -> anyhow::Result<ReadTxn> {
         Ok(ReadTxn(self.0.lmdb.read_txn()?))
