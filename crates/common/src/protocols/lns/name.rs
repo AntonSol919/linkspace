@@ -8,7 +8,6 @@
 use std::fmt::Display;
 
 use abe::{ast::{Ctr,  MatchErrorKind} };
-use anyhow::ensure;
 use linkspace_core::prelude::*;
 
 pub const MAX_LNS_NAME_LEN : usize = MAX_SPACE_DEPTH-1;
@@ -41,13 +40,11 @@ pub struct Name { space: SpaceBuf,name_type:NameType}
 pub enum NameType {
     Public,
     Local,
-    File
 }
 impl NameType {
     pub fn from_tail(b:&[u8]) -> Self{
         match b {
             b"local" => NameType::Local,
-            b"file" | b"~" => NameType::File,
             _ => NameType::Public
         }
     }
@@ -57,27 +54,12 @@ impl NameType {
 impl Name {
     pub fn root() -> Self { Name{space: SpaceBuf::new(), name_type:NameType::Public}}
     pub fn local() -> Self { Name{space: space_buf(&[b"local"]), name_type:NameType::Local}}
-    pub(crate) fn file_path(&self) -> anyhow::Result<std::path::PathBuf>{
-        ensure!(matches!(self.name_type , NameType::File));
-
-        let rspace = self.claim_space();
-        let lst = rspace.to_array();
-        let piter = lst.iter()
-            .map(|s| match std::str::from_utf8(s)?{
-                 "claim.pkt" => anyhow::bail!("file keyname can't can't contain the word 'enckey'"),
-                c => Ok(c)
-            });
-        let pb = [Ok("lns")].into_iter()
-            .chain(piter)
-            .chain([Ok("claim.pkt")]).try_collect()?;
-        Ok(pb)
-    }
+    
     pub fn claim_space(&self) -> RootedSpaceBuf { CLAIM_PREFIX.rooted().join(&self.space).rooted()}
-    pub fn claim_group(&self) -> Option<GroupID> {
+    pub fn claim_group(&self) -> GroupID {
         match self.name_type{
-            NameType::Local => Some(PRIVATE),
-            NameType::File => None,
-            NameType::Public => Some(PUBLIC),
+            NameType::Local => PRIVATE,
+            NameType::Public => PUBLIC,
         }
     }
     pub fn from_space(space:&Space) -> Result<Name,NameError>{

@@ -9,7 +9,7 @@ use anyhow::*;
 use linkspace_common::{
     anyhow::{self},
     cli::{clap::Parser,  opts::CommonOpts, *, keys::KeyOpts},
-    prelude::{* }, protocols::lns::{self, name::{NameExpr, NameType}, claim::{ Claim}, PUBKEY_TAG, GROUP_TAG, public_claim::Issue, PUBKEY_AUTH_TAG, lnstag, file_claim::list_claims }, identity,  };
+    prelude::{* }, protocols::lns::{self, name::{NameExpr}, claim::{ Claim}, PUBKEY_TAG, GROUP_TAG, public_claim::Issue, PUBKEY_AUTH_TAG, lnstag }, identity,  };
 use tracing_subscriber::EnvFilter;
 
 
@@ -188,29 +188,15 @@ fn main() -> anyhow::Result<()> {
             let name = name.eval(&ctx)?;
             let lk = common.runtime()?;
             let reader = lk.get_reader();
-            match name.name_type(){
-                NameType::File => {
-                    let mut dir = common.dir()?.join("files");
-                    let claims = list_claims(&mut dir, &name)?;
-                    for c_ok in claims{
-                        match c_ok{
-                            Result::Ok(o) => println!("{o}"),
-                            Err(e) => eprintln!("{e:#?}"),
-                        }
-                    }
-                },
-                _ => {
-                    let claims = lns::utils::list_all_potential_claims_with_prefix(&reader,&name);
-                    for c_ok in claims{
-                        match c_ok {
-                            Result::Ok(o) => {
-                                println!("{o}")
-                            },
-                            Err(e) => eprintln!("{e:#?}"),
-                        }
-                    }
+            let claims = lns::utils::list_all_potential_claims_with_prefix(&reader,&name);
+            for c_ok in claims{
+                match c_ok {
+                    Result::Ok(o) => {
+                        println!("{o}")
+                    },
+                    Err(e) => eprintln!("{e:#?}"),
                 }
-            };
+            }
         },
         Cmd::LsGroup { group } => ls_tag(&common,&GROUP_TAG,group)?,
         Cmd::LsPubkey{ pubkey} => ls_tag(&common,&PUBKEY_TAG,pubkey)?,

@@ -10,7 +10,6 @@ LNS is complex. In part because it supports 3 modes.
 The modes are :
 - public roots (:com , :dev etc) - claims are created and authorities vote - (compromised) keys are easy/cheap to replace and fast path lookup.
 - a :local admin - creates keypoints to other 'roots' creating a chain of names - a simple forward lookup where each (group of) keys names others keys.
-- a :file looks for a claim file in the $LK_DIR/files/ directory
 
 Each has a different concept of when a claim is 'live'.
 
@@ -18,10 +17,8 @@ Not all part of are fully implemented.
 
 **/
 
-
-
 use abe::eval::{ ApplyResult};
-use anyhow::{Context, ensure };
+use anyhow::{ ensure };
 use byte_fmt::{ab, AB};
 use linkspace_argon2_identity::pubkey;
 use linkspace_pkt::{ Domain, Tag, PubKey, GroupID, LkHash, Stamp, Link, rspace1, RootedStaticSpace, Point };
@@ -37,7 +34,6 @@ pub mod claim;
 
 pub mod public_claim;
 pub mod local_claim;
-pub mod file_claim;
 
 pub mod eval;
 pub mod utils;
@@ -84,7 +80,6 @@ pub fn lnstag(stamp:Stamp,rest:&[u8], kind:u8) -> anyhow::Result<Tag>{
 /// Get the parent claim
 pub fn lookup_authority_claim(lk:&Linkspace,name:&Name,issue_handler:IssueHandler) -> anyhow::Result<Result<Claim,Claim>>{
     match name.name_type() {
-        NameType::File => Ok(Ok(Claim::new(name.clone(),Stamp::MAX,&mut [Link::DEFAULT],&[]).unwrap())),
         NameType::Local => todo!(),
         NameType::Public => {
             let (parent,_val) = name.space().pop();
@@ -106,22 +101,6 @@ fn dummy_root(name:&Name) -> LiveClaim{
 /// Lookup the chain of claims that gave a name
 pub fn lookup_live_chain(lk:&Linkspace, name: &Name,issue_handler:IssueHandler) -> anyhow::Result<Result<LiveClaim,LiveClaim>>{
     match name.name_type(){
-        NameType::File => {
-            let path = name.file_path()?;
-            let claim : anyhow::Result<Claim>= try {
-                let pbytes = match lk.env().files_data(&path, false)?{
-                    Some(p) => p,
-                    None => return Ok(Err(dummy_root(name)))
-                };
-                let pkt = linkspace_pkt::read::read_pkt(&pbytes, false)?;
-                Claim::from(pkt.as_ref())?
-            };
-            Ok(Ok(LiveClaim{
-                claim: claim.with_context(||anyhow::anyhow!("Reading claim at {}",path.to_string_lossy()))?,
-                signatures: vec![],
-                parent: None,
-            }))
-        },
         NameType::Local => {
             // No admin process exists yet so we pretend something setup the correct :local claims
              match local_claim::get_private_claim(&lk.get_reader(), name, None).into_ok()?{
@@ -184,20 +163,16 @@ pub fn setup_special_keyclaim(
     overwrite:bool
 ) -> anyhow::Result<PubKey> {
     let sp = name.name_type();
-    ensure!( sp != NameType::Public, "you can only setup :file or :local key claims this way");
+    ensure!( sp == NameType::Local, "you can only setup :local key claims this way");
     if let Ok(Some(c)) = lookup_claim(lk, &name){
         if !overwrite {anyhow::bail!("claim already set but overwrite is false")}
         else { tracing::debug!(old_claim=%c)}
     }
     let pubkey = pubkey(enckey)?.into();
     let claim = Claim::new(name, Stamp::MAX, &mut [Link{tag: ab(&PUBKEY_TAG),ptr:pubkey}], enckey.as_bytes())?;
-    match sp {
-        NameType::Local => {
-            if claim.name.space().to_array().len() > 2 { anyhow::bail!("Local is currently limited to single component name")}
-            local_claim::setup_local_keyclaim(lk, claim,None)?;
-        },
-        NameType::File => file_claim::setup(lk,claim,overwrite)?,
-        NameType::Public => unreachable!()
+    if claim.name.space().to_array().len() > 2 {
+        anyhow::bail!("Local is currently limited to single component name")
     }
+    local_claim::setup_local_keyclaim(lk, claim,None)?;
     Ok(pubkey)
 }
