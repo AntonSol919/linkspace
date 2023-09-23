@@ -86,7 +86,7 @@ pub fn build_with_reader<'o>(
 ) -> anyhow::Result<Option<NetPktParts<'o>>> {
     let ctx = common.eval_ctx();
     let freespace : usize = calc_free_space(&dgs.space, links, &[], build_opts.sign).try_into()?;
-    match reader.read_next_data(&ctx.dynr(),freespace, data_buf)?{
+    match reader.read_next_data(&ctx,freespace, data_buf)?{
         Some(_) => Ok(Some(build(common, build_opts, dgs, links, data_buf)?)),
         None => Ok(None),
     }

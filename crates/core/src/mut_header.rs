@@ -37,10 +37,10 @@ impl NetHeaderMutate {
         b[1] &= clear[1];
         b[1] |= set[1];
     }
-    pub fn from_lst(lst: &[MutFieldExpr], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Self> {
+    pub fn from_lst(lst: &[MutFieldExpr], scope: &dyn Scope) -> anyhow::Result<Self> {
         let mut m = NetHeaderMutate::DEFAULT;
         for v in lst {
-            let r = v.clone().eval(ctx)?;
+            let r = v.clone().eval(scope)?;
             for pre in r.0.try_iter()? {
                 m.try_add_rule(pre)?;
             }

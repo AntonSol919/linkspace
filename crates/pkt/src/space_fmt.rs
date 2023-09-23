@@ -11,10 +11,10 @@ use byte_fmt::{
         ast::{is_fslash, take_ctr_expr, ABEError, Ctr, MatchError},
         convert::TypedABE,
         eval::ABList,
-        ABEValidator, ToABE, ABE, scope::{core_scope, uint::parse_b},
+        ABEValidator, ToABE, ABE, scope::{basic_scope, uint::parse_b},
     },
     eval::{
-         ApplyErr, ApplyResult, EvalCtx, EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
+         ApplyErr, ApplyResult,  EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
         ScopeFunc,
     },
     *,
@@ -100,9 +100,7 @@ impl ABEValidator for SpaceBuf {
 }
 
 pub fn space_str(v: &str) -> Result<SpaceBuf, ABEError<SpaceExprError>> {
-    v.parse::<SpaceExpr>()?.eval(&EvalCtx {
-        scope: core_scope(),
-    })
+    v.parse::<SpaceExpr>()?.eval(&basic_scope())
 }
 impl FromStr for RootedSpaceBuf {
     type Err = ABEError<SpaceExprError>;
@@ -348,7 +346,7 @@ impl EvalScopeImpl for SpaceFE {
         &[
             ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
-                    let lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
+                    let lst = abe::eval::eval(&scope, inp)?;
                     let p = SpaceBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())
                 },
@@ -356,7 +354,7 @@ impl EvalScopeImpl for SpaceFE {
             },
             ScopeMacro {
                 apply: |_,inp:&[ABE],scope:&dyn Scope| {
-                    let mut lst = abe::eval::eval(&EvalCtx { scope }, inp)?;
+                    let mut lst = abe::eval::eval(&scope, inp)?;
                     lst.get_mut().retain(|v|  !v.1.is_empty());
                     let p = SpaceBuf::try_from(lst)?;
                     ApplyResult::Value(p.unwrap())

@@ -359,9 +359,9 @@ pub mod abe {
         pub static LK_EVAL_CTX_RT: std::cell::RefCell<Option<linkspace_common::runtime::Linkspace>> = std::cell::RefCell::new(None);
 
         use anyhow::Context;
-        use linkspace_common::abe::eval::{EvalCtx, Scope};
+        use linkspace_common::abe::eval::{ Scope};
         use linkspace_common::prelude::scope::ArgV;
-        use linkspace_common::prelude::{EScope, NetPkt};
+        use linkspace_common::prelude::{ NetPkt};
 
         use crate::LkResult;
         pub(crate) type StdCtx<'o> = impl Scope + 'o;
@@ -427,7 +427,13 @@ pub mod abe {
             }
         }
 
-        use linkspace_common::pkt::eval::opt_pkt_ctx;
+        pub const fn core_ctx() -> LkCtx<'static> {
+
+            LkCtx(InlineCtx::Core)
+        }
+        pub const fn empty_ctx() -> LkCtx<'static> {
+            LkCtx(InlineCtx::Empty)
+        }
 
         #[cfg(feature="runtime")]
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
@@ -435,27 +441,18 @@ pub mod abe {
         }
         #[cfg(not(feature="runtime"))]
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
-            let inp_ctx = udata
+            use linkspace_common::prelude::*;
+
+            let argv = udata
                 .argv
                 .map(|v| ArgV::try_fit(v).context("Too many inp values"))
                 .transpose()?
                 .map(EScope);
             Ok(LkCtx(InlineCtx::Std((
-                opt_pkt_ctx(
-                    linkspace_common::core::eval::std_ctx(),
-                    udata.pkt.map(|v| v as &dyn NetPkt),
-                )
-                    .scope,
-                inp_ctx,
+                udata.pkt.map(|v| pkt_scope(v)),
+                core_scope(),
+                argv
             ))))
-        }
-
-        pub const fn core_ctx() -> LkCtx<'static> {
-
-            LkCtx(InlineCtx::Core)
-        }
-        pub const fn empty_ctx() -> LkCtx<'static> {
-            LkCtx(InlineCtx::Empty)
         }
 
         #[cfg(feature="runtime")]
@@ -473,12 +470,12 @@ pub mod abe {
             udata: UserData<'o>,
             enable_env: bool,
         ) -> LkResult<LkCtx<'o>> {
-            let inp_ctx = udata
+            use linkspace_common::prelude::*;
+            let argv = udata
                 .argv
                 .map(|v| ArgV::try_fit(v).context("Too many inp values"))
                 .transpose()?
                 .map(EScope);
-            use linkspace_common::eval::std_ctx;
             let get = move || {
                 match lk {
                     None => LK_EVAL_CTX_RT.borrow().as_ref().cloned(),
@@ -487,23 +484,18 @@ pub mod abe {
                 .ok_or_else(|| anyhow::anyhow!("no linkspace instance was set"))
             };
             Ok(LkCtx(InlineCtx::Std((
-                opt_pkt_ctx(
-                    std_ctx(get, enable_env),
-                    udata.pkt.map(|v| v as &dyn NetPkt),
-                )
-                .scope,
-                inp_ctx,
+                udata.pkt.map(|v| pkt_scope(v)),
+                lk_scope(get,enable_env),
+                argv
             ))))
         }
         impl<'o> LkCtx<'o> {
-            pub(crate) fn as_dyn(&self) -> EvalCtx<&(dyn Scope + 'o)> {
+            pub(crate) fn as_dyn(&self) -> &(dyn Scope + 'o) {
                 match &self.0 {
-                    InlineCtx::Std(scope) => EvalCtx { scope },
-                    InlineCtx::Core => EvalCtx {
-                        scope: &linkspace_common::prelude::scope::EVAL_SCOPE,
-                    },
-                    InlineCtx::Empty => EvalCtx { scope: &() },
-                    InlineCtx::Dyn(scope) => EvalCtx{scope},
+                    InlineCtx::Std(scope) => scope,
+                    InlineCtx::Core => &linkspace_common::prelude::CORE_SCOPE,
+                    InlineCtx::Empty => &(),
+                    InlineCtx::Dyn(scope) => scope,
                 }
             }
             #[doc(hidden)]

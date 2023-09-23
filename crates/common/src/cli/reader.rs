@@ -197,7 +197,7 @@ impl DataReadOpts {
     pub fn open_reader(
         &self,
         default_stdin: bool,
-        ctx: &EvalCtx<impl Scope>,
+        ctx: &dyn Scope,
     ) -> anyhow::Result<Reader> {
         let delim = match &self.data_delim {
             Some(delim) => {
@@ -236,7 +236,7 @@ impl Reader {
     #[instrument(skip(self, ctx))]
     pub fn read_next_data(
         &mut self,
-        ctx: &EvalCtx<&dyn Scope>,
+        ctx: &dyn Scope,
         freespace: usize,
         buf: &mut Vec<u8>,
     ) -> anyhow::Result<Option<()>> {

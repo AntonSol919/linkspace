@@ -6,10 +6,10 @@
 
 use std::time::Duration;
 
-use abe::{fncs, eval::{ScopeMacro,  EvalScopeImpl, ScopeFunc, EvalCtx,eval, ApplyResult, ScopeMacroInfo}, ABE, ast};
+use abe::{fncs, eval::{ScopeMacro,  EvalScopeImpl, ScopeFunc, eval, ApplyResult, ScopeMacroInfo}, ABE, ast};
 use anyhow::{anyhow, Context, bail };
 use byte_fmt::AB;
-use linkspace_pkt::{LkHash, pkt_ctx, ptrv};
+use linkspace_pkt::{LkHash, pkt_scope, ptrv};
 
 use crate::{ eval::LKS };
 
@@ -123,16 +123,15 @@ impl<R: LKS > EvalScopeImpl for NetLNS<R> {
     fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
-                let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_fslash());
                 let name = it.next().context("missing name")?;
                 let expr = it.as_slice();
                 let mut it = name.split(|v| v.is_colon());
                 let _empty = it.next().context("arg delimited with ':'")?;
                 ast::exact::<0>(_empty)?;
-                let name : Name = eval(&ctx,it.as_slice())?.try_into()?;
+                let name : Name = eval(scope,it.as_slice())?.try_into()?;
                 let claim = this.get_claim(name)?;
-                let v: ApplyResult = eval(&pkt_ctx(ctx, &claim.pkt), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
+                let v: ApplyResult = eval(&(scope,pkt_scope(&claim.pkt)), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
                 v
             },
             info: ScopeMacroInfo {
@@ -178,7 +177,6 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
     fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
-                let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_fslash());
                 let name = it.next().context("missing name")?;
                 let mut expr = it.as_slice();
@@ -186,9 +184,9 @@ impl<R: LKS> EvalScopeImpl for PrivateLNS<R> {
                 let mut it = name.split(|v| v.is_colon());
                 let _empty = it.next().context("arg delimited with ':'")?;
                 ast::exact::<0>(_empty)?;
-                let name : Name = eval(&ctx,it.as_slice())?.try_into()?;
+                let name : Name = eval(scope,it.as_slice())?.try_into()?;
                 let claim = this.get_claim(name)?.context("cant find claim")?;
-                let v: ApplyResult = eval(&pkt_ctx(ctx, &claim.pkt), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
+                let v: ApplyResult = eval(&(scope,pkt_scope(&claim.pkt)), expr).map(|v| v.concat()).map_err(|e| anyhow!(e.to_string())).into();
                 v
             },
             info: ScopeMacroInfo {

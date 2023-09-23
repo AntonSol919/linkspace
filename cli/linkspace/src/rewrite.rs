@@ -66,7 +66,7 @@ pub fn rewrite_pkt(
     opts: &Rewrite,
     key: Option<&SigningKey>,
     data: Either<&[u8],&mut Reader>,
-    ctx: &EvalCtx<impl Scope>,
+    ctx: &dyn Scope,
 ) -> anyhow::Result<NetPktBox> {
     let group = opts
         .group
@@ -87,7 +87,7 @@ pub fn rewrite_pkt(
         Either::Left(d) => d,
         Either::Right(reader) => {
             let freespace : usize = calc_free_space(space, t.links, &[], key.is_some()).try_into()?;
-            reader.read_next_data(&ctx.dynr(),freespace, &mut buf)?.context("No data provided")?;
+            reader.read_next_data(ctx,freespace, &mut buf)?.context("No data provided")?;
             &buf
         },
     };
@@ -140,12 +140,13 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
     let mut forward = common.open(forward)?;
     for p in inp {
         let pkt = p?;
+        let pctx = (pkt_scope(&**pkt),&ctx);
+
         let data = if *interpret_data { Either::Right(&mut reader)} else { Either::Left(pkt.data())};
         match pkt.parts().fields {
             PointFields::Unknown(_) => todo!(),
             PointFields::DataPoint(_) => common.write_multi_dest(&mut write, &**pkt, None)?,
             PointFields::LinkPoint(s) => {
-                let pctx = pkt_ctx(ctx.reref(), &**pkt);
                 let key = if *sign_mode == SignMode::SignAll {
                     key.identity(common, false).ok()
                 } else {
@@ -161,7 +162,6 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                     }
                     SignMode::Resign | SignMode::SignAll => {
                         let key = key.identity(common, false)?;
-                        let pctx = pkt_ctx(ctx.reref(), &**pkt);
                         let pkt = rewrite_pkt(
                             &lp.head,
                             &lp.tail,
@@ -173,7 +173,6 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                         common.write_multi_dest(&mut write, &**pkt, None)?;
                     }
                     SignMode::Unsign => {
-                        let pctx = pkt_ctx(ctx.reref(), &**pkt);
                         let pkt = rewrite_pkt(
                             &lp.head,
                             &lp.tail,

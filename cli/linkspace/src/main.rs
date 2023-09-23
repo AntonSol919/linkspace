@@ -80,7 +80,7 @@ static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
 });
 static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
     let ctx = LinkspaceOpts::fake_eval_ctx();
-    let pctx = pkt_ctx(ctx, &*PUBLIC_GROUP_PKT);
+    let pctx = (ctx,pkt_scope(&*PUBLIC_GROUP_PKT));
     let v = eval(&pctx, &abev!({ "help" })).unwrap().concat();
     String::from_utf8(v).unwrap()
 });
@@ -483,6 +483,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.into_query(&ctx)?;
             let req = linkspace::conventions::lk_pull_req(&query.into())?;
+            std::mem::drop(ctx);
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;

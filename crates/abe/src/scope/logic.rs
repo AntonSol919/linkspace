@@ -1,4 +1,4 @@
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeMacro, Scope, EvalCtx}, scope_macro, fncs, scope::uint::parse_b, ABE};
+use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeMacro, Scope }, scope_macro, fncs, scope::uint::parse_b, ABE};
 use anyhow::{anyhow, Context};
 
 #[derive(Copy, Clone, Debug)]
@@ -56,7 +56,7 @@ impl EvalScopeImpl for LogicOps {
                       if !it.next().context("missing expr")?.is_empty(){ return Err(anyhow!("expected ':EXPR'"))};
                       let mut err = vec![];
                       for o in it{
-                          match crate::eval::eval(&EvalCtx { scope }, o){
+                          match crate::eval::eval(scope,o){
                               Ok(b) => return Ok(b.concat()),
                               Err(e) => err.push((o,e)),
                           }

@@ -6,7 +6,7 @@
 use crate::*;
 use anyhow::{anyhow, bail, Context};
 use byte_fmt::abe::ast::Ctr;
-use byte_fmt::abe::scope::core_ctx;
+use byte_fmt::abe::scope::basic_scope;
 use byte_fmt::abe::{eval::*, ToABE, ABE};
 use byte_fmt::abe::{scope_macro, fncs};
 
@@ -18,31 +18,21 @@ pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     (pkt_env, pkt_def, (link_select, recv))
 }
 
-pub fn pkt_ctx<'o>(ctx: EvalCtx<impl Scope + 'o>, pkt: &'o dyn NetPkt) -> EvalCtx<impl Scope + 'o> {
-    ctx.scope(pkt_scope(pkt))
-}
-pub fn opt_pkt_ctx<'o>(
-    ctx: EvalCtx<impl Scope + 'o>,
-    pkt: Option<&'o dyn NetPkt>,
-) -> EvalCtx<impl Scope + 'o> {
-    let pkt_scope = pkt.map(pkt_scope);
-    ctx.scope(pkt_scope)
-}
 
 #[track_caller]
 pub fn pkt_fmt(pkt: &dyn NetPkt) -> String {
-    let ctx = pkt_ctx(core_ctx(), pkt);
-    String::from_utf8(abe::eval::eval(&ctx, &DEFAULT_FMT).unwrap().concat()).unwrap()
+    let scope = (basic_scope(),pkt_scope(pkt));
+    String::from_utf8(abe::eval::eval(&scope, &DEFAULT_FMT).unwrap().concat()).unwrap()
 }
 #[track_caller]
 pub fn netpkt_fmt(pkt: &dyn NetPkt) -> String {
-    let ctx = pkt_ctx(core_ctx(), pkt);
-    String::from_utf8(abe::eval::eval(&ctx, &DEFAULT_NETPKT_FMT).unwrap().concat()).unwrap()
+    let scope = (basic_scope(),pkt_scope(pkt));
+    String::from_utf8(abe::eval::eval(&scope, &DEFAULT_NETPKT_FMT).unwrap().concat()).unwrap()
 }
 #[track_caller]
 pub fn point_fmt(pkt: &dyn NetPkt) -> String {
-    let ctx = pkt_ctx(core_ctx(), pkt);
-    String::from_utf8(abe::eval::eval(&ctx, &DEFAULT_POINT_FMT).unwrap().concat()).unwrap()
+    let scope = (basic_scope(),pkt_scope(pkt));
+    String::from_utf8(abe::eval::eval(&scope, &DEFAULT_POINT_FMT).unwrap().concat()).unwrap()
 }
 macro_rules! as_scopefn {
     ($el:tt , $name:expr) => {
@@ -90,16 +80,16 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
             ( @C "pkt",0..=0,Some(true),"default pk fmt",|pkt:&Self,_,_,scope| {
-                let ctx = EvalCtx{scope}.scope(pkt_scope(pkt.0));
-                Ok(abe::eval::eval(&ctx,&DEFAULT_FMT).unwrap().concat())
+                let scope= (pkt_scope(pkt.0),scope);
+                Ok(abe::eval::eval(&scope,&DEFAULT_FMT).unwrap().concat())
             }, none),
             ( @C "netpkt",0..=0,Some(true),"TODO default netpkt fmt",|pkt:&Self,_,_,scope| {
-                let ctx = EvalCtx{scope}.pre_scope(pkt_scope(pkt.0));
-                Ok(abe::eval::eval(&ctx,&DEFAULT_FMT).unwrap().concat())
+                let scope= (pkt_scope(pkt.0),scope);
+                Ok(abe::eval::eval(&scope,&DEFAULT_FMT).unwrap().concat())
             }, none),
             ( @C "point",0..=0,Some(true),"TODO default point fmt",|pkt:&Self,_,_,scope| {
-                let ctx = EvalCtx{scope}.pre_scope(pkt_scope(pkt.0));
-                Ok(abe::eval::eval(&ctx,&DEFAULT_FMT).unwrap().concat())
+                let scope= (pkt_scope(pkt.0),scope);
+                Ok(abe::eval::eval(&scope,&DEFAULT_FMT).unwrap().concat())
             }, none),
             ( @C "pkt-quick",0..=2,Some(true),"[add recv? =false , data_limit = max] same as pkt but without dynamic lookup",|pkt:&Self,arg:&[&[u8]],_,_| {
                 let mut buf = String::new();
@@ -177,8 +167,11 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
                 };
                 let mut out = vec![];
                 for (i,link) in links.0.iter().enumerate() {
-                    let ctx = EvalCtx { scope }.scope(EScope(LinkEnv { link, idx: (i as u16).into() }));
-                    match eval(&ctx, abe) {
+                    let scope = (
+                        EScope(LinkEnv { link, idx: (i as u16).into() }),
+                        scope
+                    );
+                    match eval(&scope, abe) {
                         Ok(ablist) => match ablist.into_exact_bytes() {
                             Ok(o) => {
                                 out.extend_from_slice(&o);

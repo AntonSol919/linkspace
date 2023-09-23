@@ -9,6 +9,7 @@ use std::{ffi::OsStr, os::unix::prelude::OsStrExt};
 
 use anyhow::Context;
 
+
 use linkspace_core::prelude::*;
 /// Various ABE eval Scope's with database access.
 
@@ -26,15 +27,15 @@ impl<F> LKS for F where F: Fn() -> anyhow::Result<Linkspace>+Copy{
     }
 }
 
-pub type RTScope<GT> = (
-    EScope<NetLNS<GT>>,
-    EScope<PrivateLNS<GT>>,
-    (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>,Option<EScope<OSEnv>>),
+pub type LkScope<GT> = (
+    CoreScope,
+    (EScope<NetLNS<GT>>,
+     EScope<PrivateLNS<GT>>,
+     (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>,Option<EScope<OSEnv>>)
+    ),
 );
-pub type RTCtx<GT> = EvalCtx<(EvalStd, RTScope<GT>)>;
 
-
-pub const fn rt_scope<'o, GT>(rt: GT,enable_env:bool) -> RTScope<GT>
+pub const fn lk_scope<'o, GT>(rt: GT,enable_env:bool) -> LkScope<GT>
 where
     GT: 'o + LKS
 {
@@ -46,29 +47,8 @@ where
         rt,
         timeout: std::time::Duration::from_secs(1),
     });
-    (lns, local_lns, (files, readhash,env))
+    (core_scope(),(lns, local_lns, (files, readhash,env)))
 }
-pub fn rt_ctx<'o, GT>(
-    ctx: EvalCtx<impl Scope + 'o>,
-    rt: GT,
-    enable_env:bool
-) -> EvalCtx<(impl Scope + 'o, RTScope<GT>)>
-where
-    GT: 'o + LKS
-{
-    ctx.scope(rt_scope(rt,enable_env))
-}
-
-pub const fn std_ctx<'o, GT>(rt: GT,enable_env:bool) -> RTCtx<GT>
-where
-    GT: 'o + LKS
-{
-    EvalCtx {
-        scope : (linkspace_core::eval::std_ctx().scope, rt_scope(rt,enable_env)),
-    }
-}
-
-
 
 #[derive(Copy, Clone)]
 pub struct ReadHash<GT>(GT);
@@ -153,14 +133,13 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
     fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[ScopeMacro {
             apply: |this, abe: &[ABE], scope| {
-                let ctx = EvalCtx { scope };
                 let mut it = abe.split(|v| v.is_colon());
                 let _empty = it.next().context("arg delimited with ':'")?;
                 ast::exact::<0>(_empty)?;
                 let hash = it.next().context("missing hash")?;
                 let expr = it.next().context("missing expr")?;
                 let alt = it.next();
-                let hash = eval(&ctx, hash)?.concat();
+                let hash = eval(scope, hash)?.concat();
                 let hash: LkHash = LkHash::try_fit_slice(&hash)?;
                 let env = this.0.lk()?;
                 let reader = env.get_reader();
@@ -168,11 +147,11 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                     None => {
                         let alt = alt.with_context(|| format!("could not find pkt {}", hash))?;
                         it.next().context("to many args?")?;
-                        let r = eval(&ctx, alt)?.concat();
+                        let r = eval(scope, alt)?.concat();
                         ApplyResult::Value(r)
                     }
                     Some(pkt) => {
-                        let r = eval(&pkt_ctx(ctx, &pkt), expr)?.concat();
+                        let r = eval( &(scope,pkt_scope(&pkt)), expr)?.concat();
                         //drop(pkt); drop(reader);
                         ApplyResult::Value(r)
                     }

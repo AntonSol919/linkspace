@@ -12,22 +12,14 @@ pub use linkspace_pkt::abe::*;
 use linkspace_pkt::GroupID;
 use linkspace_pkt::SpaceFE;
 use linkspace_pkt::B64;
-use linkspace_pkt::abe::scope::EvalCore;
-use linkspace_pkt::abe::scope::core_scope;
+use linkspace_pkt::abe::scope::{BasicScope,basic_scope};
 
 
-pub type EvalStd = (
-    ((EvalCore, EScope<StaticLNS>), EScope<StampEF>),
-    EScope<SpaceFE>,
-);
-pub const fn std_ctx() -> EvalCtx<EvalStd> {
-    EvalCtx {
-        scope: (
-            ((core_scope(), EScope(StaticLNS)), EScope(StampEF{fixed_now:None})),
-            EScope(SpaceFE),
-        ),
-    }
+pub type CoreScope= (BasicScope, EScope<StaticLNS>, (EScope<StampEF>,EScope<SpaceFE>));
+pub const fn core_scope() -> CoreScope {
+    (basic_scope(), EScope(StaticLNS), (EScope(StampEF{fixed_now:None}),EScope(SpaceFE)))
 }
+pub static CORE_SCOPE : CoreScope = core_scope();
 
 #[derive(Copy, Clone, Debug)]
 pub struct StaticLNS;

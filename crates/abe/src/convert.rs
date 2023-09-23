@@ -58,7 +58,7 @@ impl<A: ABEValidator> TypedABE<A> {
     pub fn eval_default(
         &self,
         default: A,
-        ctx: &EvalCtx<impl Scope>,
+        ctx: &dyn Scope,
     ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
         let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
         if ablst.is_empty() {
@@ -68,7 +68,7 @@ impl<A: ABEValidator> TypedABE<A> {
     }
     pub fn eval(
         &self,
-        ctx: &EvalCtx<impl Scope>,
+        ctx: &dyn Scope,
     ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
         let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
         ablst.try_into().map_err(ABEError::TryFrom)
@@ -178,7 +178,7 @@ impl TryFrom<ABList> for String {
 }
 pub fn eval_vec<A: ABEValidator>(
     v: Vec<TypedABE<A>>,
-    e: &EvalCtx<impl Scope>,
+    e: &impl Scope,
 ) -> Result<Vec<A>, ABEError<<A as TryFrom<ABList>>::Error>> {
     v.into_iter().map(|v| v.eval(e)).try_collect()
 }

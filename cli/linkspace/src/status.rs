@@ -31,7 +31,7 @@ impl StatusArgs {
     #[allow(clippy::type_complexity)]
     pub fn eval(
         self,
-        ctx: &EvalCtx<impl Scope>,
+        ctx: &dyn Scope,
     ) -> anyhow::Result<(Domain, GroupID, Vec<u8>, Option<Vec<u8>>)> {
         Ok((
             self.domain.eval(ctx)?,
@@ -73,7 +73,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
     lk_status_set(&lk, status, move |_,domain,group,space,link| {
         buf.clear();
         let freespace : usize = calc_free_space(space, &[link], &[], false).try_into()?;
-        reader.read_next_data(&c.eval_ctx().dynr(),freespace,&mut buf)?.context("no more data")?;
+        reader.read_next_data(&c.eval_ctx(),freespace,&mut buf)?.context("no more data")?;
         lk_linkpoint(&buf,domain, group, space, &[link], None)
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;

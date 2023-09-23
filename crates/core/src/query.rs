@@ -10,7 +10,7 @@ use linkspace_pkt::{
     abe::{
         self,
         ast::Ctr,
-        eval::{eval, ABList, EvalCtx, EvalScopeImpl, Scope, ScopeFunc},
+        eval::{eval, ABList,  EvalScopeImpl, Scope, ScopeFunc},
         fncs, abconf::ABConf,
     },
     Domain, GroupID, RootedSpaceBuf, PubKey, AB,
@@ -136,10 +136,10 @@ impl Query {
             self.predicates.add_ext_predicate(stmt.try_into().with_context(|| anyhow::anyhow!("could not turn stmt into valid extpred"))?)
         } 
     }
-    pub fn parse(&mut self, multiline_stament: &[u8], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<()> {
+    pub fn parse(&mut self, multiline_stament: &[u8], scope: &dyn Scope) -> anyhow::Result<()> {
         for line in multiline_stament.split(|ch| *ch == b'\n') {
             if line.is_empty(){ continue;}
-            let e = eval(ctx, &abe::parse_abe_strict_b(line)?)?;
+            let e = eval(scope, &abe::parse_abe_strict_b(line)?)?;
             self.add_stmt(e)?;
         }
         Ok(())

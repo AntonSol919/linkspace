@@ -24,12 +24,12 @@ pub fn group() -> GroupID {
     use std::env::*;
 
     use linkspace_pkt::GroupExpr;
-    use crate::{eval::std_ctx, static_env::{LINKSPACE, open_linkspace_dir}};
+    use crate::{eval::lk_scope, static_env::{LINKSPACE, open_linkspace_dir}};
     *GROUP.get_or_init(|| match std::env::var("LK_GROUP") {
         Err(VarError::NotPresent) => PUBLIC,
         Ok(o) => {
             let expr: GroupExpr = o.parse().expect("cant parse LK_GROUP");
-            let ctx = std_ctx(
+            let scope = lk_scope(
                 || {
                     if let Some(o) = LINKSPACE.get() {
                         return Ok(o.clone());
@@ -39,7 +39,7 @@ pub fn group() -> GroupID {
                 },
                 true,
             );
-            expr.eval(&ctx).expect("can't eval LK_GROUP")
+            expr.eval(&scope).expect("can't eval LK_GROUP")
         }
         _ => panic!("can't read LK_DOMAIN as utf8"),
     })
@@ -67,12 +67,12 @@ pub fn domain() -> Domain {
     use std::env::*;
     use linkspace_pkt::DomainExpr;
 
-    use crate::{eval::std_ctx, static_env::{LINKSPACE, open_linkspace_dir}};
+    use crate::{ static_env::{LINKSPACE, open_linkspace_dir}, eval::lk_scope};
     *DOMAIN.get_or_init(|| match std::env::var("LK_DOMAIN") {
         Err(VarError::NotPresent) => ab(b""),
         Ok(o) => {
             let expr: DomainExpr = o.parse().expect("cant parse LK_DOMAIN");
-            let ctx = std_ctx(
+            let scope = lk_scope(
                 || {
                     if let Some(o) = LINKSPACE.get() {
                         return Ok(o.clone());
@@ -82,7 +82,7 @@ pub fn domain() -> Domain {
                 },
                 true,
             );
-            expr.eval(&ctx).expect("can't eval LK_DOMAIN")
+            expr.eval(&scope).expect("can't eval LK_DOMAIN")
         }
         _ => panic!("can't read LK_DOMAIN as utf8"),
     })

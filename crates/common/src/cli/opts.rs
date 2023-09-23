@@ -58,13 +58,16 @@ impl LinkspaceOpts {
         Ok(eval(&self.eval_ctx(), &parse_abe_strict_b(v.as_bytes())?)?)
     }
     pub fn fake_eval_ctx(
-    ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + 'static> {
-        crate::eval::std_ctx(|| anyhow::bail!("no linkspace instance "), false)
+    ) -> impl Scope {
+        crate::eval::lk_scope(|| anyhow::bail!("no linkspace instance "), false)
     }
     pub fn eval_ctx(
         &self,
-    ) -> crate::eval::RTCtx<impl Fn() -> anyhow::Result<Linkspace> + Copy + '_> {
-        crate::eval::std_ctx(|| self.runtime_io().context("could not open linkspace instance"), self.env)
+    ) -> impl Scope + '_{
+        crate::eval::lk_scope(|| self.runtime_io().context("could not open linkspace instance"), self.env)
+    }
+    pub fn eval_pkt_ctx<'o>(&'o self,pkt:&'o impl NetPkt) -> impl Scope+'o{
+        (self.eval_ctx(),pkt_scope(pkt))
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.root()?.join("keys"))

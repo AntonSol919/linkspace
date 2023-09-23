@@ -1,4 +1,4 @@
-use crate::eval::{EScope, EvalCtx};
+use crate::eval::{EScope };
 
 
 
@@ -19,20 +19,14 @@ pub use bytes::BytesFE;
 pub mod uint;
 pub use uint::UIntFE;
 
-pub type EvalCore = (
+pub type BasicScope= (
     (EScope<BytesFE>, EScope<UIntFE>, EScope<BaseNScope>),
     ((EScope<Comment>,EScope<Help>), EScope<LogicOps>, EScope<Encode>),
 );
-pub type EvalCoreCtx = EvalCtx<EvalCore>;
-pub const EVAL_SCOPE: EvalCore = core_scope();
-pub const fn core_scope() -> EvalCore {
+pub const fn basic_scope() -> BasicScope{
     (
         (EScope(BytesFE), EScope(UIntFE), EScope(BaseNScope)),
         ((EScope(Comment),EScope(Help)), EScope(LogicOps), EScope(Encode)),
     )
 }
-pub const fn core_ctx() -> EvalCoreCtx {
-    EvalCtx {
-        scope: core_scope()
-    }
-}
+pub static BASIC_SCOPE : BasicScope = basic_scope();

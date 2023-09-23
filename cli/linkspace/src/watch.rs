@@ -33,11 +33,11 @@ impl DGPDWatchCLIOpts {
         let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
         Ok(it.chain(exprs).collect())
     }
-    pub fn into_query(self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+    pub fn into_query(self, ctx: &impl Scope) -> anyhow::Result<Query> {
         statements2query(&self.iter_statments()?, ctx)
     }
 }
-pub fn statements2query(it: &[TypedABE<ABList>], ctx: &EvalCtx<impl Scope>) -> anyhow::Result<Query> {
+pub fn statements2query(it: &[TypedABE<ABList>], ctx: &impl Scope) -> anyhow::Result<Query> {
     let mut query = Query::default();
     for e in it{
         tracing::trace!(?e, "add expr");

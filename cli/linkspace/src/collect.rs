@@ -104,7 +104,7 @@ impl Collector {
         };
         tracing::debug!(new_pkt=?pkt,"New collect Pkt");
         common.write_multi_dest(&mut self.write, &pkt, Some(&mut self.buf))?;
-        let ctx = pkt_ctx(common.eval_ctx(), &pkt);
+        let ctx = (common.eval_ctx(),pkt_scope(&pkt));
         let hash = pkt.hash();
         self.links.extend(
             self.c_opts
@@ -135,7 +135,7 @@ impl Collector {
         common: &CommonOpts,
     ) -> anyhow::Result<bool> {
         let ctx = common.eval_ctx();
-        let tag = self.c_opts.collect_tag.eval(&pkt_ctx(ctx, &**pkt))?;
+        let tag = self.c_opts.collect_tag.eval(&(ctx,pkt_scope(&**pkt)))?;
 
         self.links.push(Link {
             ptr: pkt.hash(),

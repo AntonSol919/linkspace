@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Display};
 
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ApplyResult, EvalCtx, ScopeFuncInfo, none, ScopeMacro, ScopeMacroInfo}, scope_macro};
+use crate::{eval::{ScopeFunc, EvalScopeImpl, ApplyResult,  ScopeFuncInfo, none, ScopeMacro, ScopeMacroInfo, Scope}, scope_macro};
 
 #[derive(Copy, Clone)]
 pub struct Help;
@@ -39,7 +39,7 @@ impl EvalScopeImpl for Help {
                         };
                         out.into_bytes()
                     } else {
-                        EvalCtx { scope }.to_string().into_bytes()
+                        DisplayHelp(scope).to_string().into_bytes() 
                     }
                 })
             },
@@ -57,7 +57,7 @@ impl EvalScopeImpl for Help {
         &[scope_macro!(
             "help",
             "desribe current eval context",
-            |_, _, scope| { Ok(crate::eval::EvalCtx { scope }.to_string().into_bytes()) }
+            |_, _, scope| { Ok(DisplayHelp(scope).to_string().into_bytes())}
         )]
     }
 }
@@ -105,3 +105,31 @@ pub (crate) fn fmt_describer(
     writeln!(f)?;
     Ok(())
 }
+
+
+/// impl Display for inner Scope
+pub struct DisplayHelp<A>(pub A);
+
+impl<A: Scope> Display for DisplayHelp<A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "The context has one or more scopes active")?;
+        writeln!(f, "Each scope has functions and macros")?;
+        writeln!(f, "For each function the option set  ['[' , '/' , '?'] is given")?;
+        writeln!(f, "These refers to its use as:")?;
+        writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
+        writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
+        writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
+        writeln!(f, "")?;
+
+        let mut err = Ok(());
+        let mut set = HashSet::<&'static str>::new();
+        self.0.describe(&mut |name, about, fncs, macros| {
+            if err.is_err() {
+                return;
+            }
+            err = crate::scope::help::fmt_describer(f, &mut set, name, about, fncs, macros);
+        });
+        err
+    }
+}
+

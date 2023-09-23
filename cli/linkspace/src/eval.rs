@@ -44,8 +44,7 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
 
         let mut reader = read_opts.open_reader(true, &ctx)?;
         loop {
-            let tmp = ctx.scope(ArgList::new(arglist.as_slice()));
-            let ctx = tmp.dynr();
+            let ctx = (&ctx,ArgList::new(arglist.as_slice()));
             let mut bytes = vec![];
             let cont = reader.read_next_data(&ctx, usize::MAX, &mut bytes) ?;
             if cont.is_none() {break};
@@ -53,7 +52,7 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
         }
     }
     
-    let ctx = ctx.scope(ArgList::new(arglist.as_slice()));
+    let ctx = (ctx,ArgList::new(arglist.as_slice()));
     let val = eval(&ctx, &abe)?;
     let mut out = std::io::stdout();
     if json {

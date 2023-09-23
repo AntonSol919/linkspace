@@ -8,7 +8,7 @@ use std::ops::{Try, ControlFlow, Deref};
 use anyhow::{ anyhow};
 use bstr::BStr;
 use std::fmt::{Debug, Display};
-use std::{collections::HashSet, convert::Infallible, ops::FromResidual};
+use std::{ convert::Infallible, ops::FromResidual};
 use thiserror::Error;
 
 use crate::abtxt::as_abtxt;
@@ -433,6 +433,7 @@ pub trait Scope {
         cb("todo", "", &mut std::iter::empty(), &mut std::iter::empty())
     }
 }
+/// Wrapper around an EvalScopeImpl  to impl Scope trait
 #[derive(Copy, Clone)]
 pub struct EScope<T>(pub T);
 impl<T: EvalScopeImpl> Scope for EScope<T> {
@@ -653,39 +654,8 @@ impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
 
 }
 
-#[derive(Copy, Clone, Default)]
-pub struct EvalCtx<SCOPE> {
-    pub scope: SCOPE,
-}
 
-impl<B: Scope> EvalCtx<B> {
-    pub fn scope<F2: Scope>(self, e: F2) -> EvalCtx<(B, F2)> {
-        EvalCtx {
-            scope: (self.scope, e),
-        }
-    }
-    pub fn pre_scope<F2: Scope>(self, e: F2) -> EvalCtx<(F2, B)> {
-        EvalCtx {
-            scope: (e, self.scope),
-        }
-    }
-    pub fn reref(&self) -> EvalCtx<&B> {
-        EvalCtx { scope: &self.scope }
-    }
-    pub fn dynr(&self) -> EvalCtx<&dyn Scope> {
-        EvalCtx { scope: &self.scope }
-    }
-    pub fn boxed<'b>(self) -> EvalCtx<Box<dyn Scope + 'b>>
-    where
-        B: 'b,
-    {
-        EvalCtx {
-            scope: Box::new(self.scope),
-        }
-    }
-}
-
-fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABItem, EvalError> {
+fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalError> {
     match expr {
         ABE::Ctr(c) => {
             dbgprintln!("Match/Return Ctr({c})  (depth={depth})");
@@ -717,7 +687,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                         [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] => (id, r),
                     };
                     dbgprintln!("Eval('{}')", as_abtxt(id));
-                    match ctx.scope.try_apply_macro(id, rest, &ctx.scope) {
+                    match ctx.try_apply_macro(id, rest, &ctx) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Value(b) => {
                             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&b));
@@ -771,7 +741,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
                     let id = stack[0];
                     stack[0] = carry.as_slice();
                     let args = &stack[..size];
-                    carry = call(&ctx.scope, id, args, ctr.is_none())?;
+                    carry = call(&ctx, id, args, ctr.is_none())?;
                 }
             }
             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&carry));
@@ -780,7 +750,7 @@ fn match_expr(depth: usize, ctx: &EvalCtx<impl Scope>, expr: &ABE) -> Result<ABI
     }
 }
 
-pub fn eval(ctx: &EvalCtx<impl Scope>, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
+pub fn eval(ctx: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
     dbgprintln!("init ({})", print_abe(abe));
     match _eval(0, ctx, abe) {
         Ok(l) => {
@@ -795,7 +765,7 @@ pub fn eval(ctx: &EvalCtx<impl Scope>, abe: &[ABE]) -> std::result::Result<ABLis
 }
 pub fn _eval(
     depth: usize,
-    ctx: &EvalCtx<impl Scope>,
+    ctx: &dyn Scope,
     abe: &[ABE],
 ) -> std::result::Result<ABList, EvalError> {
     abe.iter()
@@ -819,7 +789,7 @@ pub enum EncodeError {
 /// :scope/{opts}:
 /// e.g. lns:{known}/b64/uint will attempt to encode bytes through locally known lns, otherwise use b64, and finnally attempt uint
 pub fn encode(
-    ctx: &EvalCtx<impl Scope>,
+    ctx: &dyn Scope,
     bytes: &[u8],
     options: &str,
     ignore_encoder_errors:bool
@@ -828,7 +798,7 @@ pub fn encode(
     encode_abe(ctx, bytes, &lst,ignore_encoder_errors)
 }
 pub fn encode_abe(
-    ctx: &EvalCtx<impl Scope>,
+    ctx: &dyn Scope,
     bytes: &[u8],
     options: &[ABE],
     ignore_encoder_errors:bool
@@ -847,7 +817,7 @@ pub fn encode_abe(
             e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got '{}')",print_abe(e)))),
         };
         //eprintln!("Try {}",as_abtxt(func_id));
-        match ctx.scope.try_encode(func_id, args, bytes) {
+        match ctx.try_encode(func_id, args, bytes) {
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
                 if cfg!(debug_assertions){
@@ -941,31 +911,6 @@ macro_rules! fncs {
 
 
 
-
-
-
-impl<A: Scope> Display for EvalCtx<A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "The context has one or more scopes active")?;
-        writeln!(f, "Each scope has functions and macros")?;
-        writeln!(f, "For each function the option set  ['[' , '/' , '?'] is given")?;
-        writeln!(f, "These refers to its use as:")?;
-        writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
-        writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
-        writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
-        writeln!(f, "")?;
-
-        let mut err = Ok(());
-        let mut set = HashSet::<&'static str>::new();
-        self.scope.describe(&mut |name, about, fncs, macros| {
-            if err.is_err() {
-                return;
-            }
-            err = crate::scope::help::fmt_describer(f, &mut set, name, about, fncs, macros);
-        });
-        err
-    }
-}
 
 /// Note that this destroys context information. \/ and / resolve to the same
 pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {

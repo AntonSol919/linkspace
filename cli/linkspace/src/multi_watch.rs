@@ -8,7 +8,7 @@ use std::thread::JoinHandle;
 use anyhow::{ Context};
 use linkspace_common::{
     cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
-    prelude::{*, scope::core_ctx},
+    prelude::{*  },
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
 
@@ -72,17 +72,12 @@ pub fn setup_watch(
     (common, mv): &(CommonOpts, MultiWatch),
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
-    let (full, core) = (common.eval_ctx(), core_ctx());
-    let ctx = if mv.full_ctx {
-        full.dynr()
-    } else {
-        core.dynr()
-    };
-    query.parse(pkt.data(), &ctx)?;
+    let cli_scope = common.eval_ctx();
+    query.parse(pkt.data(), if mv.full_ctx {&cli_scope} else {&CORE_SCOPE})?;
     
     let mut ok = mv.constraint.or.is_empty();
     for opt in mv.constraint.or.iter(){
-        if query.parse(opt.as_bytes(), &full.dynr()).is_ok(){
+        if query.parse(opt.as_bytes(), &cli_scope).is_ok(){
             ok = true;
             break;
         }

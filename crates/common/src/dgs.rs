@@ -28,20 +28,20 @@ pub struct DGSExpr {
 }
 impl DGSExpr {
     /// Returns eval, and mutates this value to be statically resolvable
-    pub fn resolve(&mut self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGS> {
-        let dgs = self.eval(ctx)?;
+    pub fn resolve(&mut self, scope: &dyn Scope) -> anyhow::Result<DGS> {
+        let dgs = self.eval(scope)?;
         *self = DGSExpr {
             domain: DomainExpr::from_unchecked(dgs.domain.to_abe()),
             group: HashExpr::from_unchecked(dgs.group.to_abe()),
             space: SpaceExpr::from_unchecked(dgs.space.to_abe()),
         };
-        debug_assert_eq!(self.eval(ctx).unwrap(), dgs);
+        debug_assert_eq!(self.eval(scope).unwrap(), dgs);
         Ok(dgs)
     }
-    pub fn eval(&self, ctx: &EvalCtx<impl Scope>) -> anyhow::Result<DGS> {
-        let domain = self.domain.eval(ctx);
-        let group = self.group.eval(ctx);
-        let space = self.space.eval(ctx)?.try_into_rooted();
+    pub fn eval(&self, scope: &dyn Scope) -> anyhow::Result<DGS> {
+        let domain = self.domain.eval(scope);
+        let group = self.group.eval(scope);
+        let space = self.space.eval(scope)?.try_into_rooted();
         match (domain, group, space) {
             (Ok(domain), Ok(group), Ok(space)) => Ok(DGS {
                 domain,

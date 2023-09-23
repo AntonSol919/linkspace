@@ -76,8 +76,8 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
 
     let ctx = common.eval_ctx();
     if error.is_none() && !silent {
-        let data_test = eval(&pkt_ctx(ctx, &***PUBLIC_GROUP_PKT), &datap_fmt);
-        let link_test = eval(&pkt_ctx(ctx, &***SINGLE_LINK_PKT), &linkp_fmt);
+        let data_test = eval(&(&ctx,pkt_scope(&***PUBLIC_GROUP_PKT)), &datap_fmt);
+        let link_test = eval(&(&ctx,pkt_scope(&***SINGLE_LINK_PKT)), &linkp_fmt);
         if data_test.is_err() || link_test.is_err() {
             tracing::warn!(
                 ?data_test,
@@ -136,7 +136,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
                 PointTypeFlags::KEY_POINT => &keyp_fmt,
                 _ => todo!(),
             };
-            let ctx = pkt_ctx(common.eval_ctx(), &**pkt);
+            let ctx = common.eval_pkt_ctx(&**pkt);
             match eval(&ctx, abe).with_context(|| print_abe(abe)) {
                 Ok(b) =>  write(&b.concat())?,
                 Err(e) => {

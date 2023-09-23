@@ -63,7 +63,7 @@ pub fn select(
         if test_ok {
             common.write_multi_dest(&mut write, &**pkt, None)?;
             if live {
-                let ctx = pkt_ctx(common.eval_ctx(), &**pkt);
+                let ctx = (common.eval_ctx(),pkt_scope(&**pkt));
                 let query= statements2query(&stmnts, &ctx)?;
                 e.query = Box::new(query);
                 if let Err(e) =  e.update_tests(){
