@@ -3,6 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#![deny(missing_docs, missing_debug_implementations)]
 #![feature(
     thread_local,
     write_all_vectored,
@@ -22,9 +23,12 @@ Bindings in other languages follow the same pattern.
 Some internals structs defs are currently leaking and will be removed.
 "#]
 
+/// The only error format linkspace supports - alias for anyhow::Error
 pub type LkError = anyhow::Error;
+/// Result for [LkError]
 pub type LkResult<T = ()> = std::result::Result<T, LkError>;
 
+/// Re-export common types
 pub mod prelude {
     pub use super::*;
     pub use linkspace_common::{
@@ -46,6 +50,7 @@ use linkspace_common::pkt;
 pub use prelude::SigningKey;
 
 pub use point::{lk_datapoint, lk_keypoint, lk_linkpoint};
+/// creating points
 pub mod point {
     use std::{borrow::Cow, io};
 
@@ -67,6 +72,7 @@ pub mod point {
     pub fn lk_datapoint(data: &[u8]) -> LkResult<NetPktBox> {
         lk_datapoint_ref(data).map(|v| v.as_netbox())
     }
+    /// like [lk_datapoint] but keeps it on the stack in rust enum format.
     pub fn lk_datapoint_ref(data: &[u8]) -> LkResult<NetPktParts<'_>> {
         Ok(pkt::try_datapoint_ref(data, pkt::NetOpts::Default)?)
     }
@@ -105,6 +111,7 @@ pub mod point {
     ) -> LkResult<NetPktBox> {
         lk_linkpoint_ref(data, domain, group, spacename, links, create_stamp).map(|v| v.as_netbox())
     }
+    /// like [lk_linkpoint] but keeps it on the stack in rust enum format.
     pub fn lk_linkpoint_ref<'o>(
         data: &'o [u8],
         domain: Domain,
@@ -136,6 +143,7 @@ pub mod point {
         lk_keypoint_ref(signkey, data, domain, group, spacename, links, create_stamp)
             .map(|v| v.as_netbox())
     }
+    /// like [lk_keypoint] but keeps it on the stack in rust enum format.
     pub fn lk_keypoint_ref<'o>(
         signkey: &SigningKey,
         data: &'o [u8],
@@ -158,6 +166,7 @@ pub mod point {
         )?)
     }
 
+    /// parse a [NetPktPtr] (the standard binary format) from a buffer
     pub fn lk_read(buf: &[u8], allow_private: bool) -> Result<(Cow<NetPktPtr>, &[u8]), PktError> {
         let pkt = linkspace_common::pkt::read::read_pkt(buf, false)?;
         if !allow_private {
@@ -166,6 +175,7 @@ pub mod point {
         let size: usize = pkt.size().into();
         Ok((pkt, &buf[size..]))
     }
+    /// like [lk_read] but skips the hash validation check
     pub fn lk_read_unchecked(
         buf: &[u8],
         allow_private: bool,
@@ -178,6 +188,7 @@ pub mod point {
         Ok((pkt, &buf[size..]))
     }
 
+    /// Writes any impl [NetPkt] into the binary netpkt format
     pub fn lk_write(
         p: &dyn NetPkt,
         allow_private: bool,
@@ -356,7 +367,9 @@ pub mod abe {
 
         #[cfg(feature = "runtime")]
         #[thread_local]
-        pub static LK_EVAL_CTX_RT: std::cell::RefCell<Option<linkspace_common::runtime::Linkspace>> = std::cell::RefCell::new(None);
+        pub(crate) static LK_EVAL_CTX_RT: std::cell::RefCell<Option<linkspace_common::runtime::Linkspace>> = std::cell::RefCell::new(None);
+
+        use core::fmt;
 
         use anyhow::Context;
         use linkspace_common::abe::eval::{ Scope};
@@ -367,21 +380,27 @@ pub mod abe {
         pub(crate) type StdCtx<'o> = impl Scope + 'o;
         /// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
         pub struct LkCtx<'o>(pub(crate) InlineCtx<'o>);
-        // we optimise for the instance where contains _ctx, but we expose several other context situations
+        impl<'o> fmt::Debug for LkCtx<'o> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.debug_tuple("LkCtx").field(&"_").finish()
+            }
+        }
+        
         #[allow(clippy::large_enum_variant)]
         pub(crate) enum InlineCtx<'o> {
             Std(StdCtx<'o>),
             Dyn(&'o dyn Scope),
-            // TODO UserCb
             Core,
-            Empty,
+            // TODO UserCb
         }
 
-        #[derive(Copy, Clone, Default)]
+        #[derive(Copy, Clone, Default,Debug)]
         #[repr(C)]
         /// User config for setting additional context to evaluation.
         pub struct UserData<'o> {
+            /// Enable the packet context for [abe] e.g. "\[hash:str\]"
             pub pkt: Option<&'o dyn NetPkt>,
+            /// Enable the argv context for [abe] e.g. "\[0\]"
             pub argv: Option<&'o [&'o [u8]]>,
         }
         impl From<()> for UserData<'static> {
@@ -427,19 +446,18 @@ pub mod abe {
             }
         }
 
+        /// create the a core_context - includes basic byte functions (eval "[help]"" to see the full scope)
         pub const fn core_ctx() -> LkCtx<'static> {
-
             LkCtx(InlineCtx::Core)
-        }
-        pub const fn empty_ctx() -> LkCtx<'static> {
-            LkCtx(InlineCtx::Empty)
         }
 
         #[cfg(feature="runtime")]
+        /// the default context used with lk_eval - includes runtime dependent scopes
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
             _ctx(None, udata, false)
         }
         #[cfg(not(feature="runtime"))]
+        /// the default context used with lk_eval - includes runtime dependent scopes
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
             use linkspace_common::prelude::*;
 
@@ -455,15 +473,17 @@ pub mod abe {
             ))))
         }
 
+        /*
         #[cfg(feature="runtime")]
-        pub fn lk_ctx<'o>(
+
+        fn lk_ctx<'o>(
             lk: Option<&'o crate::Linkspace>,
             udata: UserData<'o>,
             enable_env: bool,
         ) -> LkResult<LkCtx<'o>> {
             _ctx(Some(lk.map(|o| &o.0)), udata, enable_env)
         }
-        /// lk:None => get threadlocal Lk . Some(None) => no linkspace
+        */
         #[cfg(feature="runtime")]
         fn _ctx<'o>(
             lk: Option<Option<&'o linkspace_common::runtime::Linkspace>>,
@@ -494,7 +514,6 @@ pub mod abe {
                 match &self.0 {
                     InlineCtx::Std(scope) => scope,
                     InlineCtx::Core => &linkspace_common::prelude::CORE_SCOPE,
-                    InlineCtx::Empty => &(),
                     InlineCtx::Dyn(scope) => scope,
                 }
             }
@@ -507,6 +526,7 @@ pub mod abe {
 }
 
 pub use query::{lk_query, lk_query_parse, lk_query_print, lk_query_push, Query, Q};
+/// query functions to match points
 pub mod query {
     /**
     A set of predicates and options used to select packets
@@ -622,6 +642,7 @@ pub mod query {
 
 #[cfg(feature="runtime")]
 pub use key::lk_key;
+/// cryptographic key functions for use in [lk_keypoint]
 pub mod key {
     use super::prelude::*;
     use super::LkResult;
@@ -677,6 +698,7 @@ pub use runtime::{
     cb::{try_cb}
 };
 #[cfg(feature="runtime")]
+/// a runtime to watch for new points from other processes or threads
 pub mod runtime {
     /**
     The linkspace runtime.
@@ -710,6 +732,7 @@ pub mod runtime {
     /// The runtime (i.e. lk_watch) is not. 
     /// The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
     /// Moving an open runtime across threads is not supported.
+
     pub fn lk_open(dir: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
         let rt = linkspace_common::static_env::open_linkspace_dir(dir, create)?;
         let mut eval_ctx = crate::abe::ctx::LK_EVAL_CTX_RT.borrow_mut();
@@ -992,10 +1015,13 @@ pub mod conventions;
 pub use crate::{conventions::lk_pull};
 
 pub use consts::{PRIVATE, PUBLIC};
+/// consts for common groups & domains
 pub mod consts {
     pub use linkspace_common::core::consts::pkt_consts::*;
     pub use linkspace_common::core::consts::{EXCHANGE_DOMAIN, PRIVATE, PUBLIC, TEST_GROUP};
 }
+
+/// misc functions & tools - less stable
 pub mod misc {
     pub use linkspace_common::pkt_stream_utils::QuickDedup;
     pub use linkspace_common::pkt::tree_order::TreeEntry;

@@ -329,7 +329,7 @@ fn fits() {
 #[test]
 fn abe() {
     fn io<T: ABEValidator + ToABE + PartialEq + std::fmt::Debug>(val: T) {
-        let ctx = crate::abe::scope::core_ctx();
+        let ctx = crate::abe::scope::basic_scope();
         let abe = val.to_abe();
         println!("{:?}", abe);
         let evals = crate::abe::TypedABE::<T>::from_unchecked(abe)
