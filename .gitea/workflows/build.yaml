@@ -1,0 +1,23 @@
+on: [push]
+
+name: Main validation
+
+jobs:
+  full:
+    name: make validate
+    runs-on: self-hosted
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      # skipped because self hosted
+      #- name: Install nightly toolchain 
+      #  uses: actions-rs/toolchain@v1
+      #  with:
+      #    profile: minimal
+      #    toolchain: nightly
+      #    override: true
+      #    components: rustfmt, clippy
+
+      - name: make validate
+        run: make validate

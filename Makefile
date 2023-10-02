@@ -18,3 +18,10 @@ build-debug:
 	mkdir -p "$(R)/target/python"
 	ln -s "$(R)/target/debug/liblinkspace.so" "$(R)/target/python/linkspace.so" 
 	ln -s "$(R)/ffi/linkspace-py/linkspace.pyi"  "$(R)/target/python/linkspace.pyi" 
+
+validate: 
+	RUSTFLAGS="-D warnings" cargo doc --all --no-deps
+	cargo test
+	cargo build
+	cargo fmt --all -- --check
+	cargo clippy -- -D warnings
