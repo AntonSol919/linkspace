@@ -16,12 +16,12 @@ pub struct Costs{
 }
 
 pub const DEFAULT_COST: Costs = Costs{
-    mem:  16384,
+    mem:  1 << 26, // 64mb
     time: 4,
     parallelism: 4,
 };
 pub const EXPENSIVE_COST: Costs = Costs{
-    mem:  16384*2,
+    mem:  1 << 27,
     time: 8,
     parallelism: 8,
 };
@@ -134,7 +134,6 @@ pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
         mem_cost: mem,
         time_cost: time,
         lanes: parallelism,
-        thread_mode: argon2::ThreadMode::Sequential,
         secret: &[],
         ad: &[],
         hash_length: 32,
