@@ -33,15 +33,15 @@ impl DGPDWatchCLIOpts {
         let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
         Ok(it.chain(exprs).collect())
     }
-    pub fn into_query(self, ctx: &impl Scope) -> anyhow::Result<Query> {
-        statements2query(&self.iter_statments()?, ctx)
+    pub fn into_query(self, scope: &impl Scope) -> anyhow::Result<Query> {
+        statements2query(&self.iter_statments()?, scope)
     }
 }
-pub fn statements2query(it: &[TypedABE<ABList>], ctx: &impl Scope) -> anyhow::Result<Query> {
+pub fn statements2query(it: &[TypedABE<ABList>], scope: &impl Scope) -> anyhow::Result<Query> {
     let mut query = Query::default();
     for e in it{
         tracing::trace!(?e, "add expr");
-        let e = e.eval(ctx)?;
+        let e = e.eval(scope)?;
         tracing::trace!(?e, "val");
         query.add_stmt(e)?;
     }
@@ -84,8 +84,8 @@ pub struct CLIQuery {
 impl CLIQuery {
     // FIXME: printing here is confusing
     pub fn into_query(self, common: &CommonOpts) -> anyhow::Result<Option<Query>> {
-        let ctx = common.eval_ctx();
-        let mut select = self.opts.into_query(&ctx)?;
+        let scope = common.eval_scope();
+        let mut select = self.opts.into_query(&scope)?;
         let inner_mode = select.mode()?;
         if inner_mode.is_none() || inner_mode != self.mode {
             let st = self.mode.unwrap_or_default().to_string();

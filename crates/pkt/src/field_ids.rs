@@ -502,9 +502,9 @@ fn fields(){
     let rspace = rspace_buf(&[b"hello",b"world"]);
     let p = linkpoint([1;32].into(), [2;16].into(), &rspace, &[], &[], now(), ());
     let abe = abe::parse_abe("[spacename]",false).unwrap();
-    let space = abe::eval::eval(&pkt_ctx(core_ctx(), &p),&abe).unwrap().into_exact_bytes().unwrap();
+    let space = abe::eval::eval(&pkt_scope(core_scope(), &p),&abe).unwrap().into_exact_bytes().unwrap();
     let pbox = p.as_netbox();
-    let space1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
+    let space1 = abe::eval::eval(&pkt_scope(core_scope(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
     assert_eq!(space,rspace.space_bytes());
     assert_eq!(space,space1)
 }

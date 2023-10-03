@@ -40,13 +40,13 @@ impl StatusArgs {
     #[allow(clippy::type_complexity)]
     pub fn eval(
         self,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> anyhow::Result<(Domain, GroupID, Vec<u8>, Option<Vec<u8>>)> {
         Ok((
-            self.domain.eval(ctx)?,
-            self.group.eval(ctx)?,
-            self.objtype.eval(ctx)?,
-            self.instance.map(|v| v.eval(ctx)).transpose()?,
+            self.domain.eval(scope)?,
+            self.group.eval(scope)?,
+            self.objtype.eval(scope)?,
+            self.instance.map(|v| v.eval(scope)).transpose()?,
         ))
     }
 }
@@ -63,8 +63,8 @@ pub struct StatusSet {
 }
 pub fn status_set(common: CommonOpts,ss: StatusSet) -> anyhow::Result<()> {
     let StatusSet { args, readopts } = ss;
-    let ctx = common.eval_ctx();
-    let (domain, group, objtype, instance) = args.eval(&ctx)?;
+    let scope = common.eval_scope();
+    let (domain, group, objtype, instance) = args.eval(&scope)?;
     use linkspace::prelude::*;
     use linkspace::conventions::status::*;
     let status = LkStatus {
@@ -77,12 +77,12 @@ pub fn status_set(common: CommonOpts,ss: StatusSet) -> anyhow::Result<()> {
     let lk : Linkspace = common.runtime()?.into();
     let c= common.clone();
 
-    let mut reader = readopts.open_reader(false, &ctx)?;
+    let mut reader = readopts.open_reader(false, &scope)?;
     let mut buf = vec![];
     lk_status_set(&lk, status, move |_,domain,group,space,link| {
         buf.clear();
         let freespace : usize = calc_free_space(space, &[link], &[], false).try_into()?;
-        reader.read_next_data(&c.eval_ctx(),freespace,&mut buf)?.context("no more data")?;
+        reader.read_next_data(&c.eval_scope(),freespace,&mut buf)?.context("no more data")?;
         lk_linkpoint(&buf,domain, group, space, &[link], None)
     })?;
     lk_process_while(&lk,None, Stamp::ZERO)?;
@@ -119,8 +119,8 @@ pub fn status_watch(mut common: CommonOpts, ps: StatusWatch) -> anyhow::Result<(
         multi,
     } = ps;
     *common.mut_write_private() = Some(true);
-    let ctx = common.eval_ctx();
-    let (domain, group, objtype, instance) = args.eval(&ctx)?;
+    let scope = common.eval_scope();
+    let (domain, group, objtype, instance) = args.eval(&scope)?;
     let timeout = timeout;
     use linkspace::conventions::status::*;
     let status = LkStatus {

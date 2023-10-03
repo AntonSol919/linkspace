@@ -38,7 +38,7 @@ pub fn select(
     let mut write = common.open(&write)?;
     let mut write_false = common.open(&write_false)?;
     let stmnts :Vec<_> = query.iter_statments()?;
-    let query= statements2query(&stmnts, &common.eval_ctx())?;
+    let query= statements2query(&stmnts, &common.eval_scope())?;
     tracing::debug!(recv_now, ?query.predicates.recv_stamp);
     if !recv_now && query.predicates.recv_stamp != Default::default(){
         anyhow::bail!("Usign the 'recv' predicate in this context refers to the date of reading this packet - not the date it was saved to a database - to suppress this error add --recv-now");
@@ -63,8 +63,8 @@ pub fn select(
         if test_ok {
             common.write_multi_dest(&mut write, &**pkt, None)?;
             if live {
-                let ctx = (common.eval_ctx(),pkt_scope(&**pkt));
-                let query= statements2query(&stmnts, &ctx)?;
+                let scope = (common.eval_scope(),pkt_scope(&**pkt));
+                let query= statements2query(&stmnts, &scope)?;
                 e.query = Box::new(query);
                 if let Err(e) =  e.update_tests(){
                     tracing::info!(?e,"new test is empty");

@@ -58,9 +58,9 @@ impl<A: ABEValidator> TypedABE<A> {
     pub fn eval_default(
         &self,
         default: A,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
-        let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
+        let ablst = eval(scope, &self.0).map_err(ABEError::Eval)?;
         if ablst.is_empty() {
             return Ok(default);
         }
@@ -68,9 +68,9 @@ impl<A: ABEValidator> TypedABE<A> {
     }
     pub fn eval(
         &self,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
-        let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
+        let ablst = eval(scope, &self.0).map_err(ABEError::Eval)?;
         ablst.try_into().map_err(ABEError::TryFrom)
     }
     pub fn from(value: Vec<ABE>) -> Result<Self, MatchError> {

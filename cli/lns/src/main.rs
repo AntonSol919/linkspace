@@ -96,12 +96,12 @@ fn main() -> anyhow::Result<()> {
     match cmd {
         Cmd::Vote { name, claim, key ,write } => {
             let lk= common.runtime()?;
-            let ctx = common.eval_ctx();
-            let name = name.eval(&ctx)?;
+            let scope = common.eval_scope();
+            let name = name.eval(&scope)?;
             let mut write = common.open(&write)?;
 
             let reader =lk.get_reader();
-            let hash = claim.eval(&ctx)?;
+            let hash = claim.eval(&scope)?;
             let claim_pkt = reader.read(&hash)?.context("cant find claim")?;
             let claim = Claim::from(claim_pkt)?;
             ensure!(claim.name == name);
@@ -118,7 +118,7 @@ fn main() -> anyhow::Result<()> {
             let (is_ok,liveclaim) = match name {
                 None => (true,lns::public_claim::root_claim()),
                 Some(name) => {
-                    let name = name.eval(&common.eval_ctx())?;
+                    let name = name.eval(&common.eval_scope())?;
                     let mut issue_handler = |issue:Issue| {eprintln!("{:?}",issue); Ok(())};
                     let r = lns::lookup_live_chain(&common.runtime()?, &name, &mut issue_handler)?;
                     let is_ok = r.is_ok();
@@ -142,13 +142,13 @@ fn main() -> anyhow::Result<()> {
         },
         Cmd::CreateClaim { name, group, pubkey, auth, until, write,allow_empty, no_auth, enckey,copy_from} => {
             let mut write = common.open(&write)?;
-            let ctx = common.eval_ctx();
-            let until = until.eval(&ctx)?;
+            let scope = common.eval_scope();
+            let until = until.eval(&scope)?;
 
             let as_link = |tag:Tag| move |ptr:LkHash| Link::new(tag,ptr);
             let mut links = vec![];
-            let name = name.eval(&ctx)?;
-            let mut pubkey = pubkey.map(|e| e.eval(&ctx)).transpose()?;
+            let name = name.eval(&scope)?;
+            let mut pubkey = pubkey.map(|e| e.eval(&scope)).transpose()?;
             let mut data= vec![];
             match enckey {
                 Some(k) => {
@@ -161,17 +161,17 @@ fn main() -> anyhow::Result<()> {
                 None => {},
             }
             if let Some(n) = copy_from{
-                let alt_name = n.eval(&ctx)?;
+                let alt_name = n.eval(&scope)?;
                 pubkey = lns::lookup_pubkey(&common.runtime()?, &alt_name)?;
             }
 
-            let group = group.map(|e| e.eval(&ctx)).transpose()?;
+            let group = group.map(|e| e.eval(&scope)).transpose()?;
 
             links.extend(group.map(as_link(ab(&GROUP_TAG))));
             links.extend(pubkey.map(as_link(ab(&PUBKEY_TAG))));
             links.extend(pubkey.filter(|_| !no_auth).map(as_link(ab(&PUBKEY_AUTH_TAG))));
             for link_e in auth {
-                let mut auth_link = link_e.eval(&ctx)?;
+                let mut auth_link = link_e.eval(&scope)?;
                 let tag = auth_link.tag.cut_prefix_nulls();
                 auth_link.tag = lnstag(Stamp::ZERO,&tag,b'^')?;
                 links.push(auth_link)
@@ -184,8 +184,8 @@ fn main() -> anyhow::Result<()> {
             common.write_multi_dest(&mut write, &claim.pkt, None)?;
         },
         Cmd::Ls { name } => {
-            let ctx = common.eval_ctx();
-            let name = name.eval(&ctx)?;
+            let scope = common.eval_scope();
+            let name = name.eval(&scope)?;
             let lk = common.runtime()?;
             let reader = lk.get_reader();
             let claims = lns::utils::list_all_potential_claims_with_prefix(&reader,&name);
@@ -206,8 +206,8 @@ fn main() -> anyhow::Result<()> {
 
 
 fn ls_tag(common:&CommonOpts,tag:&[u8],ptr:Option<PExpr>) -> anyhow::Result<()>{
-    let ctx = common.eval_ctx();
-    let ptr = ptr.map(|g|g.eval(&ctx)).transpose()?;
+    let scope = common.eval_scope();
+    let ptr = ptr.map(|g|g.eval(&scope)).transpose()?;
     let lk = common.runtime()?;
     let reader = lk.get_reader();
     for c_ok in lns::utils::list_all_reverse_lookups(&reader,tag,ptr){

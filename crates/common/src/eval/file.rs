@@ -69,7 +69,7 @@ impl Linkspace {
         r.with_context(|| anyhow::anyhow!("Target {}", path.to_string_lossy()))
     }
     #[instrument(ret)]
-    // notfound_err simplifies context errors
+    // notfound_err simplifies scope errors
     pub fn files_data(
         &self,
         path: &Path,

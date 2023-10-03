@@ -45,7 +45,7 @@ impl<'o,A: AsRef<[B]>+'o, B: AsRef<[u8]>+'o> Scope for ArgList<'o,A,B> {
         id: &[u8],
         args: &[&[u8]],
         init: bool,
-        _ctx: &dyn Scope,
+        _scope: &dyn Scope,
     ) -> ApplyResult {
         if id == b"argv"{
             let slicing = self.0.as_ref();

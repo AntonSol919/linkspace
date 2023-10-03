@@ -125,7 +125,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                 },
                 info: ScopeFuncInfo {
                     id:  "read", init_eq: None, argc: 2..=16,to_abe:false,
-                    help:"read but accesses open a pkt by dgpk space and apply args. e.g. [read:mydomain:[#:pub]:[//a/space]:[@:me]::data:str] - does not use default group/domain - prefer eval ctx"
+                    help:"read but accesses open a pkt by dgpk space and apply args. e.g. [read:mydomain:[#:pub]:[//a/space]:[@:me]::data:str] - does not use default group/domain - prefer eval scope"
                 },
                 to_abe:none
             },

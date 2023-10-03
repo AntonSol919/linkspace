@@ -66,19 +66,19 @@ impl LinkspaceOpts {
 
 
     
-    pub fn fake_eval_ctx(
+    pub fn fake_eval_scope(
     ) -> impl Scope {
         crate::eval::lk_scope(|| anyhow::bail!("no linkspace instance "), false)
     }
-    pub fn eval_ctx(
+    pub fn eval_scope(
         &self,
     ) -> impl Scope + '_{
         crate::eval::lk_scope(
             || self.runtime_io().context("could not open linkspace instance"),
             self.env)
     }
-    pub fn eval_pkt_ctx<'o>(&'o self,pkt:&'o impl NetPkt) -> impl Scope+'o{
-        (self.eval_ctx(),pkt_scope(pkt))
+    pub fn eval_pkt_scope<'o>(&'o self,pkt:&'o impl NetPkt) -> impl Scope+'o{
+        (self.eval_scope(),pkt_scope(pkt))
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.dir()?.join("keys"))
@@ -194,9 +194,9 @@ impl CommonOpts {
         Ok(Some(pkt))
     }
     pub fn open(&self, lst: &[WriteDestSpec]) -> std::io::Result<Vec<WriteDest>> {
-        let ctx = self.eval_ctx();
+        let scope = self.eval_scope();
         lst.iter()
-            .filter_map(|v| v.open(&ctx).transpose())
+            .filter_map(|v| v.open(&scope).transpose())
             .try_collect()
     }
     pub fn write_dest(
@@ -219,7 +219,7 @@ impl CommonOpts {
                 .as_mut()
                 .ok_or_else(|| io::Error::other("no buffer in this context"))?,
         };
-        write_pkt2(&dest.prep, pkt, &self.eval_ctx(), out)
+        write_pkt2(&dest.prep, pkt, &self.eval_scope(), out)
     }
 
     pub fn write_multi_dest(
@@ -246,10 +246,10 @@ impl CommonOpts {
     pub fn stdout_writer(&self) -> impl PktStreamHandler {
         let allow_private = self.write_private().unwrap_or(false);
         let mut out = std::io::stdout();
-        let ctx = self.clone();
+        let scope = self.clone();
         move |p: &dyn NetPkt, _rx: &Linkspace| -> std::io::Result<()> {
             if!allow_private{p.check_private().map_err(|e|e.io())?}
-            write_pkt2(&None, p, &ctx.eval_ctx(), &mut out)
+            write_pkt2(&None, p, &scope.eval_scope(), &mut out)
         }
     }
     pub fn inp_reader(&self,inp: &PktReadOpts) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {

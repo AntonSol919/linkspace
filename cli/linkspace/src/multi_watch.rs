@@ -24,9 +24,9 @@ pub struct MultiWatch {
     inp:PktReadOpts,
     #[command(flatten)]
     print: PrintABE,
-    /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
+    /// by default evaluation in scope is limited to static functions. enable 'live' queries.
     #[arg(short, long)]
-    full_ctx: bool,
+    full_scope: bool,
 
     /// Continue after closing stdin
     #[arg(short, long)]
@@ -72,8 +72,8 @@ pub fn setup_watch(
     (common, mv): &(CommonOpts, MultiWatch),
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
-    let cli_scope = common.eval_ctx();
-    query.parse(pkt.data(), if mv.full_ctx {&cli_scope} else {&CORE_SCOPE})?;
+    let cli_scope = common.eval_scope();
+    query.parse(pkt.data(), if mv.full_scope {&cli_scope} else {&CORE_SCOPE})?;
     
     let mut ok = mv.constraint.or.is_empty();
     for opt in mv.constraint.or.iter(){

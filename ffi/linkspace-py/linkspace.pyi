@@ -181,7 +181,7 @@ def lk_open(dir:str|None = None,create:bool=False) -> Linkspace:
     Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     The database is shared across threads and processes.
     The runtime (i.e. lk_watch) is not. 
-    The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
+    The first call (per thread) sets the default instance for functions like [lk_eval] (see [varscope] for more options).
 
     Args:
         dir: $LK_DIR | $HOME/linkspace
@@ -221,7 +221,7 @@ def lk_query_parse(q:Query, *statement : str,
                    pkt:Pkt|None=None, argv:list[bytes|str]|None=None):
     """
     Add one or more statements in ABE format. Use lk_query_push if the encoding step is superfluous.
-    Each is evaluated with pkt and argv as context
+    Each is evaluated with pkt and argv in scope
 
     See the guide or rust docs for a full list of predicates and options
     """

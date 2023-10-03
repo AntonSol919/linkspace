@@ -193,15 +193,15 @@ impl ReadSource {
     }
 }
 impl DataReadOpts {
-    #[instrument(skip(ctx))]
+    #[instrument(skip(scope))]
     pub fn open_reader(
         &self,
         default_stdin: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> anyhow::Result<Reader> {
         let delim = match &self.data_delim {
             Some(delim) => {
-                let vec = delim.eval(ctx)?;
+                let vec = delim.eval(scope)?;
                 ensure!(vec.len() == 1, "delimiter can only be a single byte");
                 Some(vec[0])
             }
@@ -233,10 +233,10 @@ pub struct Reader {
 }
 impl Reader {
     /// pull one data block from the source, returns Some to continue, None to stop.
-    #[instrument(skip(self, ctx))]
+    #[instrument(skip(self, scope))]
     pub fn read_next_data(
         &mut self,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
         freespace: usize,
         buf: &mut Vec<u8>,
     ) -> anyhow::Result<Option<()>> {
@@ -246,7 +246,7 @@ impl Reader {
 
         if let Some(mut b) = self.next.take() {
             if self.on_overflow == EMode::Carry {
-                self.read_next_data(ctx, freespace, buf)?;
+                self.read_next_data(scope, freespace, buf)?;
                 b.extend_from_slice(buf);
                 *buf = b;
             } else {
@@ -281,7 +281,7 @@ impl Reader {
             buf.pop();
         }
         if self.eval {
-            *buf = eval(ctx, &parse_abe_strict_b(buf)?)?.concat();
+            *buf = eval(scope, &parse_abe_strict_b(buf)?)?.concat();
         }
         self.check_size(buf, freespace)?;
         Ok(Some(()))

@@ -35,7 +35,7 @@ pub struct WatchStatus{
 }
 
 #[derive(Debug)]
-/// Stored predicates, predicate state, identity, and associated ctx \<C\> ( usually a callback )
+/// Stored predicates, predicate state, identity, and associated scope \<C\> ( usually a callback )
 pub struct WatchEntry<C> {
     pub watch_id: usize,
     pub query_id: QueryID,

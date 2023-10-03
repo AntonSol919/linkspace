@@ -422,7 +422,7 @@ pub type Describer<'cb> = &'cb mut dyn FnMut(
 );
 
 pub trait Scope {
-    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _scope: &dyn Scope) -> ApplyResult {
         ApplyResult::NoValue
     }
     fn try_apply_func(
@@ -430,7 +430,7 @@ pub trait Scope {
         id: &[u8],
         inp_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult;
     fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String>;
     fn describe(&self, cb: Describer) {
@@ -441,7 +441,7 @@ pub trait Scope {
 #[derive(Copy, Clone)]
 pub struct EScope<T>(pub T);
 impl<T: EvalScopeImpl> Scope for EScope<T> {
-    fn try_apply_func(&self, id: &[u8], inp: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(&self, id: &[u8], inp: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
         for ScopeFunc { apply, info, .. } in self.0.list_funcs() {
             if info.id.as_bytes() == id {
                 if info.init_eq.is_some() && info.init_eq != Some(init) {
@@ -450,7 +450,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
                 if !info.argc.contains(&inp.len()) {
                     return ApplyResult::arg_err(inp, &format!("between {:?}", info.argc));
                 }
-                return apply(&self.0, inp, init, ctx);
+                return apply(&self.0, inp, init, scope);
             }
         }
         ApplyResult::NoValue
@@ -525,7 +525,7 @@ impl Scope for () {
         _id: &[u8],
         _args: &[&[u8]],
         _init: bool,
-        _ctx: &dyn Scope,
+        _scope: &dyn Scope,
     ) -> ApplyResult {
         AR::NoValue
     }
@@ -548,10 +548,10 @@ impl<A: Scope> Scope for Option<A> {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult {
         self.as_ref()
-            .map(|x| x.try_apply_func(id, inpt_and_args, init, ctx))
+            .map(|x| x.try_apply_func(id, inpt_and_args, init, scope))
             .unwrap_or(ApplyResult::NoValue)
     }
     fn describe(&self, cb: Describer) {
@@ -586,9 +586,9 @@ impl Scope for &dyn Scope {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult {
-        (**self).try_apply_func(id, inpt_and_args, init, ctx)
+        (**self).try_apply_func(id, inpt_and_args, init, scope)
     }
 
     fn describe(&self, cb: Describer) {
@@ -604,8 +604,8 @@ impl<A: Scope> Scope for &A {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -619,8 +619,8 @@ impl<A: Scope> Scope for Rc<A> {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -634,8 +634,8 @@ impl<A: Scope> Scope for Arc<A> {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -646,10 +646,10 @@ impl<A: Scope> Scope for Arc<A> {
 }
 
 impl<A: Scope, B: Scope> Scope for (A, B) {
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
         self.0
-            .try_apply_func(id, args, init, ctx)
-            .or_else(|| self.1.try_apply_func(id, args, init, ctx))
+            .try_apply_func(id, args, init, scope)
+            .or_else(|| self.1.try_apply_func(id, args, init, scope))
     }
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
         self.0
@@ -667,8 +667,8 @@ impl<A: Scope, B: Scope> Scope for (A, B) {
     }
 }
 impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
+        ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, scope)
     }
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
         ((&self.0, &self.1), &self.2).try_apply_macro(id, abe, scope)
@@ -694,8 +694,8 @@ impl<T:Scope> Scope for LazyCell<T>{
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, scope: &dyn Scope) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -710,10 +710,10 @@ impl<A: Scope> Scope for anyhow::Result<A> {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        o_scope: &dyn Scope,
     ) -> ApplyResult {
         match &self{
-            Ok(scope) => scope.try_apply_func(id, inpt_and_args, init, ctx),
+            Ok(scope) => scope.try_apply_func(id, inpt_and_args, init, o_scope),
             Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
         }
     }
@@ -743,7 +743,7 @@ impl<A: Scope> Scope for anyhow::Result<A> {
 }
 
 
-fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalError> {
+fn match_expr(depth: usize, scope: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalError> {
     match expr {
         ABE::Ctr(c) => {
             dbgprintln!("Match/Return Ctr({c})  (depth={depth})");
@@ -775,7 +775,7 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                         [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] => (id, r),
                     };
                     dbgprintln!("Eval('{}')", as_abtxt(id));
-                    match ctx.try_apply_macro(id, rest, &ctx) {
+                    match scope.try_apply_macro(id, rest, &scope) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Value(b) => {
                             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&b));
@@ -787,7 +787,7 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                 [ABE::Expr(Expr::Lst(_)), ..] | [ABE::Expr(_), ABE::Expr(_) ]=> {
                     Err(EvalError::Other(anyhow!("function names can not be expressions")))?
                 }
-                _ => _eval(depth + 1, ctx, ls)?,
+                _ => _eval(depth + 1, scope, ls)?,
             };
 
             fn call(
@@ -829,7 +829,7 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                     let id = stack[0];
                     stack[0] = carry.as_slice();
                     let args = &stack[..size];
-                    carry = call(&ctx, id, args, ctr.is_none())?;
+                    carry = call(&scope, id, args, ctr.is_none())?;
                 }
             }
             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&carry));
@@ -838,9 +838,9 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
     }
 }
 
-pub fn eval(ctx: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
+pub fn eval(scope: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
     dbgprintln!("init ({})", print_abe(abe));
-    match _eval(0, ctx, abe) {
+    match _eval(0, scope, abe) {
         Ok(l) => {
             dbgprintln!("result ({})", l);
             Ok(l)
@@ -853,11 +853,11 @@ pub fn eval(ctx: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalErr
 }
 pub fn _eval(
     depth: usize,
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     abe: &[ABE],
 ) -> std::result::Result<ABList, EvalError> {
     abe.iter()
-        .map(|expr| match_expr(depth, ctx, expr))
+        .map(|expr| match_expr(depth, scope, expr))
         .try_collect()
 }
 
@@ -877,16 +877,16 @@ pub enum EncodeError {
 /// :scope/{opts}:
 /// e.g. lns:{known}/b64/uint will attempt to encode bytes through locally known lns, otherwise use b64, and finnally attempt uint
 pub fn encode(
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     bytes: &[u8],
     options: &str,
     ignore_encoder_errors:bool
 ) -> std::result::Result<String, EncodeError> {
     let lst = parse_abe_strict_b(options.as_bytes()).map_err(EncodeError::ParseError)?;
-    encode_abe(ctx, bytes, &lst,ignore_encoder_errors)
+    encode_abe(scope, bytes, &lst,ignore_encoder_errors)
 }
 pub fn encode_abe(
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     bytes: &[u8],
     options: &[ABE],
     ignore_encoder_errors:bool
@@ -905,11 +905,11 @@ pub fn encode_abe(
             e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got '{}')",print_abe(e)))),
         };
         //eprintln!("Try {}",as_abtxt(func_id));
-        match ctx.try_encode(func_id, args, bytes) {
+        match scope.try_encode(func_id, args, bytes) {
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
                 if cfg!(debug_assertions){
-                    let redo = eval(ctx, &parse_abe_strict_b(&st.as_bytes()).expect("bug: encode fmt"))
+                    let redo = eval(scope, &parse_abe_strict_b(&st.as_bytes()).expect("bug: encode fmt"))
                         .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
                     let redo = redo.as_exact_bytes()
                         .expect("bug: encode multi");
@@ -959,16 +959,16 @@ macro_rules! fnc {
         $crate::fnc!($id,$argc,None,$help,$fnc)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr ) => {
-        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), none)
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_scope:&dyn $crate::eval::Scope| $fnc(a,b), none)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr ) => {
-        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), $to_abe)
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_scope:&dyn $crate::eval::Scope| $fnc(a,b), $to_abe)
     };
     ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, none) => {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: false},
-            apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                $fnc(a,b,init,ctx).into()
+            apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                $fnc(a,b,init,scope).into()
             },
             to_abe:$crate::eval::none
         }
@@ -976,8 +976,8 @@ macro_rules! fnc {
     ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr) => {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: true },
-            apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                $fnc(a,b,init,ctx).into()
+            apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                $fnc(a,b,init,scope).into()
             },
             to_abe:$to_abe
         }

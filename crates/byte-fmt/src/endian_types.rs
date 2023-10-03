@@ -329,11 +329,11 @@ fn fits() {
 #[test]
 fn abe() {
     fn io<T: ABEValidator + ToABE + PartialEq + std::fmt::Debug>(val: T) {
-        let ctx = crate::abe::scope::basic_scope();
+        let scope = crate::abe::scope::basic_scope();
         let abe = val.to_abe();
         println!("{:?}", abe);
         let evals = crate::abe::TypedABE::<T>::from_unchecked(abe)
-            .eval(&ctx)
+            .eval(&scope)
             .map_err(|_| "err")
             .unwrap();
         assert_eq!(evals, val);

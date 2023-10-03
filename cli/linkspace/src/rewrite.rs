@@ -66,28 +66,28 @@ pub fn rewrite_pkt(
     opts: &Rewrite,
     key: Option<&SigningKey>,
     data: Either<&[u8],&mut Reader>,
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
 ) -> anyhow::Result<NetPktBox> {
     let group = opts
         .group
         .as_ref()
-        .map(|v| v.eval(ctx))
+        .map(|v| v.eval(scope))
         .transpose()?
         .unwrap_or(h.group);
     let domain = opts
         .domain
         .as_ref()
-        .map(|v| v.eval(ctx))
+        .map(|v| v.eval(scope))
         .transpose()?
         .unwrap_or(h.domain);
-    let space = opts.space.as_ref().map(|v| v.eval(ctx)).transpose()?;
+    let space = opts.space.as_ref().map(|v| v.eval(scope)).transpose()?;
     let space = space.as_deref().unwrap_or(t.rspace);
     let mut buf = vec![];
     let data :&[u8]= match data {
         Either::Left(d) => d,
         Either::Right(reader) => {
             let freespace : usize = calc_free_space(space, t.links, &[], key.is_some()).try_into()?;
-            reader.read_next_data(ctx,freespace, &mut buf)?.context("No data provided")?;
+            reader.read_next_data(scope,freespace, &mut buf)?.context("No data provided")?;
             &buf
         },
     };
@@ -100,7 +100,7 @@ pub fn rewrite_pkt(
         data,
         opts.create
             .as_ref()
-            .map(|o| o.eval(ctx))
+            .map(|o| o.eval(scope))
             .transpose()?
             .unwrap_or(h.create_stamp),
         key,
@@ -130,17 +130,17 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
         interpret_data,
         ..
     } = &ropts;
-    let ctx = common.eval_ctx();
+    let scope = common.eval_scope();
     if matches!(sign_mode, SignMode::SignAll | SignMode::Resign) {
         key.identity(common, true)?;
     }
-    let mut reader = data_read.open_reader(false,&ctx)?;
+    let mut reader = data_read.open_reader(false,&scope)?;
     let inp = common.inp_reader(pkt_in)?;
     let mut write = common.open(write)?;
     let mut forward = common.open(forward)?;
     for p in inp {
         let pkt = p?;
-        let pctx = (pkt_scope(&**pkt),&ctx);
+        let pscope = (pkt_scope(&**pkt),&scope);
 
         let data = if *interpret_data { Either::Right(&mut reader)} else { Either::Left(pkt.data())};
         match pkt.parts().fields {
@@ -152,7 +152,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                 } else {
                     None
                 };
-                let pkt = rewrite_pkt(&s.head, &s.tail, &ropts, key, data, &pctx)?;
+                let pkt = rewrite_pkt(&s.head, &s.tail, &ropts, key, data, &pscope)?;
                 common.write_multi_dest(&mut write, &**pkt, None)?;
             }
             PointFields::KeyPoint(lp,_s) => {
@@ -168,7 +168,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                             &ropts,
                             Some(key),
                             data,
-                            &pctx,
+                            &pscope,
                         )?;
                         common.write_multi_dest(&mut write, &**pkt, None)?;
                     }
@@ -179,7 +179,7 @@ pub fn rewrite(common: &CommonOpts, ropts: Rewrite) -> anyhow::Result<()> {
                             &ropts,
                             None,
                             data,
-                            &pctx,
+                            &pscope,
                         )?;
                         common.write_multi_dest(&mut write, &**pkt, None)?;
                     }

@@ -67,7 +67,7 @@ impl KeyOpts {
                     Ok(crate::identity::decrypt(enckey, &password_bytes)?)
                 },
                 None => {
-                    let name = self.key.eval(&common.eval_ctx())?;
+                    let name = self.key.eval(&common.eval_scope())?;
                     let (_,enckey)= lns::lookup_enckey(&common.runtime()?, &name)?.context("no such enckey")?;
                     let password_bytes = self.password_bytes(common, prompt)?;
                     Ok(crate::identity::decrypt(&enckey, &password_bytes)?)
@@ -88,7 +88,7 @@ impl KeyOpts {
             pass_str.as_bytes().to_owned()
         } else {
             let txt = pass_str.parse::<TypedABE<Vec<u8>>>()?;
-            txt.eval(&common.eval_ctx())?
+            txt.eval(&common.eval_scope())?
         };
 
         if self.display_pass {
@@ -177,8 +177,8 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         if !no_enckey {println!("{enckey}")};
         if !no_pubkey {println!("{pubkey}")};
     };
-    let name = key.key.eval(&common.eval_ctx())?;
-    //let name = key.key.clone().map(|e| e.eval(&common.eval_ctx())).transpose()?.unwrap_or_else(Name::local);
+    let name = key.key.eval(&common.eval_scope())?;
+    //let name = key.key.clone().map(|e| e.eval(&common.eval_scope())).transpose()?.unwrap_or_else(Name::local);
     //ensure!(name.local_branch_authority(),"key names must end in :local - use lns to create public identities");
     let user_enckey_input = key.enckey.is_some();
 

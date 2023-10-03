@@ -49,7 +49,7 @@ impl DGSExpr {
                 space,
             }),
             (d, g, p) => {
-                let ctx = anyhow::anyhow!(
+                let scope = anyhow::anyhow!(
                     "{:?} : {:?} : {:?} ",
                     d.as_ref().map(|v| v.to_abe_str()),
                     g.as_ref().map(|g| g.to_abe_str()),
@@ -59,19 +59,19 @@ impl DGSExpr {
                     return Err(e)
                         .context(self.domain.to_string())
                         .context("eval domain")
-                        .context(ctx);
+                        .context(scope);
                 }
                 if let Err(e) = g {
                     return Err(e)
                         .context(self.group.to_string())
                         .context("eval group")
-                        .context(ctx);
+                        .context(scope);
                 }
                 if let Err(e) = p {
                     return Err(e)
                         .context(self.space.to_string())
                         .context("eval space")
-                        .context(ctx);
+                        .context(scope);
                 }
                 unreachable!()
             }

@@ -51,11 +51,11 @@ pub fn build<'o>(
     links: &'o [Link],
     data: &'o [u8],
 ) -> anyhow::Result<NetPktParts<'o>> {
-    let ctx = common.eval_ctx();
+    let scope = common.eval_scope();
     let stamp = build_opts
         .create
         .as_ref()
-        .map(|s| s.eval(&ctx))
+        .map(|s| s.eval(&scope))
         .transpose()?
         .or(build_opts.create_int)
         .unwrap_or_else(now);
@@ -84,9 +84,9 @@ pub fn build_with_reader<'o>(
     data_buf: &'o mut Vec<u8>,
     reader: &mut Reader,
 ) -> anyhow::Result<Option<NetPktParts<'o>>> {
-    let ctx = common.eval_ctx();
+    let scope = common.eval_scope();
     let freespace : usize = calc_free_space(&dgs.space, links, &[], build_opts.sign).try_into()?;
-    match reader.read_next_data(&ctx,freespace, data_buf)?{
+    match reader.read_next_data(&scope,freespace, data_buf)?{
         Some(_) => Ok(Some(build(common, build_opts, dgs, links, data_buf)?)),
         None => Ok(None),
     }
@@ -100,10 +100,10 @@ pub fn linkpoint(
 ) -> anyhow::Result<()> {
     common.mut_write_private().get_or_insert(true);
     common.mut_write_private().get_or_insert(true);
-    let ctx = common.eval_ctx();
-    let mut reader = opts.read.open_reader(false, &ctx)?;
-    let mut links: Vec<_> = opts.link.iter().map(|v| v.eval(&ctx)).try_collect()?;
-    let dgs = opts.dgs.eval(&ctx)?;
+    let scope = common.eval_scope();
+    let mut reader = opts.read.open_reader(false, &scope)?;
+    let mut links: Vec<_> = opts.link.iter().map(|v| v.eval(&scope)).try_collect()?;
+    let dgs = opts.dgs.eval(&scope)?;
     let mut buf = vec![];
     let pkt = build_with_reader(&common, &opts, &dgs, &links, &mut buf, &mut reader)?.context("read EOF?")?;
     common.write_multi_dest(dest, &pkt, None)?;
@@ -114,7 +114,7 @@ pub fn linkpoint(
 
     loop {
         if let Some(e) = &multi.multi_link{
-            links.push(Link{tag: e.eval(&ctx)?,ptr});
+            links.push(Link{tag: e.eval(&scope)?,ptr});
         }
         buf.clear();
         match build_with_reader(&common, &opts, &dgs, &links, &mut buf, &mut reader)?{

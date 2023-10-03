@@ -23,7 +23,7 @@ pub struct EvalOpts {
     no_parse_unencoded: bool,
 
     abe: String,
-    /// add argv context from a data source - (i.e. [0] [1] ... [7])
+    /// add argv scope from a data source - (i.e. [0] [1] ... [7])
     #[command(subcommand)]
     data: Option<WithData>
 }
@@ -39,21 +39,21 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
     let abe = linkspace_common::prelude::parse_abe(&abe,parse_unencoded)?;
 
     let mut arglist = vec![];
-    let ctx = common.eval_ctx();
+    let scope = common.eval_scope();
     if let Some(WithData::Argv(read_opts)) = data {
 
-        let mut reader = read_opts.open_reader(true, &ctx)?;
+        let mut reader = read_opts.open_reader(true, &scope)?;
         loop {
-            let ctx = (&ctx,ArgList::new(arglist.as_slice()));
+            let scope = (&scope,ArgList::new(arglist.as_slice()));
             let mut bytes = vec![];
-            let cont = reader.read_next_data(&ctx, usize::MAX, &mut bytes) ?;
+            let cont = reader.read_next_data(&scope, usize::MAX, &mut bytes) ?;
             if cont.is_none() {break};
             arglist.push(bytes);
         }
     }
     
-    let ctx = (ctx,ArgList::new(arglist.as_slice()));
-    let val = eval(&ctx, &abe)?;
+    let scope = (scope,ArgList::new(arglist.as_slice()));
+    let val = eval(&scope, &abe)?;
     let mut out = std::io::stdout();
     if json {
         use serde_json::{to_value, value::Value};

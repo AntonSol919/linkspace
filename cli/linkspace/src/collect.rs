@@ -104,17 +104,17 @@ impl Collector {
         };
         tracing::debug!(new_pkt=?pkt,"New collect Pkt");
         common.write_multi_dest(&mut self.write, &pkt, Some(&mut self.buf))?;
-        let ctx = (common.eval_ctx(),pkt_scope(&pkt));
+        let scope = (common.eval_scope(),pkt_scope(&pkt));
         let hash = pkt.hash();
         self.links.extend(
             self.c_opts
                 .chain_tag
                 .as_ref()
-                .map(|tag| tag.eval(&ctx)).transpose()?
+                .map(|tag| tag.eval(&scope)).transpose()?
                 .map(|tag| Link { tag, ptr: hash }),
         );
         for l in self.c_opts.build.link.iter() {
-            self.links.push(l.eval(&ctx)?);
+            self.links.push(l.eval(&scope)?);
         }
         #[allow(dropping_copy_types)]
         std::mem::drop(pkt);
@@ -134,8 +134,8 @@ impl Collector {
         pkt: NetPktBox,
         common: &CommonOpts,
     ) -> anyhow::Result<bool> {
-        let ctx = common.eval_ctx();
-        let tag = self.c_opts.collect_tag.eval(&(ctx,pkt_scope(&**pkt)))?;
+        let scope = common.eval_scope();
+        let tag = self.c_opts.collect_tag.eval(&(scope,pkt_scope(&**pkt)))?;
 
         self.links.push(Link {
             ptr: pkt.hash(),
@@ -152,24 +152,24 @@ impl Collector {
 
 pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
     check_stdin(&c_opts.pkt_in, &c_opts.build.read, false)?;
-    let eval_ctx = common.eval_ctx();
+    let eval_scope = common.eval_scope();
     let initial_links: Vec<_> = c_opts
         .init_link
         .iter()
         .chain(c_opts.build.link.iter())
-        .map(|v| v.eval(&eval_ctx))
+        .map(|v| v.eval(&eval_scope))
         .try_collect()?;
     tracing::debug!(?initial_links, "Initial");
     if c_opts.build.sign {
         let _ = c_opts.build.key.identity(common, false)?;
     }
-    let dgs = c_opts.build.dgs.eval(&eval_ctx)?;
+    let dgs = c_opts.build.dgs.eval(&eval_scope)?;
     tracing::debug!(?dgs);
     let mut collector = Collector {
         links: initial_links,
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
-        reader: c_opts.build.read.open_reader(false,&eval_ctx)?,
+        reader: c_opts.build.read.open_reader(false,&eval_scope)?,
         dgs,
         buf: vec![],
         c_opts,

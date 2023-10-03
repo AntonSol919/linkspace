@@ -15,7 +15,7 @@ use linkspace_rs::runtime::cb::StopReason;
 use std::{ops::ControlFlow, path::{Path, PathBuf}, time::{Duration, Instant}};
 
 use ::linkspace as linkspace_rs;
-use ::linkspace::{prelude::*, abe::ctx::{UserData, self} };
+use ::linkspace::{prelude::*, abe::scope::{UserData, self} };
 use pyo3::{
     prelude::*,
     types::{PyBytes,  PyTuple},
@@ -256,8 +256,8 @@ pub fn lk_eval<'a>(
         .transpose()?
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
-    let uctx = ctx::ctx(udata)?;
-    let bytes = linkspace_rs::varctx::lk_eval(uctx, expr,parse_unencoded.unwrap_or(false))?;
+    let uscope = scope::scope(udata)?;
+    let bytes = linkspace_rs::varscope::lk_eval(uscope, expr,parse_unencoded.unwrap_or(false))?;
     Ok(PyBytes::new(py, &*bytes))
 }
 #[pyfunction]
@@ -267,8 +267,8 @@ pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>,parse_une
         .transpose()?
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
-    let uctx = ctx::ctx(udata)?;
-    let out= linkspace_rs::varctx::lk_eval(uctx, expr, parse_unencoded.unwrap_or(false) )?;
+    let uscope = scope::scope(udata)?;
+    let out= linkspace_rs::varscope::lk_eval(uscope, expr, parse_unencoded.unwrap_or(false) )?;
     match String::from_utf8(out){
         Ok(v) => Ok(v),
         Err(e) => {
@@ -340,9 +340,9 @@ pub fn lk_query_parse(
         .transpose()?
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
-    let uctx = ctx::ctx(udata)?;
+    let uscope = scope::scope(udata)?;
     let lst :Vec<&str> = statements.iter().map(|p| p.extract::<&str>()).try_collect()?;
-    let query = linkspace_rs::varctx::lk_query_parse(uctx,query.0, &*lst)?;
+    let query = linkspace_rs::varscope::lk_query_parse(uscope,query.0, &*lst)?;
     Ok(Query(query))
 }
 #[pyfunction]

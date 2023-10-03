@@ -6,7 +6,6 @@
 #![deny(
     missing_docs,
     missing_debug_implementations,
-    rustdoc::broken_intra_doc_links
 )]
 #![feature(
     thread_local,
@@ -213,7 +212,7 @@ ABE is a byte templating language.
 See guide#ABE to understand its use and indepth explanation.
  **/
 pub mod abe {
-    use self::ctx::UserData;
+    use self::scope::UserData;
 
     use super::*;
     pub use linkspace_common::pkt::repr::DEFAULT_PKT;
@@ -270,7 +269,7 @@ pub mod abe {
     assert_eq!( by_arg, as_field);
 
     // or provide both at once with (pkt,&[b"argv"])
-    // More options are available in [varctx]
+    // More options are available in [varscope]
 
     // escaped characters
     assert_eq!( lk_eval( r#"\n\t\:\/\\\[\]"# ,())?,  &[b'\n',b'\t',b':',b'/',b'\\',b'[',b']'] );
@@ -279,14 +278,14 @@ pub mod abe {
     # }
     ```
 
-    A list of functions can be found with ```lk_eval("[help]")```
+    A list of active scopes can be displayed with lk_eval("[help]")```
     **/
     pub fn lk_eval<'o>(
         expr: &str,
         udata: impl Into<UserData<'o>>,
         parse_unencoded: bool,
     ) -> LkResult<Vec<u8>> {
-        varctx::lk_eval(ctx::ctx(udata.into())?, expr, parse_unencoded)
+        varscope::lk_eval(scope::scope(udata.into())?, expr, parse_unencoded)
     }
     /**
     An abe parser. Useful to split a cli argument like 'domain:[#:test]:/thing/[12/u32] correctly.
@@ -345,7 +344,7 @@ pub mod abe {
     **/
     pub fn lk_encode(bytes: impl AsRef<[u8]>, options: &str) -> String {
         let bytes = bytes.as_ref();
-        varctx::lk_try_encode(ctx::ctx(().into()).unwrap(), bytes, options, true)
+        varscope::lk_try_encode(scope::scope(().into()).unwrap(), bytes, options, true)
             .unwrap_or_else(|_v| as_abtxt(bytes).to_string())
     }
     /** [lk_encode] with Err on:
@@ -359,19 +358,19 @@ pub mod abe {
         ignore_encoder_err: bool,
     ) -> LkResult<String> {
         let bytes = bytes.as_ref();
-        varctx::lk_try_encode(
-            ctx::ctx(().into()).unwrap(),
+        varscope::lk_try_encode(
+            scope::scope(().into()).unwrap(),
             bytes,
             options,
             ignore_encoder_err,
         )
     }
-    /// Custom context for use in [varctx]
-    pub mod ctx {
+    /// build a custom scope for ABE for use in [varscope]
+    pub mod scope {
 
         #[cfg(feature = "runtime")]
         #[thread_local]
-        pub(crate) static LK_EVAL_CTX_RT: std::cell::RefCell<
+        pub(crate) static LK_EVAL_SCOPE_RT: std::cell::RefCell<
             Option<linkspace_common::runtime::Linkspace>,
         > = std::cell::RefCell::new(None);
 
@@ -383,18 +382,18 @@ pub mod abe {
         use linkspace_common::prelude::NetPkt;
 
         use crate::LkResult;
-        pub(crate) type StdCtx<'o> = impl Scope + 'o;
-        /// Create a new context for use in [crate::varctx] with [empty_ctx], [core_ctx], [ctx], or [lk_ctx] (default)
-        pub struct LkCtx<'o>(pub(crate) InlineCtx<'o>);
-        impl<'o> fmt::Debug for LkCtx<'o> {
+        pub(crate) type StdScope<'o> = impl Scope + 'o;
+        /// Custom scope used in [crate::varscope] build with [core_scope], [scope], or [lk_scope] (default)
+        pub struct LkScope<'o>(pub(crate) InlineScope<'o>);
+        impl<'o> fmt::Debug for LkScope<'o> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.debug_tuple("LkCtx").field(&"_").finish()
+                f.debug_tuple("LkScope").field(&"_").finish()
             }
         }
 
         #[allow(clippy::large_enum_variant)]
-        pub(crate) enum InlineCtx<'o> {
-            Std(StdCtx<'o>),
+        pub(crate) enum InlineScope<'o> {
+            Std(StdScope<'o>),
             Dyn(&'o dyn Scope),
             Core,
             // TODO UserCb
@@ -402,11 +401,11 @@ pub mod abe {
 
         #[derive(Copy, Clone, Default, Debug)]
         #[repr(C)]
-        /// User config for setting additional context to evaluation.
+        /// User config for adding common scopes
         pub struct UserData<'o> {
-            /// Enable the packet context for [abe] e.g. "\[hash:str\]"
+            /// Set a packet in scope e.g. "\[hash:str\] in group \[group:str\]"
             pub pkt: Option<&'o dyn NetPkt>,
-            /// Enable the argv context for [abe] e.g. "\[0\]"
+            /// Add the argv scope e.g. "\[0\] and \[1\]"
             pub argv: Option<&'o [&'o [u8]]>,
         }
         impl From<()> for UserData<'static> {
@@ -451,19 +450,19 @@ pub mod abe {
             }
         }
 
-        /// create the a core_context - includes basic byte functions (eval "[help]"" to see the full scope)
-        pub const fn core_ctx() -> LkCtx<'static> {
-            LkCtx(InlineCtx::Core)
+        /// create the a core_scope - includes basic byte functions (eval "\[help\]" to see the full scope)
+        pub const fn core_scope() -> LkScope<'static> {
+            LkScope(InlineScope::Core)
         }
 
         #[cfg(feature = "runtime")]
-        /// the default context used with lk_eval - includes runtime dependent scopes
-        pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
-            _ctx(None, udata, false)
+        /// the default scope used with lk_eval - includes runtime dependent scopes
+        pub fn scope(udata: UserData<'_>) -> LkResult<LkScope<'_>> {
+            _scope(None, udata, false)
         }
         #[cfg(not(feature = "runtime"))]
-        /// the default context used with lk_eval - includes runtime dependent scopes
-        pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
+        /// the default scope used with lk_eval - includes runtime dependent scopes
+        pub fn scope(udata: UserData<'_>) -> LkResult<LkScope<'_>> {
             use linkspace_common::prelude::*;
 
             let argv = udata
@@ -471,30 +470,28 @@ pub mod abe {
                 .map(|v| ArgV::try_fit(v).context("Too many inp values"))
                 .transpose()?
                 .map(EScope);
-            Ok(LkCtx(InlineCtx::Std((
+            Ok(LkScope(InlineScope::Std((
                 udata.pkt.map(|v| pkt_scope(v)),
                 core_scope(),
                 argv,
             ))))
         }
 
-        /*
         #[cfg(feature="runtime")]
-
-        fn lk_ctx<'o>(
+        /// [scope] with a explicit Linkspace and optionally add the os environment scope (used with [env:ENV_VAR])
+        pub fn lk_scope<'o>(
             lk: Option<&'o crate::Linkspace>,
             udata: UserData<'o>,
             enable_env: bool,
-        ) -> LkResult<LkCtx<'o>> {
-            _ctx(Some(lk.map(|o| &o.0)), udata, enable_env)
+        ) -> LkResult<LkScope<'o>> {
+            _scope(Some(lk.map(|o| &o.0)), udata, enable_env)
         }
-        */
         #[cfg(feature = "runtime")]
-        fn _ctx<'o>(
+        fn _scope<'o>(
             lk: Option<Option<&'o linkspace_common::runtime::Linkspace>>,
             udata: UserData<'o>,
             enable_env: bool,
-        ) -> LkResult<LkCtx<'o>> {
+        ) -> LkResult<LkScope<'o>> {
             use linkspace_common::prelude::*;
             let argv = udata
                 .argv
@@ -503,28 +500,28 @@ pub mod abe {
                 .map(EScope);
             let get = move || {
                 match lk {
-                    None => LK_EVAL_CTX_RT.borrow().as_ref().cloned(),
+                    None => LK_EVAL_SCOPE_RT.borrow().as_ref().cloned(),
                     Some(v) => v.cloned(),
                 }
                 .ok_or_else(|| anyhow::anyhow!("no linkspace instance was set"))
             };
-            Ok(LkCtx(InlineCtx::Std((
+            Ok(LkScope(InlineScope::Std((
                 udata.pkt.map(|v| pkt_scope(v)),
                 lk_scope(get, enable_env),
                 argv,
             ))))
         }
-        impl<'o> LkCtx<'o> {
+        impl<'o> LkScope<'o> {
             pub(crate) fn as_dyn(&self) -> &(dyn Scope + 'o) {
                 match &self.0 {
-                    InlineCtx::Std(scope) => scope,
-                    InlineCtx::Core => &linkspace_common::prelude::CORE_SCOPE,
-                    InlineCtx::Dyn(scope) => scope,
+                    InlineScope::Std(scope) => scope,
+                    InlineScope::Core => &linkspace_common::prelude::CORE_SCOPE,
+                    InlineScope::Dyn(scope) => scope,
                 }
             }
             #[doc(hidden)]
             pub fn from_dyn(sdyn: &'o dyn Scope) -> Self {
-                LkCtx(InlineCtx::Dyn(sdyn))
+                LkScope(InlineScope::Dyn(sdyn))
             }
         }
     }
@@ -595,7 +592,7 @@ pub mod query {
     pub use linkspace_common::core::query::KnownOptions;
     use linkspace_common::prelude::{ExtPredicate, PktPredicates};
 
-    use crate::abe::ctx::UserData;
+    use crate::abe::scope::UserData;
 
     use super::*;
     /// Create a new [Query]. Copy from a template. [Q] is the empty query.
@@ -630,7 +627,7 @@ pub mod query {
         expr: &[&str],
         udata: impl Into<UserData<'o>>,
     ) -> LkResult<Query> {
-        varctx::lk_query_parse(crate::abe::ctx::ctx(udata.into())?, query, expr)
+        varscope::lk_query_parse(crate::abe::scope::scope(udata.into())?, query, expr)
     }
     /// Clear a [Query] for reuse
     pub fn lk_query_clear(query: &mut Query) {
@@ -699,8 +696,8 @@ pub mod key {
         name: Option<&str>,
         create: bool,
     ) -> LkResult<SigningKey> {
-        super::varctx::lk_key(
-            super::abe::ctx::ctx(().into())?,
+        super::varscope::lk_key(
+            super::abe::scope::scope(().into())?,
             linkspace,
             password,
             name,
@@ -753,14 +750,14 @@ pub mod runtime {
     /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// The database is shared across threads and processes.
     /// The runtime (i.e. lk_watch) is not.
-    /// The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
+    /// The first call (per thread) sets the default instance for functions like [lk_eval] (see [varscope] for more options).
     /// Moving an open runtime across threads is not supported.
 
     pub fn lk_open(dir: Option<&std::path::Path>, create: bool) -> std::io::Result<Linkspace> {
         let rt = linkspace_common::static_env::open_linkspace_dir(dir, create)?;
-        let mut eval_ctx = crate::abe::ctx::LK_EVAL_CTX_RT.borrow_mut();
-        if eval_ctx.is_none() {
-            *eval_ctx = Some(rt.clone())
+        let mut eval_scope = crate::abe::scope::LK_EVAL_SCOPE_RT.borrow_mut();
+        if eval_scope.is_none() {
+            *eval_scope = Some(rt.clone())
         }
         Ok(Linkspace(rt))
     }
@@ -1099,44 +1096,44 @@ pub mod misc {
     */
 }
 
-/// Functions with a custom eval context - useful for security or when [lk_open]'ing multiple different runtimes (only partially supported atm)
-pub mod varctx {
+/// Functions with a custom eval scope - useful for security or when [lk_open]'ing multiple different runtimes (only partially supported atm)
+pub mod varscope {
 
     use super::*;
-    use crate::abe::ctx::LkCtx;
+    use crate::abe::scope::LkScope;
     use linkspace_common::abe::{eval::eval, parse_abe};
 
     /// [[crate::lk_eval]] with a custom context.
-    pub fn lk_eval(ctx: LkCtx, expr: &str, parse_unencoded: bool) -> LkResult<Vec<u8>> {
+    pub fn lk_eval(scope: LkScope, expr: &str, parse_unencoded: bool) -> LkResult<Vec<u8>> {
         let expr = parse_abe(expr, parse_unencoded)?;
-        let val = eval(&ctx.as_dyn(), &expr)?;
+        let val = eval(&scope.as_dyn(), &expr)?;
         Ok(val.concat())
     }
-    /// [lk_eval] with a custom context that errors on bad option & can explicit trigger error on no encoding found.
+    /// [lk_eval] with a custom scope that errors on bad option & can explicit trigger error on no encoding found.
     pub fn lk_try_encode(
-        ctx: LkCtx,
+        scope: LkScope,
         bytes: &[u8],
         options: &str,
         ignore_encoder_err: bool,
     ) -> LkResult<String> {
         Ok(linkspace_common::abe::eval::encode(
-            &ctx.as_dyn(),
+            &scope.as_dyn(),
             bytes,
             options,
             ignore_encoder_err,
         )?)
     }
-    /// custom ctx version of [super::lk_query_parse]
-    pub fn lk_query_parse(ctx: LkCtx, mut query: Query, statements: &[&str]) -> LkResult<Query> {
+    /// custom scope version of [super::lk_query_parse]
+    pub fn lk_query_parse(scope: LkScope, mut query: Query, statements: &[&str]) -> LkResult<Query> {
         for stmnt in statements {
-            query.0.parse(stmnt.as_bytes(), &ctx.as_dyn())?;
+            query.0.parse(stmnt.as_bytes(), &scope.as_dyn())?;
         }
         Ok(query)
     }
     #[cfg(feature = "runtime")]
     /// [lk_key] with a custom context
     pub fn lk_key(
-        ctx: LkCtx,
+        scope: LkScope,
         linkspace: &Linkspace,
         password: Option<&[u8]>,
         name: Option<&str>,
@@ -1156,13 +1153,13 @@ pub mod varctx {
             Some(v) => Cow::Borrowed(v),
             None => match std::env::var("LK_PASS") {
                 Ok(abe) => {
-                    Cow::Owned(eval(&ctx.as_dyn(), &parse_abe_strict_b(abe.as_bytes())?)?.concat())
+                    Cow::Owned(eval(&scope.as_dyn(), &parse_abe_strict_b(abe.as_bytes())?)?.concat())
                 }
                 Err(_e) => Cow::Borrowed(&[] as &[u8]),
             },
         };
         let expr = parse_abe_strict_b(name.as_bytes())?;
-        let name: lns::name::Name = eval(&ctx.as_dyn(), &expr)?.try_into()?;
+        let name: lns::name::Name = eval(&scope.as_dyn(), &expr)?.try_into()?;
         match lns::lookup_enckey(&linkspace.0, &name)? {
             Some((_, enckey)) => Ok(linkspace_common::identity::decrypt(&enckey, &password)?),
             None => {

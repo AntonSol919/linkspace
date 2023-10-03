@@ -168,7 +168,7 @@ impl<E: std::error::Error> Display for ParseErr<E> {
 }
 
 impl<'o> AB<&'o [u8]> {
-    pub fn parse_ctx<V>(&self) -> Result<V, ParseErr<<V as FromStr>::Err>>
+    pub fn parse_scope<V>(&self) -> Result<V, ParseErr<<V as FromStr>::Err>>
     where
         V: FromStr,
         <V as FromStr>::Err: std::error::Error,

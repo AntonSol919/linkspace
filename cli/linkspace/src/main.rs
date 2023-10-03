@@ -79,9 +79,9 @@ static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
     st
 });
 static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
-    let ctx = LinkspaceOpts::fake_eval_ctx();
-    let pctx = (ctx,pkt_scope(&*PUBLIC_GROUP_PKT));
-    let v = eval(&pctx, &abev!({ "help" })).unwrap().concat();
+    let scope = LinkspaceOpts::fake_eval_scope();
+    let pscope = (scope,pkt_scope(&*PUBLIC_GROUP_PKT));
+    let v = eval(&pscope, &abev!({ "help" })).unwrap().concat();
     String::from_utf8(v).unwrap()
 });
 
@@ -346,8 +346,8 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let mut bytes = vec![];
             std::io::stdin().read_to_end(&mut bytes)?;
             tracing::trace!(?bytes);
-            let ctx = common.eval_ctx();
-            let r = linkspace_common::abe::eval::encode(&ctx, &bytes, &opts,ignore_err > 0 );
+            let scope = common.eval_scope();
+            let r = linkspace_common::abe::eval::encode(&scope, &bytes, &opts,ignore_err > 0 );
             if ignore_err > 1 && r.is_err() {
                 std::io::stdout().write_all(abtxt::as_abtxt(&bytes).as_bytes())?;
             }else {
@@ -446,11 +446,11 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         Command::Eval(eval_opts) => eval::eval_cmd(common, eval_opts)?,
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
         Command::Route { field_mut , pkt_in} => {
-            let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_ctx())?;
+            let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_scope())?;
             common.enable_private_group();
             common.io.inp.skip_hash = true;
             let inp = common.inp_reader(&pkt_in)?;
-            let mut out = WriteDestSpec::stdout().open(&common.eval_ctx())?.unwrap();
+            let mut out = WriteDestSpec::stdout().open(&common.eval_scope())?.unwrap();
             for p in inp {
                 let mut p = p?;
                 muth.mutate(&mut p._net_header);
@@ -476,12 +476,12 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             println!("exec not supported")
         }
         Command::Pull { write, mut watch } => {
-            let ctx = common.eval_ctx();
+            let scope = common.eval_scope();
             watch.watch_opts.aliases.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
-            let query = watch.into_query(&ctx)?;
+            let query = watch.into_query(&scope)?;
             let req = linkspace::conventions::pull::lk_pull_point(&query.into())?;
-            std::mem::drop(ctx);
+            std::mem::drop(scope);
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;

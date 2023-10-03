@@ -112,12 +112,11 @@ pub struct DisplayHelp<A>(pub A);
 
 impl<A: Scope> Display for DisplayHelp<A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "The context has one or more scopes active")?;
         writeln!(f, "Each scope has functions and macros")?;
         writeln!(f, "For each function the option set  ['[' , '/' , '?'] is given")?;
         writeln!(f, "These refers to its use as:")?;
         writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
-        writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
+        writeln!(f, " ':'  => Can be used in sequence '[../func]' (taking the left-side as first argument)")?;
         writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
         writeln!(f, "")?;
 
@@ -132,4 +131,3 @@ impl<A: Scope> Display for DisplayHelp<A> {
         err
     }
 }
-
