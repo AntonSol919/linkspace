@@ -138,7 +138,7 @@ pub fn lk_status_watch(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
     Ok(ok)
 }
 
-pub fn is_status_reply(status:LkStatus,rspace:&RootedSpace,pkt:&NetPktPtr) -> LkResult<()>{
+fn is_status_reply(status:LkStatus,rspace:&RootedSpace,pkt:&NetPktPtr) -> LkResult<()>{
     anyhow::ensure!(*pkt.get_domain() == status.domain
                     && *pkt.get_group() == PRIVATE
                     && pkt.get_rooted_spacename() == rspace

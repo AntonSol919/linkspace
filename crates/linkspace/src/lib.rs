@@ -3,7 +3,11 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-// #![deny(missing_docs, missing_debug_implementations)]
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    rustdoc::broken_intra_doc_links
+)]
 #![feature(
     thread_local,
     write_all_vectored,
@@ -35,17 +39,17 @@ pub mod prelude {
         byte_fmt::{endian_types, AB, B64},
         core::env::RecvPktPtr,
         pkt::{
-            ab, as_abtxt_c, rspace1, rspace_buf, now, repr::PktFmt, space_buf, try_ab, Domain,
-            Error as PktError, GroupID, RootedSpace, RootedSpaceBuf, RootedStaticSpace, Link, LkHash, NetFlags, NetPkt,
-            NetPktArc, NetPktBox, NetPktExt, NetPktHeader, NetPktParts, NetPktPtr, SpaceError,
-            Point, PointExt, PointTypeFlags, PubKey, Space, SpaceBuf, SigningExt, SigningKey,
-            Stamp, Tag,
+            ab, as_abtxt_c, now, repr::PktFmt, rspace1, rspace_buf, space_buf, try_ab, Domain,
+            Error as PktError, GroupID, Link, LkHash, NetFlags, NetPkt, NetPktArc, NetPktBox,
+            NetPktExt, NetPktHeader, NetPktParts, NetPktPtr, Point, PointExt, PointTypeFlags,
+            PubKey, RootedSpace, RootedSpaceBuf, RootedStaticSpace, SigningExt, SigningKey, Space,
+            SpaceBuf, SpaceError, Stamp, Tag,
         },
         thread_local::{domain, group, set_domain, set_group},
     };
 }
-use prelude::*;
 use linkspace_common::pkt;
+use prelude::*;
 
 pub use prelude::SigningKey;
 
@@ -367,14 +371,16 @@ pub mod abe {
 
         #[cfg(feature = "runtime")]
         #[thread_local]
-        pub(crate) static LK_EVAL_CTX_RT: std::cell::RefCell<Option<linkspace_common::runtime::Linkspace>> = std::cell::RefCell::new(None);
+        pub(crate) static LK_EVAL_CTX_RT: std::cell::RefCell<
+            Option<linkspace_common::runtime::Linkspace>,
+        > = std::cell::RefCell::new(None);
 
         use core::fmt;
 
         use anyhow::Context;
-        use linkspace_common::abe::eval::{ Scope};
+        use linkspace_common::abe::eval::Scope;
         use linkspace_common::prelude::scope::ArgV;
-        use linkspace_common::prelude::{ NetPkt};
+        use linkspace_common::prelude::NetPkt;
 
         use crate::LkResult;
         pub(crate) type StdCtx<'o> = impl Scope + 'o;
@@ -385,7 +391,7 @@ pub mod abe {
                 f.debug_tuple("LkCtx").field(&"_").finish()
             }
         }
-        
+
         #[allow(clippy::large_enum_variant)]
         pub(crate) enum InlineCtx<'o> {
             Std(StdCtx<'o>),
@@ -394,7 +400,7 @@ pub mod abe {
             // TODO UserCb
         }
 
-        #[derive(Copy, Clone, Default,Debug)]
+        #[derive(Copy, Clone, Default, Debug)]
         #[repr(C)]
         /// User config for setting additional context to evaluation.
         pub struct UserData<'o> {
@@ -428,7 +434,6 @@ pub mod abe {
             }
         }
 
-
         impl<'o, const N: usize> From<&'o [&'o [u8]; N]> for UserData<'o> {
             fn from(inp: &'o [&'o [u8]; N]) -> Self {
                 UserData {
@@ -451,12 +456,12 @@ pub mod abe {
             LkCtx(InlineCtx::Core)
         }
 
-        #[cfg(feature="runtime")]
+        #[cfg(feature = "runtime")]
         /// the default context used with lk_eval - includes runtime dependent scopes
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
             _ctx(None, udata, false)
         }
-        #[cfg(not(feature="runtime"))]
+        #[cfg(not(feature = "runtime"))]
         /// the default context used with lk_eval - includes runtime dependent scopes
         pub fn ctx(udata: UserData<'_>) -> LkResult<LkCtx<'_>> {
             use linkspace_common::prelude::*;
@@ -469,7 +474,7 @@ pub mod abe {
             Ok(LkCtx(InlineCtx::Std((
                 udata.pkt.map(|v| pkt_scope(v)),
                 core_scope(),
-                argv
+                argv,
             ))))
         }
 
@@ -484,7 +489,7 @@ pub mod abe {
             _ctx(Some(lk.map(|o| &o.0)), udata, enable_env)
         }
         */
-        #[cfg(feature="runtime")]
+        #[cfg(feature = "runtime")]
         fn _ctx<'o>(
             lk: Option<Option<&'o linkspace_common::runtime::Linkspace>>,
             udata: UserData<'o>,
@@ -505,8 +510,8 @@ pub mod abe {
             };
             Ok(LkCtx(InlineCtx::Std((
                 udata.pkt.map(|v| pkt_scope(v)),
-                lk_scope(get,enable_env),
-                argv
+                lk_scope(get, enable_env),
+                argv,
             ))))
         }
         impl<'o> LkCtx<'o> {
@@ -518,7 +523,7 @@ pub mod abe {
                 }
             }
             #[doc(hidden)]
-            pub fn from_dyn(sdyn: &'o dyn Scope) -> Self{
+            pub fn from_dyn(sdyn: &'o dyn Scope) -> Self {
                 LkCtx(InlineCtx::Dyn(sdyn))
             }
         }
@@ -647,7 +652,7 @@ pub mod query {
     }
 }
 
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub use key::lk_key;
 /// cryptographic key functions for use in [lk_keypoint]
 pub mod key {
@@ -682,13 +687,12 @@ pub mod key {
     pub fn lk_key_pubkey(key: &str) -> LkResult<PubKey> {
         Ok(linkspace_common::identity::pubkey(key)?.into())
     }
-    
 
     /** linkspace stored identity
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
     empty name defaults to ( i.e. \[@:me:local\] )
     **/
-    #[cfg(feature="runtime")]
+    #[cfg(feature = "runtime")]
     pub fn lk_key(
         linkspace: &Linkspace,
         password: Option<&[u8]>,
@@ -705,12 +709,12 @@ pub mod key {
     }
 }
 
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub use runtime::{
-    lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch, Linkspace,
-    cb::{try_cb}
+    cb::try_cb, lk_get, lk_open, lk_process, lk_process_while, lk_save, lk_stop, lk_watch,
+    Linkspace,
 };
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 /// a runtime to watch for new points from other processes or threads
 pub mod runtime {
     /**
@@ -728,7 +732,7 @@ pub mod runtime {
     pub struct Linkspace(pub(crate) LinkspaceImpl);
     use crate::interop::rt_interop::LinkspaceImpl;
 
-    impl std::fmt::Debug for Linkspace{
+    impl std::fmt::Debug for Linkspace {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_tuple("Linkspace").field(&"_").finish()
         }
@@ -736,8 +740,8 @@ pub mod runtime {
 
     use std::time::Instant;
 
-    use linkspace_common::{prelude::{QueryIDRef }, saturating_cast, saturating_neg_cast};
     use cb::PktHandler;
+    use linkspace_common::{prelude::QueryIDRef, saturating_cast, saturating_neg_cast};
     use tracing::debug_span;
 
     use super::*;
@@ -748,7 +752,7 @@ pub mod runtime {
     /// A runtime is used in many arguments.
     /// Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     /// The database is shared across threads and processes.
-    /// The runtime (i.e. lk_watch) is not. 
+    /// The runtime (i.e. lk_watch) is not.
     /// The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
     /// Moving an open runtime across threads is not supported.
 
@@ -769,17 +773,20 @@ pub mod runtime {
 
     /// save a packet. Returns true if new and false if its old.
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
-         lk.0.env().save_dyn_one(pkt).map(|o| o.is_new())
+        lk.0.env().save_dyn_one(pkt).map(|o| o.is_new())
     }
     /// save multiple packets at once - returns the number of new packets written
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
-        let (start,excl) = lk_save_all_ext(lk, pkts)?;
-        Ok((excl.get()-start.get()) as usize)
+        let (start, excl) = lk_save_all_ext(lk, pkts)?;
+        Ok((excl.get() - start.get()) as usize)
     }
     /// returns the range of recv stampes used to save new packets. total_new = r.1-r.0
-    pub fn lk_save_all_ext(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<(Stamp,Stamp)> {
-        let (s,e) = lk.0.env().save_dyn_iter(pkts.iter().copied())?;
-        Ok((s.into(),e.into()))
+    pub fn lk_save_all_ext(
+        lk: &Linkspace,
+        pkts: &[&dyn NetPkt],
+    ) -> std::io::Result<(Stamp, Stamp)> {
+        let (s, e) = lk.0.env().save_dyn_iter(pkts.iter().copied())?;
+        Ok((s.into(), e.into()))
     }
 
     /// Run callback for every match for the query in the database.
@@ -929,7 +936,7 @@ pub mod runtime {
         /// the path under which it is saved
         pub dir: &'o std::path::Path,
     }
-    /// get [LkInfo] of a linkspace runtime 
+    /// get [LkInfo] of a linkspace runtime
     pub fn lk_info(lk: &Linkspace) -> LkInfo {
         LkInfo {
             kind: "lmdb",
@@ -945,21 +952,36 @@ pub mod runtime {
 
         use std::ops::{ControlFlow, Try};
 
-        use linkspace_common::prelude::{NetPkt };
+        use linkspace_common::prelude::NetPkt;
 
         /// Callbacks stored in a [Linkspace] instance. use [runtime::cb] to impl from function
         pub trait PktHandler {
             /// Handles an event.
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
             /// Called when break, finished, or replaced
-            fn stopped(&mut self, _: Query, _: &Linkspace, _: StopReason, _total_calls: u32, _watch_calls: u32){}
+            fn stopped(
+                &mut self,
+                _: Query,
+                _: &Linkspace,
+                _: StopReason,
+                _total_calls: u32,
+                _watch_calls: u32,
+            ) {
+            }
         }
         impl PktHandler for Box<dyn PktHandler> {
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
                 (**self).handle_pkt(pkt, lk)
             }
 
-            fn stopped(&mut self, query: Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32) where{
+            fn stopped(
+                &mut self,
+                query: Query,
+                lk: &Linkspace,
+                reason: StopReason,
+                total: u32,
+                new: u32,
+            ) {
                 (**self).stopped(query, lk, reason, total, new)
             }
         }
@@ -970,10 +992,10 @@ pub mod runtime {
         #[derive(Copy, Clone)]
         struct Cb<A> {
             handle_pkt: A,
-        //  stopped: B,// unused but might enable later
+            //  stopped: B,// unused but might enable later
         }
         /// takes a fn(&dyn NetPkt,&Linkspace) -> bool[should_continue] and returns impl [PktHandler]
-        pub fn cb(mut handle_pkt: impl FnMut(&dyn NetPkt, &Linkspace) -> bool) -> impl PktHandler{
+        pub fn cb(mut handle_pkt: impl FnMut(&dyn NetPkt, &Linkspace) -> bool) -> impl PktHandler {
             Cb {
                 handle_pkt: move |pkt: &dyn NetPkt, lk: &Linkspace| {
                     if (handle_pkt)(pkt, lk) {
@@ -986,7 +1008,7 @@ pub mod runtime {
         }
 
         /// takes any fn(&dyn NetPkt,&Linkspace) -> Try (e.g. Result or Option) and returns impl [PktHandler] that logs on break
-        pub fn try_cb<A, R, E>(mut handle_pkt: A) -> impl PktHandler 
+        pub fn try_cb<A, R, E>(mut handle_pkt: A) -> impl PktHandler
         where
             R: Try<Output = (), Residual = E>,
             E: std::fmt::Debug,
@@ -1001,20 +1023,20 @@ pub mod runtime {
             }
         }
 
-        impl<A> PktHandler for Cb<A> where  A: FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>
+        impl<A> PktHandler for Cb<A>
+        where
+            A: FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>,
         {
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
                 (self.handle_pkt)(pkt, lk)
             }
         }
-
     }
 }
 
-
 /// A set of functions that adhere to conventions
 pub mod conventions;
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub use crate::conventions::pull::lk_pull;
 
 pub use consts::{PRIVATE, PUBLIC};
@@ -1026,13 +1048,13 @@ pub mod consts {
 
 /// misc functions & tools - less stable
 pub mod misc {
-    pub use linkspace_common::pkt_stream_utils::QuickDedup;
-    pub use linkspace_common::pkt::tree_order::TreeEntry;
-    pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
     pub use linkspace_common::pkt::netpkt::cmp::PktCmp;
+    pub use linkspace_common::pkt::netpkt::DEFAULT_ROUTING_BITS;
     pub use linkspace_common::pkt::read;
     pub use linkspace_common::pkt::reroute::{RecvPkt, ReroutePkt, ShareArcPkt};
+    pub use linkspace_common::pkt::tree_order::TreeEntry;
     pub use linkspace_common::pkt::FieldEnum;
+    pub use linkspace_common::pkt_stream_utils::QuickDedup;
 
     use linkspace_common::prelude::B64;
 
@@ -1077,15 +1099,12 @@ pub mod misc {
     */
 }
 
-/// Functions with a custom eval context
+/// Functions with a custom eval context - useful for security or when [lk_open]'ing multiple different runtimes (only partially supported atm)
 pub mod varctx {
-
 
     use super::*;
     use crate::abe::ctx::LkCtx;
-    use linkspace_common::{
-        abe::{eval::eval, parse_abe},
-    };
+    use linkspace_common::abe::{eval::eval, parse_abe};
 
     /// [[crate::lk_eval]] with a custom context.
     pub fn lk_eval(ctx: LkCtx, expr: &str, parse_unencoded: bool) -> LkResult<Vec<u8>> {
@@ -1093,6 +1112,7 @@ pub mod varctx {
         let val = eval(&ctx.as_dyn(), &expr)?;
         Ok(val.concat())
     }
+    /// [lk_eval] with a custom context that errors on bad option & can explicit trigger error on no encoding found.
     pub fn lk_try_encode(
         ctx: LkCtx,
         bytes: &[u8],
@@ -1113,7 +1133,8 @@ pub mod varctx {
         }
         Ok(query)
     }
-    #[cfg(feature="runtime")]
+    #[cfg(feature = "runtime")]
+    /// [lk_key] with a custom context
     pub fn lk_key(
         ctx: LkCtx,
         linkspace: &Linkspace,
@@ -1123,7 +1144,7 @@ pub mod varctx {
     ) -> LkResult<SigningKey> {
         use std::borrow::Cow;
 
-        use linkspace_common::{protocols::lns, prelude::parse_abe_strict_b};
+        use linkspace_common::{prelude::parse_abe_strict_b, protocols::lns};
 
         let name = match name {
             Some(v) => Cow::Borrowed(v),
