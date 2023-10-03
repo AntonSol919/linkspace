@@ -545,8 +545,7 @@ pub fn abesplit(){
     let v : Vec<_> = tokenize_abe_b(b"hello/world\nok",0, 0).try_collect().unwrap();
     assert_eq!(&*v,&[(0,false,b"hello" as &[u8]),(b'/',false,b"world"),(b'\n',false,b"ok")]);
 
-    let v : Vec<_> = tokenize_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
-
+    let _v : Vec<_> = tokenize_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
 }
 
 /// Split abe into top level components

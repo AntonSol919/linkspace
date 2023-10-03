@@ -249,7 +249,7 @@ pub fn lk_eval<'a>(
     expr: &str,
     pkt: Option<&Pkt>,
     argv: Option<&PyAny>,
-    parse_unencoded:Option<bool>
+    loose:Option<bool>
 ) -> anyhow::Result<&'a PyBytes> {
     let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
@@ -257,18 +257,18 @@ pub fn lk_eval<'a>(
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uscope = scope::scope(udata)?;
-    let bytes = linkspace_rs::varscope::lk_eval(uscope, expr,parse_unencoded.unwrap_or(false))?;
+    let bytes = linkspace_rs::varscope::lk_eval(uscope, expr,loose.unwrap_or(false))?;
     Ok(PyBytes::new(py, &*bytes))
 }
 #[pyfunction]
-pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>,parse_unencoded:Option<bool>) -> anyhow::Result<String> {
+pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>,loose:Option<bool>) -> anyhow::Result<String> {
     let argv: Vec<&[u8]> = argv
         .map(|v| v.iter()?.take(9).map(|v| bytelike(v?)).try_collect())
         .transpose()?
         .unwrap_or_default();
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uscope = scope::scope(udata)?;
-    let out= linkspace_rs::varscope::lk_eval(uscope, expr, parse_unencoded.unwrap_or(false) )?;
+    let out= linkspace_rs::varscope::lk_eval(uscope, expr, loose.unwrap_or(false) )?;
     match String::from_utf8(out){
         Ok(v) => Ok(v),
         Err(e) => {

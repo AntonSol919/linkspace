@@ -3,6 +3,9 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+// ABE uses a lot of [...] in help texts. Clap uses doc comments as help - without cargo doc creates a lot of noise.
+#![allow(rustdoc::broken_intra_doc_links)] 
 #![feature(
     once_cell_try,
     iterator_try_collect,
@@ -161,13 +164,13 @@ enum Command {
     #[command(alias = "e")]
     /** abe - eval ABE expression
 
-    The abe syntax can be found in the guide (https://www.linkspace.dev/guide/index.html#ABE)
+    The abe syntax can be found in the guide <https://www.linkspace.dev/guide/index.html#ABE>
     Use "[help]" for a list of functions.
     */
     Eval(eval::EvalOpts),
     /** abe   - eval expression for each pkt from stdin 
 
-    The abe syntax can be found in the guide (https://www.linkspace.dev/guide/index.html#ABE)
+    The abe syntax can be found in the guide <https://www.linkspace.dev/guide/index.html#ABE>
     */
     #[command(alias="p",before_long_help=&*PKT_HELP)]
     Pktf(pktf::PktFmtOpts),

@@ -288,8 +288,7 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
 #[test]
 fn pktfmt() {
     let pkt = datapoint(b"hello", ());
-    let scope = core_scope();
-    let scope = pkt_scope(scope, &pkt);
+    let scope = (basic_scope(),pkt_scope(&pkt));
     let abe = abe::parse_abe("[pkt] [data]",false).unwrap();
     let st = eval(&scope,&abe).unwrap().concat();
     let _v = std::str::from_utf8(&st).unwrap();

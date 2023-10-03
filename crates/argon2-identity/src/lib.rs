@@ -11,23 +11,23 @@ Uses public key as salt, xors private key with the encoded hash.
 #[derive(Copy,Clone,PartialEq)]
 pub struct Costs{
     pub mem:u32,
-    pub time:u32,
+    pub times:u32,
     pub parallelism:u32
 }
 
 pub const DEFAULT_COST: Costs = Costs{
-    mem:  1 << 26, // 64mb
-    time: 4,
+    mem:  1 << 17,
+    times: 4,
     parallelism: 4,
 };
 pub const EXPENSIVE_COST: Costs = Costs{
-    mem:  1 << 27,
-    time: 8,
-    parallelism: 8,
+    mem:  1 << 21,
+    times: 1,
+    parallelism: 4,
 };
 pub const INSECURE_COST: Costs = Costs{
     mem:  8,
-    time: 1,
+    times: 1,
     parallelism: 1,
 };
 
@@ -58,7 +58,7 @@ mod params {
         let (mem,time,parallelism) = (opt_it.next()?,opt_it.next()?,opt_it.next()?);
         if opt_it.next().is_some() { return None}
         Some(Decoded {
-            costs: crate::Costs { mem, time, parallelism},
+            costs: crate::Costs { mem, times: time, parallelism},
             salt,
             hash,
         })
@@ -85,7 +85,7 @@ pub fn encrypt(key: &SigningKey, password: &[u8], cost:Option<Costs>) -> String{
 }
 fn _encrypt(key: &SigningKey, password: &[u8], cost: Costs) -> Option<String>{
     use base64::prelude::*;
-    let Costs { mem, time, parallelism }=cost;
+    let Costs { mem, times: time, parallelism }=cost;
     let config = Config {
         variant: argon2::Variant::Argon2d,
         mem_cost:mem,
@@ -127,7 +127,7 @@ pub fn pubkey(identity: &str) -> Result<PublicKey, KeyError> {
 
 pub fn decrypt(enckey: &str, password: &[u8]) -> Result<SigningKey, KeyError> {
     let argon_param = params::decode_string(enckey).ok_or(KeyError::BadData)?;
-    let Costs { mem, time, parallelism } = argon_param.costs;
+    let Costs { mem, times: time, parallelism } = argon_param.costs;
     let config = Config {
         variant: argon2::Variant::Argon2d,
         version: argon2::Version::Version13,
@@ -160,11 +160,11 @@ pub fn test_encoding_decoding(){
         let pubkey = pubkey(i).unwrap();
         let from_key = key.pubkey_bytes();
         assert_eq!(pubkey,from_key);
-        let st = encrypt(&key, pass, None);
+        let st = encrypt(&key, pass, Some(INSECURE_COST));
         assert_eq!(i,st)
     }
     let key = SigningKey::generate();
-    let e = encrypt(&key, b"hello", None);
+    let e = encrypt(&key, b"hello", Some(INSECURE_COST));
     check_key(&e, b"hello");
 
     assert!(decrypt(&e,b"not hello").is_err());

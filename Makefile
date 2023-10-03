@@ -25,3 +25,4 @@ validate:
 	cargo build
 	cargo fmt --all -- --check
 	cargo clippy -- -D warnings
+	make -C ./ffi/linkspace-js validate

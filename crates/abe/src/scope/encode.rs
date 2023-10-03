@@ -42,8 +42,8 @@ impl EvalScopeImpl for Encode {
               apply: |_, inp, _, scope| {
 
                   if inp.len() > 2 { return ApplyResult::Err(anyhow!("Options not yet supported"))};
-                  let kind = std::str::from_utf8(inp[1]).context("bad encoder")?;
-                  let r = crate::eval::encode(scope, inp[0], kind, false)?;
+                  let options = std::str::from_utf8(inp[1]).context("bad encoder")?;
+                  let r = crate::eval::encode(scope, inp[0], options, false)?;
                   ApplyResult::Value(r.into_bytes())
               },
               to_abe: crate::eval::none,

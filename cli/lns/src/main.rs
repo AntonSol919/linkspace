@@ -54,10 +54,10 @@ pub enum Cmd {
         /// name of claim
         name:NameExpr,
         #[arg(long)]
-        /// the group id value for [#:NAME]
+        /// the group id value for `[#:NAME]`
         group: Option<GroupExpr>,
         #[arg(long)]
-        /// the public key to find with [@:NAME] - becomes an authority as well unless --no-auth was set
+        /// the public key to find with `[@:NAME]` - becomes an authority as well unless --no-auth was set
         pubkey: Option<PubKeyExpr>,
         /// do not give the pubkey/enckey authority status
         #[arg(long)]
@@ -70,7 +70,7 @@ pub enum Cmd {
         copy_from:Option<NameExpr>,
 
         #[arg(long)]
-        /// desired list of authname^:pubkey authorities over [NAME + ':*'] - authname is arbitrary ('^' is inserted automatically)
+        /// desired list of authname^:pubkey authorities over `[NAME + ':*']` - authname is arbitrary ('^' is inserted automatically)
         auth: Vec<LinkExpr>,
         #[arg(long,default_value="[now:+7D]")]
         /// end date of this claim

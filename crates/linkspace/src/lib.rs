@@ -66,7 +66,7 @@ pub mod point {
     # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
     let datap = lk_datapoint(b"Some data")?;
-    assert_eq!(datap.hash().to_string(), "ay01_aEzVcp0scyCgKqfugoQSXGW4iefLgAZRxRp9sY");
+    assert_eq!(datap.hash().to_string(), "ATE6XG70_mx-kV2GCZUIkNijcPa8gd1-C3OYu1pXqcU");
     assert_eq!(datap.data() , b"Some data");
     # Ok(())}
     ```
@@ -94,9 +94,9 @@ pub mod point {
     ];
     let data = b"extra data for the linkpoint";
     let create = Some(U64::new(0)); // None == Some(now()).
-    let linkpoint = lk_linkpoint(ab(b"mydomain"),PUBLIC,&space,&links,data,create)?;
+    let linkpoint = lk_linkpoint(data,ab(b"mydomain"),PUBLIC,&space,&links,create)?;
 
-    assert_eq!(linkpoint.hash().to_string(), "zvyWklJrmEHBQfYBLxYh7Gh-3YOTCFRgyuXaGl6-xt8");
+    assert_eq!(linkpoint.hash().to_string(),"IdnnQjgxJLGxLZGKdaXWVxc82-U8KyJoyKK3sKlD8Lc");
     assert_eq!(linkpoint.data(), data);
     assert_eq!(*linkpoint.get_group(), PUBLIC);
 
@@ -224,10 +224,11 @@ pub mod abe {
     /**
     Evaluate an expression and return the bytes
 
-    Optionally add a `pkt` as a context.
-    ':' and '/' outside of '[' and ']' read as plain bytes.
-    Set parse_unencoded to true to read bytes outside the range 0x20..0xfe as-is. i.e. useful for contemplating with newlines and utf8.
+    Print a list of active scopes with help by using `lk_eval("[help]")`
+
+    Optionally add a `pkt` in the scope.
     See [lk_tokenize_abe] for different delimiter behavior
+    See [lk_eval_loose] that is less strict on its input
 
     ```
     # use linkspace::{*,prelude::*,abe::*};
@@ -258,7 +259,7 @@ pub mod abe {
     let result = lk_eval( "You can provide an argv [0] [1]" , &[b"like" as &[u8], b"this"])?;
     assert_eq!(result,   b"You can provide an argv like this");
 
-    let lp : NetPktBox = lk_linkpoint(ab(b"mydomain"),PUBLIC,RootedSpace::empty(),&[],&[],None)?;
+    let lp : NetPktBox = lk_linkpoint(&[],ab(b"mydomain"),PUBLIC,RootedSpace::empty(),&[],None)?;
     let pkt: &dyn NetPkt = &lp;
 
     assert_eq!( lk_eval( "[hash]" , pkt)?,&*pkt.hash());
@@ -277,15 +278,33 @@ pub mod abe {
     # Ok(())
     # }
     ```
-
-    A list of active scopes can be displayed with lk_eval("[help]")```
+    
     **/
     pub fn lk_eval<'o>(
         expr: &str,
         udata: impl Into<UserData<'o>>,
-        parse_unencoded: bool,
     ) -> LkResult<Vec<u8>> {
-        varscope::lk_eval(scope::scope(udata.into())?, expr, parse_unencoded)
+        varscope::lk_eval(scope::scope(udata.into())?, expr, false)
+    }
+
+    /**
+    Same as lk_eval but accepts bytes outside the range 0x20..0xfe as-is. 
+    useful for templating with newlines and utf bytes.
+
+    This distinction exists because UTF has a bunch of characters that can hide a surprise - lk_eval input and lk_encode output is only ever ascii. 
+    ```
+    # use linkspace::{*,prelude::*,abe::*};
+    # fn main() -> LkResult{
+    assert_eq!( "abc 🔗🔗".as_bytes() as &[u8], &lk_eval_loose( "abc 🔗🔗" ,())?, );
+    assert_eq!( "\0\0\0\0\0\0\0\0\0\0\0\0🔗 4036990103".as_bytes() as &[u8], &lk_eval_loose( "[a:🔗] [:🔗/?u]",())?, );
+    # Ok(())}
+    ```
+    **/
+    pub fn lk_eval_loose<'o>(
+        expr: &str,
+        udata: impl Into<UserData<'o>>,
+    ) -> LkResult<Vec<u8>> {
+        varscope::lk_eval(scope::scope(udata.into())?, expr, true)
     }
     /**
     An abe parser. Useful to split a cli argument like 'domain:[#:test]:/thing/[12/u32] correctly.
@@ -324,17 +343,24 @@ pub mod abe {
     # fn main() -> LkResult{
     let bytes= lk_eval("[u32:8]",())?;
     assert_eq!(bytes,&[0,0,0,8]);
-    assert_eq!(lk_encode(&bytes,""), r#"\0\0\0\x08"#);
+    assert_eq!(lk_encode(&bytes,"/:"), r#"\0\0\0\x08"#);
     assert_eq!(lk_encode(&bytes,"u32"), "[u32:8]");
 
-    // This function can also be called with the encode '/?' evaluator
-    assert_eq!(lk_eval(r#"[/?:\0\0\0[u8:8]:u32]"#,())?,b"[u32:8]");
-
+    
     // the options are a list of '/' separated functions
     // In this example 'u32' wont fit, LNS '#' lookup will succeed, if not the encoding would be base64
 
     let public_grp = PUBLIC;
     assert_eq!(lk_encode(&*public_grp,"u32/#/b"), "[#:pub]");
+
+    // We can get meta - encode is also available as a scope during lk_eval
+
+    // As the '?' function - with the tail argument being a single reverse option
+    assert_eq!(lk_eval(r#"[?:\0\0\0[u8:8]:u32]"#,())?,b"[u32:8]");
+    assert_eq!(lk_eval(r#"[:\0\0\0[u8:8]/?:u32]"#,())?,b"[u32:8]");
+
+    // Or as the '?' macro 
+    assert_eq!(lk_eval(r#"[/?:\0\0\0[u8:8]/u32/#/b]"#,())?,b"[u32:8]");
 
     # Ok(())
     # }
@@ -478,7 +504,7 @@ pub mod abe {
         }
 
         #[cfg(feature="runtime")]
-        /// [scope] with a explicit Linkspace and optionally add the os environment scope (used with [env:ENV_VAR])
+        /// [scope] with a explicit Linkspace and optionally add the os environment scope (used with `[env:ENV_VAR]`)
         pub fn lk_scope<'o>(
             lk: Option<&'o crate::Linkspace>,
             udata: UserData<'o>,
@@ -951,7 +977,7 @@ pub mod runtime {
 
         use linkspace_common::prelude::NetPkt;
 
-        /// Callbacks stored in a [Linkspace] instance. use [runtime::cb] to impl from function
+        /// Callbacks stored in a [Linkspace] instance. use [cb] and [try_cb] to impl from a single function.
         pub trait PktHandler {
             /// Handles an event.
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
@@ -991,7 +1017,7 @@ pub mod runtime {
             handle_pkt: A,
             //  stopped: B,// unused but might enable later
         }
-        /// takes a fn(&dyn NetPkt,&Linkspace) -> bool[should_continue] and returns impl [PktHandler]
+        /// takes a `fn(&dyn NetPkt,&Linkspace) -> bool[should_continue]` and returns impl [PktHandler]
         pub fn cb(mut handle_pkt: impl FnMut(&dyn NetPkt, &Linkspace) -> bool) -> impl PktHandler {
             Cb {
                 handle_pkt: move |pkt: &dyn NetPkt, lk: &Linkspace| {
@@ -1103,9 +1129,9 @@ pub mod varscope {
     use crate::abe::scope::LkScope;
     use linkspace_common::abe::{eval::eval, parse_abe};
 
-    /// [[crate::lk_eval]] with a custom context.
-    pub fn lk_eval(scope: LkScope, expr: &str, parse_unencoded: bool) -> LkResult<Vec<u8>> {
-        let expr = parse_abe(expr, parse_unencoded)?;
+    /// [crate::lk_eval]/[crate::abe::lk_eval_loose] with a custom scope 
+    pub fn lk_eval(scope: LkScope, expr: &str, loose: bool) -> LkResult<Vec<u8>> {
+        let expr = parse_abe(expr, loose)?;
         let val = eval(&scope.as_dyn(), &expr)?;
         Ok(val.concat())
     }

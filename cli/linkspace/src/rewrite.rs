@@ -25,7 +25,6 @@ rewrite --space "[hash]/[group]"
 rewrite --create "[create:+1D]"
 
 **/
-
 // TODO add Vec<linkmut { filter, add, map, }>
 #[derive(Parser)]
 pub struct Rewrite {

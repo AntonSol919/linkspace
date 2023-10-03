@@ -25,32 +25,32 @@ pub struct ExtWatchCLIOpts {
 #[derive(Debug, Clone, Default, Args)]
 /// aliases for a set of common predicates
 pub struct PredicateAliases {
-    /// only match locally indexed pkts           | i_new:=:[u32:0]
+    /// only match locally indexed pkts           | `i_new:=:[u32:0]`
     #[arg(long, alias = "no-new")]
     pub db_only: bool,
-    /// only match new unindexed pkts             | i_db:=:[u32:0]
+    /// only match new unindexed pkts             | `i_db:=:[u32:0]`
     #[arg(long, alias = "no-index")]
     pub new_only: bool,
 
-    /// match upto max packets.                   | i:<:[u32:max]
+    /// match upto max packets.                   | `i:<:[u32:max]`
     #[arg(long)]
     pub max: Option<u32>,
 
-    /// match upto max per (dm,grp,space,key) pkts | i_branch:<:[u32:max_branch]
+    /// match upto max per (dm,grp,space,key) key | `i_branch:<:[u32:max_branch]`
     #[arg(long)]
     pub max_branch: Option<u32>,
-    /// match upto max from local index           | i_db:<:[u32:max_index]
+    /// match upto max from local index           | `i_db:<:[u32:max_index]`
     #[arg(long)]
     pub max_index: Option<u32>,
-    /// match upto max unindexed pkts             | i_new:<:[u32:max_new]
+    /// match upto max unindexed pkts             | `i_new:<:[u32:max_new]`
     #[arg(long)]
     pub max_new: Option<u32>,
 
-    /// match only signed pkts                    | pubkey:>:[@:none]
+    /// match only signed pkts                    | `pubkey:>:[@:none]`
     #[arg(long, conflicts_with = "unsigned")]
     pub signed: bool,
 
-    /// match only unsigned pkts                  | pubkey:=:[@:none]
+    /// match only unsigned pkts                  | `pubkey:=:[@:none]`
     #[arg(long)]
     pub unsigned: bool,
 
@@ -65,7 +65,7 @@ pub struct PredicateAliases {
     pub follow: bool,
 
     #[arg(long)]
-    /// add recv:<:[us:INIT:+{until}] where INIT is set at start
+    /// add `recv:<:[us:INIT:+{until}]` where INIT is set at start
     pub until : Option<String>
 }
 

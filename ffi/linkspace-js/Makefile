@@ -21,3 +21,10 @@ pack:
 	jq '.files = ["*"]' ./pkg/package.json > ./pkg/tmp.json
 	mv ./pkg/tmp.json ./pkg/package.json
 	wasm-pack pack
+
+validate: 
+	RUSTFLAGS="-D warnings" cargo doc --no-deps
+	cargo test
+	cargo build
+	cargo fmt --all -- --check
+	cargo clippy -- -D warnings

@@ -15,7 +15,7 @@ pub fn set_group(group: GroupID) {
         "user bug: the default group can only be set once per thread"
     );
 }
-/** [Thread Local]: get the 'default' group. from [set_group] || $LK_GROUP || [#:pub]
+/** [Thread Local]: get the 'default' group. from [set_group] || $LK_GROUP || `[#:pub]`
 
 If the LK_GROUP expression requires LNS evaluation this will use the thread local linkspace or open the default.
 **/
@@ -58,7 +58,7 @@ pub fn set_domain(domain: Domain) {
         "user bug: the standard domain can only be set once per thread"
     );
 }
-/** [Thread Local]: get the 'default' domain. from [set_domain] || $LK_DOMAIN || [0;16]
+/** [Thread Local]: get the 'default' domain. from [set_domain] || $LK_DOMAIN || `[0;16]`
 
 If the LK_DOMAIN expression requires LNS evaluation this will use the thread local linkspace or open the default.
 **/

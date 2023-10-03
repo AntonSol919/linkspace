@@ -201,8 +201,11 @@ fn _fit() {
 /**
 copy `val` into array of N bytes prepending 0's as needed. panic if val > N
 
-```
-    assert_eq!(ab::<8>("abcd"),AB([0,0,0,0,97,98,99,100]));
+```rust
+# use byte_fmt::*;
+# fn main(){
+    assert_eq!(ab::<8>(b"abcd"),AB([0,0,0,0,97,98,99,100]));
+# }
 ```
 **/
 pub const fn ab<const N: usize>(val: &[u8]) -> AB<[u8; N]> {
@@ -597,5 +600,4 @@ fn casts(){
     let o : &[u8;32] = B64([1u128;2]).as_ref();
     let i = u128::from_ne_bytes(o[0..16].try_into().unwrap());
     assert_eq!(i,1);
-    panic!("ok")
 }

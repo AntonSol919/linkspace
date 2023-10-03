@@ -20,7 +20,7 @@ pub struct EvalOpts {
     json: bool,
     /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
     #[arg(alias="strict",long)]
-    no_parse_unencoded: bool,
+    no_loose: bool,
 
     abe: String,
     /// add argv scope from a data source - (i.e. [0] [1] ... [7])
@@ -33,10 +33,10 @@ pub enum WithData{
 }
 
 pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
-    let EvalOpts { json, abe, data, no_parse_unencoded } = opts;
-    let parse_unencoded = !no_parse_unencoded;
+    let EvalOpts { json, abe, data, no_loose } = opts;
+    let loose = !no_loose;
 
-    let abe = linkspace_common::prelude::parse_abe(&abe,parse_unencoded)?;
+    let abe = linkspace_common::prelude::parse_abe(&abe,loose)?;
 
     let mut arglist = vec![];
     let scope = common.eval_scope();

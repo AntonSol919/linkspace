@@ -45,7 +45,7 @@ macro_rules! dbgprintln {
 }
 
 /** a list of (ctr,bytes) components.
-It is an error for the lst to be empty - and for a Option<Ctr> to be None except for the first entry.
+It is an error for the lst to be empty - and for a `Option<Ctr>` to be None except for the first entry.
 **/
 #[derive(Clone, PartialEq)]
 pub struct ABList(Vec<ABLV>);
@@ -236,7 +236,7 @@ impl ABList {
         })
     }
 
-    /// iterate over logical bytes instead of tuples. i.e. a:b/c => [a,b,c] :a/b:c: => ['',a,b,c,'']
+    /// iterate over logical bytes instead of tuples. i.e. a:b/c => `[a,b,c]` :a/b:c: => `['',a,b,c,'']``
     pub fn iter_bytes(&self) -> impl Iterator<Item=&[u8]>{
         let head :Option<&[u8]>= self.0.first().map(|o| o.0.map(|_|&[] as &[u8])).flatten();
         head.into_iter().chain(self.0.iter().map(|o| o.1.as_slice()))

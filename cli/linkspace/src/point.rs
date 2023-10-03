@@ -23,7 +23,7 @@ pub struct MultiOpts {
 #[derive(Parser, Debug)]
 pub struct PointOpts {
     /// 8 byte abe expression - e.g. [now:-1D] or [u64:0]  (defaults to now)
-    #[arg(long, alias = "u")]
+    #[arg(long, alias = "u",help="")]
     pub create: Option<StampExpr>,
     /// decimal create stamp - eqv to [u64:{create_int}]
     #[arg(long, conflicts_with = "create")]

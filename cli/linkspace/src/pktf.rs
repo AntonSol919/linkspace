@@ -40,9 +40,9 @@ pub struct PktFmtOpts {
     /// delimiter to print between packets.
     #[arg(short, long, default_value = "\\n")]
     delimiter: TypedABE<Vec<u8>>,
-    /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
-    #[arg(alias="strict",long)]
-    no_parse_unencoded: bool,
+    /// reject non-abe bytes in the fmt
+    #[arg(alias="no-loose",long)]
+    strict: bool,
     /// ABE expression to evaluate per packet - use a second and third expression to use differrent formats for [datapoint, [linkpoint [keypoint]]]
     #[arg(action = clap::ArgAction::Append, env="LK_PKTF")]
     fmt: Vec<String>,
@@ -61,18 +61,18 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
         delimiter,
         fmt,
         join_delimiter,
-        no_parse_unencoded,
+        strict,
         pkt_in,
         fast,
     } = popts;
-    let parse_unencoded = !no_parse_unencoded;
+    let loose = !strict;
     let write_private = common.write_private().unwrap_or(true);
     common.mut_read_private().get_or_insert(true);
     let datap_fmt = fmt.get(0).map(|o| {
-        parse_abe(o, parse_unencoded)
+        parse_abe(o, loose)
     }).transpose()?.unwrap_or(DEFAULT_FMT.clone());
-    let linkp_fmt = fmt.get(1).map(|o| parse_abe(o, parse_unencoded)).transpose()?.unwrap_or_else(||datap_fmt.clone());
-    let keyp_fmt = fmt.get(2).map(|o| parse_abe(o, parse_unencoded)).transpose()?.unwrap_or_else(||linkp_fmt.clone());
+    let linkp_fmt = fmt.get(1).map(|o| parse_abe(o, loose)).transpose()?.unwrap_or_else(||datap_fmt.clone());
+    let keyp_fmt = fmt.get(2).map(|o| parse_abe(o, loose)).transpose()?.unwrap_or_else(||linkp_fmt.clone());
 
     let scope = common.eval_scope();
     if error.is_none() && !silent {
