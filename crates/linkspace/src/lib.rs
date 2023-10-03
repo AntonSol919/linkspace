@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#![deny(missing_docs, missing_debug_implementations)]
+// #![deny(missing_docs, missing_debug_implementations)]
 #![feature(
     thread_local,
     write_all_vectored,
@@ -567,11 +567,18 @@ pub mod query {
 
     */
     #[derive(Clone)]
+    /// a set of predicates and options to select/filter packets
     pub struct Query(pub(crate) linkspace_common::core::query::Query);
 
+    /// The empty_query
     pub static Q: Query = Query(linkspace_common::core::query::Query::DEFAULT);
 
     impl std::fmt::Display for Query {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.0.fmt(f)
+        }
+    }
+    impl std::fmt::Debug for Query {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             self.0.fmt(f)
         }
@@ -648,6 +655,14 @@ pub mod key {
     use super::LkResult;
     use linkspace_common::identity;
 
+    /// generate a new key
+    pub fn lk_keygen() -> SigningKey {
+        SigningKey::generate()
+    }
+    /** Encrypt the private key into a storable/share-able string - sometimes called an enckey
+    Uses argon2d (using the public key as salt).
+    An empty password sets the difficulty to trivial.
+    **/
     pub fn lk_key_encrypt(key: &SigningKey, password: &[u8]) -> String {
         identity::encrypt(
             key,
@@ -659,19 +674,17 @@ pub mod key {
             },
         )
     }
+    /// decrypt the result of [lk_key_encrypt]
     pub fn lk_key_decrypt(key: &str, password: &[u8]) -> LkResult<SigningKey> {
         Ok(linkspace_common::identity::decrypt(key, password)?)
     }
-    /// read the public key from a [lk_key_encrypt] string
+    /// read the public key portion of a [lk_key_encrypt] string
     pub fn lk_key_pubkey(key: &str) -> LkResult<PubKey> {
         Ok(linkspace_common::identity::pubkey(key)?.into())
     }
-    pub fn lk_keygen() -> SigningKey {
-        SigningKey::generate()
-    }
+    
 
     /** linkspace stored identity
-
     open (or generate) the key `name` which is also accessible as \[@:name:local\].
     empty name defaults to ( i.e. \[@:me:local\] )
     **/
@@ -715,6 +728,12 @@ pub mod runtime {
     pub struct Linkspace(pub(crate) LinkspaceImpl);
     use crate::interop::rt_interop::LinkspaceImpl;
 
+    impl std::fmt::Debug for Linkspace{
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_tuple("Linkspace").field(&"_").finish()
+        }
+    }
+
     use std::time::Instant;
 
     use linkspace_common::{prelude::{QueryIDRef }, saturating_cast, saturating_neg_cast};
@@ -752,6 +771,7 @@ pub mod runtime {
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
          lk.0.env().save_dyn_one(pkt).map(|o| o.is_new())
     }
+    /// save multiple packets at once - returns the number of new packets written
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
         let (start,excl) = lk_save_all_ext(lk, pkts)?;
         Ok((excl.get()-start.get()) as usize)
@@ -894,22 +914,33 @@ pub mod runtime {
     ) -> LkResult<isize> {
         lk.0.run_while(timeout, qid)
     }
+
+    /// iterate over all active (Qid,Query)
     pub fn lk_list_watches(lk: &Linkspace, cb: &mut dyn FnMut(&[u8], &Query)) {
         for el in lk.0.dbg_watches().entries() {
             cb(&el.query_id, Query::from_impl(&el.query))
         }
     }
     #[derive(Debug)]
+    /// miscellaneous information about the runtime
     pub struct LkInfo<'o> {
+        /// the kind of runtime in use - currently only known is "lmdb"
+        pub kind: &'static str,
+        /// the path under which it is saved
         pub dir: &'o std::path::Path,
     }
+    /// get [LkInfo] of a linkspace runtime 
     pub fn lk_info(lk: &Linkspace) -> LkInfo {
         LkInfo {
+            kind: "lmdb",
             dir: lk.0.env().dir(),
         }
     }
 
     #[cfg(feature = "runtime")]
+    /** (rust only) [lk_watch] takes the callback [PktHandler] which are quick to impl with [cb] and [try_cb].
+    Other languages should use their own function syntax as argument to lk_watch.
+    **/
     pub mod cb {
 
         use std::ops::{ControlFlow, Try};
@@ -921,7 +952,7 @@ pub mod runtime {
             /// Handles an event.
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()>;
             /// Called when break, finished, or replaced
-            fn stopped(&mut self, query: Query, lk: &Linkspace, reason: StopReason, total: u32, new: u32);
+            fn stopped(&mut self, _: Query, _: &Linkspace, _: StopReason, _total_calls: u32, _watch_calls: u32){}
         }
         impl PktHandler for Box<dyn PktHandler> {
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
@@ -937,23 +968,13 @@ pub mod runtime {
         use crate::{Linkspace, Query};
 
         #[derive(Copy, Clone)]
-        pub struct Cb<A, B> {
-            pub handle_pkt: A,
-            pub stopped: B,
+        struct Cb<A> {
+            handle_pkt: A,
+        //  stopped: B,// unused but might enable later
         }
-        pub fn nop_stopped(_: Query, _: &Linkspace, _: StopReason, _: u32, _: u32) {}
-
-        pub fn cb<A>(
-            mut handle_pkt: A,
-        ) -> Cb<
-            impl FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>,
-            fn(Query, &Linkspace, StopReason, u32, u32),
-        >
-        where
-            A: FnMut(&dyn NetPkt, &Linkspace) -> bool,
-        {
+        /// takes a fn(&dyn NetPkt,&Linkspace) -> bool[should_continue] and returns impl [PktHandler]
+        pub fn cb(mut handle_pkt: impl FnMut(&dyn NetPkt, &Linkspace) -> bool) -> impl PktHandler{
             Cb {
-                stopped: nop_stopped,
                 handle_pkt: move |pkt: &dyn NetPkt, lk: &Linkspace| {
                     if (handle_pkt)(pkt, lk) {
                         ControlFlow::Break(())
@@ -964,12 +985,8 @@ pub mod runtime {
             }
         }
 
-        pub fn try_cb<A, R, E>(
-            mut handle_pkt: A,
-        ) -> Cb<
-            impl FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()> + 'static,
-            fn(Query, &Linkspace, StopReason, u32, u32),
-        >
+        /// takes any fn(&dyn NetPkt,&Linkspace) -> Try (e.g. Result or Option) and returns impl [PktHandler] that logs on break
+        pub fn try_cb<A, R, E>(mut handle_pkt: A) -> impl PktHandler 
         where
             R: Try<Output = (), Residual = E>,
             E: std::fmt::Debug,
@@ -981,30 +998,16 @@ pub mod runtime {
                         .branch()
                         .map_break(|brk| tracing::info!(?brk, "break"))
                 },
-                stopped: nop_stopped,
             }
         }
 
-        impl<A, B> PktHandler for Cb<A, B>
-        where
-            A: FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>,
-            B: FnMut(Query, &Linkspace, StopReason, u32, u32), // TODO could be FnOnce
+        impl<A> PktHandler for Cb<A> where  A: FnMut(&dyn NetPkt, &Linkspace) -> ControlFlow<()>
         {
             fn handle_pkt(&mut self, pkt: &dyn NetPkt, lk: &Linkspace) -> ControlFlow<()> {
                 (self.handle_pkt)(pkt, lk)
             }
-
-            fn stopped(
-                &mut self,
-                query: crate::Query,
-                lk: &Linkspace,
-                reason: StopReason,
-                total: u32,
-                new: u32,
-            ) {
-                (self.stopped)(query, lk, reason, total, new)
-            }
         }
+
     }
 }
 
@@ -1012,7 +1015,7 @@ pub mod runtime {
 /// A set of functions that adhere to conventions
 pub mod conventions;
 #[cfg(feature="runtime")]
-pub use crate::{conventions::lk_pull};
+pub use crate::conventions::pull::lk_pull;
 
 pub use consts::{PRIVATE, PUBLIC};
 /// consts for common groups & domains

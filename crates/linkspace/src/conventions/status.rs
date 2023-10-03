@@ -1,5 +1,3 @@
-
-
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -36,15 +34,22 @@ A reply is accepted if it was made now-timeout.
 This might change
 **/
 use crate::{*};
-pub const STATUS_SPACE: RootedStaticSpace<16> = rspace1::<7>(concat_bytes!([255], b"status"));
+/// const '/status' spacename
+pub static STATUS_SPACE: RootedStaticSpace<16> = rspace1::<7>(concat_bytes!([255], b"status"));
 
 #[derive(Copy, Clone)]
 #[repr(C)]
+/// Options for a local status request.
 pub struct LkStatus<'o> {
+    /// the domain of interests
     pub domain: Domain,
+    /// the group of interests (NOT the group to query, see mod level doc on the usage)
     pub group: GroupID,
+    /// the object type of interests
     pub objtype: &'o [u8],
+    /// the instance
     pub instance: Option<&'o [u8]>,
+    /// qid to use for query - reuse of qid will remove the listening query
     pub qid: &'o [u8]
 }
 impl Default for LkStatus<'static> {
@@ -91,6 +96,7 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
 }
 
 #[cfg(feature="runtime")]
+/// watch for any points matching 
 pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
                       mut cb: impl crate::runtime::cb::PktHandler + 'static) -> LkResult<bool>{
     use crate::runtime::{lk_watch2,lk_get_all};
@@ -186,16 +192,4 @@ pub fn lk_status_set(lk:&Linkspace,status:LkStatus,mut update:impl FnMut(&Linksp
         Ok(())
     }),span)?;
     Ok(())
-}
-
-
-pub fn testu32(b:&[u32]) -> u64{
-    let a = u64::from_ne_bytes(unsafe{*b.as_ptr().cast()});
-    let b = u64::from_ne_bytes(unsafe{*b[2..].as_ptr().cast()});
-    a+b
-}
-pub fn testu8(b:&[u8]) -> u64{
-    let a = u64::from_ne_bytes(unsafe{*b.as_ptr().cast()});
-    let b = u64::from_ne_bytes(unsafe{*b[8..].as_ptr().cast()});
-    a+b
 }

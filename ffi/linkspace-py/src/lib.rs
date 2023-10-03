@@ -520,7 +520,7 @@ pub fn lk_status_poll(
 
 #[pyfunction]
 pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Result<&'o PyBytes> {
-    let hash = linkspace_rs::conventions::lk_pull(&lk.0, &query.0)?;
+    let hash = linkspace_rs::conventions::pull::lk_pull(&lk.0, &query.0)?;
     Ok(PyBytes::new(py, &hash.0))
 }
 
@@ -528,14 +528,16 @@ pub fn lk_pull<'o>(py: Python<'o>, lk: &Linkspace, query: &Query) -> anyhow::Res
 #[pyclass]
 #[pyo3(get_all)]
 pub struct LkInfo {
+    pub kind: String,
     pub dir:PathBuf
 }
 #[pyfunction]
 pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
     let linkspace_rs::runtime::LkInfo{
+        kind,
         dir
     }= linkspace_rs::runtime::lk_info(&lk.0);
-    Ok(LkInfo{dir:dir.into()})
+    Ok(LkInfo{dir:dir.into(),kind:kind.into()})
 }
 
 

@@ -482,7 +482,7 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             watch.watch_opts.aliases.watch = true;
             ensure!(watch.dgpd.is_some(), "DGSD required for pull request");
             let query = watch.into_query(&ctx)?;
-            let req = linkspace::conventions::lk_pull_req(&query.into())?;
+            let req = linkspace::conventions::pull::lk_pull_point(&query.into())?;
             std::mem::drop(ctx);
             *common.mut_write_private() = Some(true);
             let mut write = common.open(&write)?;
