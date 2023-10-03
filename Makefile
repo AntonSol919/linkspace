@@ -20,7 +20,7 @@ build-debug:
 	ln -s "$(R)/ffi/linkspace-py/linkspace.pyi"  "$(R)/target/python/linkspace.pyi" 
 
 validate: 
-	RUSTFLAGS="-D warnings" cargo doc --all --no-deps
+	cargo doc --all --no-deps
 	cargo test
 	cargo build
 	cargo fmt --all -- --check

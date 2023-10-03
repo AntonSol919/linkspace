@@ -41,7 +41,7 @@ impl<'o> From<RecvPktPtr<'o>> for Pkt {
 #[pymethods]
 impl Pkt {
     pub fn __str__(&self) -> String {
-        String::from_utf8(lk_eval("[pkt]", self.0.netpktptr() as &dyn NetPkt,true).unwrap()).unwrap()
+        String::from_utf8(lk_eval("[pkt]", self.0.netpktptr() as &dyn NetPkt).unwrap()).unwrap()
     }
     pub fn __getitem__<'p>(&self, py: Python<'p>, field: &str) -> anyhow::Result<&'p PyBytes> {
         let field = FieldEnum::from_str(field)?;
