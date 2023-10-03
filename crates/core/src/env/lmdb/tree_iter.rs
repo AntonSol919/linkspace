@@ -1,10 +1,11 @@
-use linkspace_pkt::{GroupID, Domain,
-                   tree_order::{TreeEntryRef, TreeValueBytes, TreeKey}};
+use linkspace_pkt::{
+    tree_order::{TreeEntryRef, TreeKey, TreeValueBytes},
+    Domain, GroupID,
+};
 
-use crate::{prelude::treekey::{TreeKeys },  stamp_range::IterCmp};
+use crate::{prelude::treekey::TreeKeys, stamp_range::IterCmp};
 
 use super::db::IterDup;
-
 
 #[derive(Debug)]
 pub struct TreeKeysIter<'txn> {
@@ -14,8 +15,9 @@ pub struct TreeKeysIter<'txn> {
 }
 
 // alias
-pub (super) fn  spd<'o>(kv: (&'o [u8], &'o TreeValueBytes)) -> TreeEntryRef<'o> {TreeEntryRef::from_db(kv) }
-
+pub(super) fn spd<'o>(kv: (&'o [u8], &'o TreeValueBytes)) -> TreeEntryRef<'o> {
+    TreeEntryRef::from_db(kv)
+}
 
 impl<'txn> TreeKeysIter<'txn> {
     pub fn next_entry(&mut self) -> Option<TreeEntryRef<'txn>> {

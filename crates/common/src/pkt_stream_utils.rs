@@ -47,7 +47,7 @@ impl Buffer {
     }
 }
 
-/// Extremely light best-effort deduplication. 
+/// Extremely light best-effort deduplication.
 pub struct QuickDedup {
     bufs: Box<[LkHash]>,
 }

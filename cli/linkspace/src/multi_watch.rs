@@ -5,10 +5,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::thread::JoinHandle;
 
-use anyhow::{ Context};
+use anyhow::Context;
 use linkspace_common::{
-    cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
-    prelude::{*  },
+    cli::{clap, clap::Args, opts::CommonOpts, reader::PktReadOpts, tracing},
+    prelude::*,
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
 
@@ -21,7 +21,7 @@ Read multiple queries from pkts on stdin.
 #[group(skip)]
 pub struct MultiWatch {
     #[command(flatten)]
-    inp:PktReadOpts,
+    inp: PktReadOpts,
     #[command(flatten)]
     print: PrintABE,
     /// by default evaluation in scope is limited to static functions. enable 'live' queries.
@@ -73,17 +73,23 @@ pub fn setup_watch(
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
     let cli_scope = common.eval_scope();
-    query.parse(pkt.data(), if mv.full_scope {&cli_scope} else {&CORE_SCOPE})?;
-    
+    query.parse(
+        pkt.data(),
+        if mv.full_scope {
+            &cli_scope
+        } else {
+            &CORE_SCOPE
+        },
+    )?;
+
     let mut ok = mv.constraint.or.is_empty();
-    for opt in mv.constraint.or.iter(){
-        if query.parse(opt.as_bytes(), &cli_scope).is_ok(){
+    for opt in mv.constraint.or.iter() {
+        if query.parse(opt.as_bytes(), &cli_scope).is_ok() {
             ok = true;
             break;
         }
     }
-    anyhow::ensure!(ok,"cant find valid set");
-
+    anyhow::ensure!(ok, "cant find valid set");
 
     if mv.print.do_print() {
         mv.print.print_query(&query, &mut std::io::stdout())?;
@@ -108,4 +114,3 @@ pub struct OrConstrait {
     #[arg(long)]
     pub or: Vec<String>,
 }
-

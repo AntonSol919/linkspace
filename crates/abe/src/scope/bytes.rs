@@ -95,7 +95,6 @@ impl EvalScopeImpl for BytesFE {
                 format!("[a:{cut_b}:{len}]")
             })
         }
-        
 
         fncs!([
             ("?a",1..=1,"encode bytes into ascii-bytes format",|_,i:&[&[u8]]| Ok(as_abtxt(i[0]).into_owned().into_bytes())),
@@ -125,19 +124,28 @@ impl EvalScopeImpl for BytesFE {
         ])
     }
 }
-fn replace([mut b, from,to]:[&[u8];3]) -> Vec<u8>{
-    let mut r =Vec::with_capacity(b.len());
-    while let Some((h,rest)) = b.split_first(){
-        match b.strip_prefix(from){
-            Some(rest) => {r.extend_from_slice(to); b = rest},
-            None => {r.push(*h); b = rest},
+fn replace([mut b, from, to]: [&[u8]; 3]) -> Vec<u8> {
+    let mut r = Vec::with_capacity(b.len());
+    while let Some((h, rest)) = b.split_first() {
+        match b.strip_prefix(from) {
+            Some(rest) => {
+                r.extend_from_slice(to);
+                b = rest
+            }
+            None => {
+                r.push(*h);
+                b = rest
+            }
         }
     }
     r
 }
 
 /// python like slice indexing
-pub fn slice<'o, F>(bytes:&'o [F], args: &[&[u8]]) -> Result<impl Iterator<Item=&'o F>+'o, ApplyErr> {
+pub fn slice<'o, F>(
+    bytes: &'o [F],
+    args: &[&[u8]],
+) -> Result<impl Iterator<Item = &'o F> + 'o, ApplyErr> {
     #[derive(Debug, Copy, Clone)]
     struct SignedInt {
         neg: bool,
@@ -165,7 +173,7 @@ pub fn slice<'o, F>(bytes:&'o [F], args: &[&[u8]]) -> Result<impl Iterator<Item=
         .map(|b| anyhow::Ok::<isize>(std::str::from_utf8(b)?.parse()?))
         .transpose()?
         .unwrap_or(1);
-    
+
     let (sb, eb) = if step >= 0 { (0, len) } else { (len - 1, -1) };
 
     let to_bound = |v: Option<SignedInt>| -> Option<isize> {
@@ -184,7 +192,7 @@ pub fn slice<'o, F>(bytes:&'o [F], args: &[&[u8]]) -> Result<impl Iterator<Item=
 
     Ok(std::iter::from_fn(move || {
         let in_range = if step >= 0 { i < end } else { i > end };
-        if !in_range || step == 0{
+        if !in_range || step == 0 {
             return None;
         }
         let result = bytes.get(i as usize)?;

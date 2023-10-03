@@ -207,7 +207,7 @@ pub struct Bound<U> {
     pub low: U,
     pub high: U,
 }
-impl<U:UInt> Default for Bound<U>{
+impl<U: UInt> Default for Bound<U> {
     fn default() -> Self {
         Self::DEFAULT
     }
@@ -285,7 +285,6 @@ impl<U: UInt> Bound<U> {
         std::mem::replace(&mut self.low, Self::DEFAULT.low)
     }
 }
-
 
 impl<U: UInt> Mask<U> {
     pub const DEFAULT: Self = {
@@ -456,8 +455,8 @@ impl<U: UInt> std::fmt::Debug for Mask<U> {
 }
 
 impl<U: UInt> TestSet<U> {
-    pub fn new_eq(v: U) -> TestSet<U>{
-        let mut t= Self::DEFAULT;
+    pub fn new_eq(v: U) -> TestSet<U> {
+        let mut t = Self::DEFAULT;
         t.add(TestOp::Equal, v);
         t
     }
@@ -637,8 +636,12 @@ impl<U: UInt> TestSet<U> {
 }
 impl Bound<u64> {
     pub fn stamp_range(&self, ascending: bool) -> StampRange {
-        let (start,end) = if ascending {(self.low,self.high) }else {(self.high,self.low)};
-        StampRange{start,end}
+        let (start, end) = if ascending {
+            (self.low, self.high)
+        } else {
+            (self.high, self.low)
+        };
+        StampRange { start, end }
     }
 }
 impl<U: UInt> TestSet<U> {

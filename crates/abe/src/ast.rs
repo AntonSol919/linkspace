@@ -3,7 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Write;
@@ -107,7 +107,7 @@ impl Display for MatchError {
 #[derive(Error, Debug)]
 pub enum MatchErrorKind {
     #[error("length mismatch max {max} has {has}")]
-    MaxLen{ max: usize, has: usize },
+    MaxLen { max: usize, has: usize },
 
     #[error("length mismatch expect {expect} has {has}")]
     ExactLen { expect: usize, has: usize },
@@ -384,9 +384,6 @@ pub enum ASTParseError {
     NewlineInBrackets,
 }
 
-
-
-
 mod collect {
     use std::iter::Peekable;
 
@@ -399,7 +396,7 @@ mod collect {
         Bytes(Vec<u8>),
         Ctr(CtrChar),
     }
-    /// turn a linear sequence of tokens into a ast. 
+    /// turn a linear sequence of tokens into a ast.
     pub fn collect(tokens: &mut Peekable<impl Iterator<Item = ABTok>>) -> Option<ABE> {
         match tokens.next() {
             None => None,
@@ -412,29 +409,31 @@ mod collect {
                 )),
                 ABTok::Ctr(_) => todo!("Make unreachable"),
                 ABTok::Bytes(mut b) => {
-                    while let Some(ABTok::Bytes(o)) = tokens.peek(){
+                    while let Some(ABTok::Bytes(o)) = tokens.peek() {
                         b.extend_from_slice(o);
                         tokens.next();
                     }
                     ABE::Expr(Expr::Bytes(b))
-                },
+                }
             }),
         }
-    } 
+    }
 }
 
+/// parse a string into abe. With parse_unencoded true, bytes outside the printable ascii range (0x20..0xfe)
 
-/// parse a string into abe. With parse_unencoded true, bytes outside the printable ascii range (0x20..0xfe) 
-
-pub fn parse_abe(st: impl AsRef<[u8]>,parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseError> {
-    parse_abe_b(st.as_ref(),parse_unencoded)
+pub fn parse_abe(st: impl AsRef<[u8]>, parse_unencoded: bool) -> Result<Vec<ABE>, ASTParseError> {
+    parse_abe_b(st.as_ref(), parse_unencoded)
 }
-pub fn parse_abe_b(st: &[u8],parse_unencoded:bool) -> Result<Vec<ABE>, ASTParseError> {
-    if parse_unencoded{ parse_abe_with_unencoded_b(st)}
-    else { parse_abe_strict_b(st)}
+pub fn parse_abe_b(st: &[u8], parse_unencoded: bool) -> Result<Vec<ABE>, ASTParseError> {
+    if parse_unencoded {
+        parse_abe_with_unencoded_b(st)
+    } else {
+        parse_abe_strict_b(st)
+    }
 }
 
-/// ALl bytes must be valid ABE. 
+/// ALl bytes must be valid ABE.
 pub fn parse_abe_strict_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
@@ -477,8 +476,7 @@ pub fn parse_abe_strict_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     }
 }
 
-
-/// In contrast to [[parse_abe_strict_b]] this function does not error bytes outside the range 0x20..0xfe, but reads them as-is. 
+/// In contrast to [[parse_abe_strict_b]] this function does not error bytes outside the range 0x20..0xfe, but reads them as-is.
 pub fn parse_abe_with_unencoded_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> {
     let mut depth = 0;
     let mut r: Vec<ABTok> = vec![];
@@ -486,12 +484,17 @@ pub fn parse_abe_with_unencoded_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> 
     let mut todo = st;
     let len = todo.len();
     loop {
-        let b = match crate::abtxt::next_byte(todo, len - todo.len(), STD_PLAIN_CSET,STD_ERR_CSET){
+        let b = match crate::abtxt::next_byte(todo, len - todo.len(), STD_PLAIN_CSET, STD_ERR_CSET)
+        {
             Ok(o) => o,
-            Err(ABTxtError::ParseError { byte, idx:_}) => {todo = &todo[1..];bytes.push(byte); continue;}
-            Err(e) => return Err(e.into())
+            Err(ABTxtError::ParseError { byte, idx: _ }) => {
+                todo = &todo[1..];
+                bytes.push(byte);
+                continue;
+            }
+            Err(e) => return Err(e.into()),
         };
-        match b{
+        match b {
             Byte::Finished => {
                 if depth != 0 {
                     return Err(ASTParseError::UnmatchedOpen);
@@ -526,26 +529,35 @@ pub fn parse_abe_with_unencoded_b(st: &[u8]) -> Result<Vec<ABE>, ASTParseError> 
     }
 }
 
-
 /// Split abe into top level components
 /// See next_byte for the meaning of cset
 pub fn tokenize_abe(
     st: &str,
     plain_cset: u32,
     err_cset: u32,
-) -> Result<Vec<(u8,bool,&str)>, ASTParseError> {
+) -> Result<Vec<(u8, bool, &str)>, ASTParseError> {
     tokenize_abe_b(st.as_bytes(), plain_cset, err_cset)
-        .map(|i| i.map(|(c,i, b)| (c,i,unsafe { std::str::from_utf8_unchecked(b) })))
+        .map(|i| i.map(|(c, i, b)| (c, i, unsafe { std::str::from_utf8_unchecked(b) })))
         .try_collect()
 }
 
 #[test]
-pub fn abesplit(){
-    
-    let v : Vec<_> = tokenize_abe_b(b"hello/world\nok",0, 0).try_collect().unwrap();
-    assert_eq!(&*v,&[(0,false,b"hello" as &[u8]),(b'/',false,b"world"),(b'\n',false,b"ok")]);
+pub fn abesplit() {
+    let v: Vec<_> = tokenize_abe_b(b"hello/world\nok", 0, 0)
+        .try_collect()
+        .unwrap();
+    assert_eq!(
+        &*v,
+        &[
+            (0, false, b"hello" as &[u8]),
+            (b'/', false, b"world"),
+            (b'\n', false, b"ok")
+        ]
+    );
 
-    let _v : Vec<_> = tokenize_abe_b(b"[test[thing]]",0, 0).try_collect().unwrap();
+    let _v: Vec<_> = tokenize_abe_b(b"[test[thing]]", 0, 0)
+        .try_collect()
+        .unwrap();
 }
 
 /// Split abe into top level components
@@ -553,20 +565,22 @@ pub fn tokenize_abe_b(
     st: &[u8],
     plain_cset: u32,
     err_cset: u32,
-) -> impl Iterator<Item=Result<(u8,bool,&[u8]),ASTParseError>>{
+) -> impl Iterator<Item = Result<(u8, bool, &[u8]), ASTParseError>> {
     let mut depth = 0;
     let mut head_ctr = 0;
     let mut todo = st;
     let mut start_comp = 0;
     let mut with_inner = false;
     let len = todo.len();
-    std::iter::from_fn(move ||{
-        if todo.is_empty(){ return None};
+    std::iter::from_fn(move || {
+        if todo.is_empty() {
+            return None;
+        };
         loop {
-            let byte = match crate::abtxt::next_byte(todo, len - todo.len(), plain_cset, err_cset){
+            let byte = match crate::abtxt::next_byte(todo, len - todo.len(), plain_cset, err_cset) {
                 Ok(b) => b,
-                Err(e) => return Some(Err(e.into()))
-            } ;
+                Err(e) => return Some(Err(e.into())),
+            };
             match byte {
                 Byte::Finished => {
                     if depth != 0 {
@@ -574,12 +588,16 @@ pub fn tokenize_abe_b(
                     }
                     let at = len - todo.len();
                     todo = &[];
-                    return Some(Ok((head_ctr,with_inner,&st[start_comp..at])));
+                    return Some(Ok((head_ctr, with_inner, &st[start_comp..at])));
                 }
                 Byte::Ctr { kind, rest } => {
                     if depth == 0 && !kind.is_bracket() {
                         let at = len - todo.len();
-                        let r = (head_ctr,std::mem::take(&mut with_inner),&st[start_comp..at]);
+                        let r = (
+                            head_ctr,
+                            std::mem::take(&mut with_inner),
+                            &st[start_comp..at],
+                        );
                         todo = rest;
                         start_comp = len - todo.len();
                         head_ctr = kind.as_char();
@@ -604,7 +622,7 @@ pub fn tokenize_abe_b(
         }
     })
 }
-                       
+
 pub fn print_abe<B: std::borrow::Borrow<ABE>>(v: impl IntoIterator<Item = B>) -> String {
     v.into_iter().map(|v| v.borrow().to_string()).collect()
 }

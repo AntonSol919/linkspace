@@ -4,8 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-
-
 /*
 TODO rewrite.
 This is rather messy as its old code missing some insights gained later.
@@ -78,16 +76,18 @@ impl DGSExpr {
         }
     }
     pub fn as_test_exprs(self) -> impl Iterator<Item = Vec<ABE>> {
-        let DGSExpr { domain, group, space } = self;
+        let DGSExpr {
+            domain,
+            group,
+            space,
+        } = self;
         let mut prefix = None;
         if !space.is_empty() {
-            prefix = Some(
-                abev!("prefix" : "=" : +(space.0))
-            );
+            prefix = Some(abev!("prefix" : "=" : +(space.0)));
         }
         [
             abev!("domain" : "=" : +(domain.0)),
-            abev!("group" : "=" : +(group.0))
+            abev!("group" : "=" : +(group.0)),
         ]
         .into_iter()
         .chain(prefix)
@@ -102,7 +102,11 @@ pub struct DGS {
 impl DGS {
     pub fn as_predicates(&self) -> impl Iterator<Item = Predicate> {
         [
-            Predicate::from_slice(RuleType::SpacePrefix, TestOp::Equal, self.space.space_bytes()),
+            Predicate::from_slice(
+                RuleType::SpacePrefix,
+                TestOp::Equal,
+                self.space.space_bytes(),
+            ),
             Predicate::from_slice(FieldEnum::DomainF, TestOp::Equal, &*self.domain),
             Predicate::from_slice(FieldEnum::GroupIDF, TestOp::Equal, &*self.group),
         ]
@@ -138,10 +142,15 @@ pub struct DGSDExpr {
 impl DGSDExpr {
     pub fn predicate_exprs(self) -> anyhow::Result<impl Iterator<Item = Vec<ABE>>> {
         let mut prefix_rule = None;
-        if self.depth_limit != MAX_SPACE_DEPTH as u8 && !self.dgs.space.is_empty() && !self.dgs.space.0.iter().any(|v| v.is_fslash()) {
-                        anyhow::bail!("can't use subrange expr with an evaluated space ( dont know its length ).
-        Must add ':**' or manually set -- depth ...")
-                    }
+        if self.depth_limit != MAX_SPACE_DEPTH as u8
+            && !self.dgs.space.is_empty()
+            && !self.dgs.space.0.iter().any(|v| v.is_fslash())
+        {
+            anyhow::bail!(
+                "can't use subrange expr with an evaluated space ( dont know its length ).
+        Must add ':**' or manually set -- depth ..."
+            )
+        }
 
         if self.depth_limit < MAX_SPACE_DEPTH as u8 {
             let prefix_len = self
@@ -163,13 +172,13 @@ pub fn try_take_dgs(ast: &[ABE]) -> anyhow::Result<(DGSExpr, &[ABE])> {
     use abe::*;
     let mut it = ast.split(|v| matches!(v, ABE::Ctr(Ctr::Colon)));
 
-    let domain = match it.next().unwrap_or(&[]){
+    let domain = match it.next().unwrap_or(&[]) {
         &[] => TypedABE::from_unchecked(crate::thread_local::domain().to_abe()),
         v => v.try_into()?,
     };
-    let group = match it.next().unwrap_or(&[]){
+    let group = match it.next().unwrap_or(&[]) {
         &[] => TypedABE::from_unchecked(crate::thread_local::group().to_abe()),
-        v => v.try_into()?
+        v => v.try_into()?,
     };
     let space = it.next().unwrap_or_default().try_into()?;
     Ok((
@@ -183,7 +192,6 @@ pub fn try_take_dgs(ast: &[ABE]) -> anyhow::Result<(DGSExpr, &[ABE])> {
 }
 
 pub fn dgpd(ast: &[ABE]) -> anyhow::Result<DGSDExpr> {
-
     let (dgs, rest) = try_take_dgs(ast)?;
     let mut subsegment_limit = 0;
     if !rest.is_empty() {
@@ -214,22 +222,20 @@ pub fn try_take_subsegm_expr(ast: &[ABE]) -> anyhow::Result<(u8, &[ABE])> {
         Err(_) => return Ok((0, &[])),
     };
     let depth = match as_expr(e)? {
-        Expr::Bytes(s) => {
-            match s.as_slice() {
-                b"0" => 0,
-                b"1" => 1,
-                b"2" => 2,
-                b"3" => 3,
-                b"4" => 4,
-                b"5" => 5,
-                b"6" => 6,
-                b"7" => 7,
-                b"8" => 8,
-                b"*" => 1,
-                b"**" => MAX_SPACE_DEPTH as u8,
-                _e => bail!("{} is an invalid depth",e)
-            }
-        }
+        Expr::Bytes(s) => match s.as_slice() {
+            b"0" => 0,
+            b"1" => 1,
+            b"2" => 2,
+            b"3" => 3,
+            b"4" => 4,
+            b"5" => 5,
+            b"6" => 6,
+            b"7" => 7,
+            b"8" => 8,
+            b"*" => 1,
+            b"**" => MAX_SPACE_DEPTH as u8,
+            _e => bail!("{} is an invalid depth", e),
+        },
         Expr::Lst(_) => bail!("todo"),
     };
     Ok((depth, rest))

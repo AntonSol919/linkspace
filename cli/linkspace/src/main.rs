@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 // ABE uses a lot of [...] in help texts. Clap uses doc comments as help - without cargo doc creates a lot of noise.
-#![allow(rustdoc::broken_intra_doc_links)] 
+#![allow(rustdoc::broken_intra_doc_links)]
 #![feature(
     once_cell_try,
     iterator_try_collect,
@@ -17,47 +17,43 @@
     exit_status_error,
     unix_sigpipe
 )]
-use std::{
-    ffi::OsString,
-    io::{ Write},
-    process::ExitCode, sync::{ LazyLock}, path::PathBuf, 
-};
+use std::{ffi::OsString, io::Write, path::PathBuf, process::ExitCode, sync::LazyLock};
 
-use anyhow::{ensure };
-use linkspace::{query::PredicateType };
+use anyhow::ensure;
+use linkspace::query::PredicateType;
 use linkspace_common::{
     cli::{
         clap,
         clap::Parser,
         keys,
-        opts::{CommonOpts, LinkspaceOpts },
-        tracing, WriteDestSpec, reader::{DataReadOpts, PktReadOpts},
+        opts::{CommonOpts, LinkspaceOpts},
+        reader::{DataReadOpts, PktReadOpts},
+        tracing, WriteDestSpec,
     },
-    core::{
-        mut_header::{MutFieldExpr, NetHeaderMutate},
-    },
+    core::mut_header::{MutFieldExpr, NetHeaderMutate},
+    predicate_aliases::ExtWatchCLIOpts,
     prelude::{
         predicate_type::PredInfo,
         query_mode::{Mode, Order, Table},
-        *, 
-    }, predicate_aliases::ExtWatchCLIOpts,
+        *,
+    },
 };
-use point::{PointOpts, GenPointOpts};
+use point::{GenPointOpts, PointOpts};
 use tracing_subscriber::EnvFilter;
-use watch::{DGPDWatchCLIOpts, CLIQuery};
+use watch::{CLIQuery, DGPDWatchCLIOpts};
 
 pub mod collect;
+pub mod datapoint;
+pub mod eval;
 pub mod filter;
+pub mod get_links;
 pub mod multi_watch;
-pub mod point;
 pub mod pktf;
+pub mod point;
 pub mod rewrite;
 pub mod save;
 pub mod status;
 pub mod watch;
-pub mod get_links;
-pub mod datapoint;
-pub mod eval;
 
 static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
     use std::fmt::Write;
@@ -83,19 +79,22 @@ static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
 });
 static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
     let scope = LinkspaceOpts::fake_eval_scope();
-    let pscope = (scope,pkt_scope(&*PUBLIC_GROUP_PKT));
+    let pscope = (scope, pkt_scope(&*PUBLIC_GROUP_PKT));
     let v = eval(&pscope, &abev!({ "help" })).unwrap().concat();
     String::from_utf8(v).unwrap()
 });
 
-pub static BUILD_INFO : &str = concat!(
-    env!("CARGO_PKG_NAME")," - ",
-    env!("CARGO_PKG_VERSION")," - ",
-    env!("VERGEN_GIT_BRANCH")," - ",
-    env!("VERGEN_GIT_DESCRIBE"), " - ", 
+pub static BUILD_INFO: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    " - ",
+    env!("CARGO_PKG_VERSION"),
+    " - ",
+    env!("VERGEN_GIT_BRANCH"),
+    " - ",
+    env!("VERGEN_GIT_DESCRIBE"),
+    " - ",
     env!("VERGEN_RUSTC_SEMVER")
 );
-
 
 /**
 linkspace-cli exposes most library functions as well as some utility functions.
@@ -119,14 +118,13 @@ struct Cli {
 
 #[derive(Parser)]
 enum Command {
-    
     /// points - create a new datapoint
     #[command(alias = "d", alias = "data")]
-    Datapoint{
+    Datapoint {
         #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
-        #[command(flatten,next_help_heading="Data Options")]
-        read_opts: DataReadOpts
+        #[command(flatten, next_help_heading = "Data Options")]
+        read_opts: DataReadOpts,
     },
     /** points - create a new linkpoint
 
@@ -137,7 +135,7 @@ enum Command {
         #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[command(flatten)]
-        multi:point::MultiOpts,
+        multi: point::MultiOpts,
         #[command(flatten)]
         link: point::PointOpts,
     },
@@ -150,12 +148,12 @@ enum Command {
         #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[command(flatten)]
-        multi:point::MultiOpts,
+        multi: point::MultiOpts,
         #[command(flatten)]
         link: point::PointOpts,
     },
-    /// points - create a new point - detect what kind of point - prefer to be exact by using 'data', 'link', or 'keyp' 
-    Point{
+    /// points - create a new point - detect what kind of point - prefer to be exact by using 'data', 'link', or 'keyp'
+    Point {
         #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[command(flatten)]
@@ -168,7 +166,7 @@ enum Command {
     Use "[help]" for a list of functions.
     */
     Eval(eval::EvalOpts),
-    /** abe   - eval expression for each pkt from stdin 
+    /** abe   - eval expression for each pkt from stdin
 
     The abe syntax can be found in the guide <https://www.linkspace.dev/guide/index.html#ABE>
     */
@@ -226,7 +224,7 @@ enum Command {
         #[arg(long, short, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[command(flatten)]
-        rest : ExtWatchCLIOpts 
+        rest: ExtWatchCLIOpts,
     },
     /// runtime - alias for: watch --mode log-desc
     WatchLog {
@@ -248,8 +246,11 @@ enum Command {
         #[command(flatten)]
         watch: DGPDWatchCLIOpts,
     },
-    
-    Status{#[command(subcommand)] cmd: status::StatusCmd},
+
+    Status {
+        #[command(subcommand)]
+        cmd: status::StatusCmd,
+    },
 
     /// rewrite packets
     Rewrite(rewrite::Rewrite),
@@ -257,9 +258,9 @@ enum Command {
     Collect(collect::Collect),
 
     /// filter a stream of packets based on a query
-    Filter(filter::Filter) ,
+    Filter(filter::Filter),
     /// alias to 'filter' with the --write and --write-false argument swapped.
-    Ignore(filter::Filter) ,
+    Ignore(filter::Filter),
 
     /// deduplicate packets based on hash
     Dedup {
@@ -268,13 +269,13 @@ enum Command {
         #[arg(short, long, default_value = "stdout")]
         write: Vec<WriteDestSpec>,
         #[command(flatten)]
-        pkt_in: PktReadOpts
+        pkt_in: PktReadOpts,
     },
     /// mutate the netheader of packets
     Route {
         #[command(flatten)]
         pkt_in: PktReadOpts,
-        field_mut: Vec<MutFieldExpr> ,
+        field_mut: Vec<MutFieldExpr>,
     },
     /// Get and write all link.ptr points
     GetLinks(get_links::GetLinks),
@@ -289,7 +290,7 @@ enum Command {
     },
     DbCheck,
     DbImport {
-        file: PathBuf
+        file: PathBuf,
     },
     #[cfg(target_family = "unix")]
     #[command(external_subcommand)]
@@ -334,10 +335,10 @@ fn main() -> std::process::ExitCode {
 }
 fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
     match command {
-        Command::Datapoint{write,read_opts} => {
+        Command::Datapoint { write, read_opts } => {
             crate::datapoint::write_datapoint(write, &common, read_opts)?;
         }
-        
+
         Command::Save(opts) => {
             crate::save::save(opts, common)?;
         }
@@ -350,37 +351,55 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             std::io::stdin().read_to_end(&mut bytes)?;
             tracing::trace!(?bytes);
             let scope = common.eval_scope();
-            let r = linkspace_common::abe::eval::encode(&scope, &bytes, &opts,ignore_err > 0 );
+            let r = linkspace_common::abe::eval::encode(&scope, &bytes, &opts, ignore_err > 0);
             if ignore_err > 1 && r.is_err() {
                 std::io::stdout().write_all(abtxt::as_abtxt(&bytes).as_bytes())?;
-            }else {
+            } else {
                 let r = r?;
                 std::io::stdout().write_all(r.as_bytes())?;
             }
         }
         Command::Linkpoint { write, link, multi } => {
             let mut write = common.open(&write)?;
-            point::linkpoint(common, link,multi, &mut write)?;
+            point::linkpoint(common, link, multi, &mut write)?;
         }
-        Command::Keypoint { write, mut link, multi } => {
+        Command::Keypoint {
+            write,
+            mut link,
+            multi,
+        } => {
             link.sign = true;
             let mut write = common.open(&write)?;
             point::linkpoint(common, link, multi, &mut write)?
         }
-        Command::Point { write, mut point} =>{
-            match point.dgs{
-                None => {
-                    let data = std::mem::take(&mut point.read);
-                    crate::datapoint::write_datapoint(write, &common, data)?;
-                },
-                Some(dgs) =>{
-                    let mut write = common.open(&write)?;
-                    let GenPointOpts{ create, create_int, sign, key, read, dgs:_, link } = point;
-                    let p = PointOpts{ create, create_int, sign, key, read, dgs, link};
-                    point::linkpoint(common, p,Default::default(), &mut write)?;
-                },
+        Command::Point { write, mut point } => match point.dgs {
+            None => {
+                let data = std::mem::take(&mut point.read);
+                crate::datapoint::write_datapoint(write, &common, data)?;
             }
-        }
+            Some(dgs) => {
+                let mut write = common.open(&write)?;
+                let GenPointOpts {
+                    create,
+                    create_int,
+                    sign,
+                    key,
+                    read,
+                    dgs: _,
+                    link,
+                } = point;
+                let p = PointOpts {
+                    create,
+                    create_int,
+                    sign,
+                    key,
+                    read,
+                    dgs,
+                    link,
+                };
+                point::linkpoint(common, p, Default::default(), &mut write)?;
+            }
+        },
         Command::Key(opts) => keys::keygen(&common, opts)?,
         Command::DataFilter { .. } => {
             todo!("Use before/after link NetFlags");
@@ -396,7 +415,11 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             }
             */
         }
-        Command::Dedup { capacity, write, pkt_in } => {
+        Command::Dedup {
+            capacity,
+            write,
+            pkt_in,
+        } => {
             common.enable_private_group();
             let inp = common.inp_reader(&pkt_in)?;
             let mut deduper = linkspace_common::pkt_stream_utils::QuickDedup::new(capacity);
@@ -411,44 +434,42 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
         Command::Collect(cmd) => collect::collect(&common, cmd)?,
         Command::Rewrite(cmd) => rewrite::rewrite(&common, cmd)?,
-        Command::GetLinks(cmd) => get_links::exec(common,cmd)?,
+        Command::GetLinks(cmd) => get_links::exec(common, cmd)?,
         Command::WatchHash { hash, write, rest } => {
-            let mut cquery = CLIQuery{
-                mode : Some(Mode::HASH_ASC),
+            let mut cquery = CLIQuery {
+                mode: Some(Mode::HASH_ASC),
                 ..CLIQuery::default()
             };
             cquery.opts.watch_opts = rest;
             let hpred = abev!( "hash" : "=" : +(hash.0));
-            cquery.opts.watch_opts.exprs.push( hpred.into());
+            cquery.opts.watch_opts.exprs.push(hpred.into());
             watch::watch(common, cquery, write)?;
         }
-        Command::WatchTree { query, asc, write } => {
-            watch::watch(
-                common,
-                query.mode(Mode {
-                    table: Table::Tree,
-                    order: Order::asc(asc),
-                }),
-                write
-            )?
-        }
+        Command::WatchTree { query, asc, write } => watch::watch(
+            common,
+            query.mode(Mode {
+                table: Table::Tree,
+                order: Order::asc(asc),
+            }),
+            write,
+        )?,
         Command::WatchLog { query, asc, write } => watch::watch(
             common,
             query.mode(Mode {
                 table: Table::Log,
                 order: Order::asc(asc),
             }),
-            write
+            write,
         )?,
-        Command::Watch { watch, write } => watch::watch(common, watch,write)?,
+        Command::Watch { watch, write } => watch::watch(common, watch, write)?,
         Command::Filter(filter) => filter::select(common, filter)?,
         Command::Ignore(mut filter) => {
             std::mem::swap(&mut filter.write_false, &mut filter.write);
             filter::select(common, filter)?
-        },
+        }
         Command::Eval(eval_opts) => eval::eval_cmd(common, eval_opts)?,
         Command::MultiWatch(mv) => multi_watch::multi_watch(common, mv)?,
-        Command::Route { field_mut , pkt_in} => {
+        Command::Route { field_mut, pkt_in } => {
             let muth = NetHeaderMutate::from_lst(&field_mut, &common.eval_scope())?;
             common.enable_private_group();
             common.io.inp.skip_hash = true;
@@ -462,7 +483,9 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
         }
 
         Command::PrintQuery { mut opts } => {
-            if !opts.print.do_print(){ opts.print.print_expr = true;}
+            if !opts.print.do_print() {
+                opts.print.print_expr = true;
+            }
             let _ = opts.into_query(&common)?;
         }
         Command::External(args) => {
@@ -489,26 +512,30 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;
         }
-        Command::Status{cmd: status::StatusCmd::Watch(w)} => status::status_watch(common, w)?,
-        Command::Status{cmd: status::StatusCmd::Set(w)} => status::status_set(common, w)?,
+        Command::Status {
+            cmd: status::StatusCmd::Watch(w),
+        } => status::status_watch(common, w)?,
+        Command::Status {
+            cmd: status::StatusCmd::Set(w),
+        } => status::status_set(common, w)?,
         Command::Init => {
             common.linkspace.init = true;
             let lk = common.runtime()?.into();
             let x = linkspace::runtime::lk_info(&lk);
-            println!("{:?}",x);
-        },
+            println!("{:?}", x);
+        }
         Command::DbCheck => {
             let lk = common.runtime()?;
             let env = lk.env();
-            println!("{:?}",env.dir());
-            println!("{:#?}",env.lmdb_version());
-            println!("{:#?}",env.env_info());
-            println!("{:#?}",env.db_info());
-            println!("real disk size: {:#?}",env.real_disk_size());
+            println!("{:?}", env.dir());
+            println!("{:#?}", env.lmdb_version());
+            println!("{:#?}", env.env_info());
+            println!("{:#?}", env.db_info());
+            println!("real disk size: {:#?}", env.real_disk_size());
             let e = env.linkspace_info();
-            if let Err(e) = &e{
-                eprintln!("{}",e);
-            }else {
+            if let Err(e) = &e {
+                eprintln!("{}", e);
+            } else {
                 println!("everything ok");
             }
             return e;
@@ -519,22 +546,22 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let lk = common.runtime()?;
             let env = lk.env();
             let mut bytes = mmap.as_ref();
-            let mut pkts : Vec<(&NetPktPtr,SaveState)> = vec![];
-            while !bytes.is_empty(){
-                match read::read_pkt(bytes, common.io.inp.skip_hash)?{
+            let mut pkts: Vec<(&NetPktPtr, SaveState)> = vec![];
+            while !bytes.is_empty() {
+                match read::read_pkt(bytes, common.io.inp.skip_hash)? {
                     std::borrow::Cow::Borrowed(o) => {
-                        bytes =&bytes[o.size() as usize..];
-                        pkts.push((o,SaveState::Pending));
-                    },
+                        bytes = &bytes[o.size() as usize..];
+                        pkts.push((o, SaveState::Pending));
+                    }
                     std::borrow::Cow::Owned(_) => todo!(),
                 }
             }
-            let i = env.save_ptr( &mut pkts)?;
-            for (pkt,state) in &pkts {
-                println!("{} {}",pkt.hash_ref(),state)
+            let i = env.save_ptr(&mut pkts)?;
+            for (pkt, state) in &pkts {
+                println!("{} {}", pkt.hash_ref(), state)
             }
-            println!("read {} - {i:?}",pkts.len());
-        },
+            println!("read {} - {i:?}", pkts.len());
+        }
     }
     Ok(())
 }

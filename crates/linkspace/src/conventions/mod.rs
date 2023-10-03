@@ -7,6 +7,5 @@
 /// utility functions for making pull requests.
 pub mod pull;
 /// utility functions for the private status convention.
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub mod status;
-

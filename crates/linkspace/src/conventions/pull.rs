@@ -1,4 +1,3 @@
-
 /** pull requests create a linkpoint in \[f:exchange\]:\[#:0\]:/pull/\[query.group\]/\[query.domain\]/\[query.id\]
 
 Pull queries must have the predicates 'domain:=:..' and 'group:=:..'.
@@ -13,7 +12,7 @@ use linkspace_common::prelude::EXCHANGE_DOMAIN;
 
 use crate::*;
 
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 /// Save a query in linkspace using the point format compatible with the pull convention
 pub fn lk_pull(lk: &Linkspace, query: &Query) -> LkResult<LkHash> {
     let req = lk_pull_point(query)?;
@@ -21,7 +20,7 @@ pub fn lk_pull(lk: &Linkspace, query: &Query) -> LkResult<LkHash> {
     Ok(req.hash())
 }
 /// Prefer using [lk_pull] - creates a pullpoint from a query
-pub fn lk_pull_point(query: &Query ) -> LkResult<NetPktBox> {
+pub fn lk_pull_point(query: &Query) -> LkResult<NetPktBox> {
     let group: GroupID = query
         .0
         .predicates
@@ -36,7 +35,11 @@ pub fn lk_pull_point(query: &Query ) -> LkResult<NetPktBox> {
         .as_eq()
         .context("requires exact domain predicate")?
         .into();
-    let id = query.0.qid()?.flatten().context("missing :qid:... option")?;
+    let id = query
+        .0
+        .qid()?
+        .flatten()
+        .context("missing :qid:... option")?;
     let data = query.0.to_string();
     tracing::trace!(data);
     let pull_space = rspace_buf(&[b"pull", &*group, &*domain, id]);

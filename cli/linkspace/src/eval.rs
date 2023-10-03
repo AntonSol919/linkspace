@@ -7,11 +7,11 @@ use linkspace_common::{
     cli::{
         clap::{self, Parser, Subcommand},
         opts::CommonOpts,
-        reader::{ DataReadOpts},
+        reader::DataReadOpts,
     },
-    prelude::{eval,scope::{ argv::ArgList}  },
+    prelude::{eval, scope::argv::ArgList},
 };
-use std::io::{ Write};
+use std::io::Write;
 
 #[derive(Parser, Clone)]
 pub struct EvalOpts {
@@ -19,40 +19,46 @@ pub struct EvalOpts {
     #[arg(long)]
     json: bool,
     /// read non-abe bytes from the fmt as-is - i.e. allow newlines and utf8 in the format.
-    #[arg(alias="strict",long)]
+    #[arg(alias = "strict", long)]
     no_loose: bool,
 
     abe: String,
     /// add argv scope from a data source - (i.e. [0] [1] ... [7])
     #[command(subcommand)]
-    data: Option<WithData>
+    data: Option<WithData>,
 }
-#[derive(Subcommand,Clone,Debug)]
-pub enum WithData{
+#[derive(Subcommand, Clone, Debug)]
+pub enum WithData {
     Argv(DataReadOpts),
 }
 
 pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
-    let EvalOpts { json, abe, data, no_loose } = opts;
+    let EvalOpts {
+        json,
+        abe,
+        data,
+        no_loose,
+    } = opts;
     let loose = !no_loose;
 
-    let abe = linkspace_common::prelude::parse_abe(abe,loose)?;
+    let abe = linkspace_common::prelude::parse_abe(abe, loose)?;
 
     let mut arglist = vec![];
     let scope = common.eval_scope();
     if let Some(WithData::Argv(read_opts)) = data {
-
         let mut reader = read_opts.open_reader(true, &scope)?;
         loop {
-            let scope = (&scope,ArgList::new(arglist.as_slice()));
+            let scope = (&scope, ArgList::new(arglist.as_slice()));
             let mut bytes = vec![];
-            let cont = reader.read_next_data(&scope, usize::MAX, &mut bytes) ?;
-            if cont.is_none() {break};
+            let cont = reader.read_next_data(&scope, usize::MAX, &mut bytes)?;
+            if cont.is_none() {
+                break;
+            };
             arglist.push(bytes);
         }
     }
-    
-    let scope = (scope,ArgList::new(arglist.as_slice()));
+
+    let scope = (scope, ArgList::new(arglist.as_slice()));
     let val = eval(&scope, &abe)?;
     let mut out = std::io::stdout();
     if json {
@@ -76,4 +82,3 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
     out.flush()?;
     Ok(())
 }
-

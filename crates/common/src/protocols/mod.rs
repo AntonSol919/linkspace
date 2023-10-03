@@ -7,8 +7,7 @@ use linkspace_core::prelude::{GroupID, PubKey};
 
 pub mod handshake;
 
-
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub mod lns;
 
 pub fn unicast_group(p1: PubKey, p2: PubKey) -> GroupID {

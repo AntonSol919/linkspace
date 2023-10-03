@@ -51,9 +51,7 @@ fn test() {
 
     let _ok = abe!(<Vec<u8>> "prefix" : "=" : );
 
-    let opt1: ABE = abe!( "#" : / : {/} :)
-        .chain(ext.clone())
-        .collect();
+    let opt1: ABE = abe!( "#" : / : {/} :).chain(ext.clone()).collect();
     let v: ABE = abe!( "#" : / : {/} : +(ext.into_iter())).collect();
     assert_eq!(opt1, v);
 }

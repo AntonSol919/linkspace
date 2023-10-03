@@ -9,19 +9,26 @@ use std::{ffi::OsStr, os::unix::prelude::OsStrExt};
 
 use anyhow::Context;
 
-
-use linkspace_core::prelude::*;
 /// Various ABE eval Scope's with database access.
-
 use crate::{
-    runtime::Linkspace, protocols::lns::eval::{NetLNS, PrivateLNS}, 
+    protocols::lns::eval::{NetLNS, PrivateLNS},
+    runtime::Linkspace,
 };
+use linkspace_core::prelude::*;
 
 use self::file::FileEnv;
-pub trait LKS  where Self: Fn() -> anyhow::Result<Linkspace> + Sized + Copy{
-    fn lk(self) -> anyhow::Result<Linkspace>{ (self)()}
+pub trait LKS
+where
+    Self: Fn() -> anyhow::Result<Linkspace> + Sized + Copy,
+{
+    fn lk(self) -> anyhow::Result<Linkspace> {
+        (self)()
+    }
 }
-impl<F> LKS for F where F: Fn() -> anyhow::Result<Linkspace>+Copy{
+impl<F> LKS for F
+where
+    F: Fn() -> anyhow::Result<Linkspace> + Copy,
+{
     fn lk(self) -> anyhow::Result<Linkspace> {
         (self)()
     }
@@ -29,31 +36,39 @@ impl<F> LKS for F where F: Fn() -> anyhow::Result<Linkspace>+Copy{
 
 pub type LkScope<GT> = (
     CoreScope,
-    (EScope<NetLNS<GT>>,
-     EScope<PrivateLNS<GT>>,
-     (EScope<FileEnv<GT>>, EScope<ReadHash<GT>>,Option<EScope<OSEnv>>)
+    (
+        EScope<NetLNS<GT>>,
+        EScope<PrivateLNS<GT>>,
+        (
+            EScope<FileEnv<GT>>,
+            EScope<ReadHash<GT>>,
+            Option<EScope<OSEnv>>,
+        ),
     ),
 );
 
-
-pub const fn lk_scope<'o, GT>(rt: GT,enable_env:bool) -> LkScope<GT>
+pub const fn lk_scope<'o, GT>(rt: GT, enable_env: bool) -> LkScope<GT>
 where
-    GT: 'o + LKS
+    GT: 'o + LKS,
 {
-    let files= EScope(FileEnv(rt));
+    let files = EScope(FileEnv(rt));
     let readhash = EScope(ReadHash(rt));
     let local_lns = EScope(PrivateLNS { rt });
-    let env = if enable_env{ Some(EScope(OSEnv))} else {None};
+    let env = if enable_env {
+        Some(EScope(OSEnv))
+    } else {
+        None
+    };
     let lns = EScope(NetLNS {
         rt,
         timeout: std::time::Duration::from_secs(1),
     });
-    (core_scope(),(lns, local_lns, (files, readhash,env)))
+    (core_scope(), (lns, local_lns, (files, readhash, env)))
 }
 
 #[derive(Copy, Clone)]
 pub struct ReadHash<GT>(GT);
-impl<R:LKS> ReadHash<R> {
+impl<R: LKS> ReadHash<R> {
     fn read_dgpk(&self, inp: &[&[u8]], scope: &dyn Scope) -> Result<Vec<u8>, ApplyErr> {
         let domain = Domain::try_fit_byte_slice(inp[0])?;
         let group = inp
@@ -152,7 +167,7 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
                         ApplyResult::Value(r)
                     }
                     Some(pkt) => {
-                        let r = eval( &(scope,pkt_scope(&pkt)), expr)?.concat();
+                        let r = eval(&(scope, pkt_scope(&pkt)), expr)?.concat();
                         //drop(pkt); drop(reader);
                         ApplyResult::Value(r)
                     }
@@ -169,17 +184,14 @@ funcs evaluate as if [/[func + args]:[rest]]. (e.g. [/readhash:HASH:[group:str]]
 #[derive(Copy, Clone)]
 pub struct OSEnv;
 
-impl EvalScopeImpl for OSEnv{
+impl EvalScopeImpl for OSEnv {
     fn about(&self) -> (String, String) {
-        (
-            "env".into(),
-            "os environment variables".into()
-        )
+        ("env".into(), "os environment variables".into())
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[ScopeFunc {
             apply: |_this: &Self, inp: &[&[u8]], _, _scope| {
-                let st : &OsStr = OsStr::from_bytes(inp[0]); // TODO this might be wrong
+                let st: &OsStr = OsStr::from_bytes(inp[0]); // TODO this might be wrong
                 std::env::var_os(st)
                     .with_context(|| format!("{st:?} env variable not set"))
                     .map(|o| o.as_bytes().to_vec())

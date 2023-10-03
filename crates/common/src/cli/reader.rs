@@ -194,11 +194,7 @@ impl ReadSource {
 }
 impl DataReadOpts {
     #[instrument(skip(scope))]
-    pub fn open_reader(
-        &self,
-        default_stdin: bool,
-        scope: &dyn Scope,
-    ) -> anyhow::Result<Reader> {
+    pub fn open_reader(&self, default_stdin: bool, scope: &dyn Scope) -> anyhow::Result<Reader> {
         let delim = match &self.data_delim {
             Some(delim) => {
                 let vec = delim.eval(scope)?;

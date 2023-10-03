@@ -1,4 +1,9 @@
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ScopeMacro, Scope }, scope_macro, fncs, scope::uint::parse_b, ABE};
+use crate::{
+    eval::{EvalScopeImpl, Scope, ScopeFunc, ScopeMacro},
+    fncs,
+    scope::uint::parse_b,
+    scope_macro, ABE,
+};
 use anyhow::{anyhow, Context};
 
 #[derive(Copy, Clone, Debug)]
@@ -22,7 +27,7 @@ impl EvalScopeImpl for LogicOps {
                         b"=" => {
                             if blen != size {
                                 return Err(anyhow!("expected {size} bytes got {blen}"));
-                            } 
+                            }
                         }
                         _ => return Err(anyhow!("unknown op")),
                     };
@@ -39,7 +44,7 @@ impl EvalScopeImpl for LogicOps {
                         b"=" => {
                             if bytes != i[2] {
                                 return Err(anyhow!("unequal bytes"));
-                            } 
+                            }
                         }
                         _ => return Err(anyhow!("unknown op")),
                     };

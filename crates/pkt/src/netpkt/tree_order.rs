@@ -3,9 +3,9 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use crate::*;
 use core::mem::size_of;
 use serde::{Deserialize, Serialize};
-use crate::*;
 
 /**
 'tree' index order is a Ord of NetPkts defined by the order of the tuple
@@ -45,8 +45,8 @@ pub struct TreeValue {
     create: Stamp,
     hash: LkHash,
     logptr: Stamp,
-    links_len:U16,
-    data_size:U16
+    links_len: U16,
+    data_size: U16,
 }
 pub type TreeValueBytes = [u8; size_of::<TreeValue>()];
 impl TreeEntry {
@@ -58,7 +58,7 @@ impl TreeEntry {
             hash: pkt.hash(),
             logptr: rstamp,
             links_len: U16::new(pkt.get_links().len() as u16),
-            data_size: U16::new(pkt.data().len() as u16)
+            data_size: U16::new(pkt.data().len() as u16),
         };
         Some(TreeEntry {
             btree_key: TreeKey::from_fields(sp.group, sp.domain, *space.space_depth(), space, key),
@@ -106,10 +106,10 @@ impl<K, V: AsRef<[u8]>> TreeEntry<K, V> {
     pub fn create(&self) -> Stamp {
         self.val().create
     }
-    pub fn data_size(&self) -> U16{
+    pub fn data_size(&self) -> U16 {
         self.val().data_size
     }
-    pub fn links_len(&self) -> U16{
+    pub fn links_len(&self) -> U16 {
         self.val().links_len
     }
 }
@@ -194,7 +194,6 @@ impl<K: AsRef<[u8]>, V: AsRef<[u8]>> std::fmt::Debug for TreeEntry<K, V> {
     }
 }
 
-
 impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (g, d, spd, sp, k) = self.fields();
@@ -214,11 +213,22 @@ impl<B: AsRef<[u8]>> std::fmt::Debug for TreeKey<B> {
 
 impl<K: AsRef<[u8]>, V: AsRef<[u8]>> std::fmt::Display for TreeEntry<K, V> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (g,d,spd,sp,k) = self.btree_key.fields();
-        let key = if k == PRIVATE { String::new() } else { k.to_string()};
-        let TreeValue { create, hash, logptr, links_len, data_size }= self.val();
-        write!(f,"{g}:{d}:{spd} {sp} {key} => ({create},{hash},{logptr},{links_len},{data_size})")
+        let (g, d, spd, sp, k) = self.btree_key.fields();
+        let key = if k == PRIVATE {
+            String::new()
+        } else {
+            k.to_string()
+        };
+        let TreeValue {
+            create,
+            hash,
+            logptr,
+            links_len,
+            data_size,
+        } = self.val();
+        write!(
+            f,
+            "{g}:{d}:{spd} {sp} {key} => ({create},{hash},{logptr},{links_len},{data_size})"
+        )
     }
 }
-
-

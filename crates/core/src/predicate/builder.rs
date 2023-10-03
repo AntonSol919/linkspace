@@ -5,31 +5,29 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_pkt::*;
 
-use crate::prelude::{TestOp };
+use crate::prelude::TestOp;
 
 use super::pkt_predicates::PktPredicates;
 
 impl PktPredicates {
-    pub fn from_gdp(group: GroupID, domain: Domain, space: &Space,exact:bool) -> Self {
-        let mut r = Self::DEFAULT
-            .group(group)
-            .unwrap()
-            .domain(domain)
-            .unwrap();
+    pub fn from_gdp(group: GroupID, domain: Domain, space: &Space, exact: bool) -> Self {
+        let mut r = Self::DEFAULT.group(group).unwrap().domain(domain).unwrap();
         r.prefix(space).unwrap();
         if exact {
-            r.depth.try_add(TestOp::Equal, *r.rspace_prefix.space_depth()).unwrap();
+            r.depth
+                .try_add(TestOp::Equal, *r.rspace_prefix.space_depth())
+                .unwrap();
         }
         r
     }
-    
 
     pub fn from_gd(group: GroupID, domain: Domain) -> Self {
         Self::DEFAULT.group(group).unwrap().domain(domain).unwrap()
     }
     pub fn space(mut self, space: impl AsRef<Space>) -> anyhow::Result<Self> {
         self.prefix(space)?;
-        self.depth.try_add(TestOp::Equal, *self.rspace_prefix.space_depth())?;
+        self.depth
+            .try_add(TestOp::Equal, *self.rspace_prefix.space_depth())?;
         Ok(self)
     }
     pub fn prefix(&mut self, prefix: impl AsRef<Space>) -> anyhow::Result<()> {
@@ -47,7 +45,7 @@ impl PktPredicates {
         Ok(())
     }
     pub fn key(mut self, k: PubKey) -> anyhow::Result<Self> {
-        self.pubkey.try_add(TestOp::Equal,k.into())?;
+        self.pubkey.try_add(TestOp::Equal, k.into())?;
         Ok(self)
     }
     pub fn group(mut self, g: GroupID) -> anyhow::Result<Self> {
@@ -63,5 +61,4 @@ impl PktPredicates {
         self.create.try_add(TestOp::Less, create.get())?;
         Ok(self)
     }
-    
 }

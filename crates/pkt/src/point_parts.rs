@@ -5,7 +5,6 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::*;
 
-
 /// The rusty enum repr of a point.
 /// Constructed through datapoint, linkpoint, and keypoint
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -15,23 +14,18 @@ pub struct PointParts<'a> {
     pub fields: PointFields<'a>,
 }
 
-
-#[derive(Clone, Copy, Eq, PartialEq,Debug)]
-#[repr(C,align(4))]
-pub struct Signed{
-    pub pubkey:PubKey,
-    pub signature:Signature
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[repr(C, align(4))]
+pub struct Signed {
+    pub pubkey: PubKey,
+    pub signature: Signature,
 }
 impl Signed {
     fn as_bytes(&self) -> &[u8] {
-        unsafe{std::slice::from_raw_parts(std::ptr::from_ref(self).cast(),size_of::<Self>())}
+        unsafe { std::slice::from_raw_parts(std::ptr::from_ref(self).cast(), size_of::<Self>()) }
     }
-    pub(crate) fn validate(&self,hash:&[u8;32]) -> Result<(), linkspace_cryptography::Error> {
-        linkspace_cryptography::validate_signature(
-            &self.pubkey.0,
-            &self.signature.0,
-            hash,
-        )
+    pub(crate) fn validate(&self, hash: &[u8; 32]) -> Result<(), linkspace_cryptography::Error> {
+        linkspace_cryptography::validate_signature(&self.pubkey.0, &self.signature.0, hash)
     }
 }
 
@@ -48,7 +42,7 @@ impl<'a> PointFields<'a> {
     pub fn common_idx(&self) -> Option<(&LinkPointHeader, &RootedSpace, Option<&PubKey>)> {
         match self {
             PointFields::LinkPoint(sp) => Some((&sp.head, sp.tail.rspace, None)),
-            PointFields::KeyPoint(sp,signed) => {
+            PointFields::KeyPoint(sp, signed) => {
                 Some((&sp.head, sp.tail.rspace, Some(&signed.pubkey)))
             }
             _ => None,
@@ -88,8 +82,8 @@ impl<'tail> PointParts<'tail> {
     pub fn data_ptr(&self) -> &'tail [u8] {
         match self.fields {
             PointFields::DataPoint(b) => b,
-            PointFields::LinkPoint(LinkPoint {  tail, .. }) => tail.data,
-            PointFields::KeyPoint(LinkPoint{tail,..}, _) => tail.data,
+            PointFields::LinkPoint(LinkPoint { tail, .. }) => tail.data,
+            PointFields::KeyPoint(LinkPoint { tail, .. }, _) => tail.data,
             PointFields::Error(b) => b,
             PointFields::Unknown(o) => o,
         }
@@ -107,25 +101,25 @@ impl<'tail> Point for PointParts<'tail> {
 
         let padding = self.padding();
         match &self.fields {
-            PointFields::Unknown(b) => ByteSegments::from_array([pkt_head, b,padding]),
-            PointFields::DataPoint(b) => ByteSegments::from_array([pkt_head, b,padding]),
-            PointFields::Error(b) => ByteSegments::from_array([pkt_head, b,padding]),
+            PointFields::Unknown(b) => ByteSegments::from_array([pkt_head, b, padding]),
+            PointFields::DataPoint(b) => ByteSegments::from_array([pkt_head, b, padding]),
+            PointFields::Error(b) => ByteSegments::from_array([pkt_head, b, padding]),
             PointFields::LinkPoint(LinkPoint { head, tail }) => ByteSegments::from_array([
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
                 tail.rspace.rooted_bytes(),
                 tail.data,
-                padding
+                padding,
             ]),
-            PointFields::KeyPoint(LinkPoint{head, tail}, signed) => ByteSegments::from_array([
+            PointFields::KeyPoint(LinkPoint { head, tail }, signed) => ByteSegments::from_array([
                 pkt_head,
                 head.as_bytes(),
                 tail.links_as_bytes(),
                 tail.rspace.rooted_bytes(),
                 tail.data,
                 padding,
-                signed.as_bytes()
+                signed.as_bytes(),
             ]),
         }
     }
@@ -134,17 +128,17 @@ impl<'tail> Point for PointParts<'tail> {
     fn data(&self) -> &[u8] {
         self.data_ptr()
     }
-    fn padding(&self) -> &[u8]{
+    fn padding(&self) -> &[u8] {
         let pad_len = self.pkt_header.padded_point_size() - self.pkt_header.upoint_size();
-        static PAD : [u8;8] = [255;8];
+        static PAD: [u8; 8] = [255; 8];
         &PAD[..pad_len as usize]
     }
 
     #[inline(always)]
     fn tail(&self) -> Option<Tail> {
         match self.fields {
-            PointFields::LinkPoint(LinkPoint {  tail ,.. }) => Some(tail),
-            PointFields::KeyPoint(LinkPoint{  tail , .. },_) => Some(tail),
+            PointFields::LinkPoint(LinkPoint { tail, .. }) => Some(tail),
+            PointFields::KeyPoint(LinkPoint { tail, .. }, _) => Some(tail),
             _ => None,
         }
     }
@@ -155,15 +149,15 @@ impl<'tail> Point for PointParts<'tail> {
     #[inline(always)]
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         match &self.fields {
-            PointFields::LinkPoint(LinkPoint { head, ..}) => Some(head),
-            PointFields::KeyPoint(LinkPoint{ head, ..},_) => Some(head),
+            PointFields::LinkPoint(LinkPoint { head, .. }) => Some(head),
+            PointFields::KeyPoint(LinkPoint { head, .. }, _) => Some(head),
             _ => None,
         }
     }
 
     fn signed(&self) -> Option<&Signed> {
         match &self.fields {
-            PointFields::KeyPoint(_,t) => Some(t),
+            PointFields::KeyPoint(_, t) => Some(t),
             _ => None,
         }
     }
@@ -184,7 +178,11 @@ impl<'o> core::fmt::Debug for PointFields<'o> {
                     .finish()
             }
             Self::LinkPoint(arg0) => f.debug_tuple("LinkPoint").field(arg0).finish(),
-            Self::KeyPoint(arg0,arg1) => f.debug_tuple("NewKeyPoint").field(arg0).field(arg1).finish(),
+            Self::KeyPoint(arg0, arg1) => f
+                .debug_tuple("NewKeyPoint")
+                .field(arg0)
+                .field(arg1)
+                .finish(),
             Self::Error(arg0) => f.debug_tuple("Error").field(&AB(&arg0)).finish(),
         }
     }

@@ -21,19 +21,19 @@ where
     fn inc(self) -> Option<Self> {
         self.checked_add(Self::ONE)
     }
-    fn overflowing_add(self, rhs: Self) -> (Self, bool) ;
+    fn overflowing_add(self, rhs: Self) -> (Self, bool);
     fn checked_add(self, o: Self) -> Option<Self>;
     fn checked_sub(self, o: Self) -> Option<Self>;
     fn decr(self) -> Option<Self> {
         self.checked_sub(Self::ONE)
     }
 
-    fn overflowing_shl(self, rhs: u32) -> (Self, bool) ;
-    fn overflowing_shr(self, rhs: u32) -> (Self, bool) ;
-    fn leading_zeros(&self) -> u32 ;
-    fn trailing_zeros(&self) -> u32 ;
-    fn trailing_ones(&self) -> u32 ;
-    fn leading_ones(&self) -> u32 ;
+    fn overflowing_shl(self, rhs: u32) -> (Self, bool);
+    fn overflowing_shr(self, rhs: u32) -> (Self, bool);
+    fn leading_zeros(&self) -> u32;
+    fn trailing_zeros(&self) -> u32;
+    fn trailing_ones(&self) -> u32;
+    fn leading_ones(&self) -> u32;
 
     fn as_be_bytes(&self, _out: &mut dyn FnMut(&[u8]));
     fn to_be_vec(&self) -> Vec<u8> {
@@ -54,7 +54,9 @@ macro_rules! impl_native_uint {
             const MAX: Self = $k::max_value();
             const BITS: u32 = std::mem::size_of::<Self>() as u32 * 8;
 
-            fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])){out(&$k::to_be_bytes(*self))}
+            fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])) {
+                out(&$k::to_be_bytes(*self))
+            }
             #[inline(always)]
             fn not(self) -> Self {
                 !self
@@ -218,60 +220,57 @@ impl UInt for B64<[u8; 32]> {
         u8_be::sub(self.0, u8_be::one()).map(B64)
     }
 
-
     fn checked_sub(self, other: Self) -> Option<Self> {
-        UInt::checked_sub(self.to_u256(),other.to_u256()).map(Self::from_u256)
+        UInt::checked_sub(self.to_u256(), other.to_u256()).map(Self::from_u256)
     }
     fn checked_add(self, other: Self) -> Option<Self> {
-        UInt::checked_add(self.to_u256(),other.to_u256()).map(Self::from_u256)
+        UInt::checked_add(self.to_u256(), other.to_u256()).map(Self::from_u256)
     }
 
-    fn overflowing_shl(self, rhs: u32) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_shl(self.to_u256(), rhs);
-        (v.into(),over)
+    fn overflowing_shl(self, rhs: u32) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_shl(self.to_u256(), rhs);
+        (v.into(), over)
     }
 
-    fn overflowing_shr(self, rhs: u32) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_shr(self.to_u256(), rhs);
-        (v.into(),over)
+    fn overflowing_shr(self, rhs: u32) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_shr(self.to_u256(), rhs);
+        (v.into(), over)
     }
 
-    fn leading_zeros(&self) -> u32  {
+    fn leading_zeros(&self) -> u32 {
         UInt::leading_zeros(&self.to_u256())
     }
-    fn trailing_zeros(&self) -> u32  {
+    fn trailing_zeros(&self) -> u32 {
         UInt::trailing_zeros(&self.to_u256())
     }
 
-    fn trailing_ones(&self) -> u32  {
+    fn trailing_ones(&self) -> u32 {
         UInt::trailing_ones(&self.to_u256())
     }
 
-    fn leading_ones(&self) -> u32  {
+    fn leading_ones(&self) -> u32 {
         UInt::leading_ones(&self.to_u256())
     }
 
-    fn overflowing_add(self, rhs: Self) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_add(self.to_u256(), rhs.to_u256());
-        (v.into(),over)
+    fn overflowing_add(self, rhs: Self) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_add(self.to_u256(), rhs.to_u256());
+        (v.into(), over)
     }
 
     fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])) {
         out(&self.0)
     }
-
-
 }
 
 impl UInt for AB<[u8; 16]> {
     const MIN: Self = AB([0; 16]);
-   const MAX: Self = AB([255; 16]);
+    const MAX: Self = AB([255; 16]);
     const ONE: Self = AB(u8_be::one());
     const BITS: u32 = 16 * 8;
     fn as_be_bytes(&self, out: &mut dyn FnMut(&[u8])) {
         out(&self.0)
     }
-  
+
     #[inline(always)]
     fn bit_and(self, other: Self) -> Self {
         AB(std::array::from_fn(|i| self.0[i] & other.0[i]))
@@ -290,43 +289,42 @@ impl UInt for AB<[u8; 16]> {
     fn decr(self) -> Option<Self> {
         u8_be::sub(self.0, u8_be::one()).map(AB)
     }
-    fn overflowing_add(self, rhs: Self) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_add(self.to_u128(), rhs.to_u128());
-        (v.into(),over)
+    fn overflowing_add(self, rhs: Self) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_add(self.to_u128(), rhs.to_u128());
+        (v.into(), over)
     }
 
     fn checked_sub(self, other: Self) -> Option<Self> {
-        UInt::checked_sub(self.to_u128(),other.to_u128()).map(Self::from_u128)
+        UInt::checked_sub(self.to_u128(), other.to_u128()).map(Self::from_u128)
     }
     fn checked_add(self, other: Self) -> Option<Self> {
-        UInt::checked_add(self.to_u128(),other.to_u128()).map(Self::from_u128)
+        UInt::checked_add(self.to_u128(), other.to_u128()).map(Self::from_u128)
     }
 
-    fn overflowing_shl(self, rhs: u32) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_shl(self.to_u128(), rhs);
-        (v.into(),over)
+    fn overflowing_shl(self, rhs: u32) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_shl(self.to_u128(), rhs);
+        (v.into(), over)
     }
 
-    fn overflowing_shr(self, rhs: u32) -> (Self, bool)  {
-        let (v,over) = UInt::overflowing_shr(self.to_u128(), rhs);
-        (v.into(),over)
+    fn overflowing_shr(self, rhs: u32) -> (Self, bool) {
+        let (v, over) = UInt::overflowing_shr(self.to_u128(), rhs);
+        (v.into(), over)
     }
 
-    fn leading_zeros(&self) -> u32  {
+    fn leading_zeros(&self) -> u32 {
         UInt::leading_zeros(&self.to_u128())
     }
-    fn trailing_zeros(&self) -> u32  {
+    fn trailing_zeros(&self) -> u32 {
         UInt::trailing_zeros(&self.to_u128())
     }
 
-    fn trailing_ones(&self) -> u32  {
+    fn trailing_ones(&self) -> u32 {
         UInt::trailing_ones(&self.to_u128())
     }
 
-    fn leading_ones(&self) -> u32  {
+    fn leading_ones(&self) -> u32 {
         UInt::leading_ones(&self.to_u128())
     }
-
 }
 
 pub const fn one<const N: usize>() -> [u64; N] {

@@ -6,14 +6,14 @@
 use byte_fmt::{
     abe::ToABE,
     endian_types::{U32, U8},
-     AB, B64,
+    AB, B64,
 };
-use std::ptr;
 use core::fmt;
 use serde::{Deserialize, Serialize};
+use std::ptr;
 
 use crate::Stamp;
-use std::{cell::Cell };
+use std::cell::Cell;
 
 /// A thread local default net header value when creating new netpackets
 #[thread_local]
@@ -30,7 +30,6 @@ pub struct NetPktHeader {
     pub stamp: Stamp,
     pub ubits: [U32; 4],
 }
-
 
 static_assertions::assert_eq_size!(NetPktHeader, [u8; 32]);
 impl From<NetPktHeader> for B64<[u8; 32]> {
@@ -71,8 +70,6 @@ impl fmt::Display for NetPktHeader {
     }
 }
 
-
-
 impl Default for NetPktHeader {
     /// DEFAULT_ROUTING_BITS
     fn default() -> Self {
@@ -90,15 +87,15 @@ impl NetPktHeader {
 
     #[inline(always)]
     pub const fn as_bytes(&self) -> &[u8; 32] {
-        unsafe { &*ptr::from_ref(self).cast::<[u8;32]>()}
+        unsafe { &*ptr::from_ref(self).cast::<[u8; 32]>() }
     }
     #[inline(always)]
     pub const fn cfrom(b: [u8; 32]) -> Self {
-        unsafe { b.as_ptr().cast::<Self>().read_unaligned()}
+        unsafe { b.as_ptr().cast::<Self>().read_unaligned() }
     }
     #[inline(always)]
     pub const fn cinto(self) -> [u8; 32] {
-        unsafe{*ptr::from_ref(&self).cast::<[u8;32]>()}
+        unsafe { *ptr::from_ref(&self).cast::<[u8; 32]>() }
     }
 
     #[must_use]
@@ -123,7 +120,7 @@ impl NetPktHeader {
         unsafe { &*(ptr::from_ref(&self.flags).cast::<u8>()) }
     }
     pub fn mut_flags_u8(&mut self) -> &mut u8 {
-        unsafe {  &mut *(ptr::from_mut(&mut self.flags).cast::<u8>()) }
+        unsafe { &mut *(ptr::from_mut(&mut self.flags).cast::<u8>()) }
     }
 }
 

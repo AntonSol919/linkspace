@@ -5,18 +5,18 @@
 /**
 Utility to create packets from multiple byte slices without allocating.
 **/
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct ByteSegments<'a>(pub(crate) [&'a [u8]; 8]);
 
 impl<'a> ExactSizeIterator for ByteSegments<'a> {
     #[inline(always)]
     fn len(&self) -> usize {
-        // Wrapping ok because Self is only created from valid packets. 
-        self.0.iter().fold(0, |a, b| a.wrapping_add( b.len()))
+        // Wrapping ok because Self is only created from valid packets.
+        self.0.iter().fold(0, |a, b| a.wrapping_add(b.len()))
     }
     #[inline]
     fn is_empty(&self) -> bool {
-        self.0 == [&[] as &[u8];8]
+        self.0 == [&[] as &[u8]; 8]
     }
 }
 
@@ -78,8 +78,8 @@ pub fn it() {
 impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub const fn from_array<const N: usize>(segments: [&'a [u8]; N]) -> Self {
-        assert!(N < 8,"not supported");
-        let mut r : [&'a [u8];8]= [&[]; 8];
+        assert!(N < 8, "not supported");
+        let mut r: [&'a [u8]; 8] = [&[]; 8];
         let mut i = 0;
         while i < N {
             r[i] = segments[i];
@@ -96,7 +96,10 @@ impl<'a> ByteSegments<'a> {
     #[inline(always)]
     pub(crate) fn push_front(self, head: &'a [u8]) -> Self {
         let [a, b, c, d, e, f, g, h] = self.0;
-        debug_assert!(h.is_empty(), "segmented packet construction stacked to deep");
+        debug_assert!(
+            h.is_empty(),
+            "segmented packet construction stacked to deep"
+        );
         ByteSegments([head, a, b, c, d, e, f, g])
     }
     #[inline]
@@ -108,7 +111,7 @@ impl<'a> ByteSegments<'a> {
     ///
     /// dest needs to be initialized to fit the entire length;
     #[inline(always)]
-    pub const unsafe fn write_segments_unchecked(self, mut dest: *mut u8)  -> *mut u8{
+    pub const unsafe fn write_segments_unchecked(self, mut dest: *mut u8) -> *mut u8 {
         let mut i = 0;
         while i < 8 {
             let len = self.0[i].len();

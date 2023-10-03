@@ -40,13 +40,16 @@ pub use ops::*;
 pub mod ops {
 
     use k256::schnorr::signature::hazmat::PrehashVerifier;
-    use rand::{Rng};
+    use rand::Rng;
 
     use super::*;
     pub fn sign_hash(key: &SigningKey, hash: &Hash) -> Signature {
-        let mut aux_rand = [0;32];
-        if false { rand::thread_rng().fill(&mut aux_rand);}
-        key.0.sign_prehash_with_aux_rand(hash,&aux_rand)
+        let mut aux_rand = [0; 32];
+        if false {
+            rand::thread_rng().fill(&mut aux_rand);
+        }
+        key.0
+            .sign_prehash_with_aux_rand(hash, &aux_rand)
             .unwrap()
             .to_bytes()
     }

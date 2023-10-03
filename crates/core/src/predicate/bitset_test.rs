@@ -78,7 +78,9 @@ impl<const MAX: u8> BitTestSet<MAX> {
     pub fn next_depth(&self, at: u8) -> Option<u8> {
         let mask = u32::MAX.checked_shl(at as u32 + 1)?;
         let new = self.0 & mask;
-        if new == 0 { return None}
+        if new == 0 {
+            return None;
+        }
         Some(new.trailing_zeros() as u8)
     }
     pub fn info(self, val: u8) -> SetValueInfo<u8> {

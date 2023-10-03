@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::Query;
-use linkspace_common::{core::query::Query as QueryImpl };
+use linkspace_common::core::query::Query as QueryImpl;
 #[doc(hidden)]
 impl From<crate::Query> for QueryImpl {
     fn from(val: crate::Query) -> Self {
@@ -28,9 +28,6 @@ impl crate::Query {
         unsafe { &*(q as *const QueryImpl as *const Query) }
     }
 }
-
-
-
 
 #[cfg(feature = "runtime")]
 pub mod rt_interop {
@@ -82,5 +79,4 @@ pub mod rt_interop {
                 .stopped(query, rx, reason, watch.nth_query, watch.nth_new)
         }
     }
-
 }

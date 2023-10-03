@@ -5,8 +5,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use anyhow::ensure;
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::{CommonOpts }, tracing, Out, WriteDest, WriteDestSpec, reader::PktReadOpts},
-    prelude::{*},
+    cli::{
+        clap, clap::Parser, opts::CommonOpts, reader::PktReadOpts, tracing, Out, WriteDest,
+        WriteDestSpec,
+    },
+    prelude::*,
 };
 
 #[derive(Parser, Clone)]
@@ -51,7 +54,7 @@ pub fn save(opts: SaveForward, mut common: CommonOpts) -> anyhow::Result<()> {
         let pkt = pkt?;
         // TODO: It might be better to spin a thread that will batch writes in a single transaction.
         // Depends on the speed of writing vs checking
-        let is_new = env.save_ptr_one( &pkt)?.is_new();
+        let is_new = env.save_ptr_one(&pkt)?.is_new();
         let dest = if is_new { &mut new } else { &mut old };
         common.write_multi_dest(dest, &pkt, None)?;
         tracing::debug!(hash=?pkt.hash(),is_new,"Flush OK");

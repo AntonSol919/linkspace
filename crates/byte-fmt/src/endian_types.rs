@@ -105,7 +105,7 @@ macro_rules! endian_number{
                 <$native>::from_str(s).map($name::from)
             }
         }
-        
+
         impl AsRef<[u8]> for $name {
             fn as_ref(&self) -> &[u8] { &self.0}
         }

@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    io::{self },
+    io::{self},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -42,7 +42,6 @@ impl Debug for BTreeEnv {
     }
 }
 impl BTreeEnv {
-    
     pub fn open(path: PathBuf, make_dir: bool) -> io::Result<BTreeEnv> {
         let lmdb = db::open(&path, make_dir)?;
         let location = path.canonicalize()?;
@@ -63,7 +62,9 @@ impl BTreeEnv {
         }
         Ok(env)
     }
-    pub fn location(&self) -> &Path { &self.0.location}
+    pub fn location(&self) -> &Path {
+        &self.0.location
+    }
     #[track_caller]
     pub fn new_read_txn(&self) -> anyhow::Result<ReadTxn> {
         Ok(ReadTxn(self.0.lmdb.read_txn()?))

@@ -3,17 +3,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use abe::{convert::AnyABE };
+use abe::convert::AnyABE;
 use clap::Args;
 use linkspace_core::{
-    predicate::exprs::{ QScope},
-    prelude::{*, predicate_type::PredicateType},
+    predicate::exprs::QScope,
+    prelude::{predicate_type::PredicateType, *},
 };
 
-
-
-
-#[derive(Debug, Clone,   Default, Args)]
+#[derive(Debug, Clone, Default, Args)]
 #[group(skip)]
 pub struct ExtWatchCLIOpts {
     #[command(flatten)]
@@ -66,7 +63,7 @@ pub struct PredicateAliases {
 
     #[arg(long)]
     /// add `recv:<:[us:INIT:+{until}]` where INIT is set at start
-    pub until : Option<String>
+    pub until: Option<String>,
 }
 
 impl PredicateAliases {
@@ -103,18 +100,22 @@ impl PredicateAliases {
         let max_branch = max_branch
             .map(|i| abev!( (QScope::Branch.to_string()) : "<" : +(U32::from(i).to_abe())));
 
-
-        let new = new_only.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
+        let new =
+            new_only.then(|| abev!( (QScope::Index.to_string()) : "<" : +(U32::ZERO.to_abe())));
         let log = db_only.then(|| abev!( (QScope::New.to_string()) : "<" : +(U32::ZERO.to_abe())));
 
-        let watch = qid.map(|v| v.unwrap()).or(watch.then(|| abev!("default")))
+        let watch = qid
+            .map(|v| v.unwrap())
+            .or(watch.then(|| abev!("default")))
             .map(|v| abev!( : (KnownOptions::Qid.to_string()) : +(v)));
 
         let now = now().0.to_vec();
-        let ttl = until.map(|v| abev!( (PredicateType::Recv.to_string()) : "<" :  { : now / "us" : "+" v}));
+        let ttl = until
+            .map(|v| abev!( (PredicateType::Recv.to_string()) : "<" :  { : now / "us" : "+" v}));
         let follow = follow.then(|| abev!(: (KnownOptions::Follow.to_string())));
 
-        watch.into_iter()
+        watch
+            .into_iter()
             .chain(ttl)
             .chain(follow)
             .chain(signed)
@@ -125,6 +126,5 @@ impl PredicateAliases {
             .chain(max_branch)
             .chain(log)
             .chain(new)
-
     }
 }

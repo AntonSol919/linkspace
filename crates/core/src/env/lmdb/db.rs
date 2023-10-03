@@ -4,34 +4,38 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-
-
-
-use linkspace_pkt::tree_order::TreeValueBytes;
 use ::lmdb::{self, *};
 use ffi::MDB_NEXT_NODUP;
+use linkspace_pkt::tree_order::TreeValueBytes;
 use lmdb_sys as ffi;
 use std::io;
 use std::io::{ErrorKind, Result};
-use std::{fmt::Debug, io::Write, marker::PhantomData, path::Path };
-
+use std::{fmt::Debug, io::Write, marker::PhantomData, path::Path};
 
 pub use lmdb::Error;
 
-use super::misc::{  assert_align  };
+use super::misc::assert_align;
 
 #[cfg(target_pointer_width = "32")]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) - 4;
 #[cfg(not(target_pointer_width = "32"))]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) * 128;
 
-
 fn open_env(path: &Path, flags: EnvironmentFlags) -> Environment {
     let mut err = Ok(());
-    let mapsize : Option<usize> = std::env::var("LK_LMDB_MAPSIZE").ok().map(|v| v.parse()).transpose().expect("can't parse LK_LMDB_MAPSIZE");
+    let mapsize: Option<usize> = std::env::var("LK_LMDB_MAPSIZE")
+        .ok()
+        .map(|v| v.parse())
+        .transpose()
+        .expect("can't parse LK_LMDB_MAPSIZE");
 
-    if mapsize.is_none(){
-        if let Ok(env) = Environment::new().set_max_dbs(4).set_flags(flags).set_map_size(DEFAULT_MAP_SIZE).open(path){
+    if mapsize.is_none() {
+        if let Ok(env) = Environment::new()
+            .set_max_dbs(4)
+            .set_flags(flags)
+            .set_map_size(DEFAULT_MAP_SIZE)
+            .open(path)
+        {
             return env;
         }
     }
@@ -43,9 +47,9 @@ fn open_env(path: &Path, flags: EnvironmentFlags) -> Environment {
             tracing::info!("{path:?} setting mapsize {ms}");
             env.set_map_size(ms);
         }
-        match env.open(path){
+        match env.open(path) {
             Ok(env) => return env,
-            Err(e) => { err = Err(e)},
+            Err(e) => err = Err(e),
         };
         let os_err = std::io::Error::last_os_error();
         if os_err.kind() == ErrorKind::OutOfMemory {
@@ -85,7 +89,7 @@ pub fn as_io(e: lmdb::Error) -> std::io::Error {
 }
 
 pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
-    tracing::trace!(?path,make_dir,"open db");
+    tracing::trace!(?path, make_dir, "open db");
     path.as_os_str().to_str().ok_or(io::Error::new(
         io::ErrorKind::Other,
         "Path must be valid utf8",
@@ -110,9 +114,7 @@ pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
         path,
         EnvironmentFlags::empty() | EnvironmentFlags::WRITE_MAP | EnvironmentFlags::NO_TLS,
     );
-    let pktlog = env
-        .create_db(Some("pktlog"), pktlog::PKTLOG_FLAGS)
-        .unwrap();
+    let pktlog = env.create_db(Some("pktlog"), pktlog::PKTLOG_FLAGS).unwrap();
     let hash = env.create_db(Some("hash"), DatabaseFlags::empty()).unwrap();
     let tree = env
         .create_db(
@@ -134,10 +136,10 @@ pub(crate) fn open(path: &Path, make_dir: bool) -> std::io::Result<LMDBEnv> {
     })
 }
 
-impl LMDBEnv{
+impl LMDBEnv {
     pub(crate) fn read_txn(&self) -> Result<LMDBTxn> {
         let txn = self.env.begin_ro_txn().map_err(as_io)?;
-        Ok(LMDBTxn { txn,env:self})
+        Ok(LMDBTxn { txn, env: self })
     }
 }
 pub(crate) struct LMDBEnv {
@@ -150,7 +152,7 @@ pub(crate) struct LMDBEnv {
 }
 pub struct LMDBTxn<'env> {
     pub(crate) txn: RoTransaction<'env>,
-    pub(crate) env: &'env LMDBEnv
+    pub(crate) env: &'env LMDBEnv,
 }
 pub struct MultiCursor<'o, A>(A, PhantomData<&'o ()>);
 pub struct UniqCursor<'o, K, A>(A, PhantomData<(K, &'o ())>, &'static str);
@@ -159,32 +161,32 @@ pub type HashCursor<'o> = UniqCursor<'o, [u8; 32], RoCursor<'o>>;
 pub type PktLogCursor<'o> = UniqCursor<'o, u64, RoCursor<'o>>;
 pub type TreeCursor<'o> = MultiCursor<'o, RoCursor<'o>>;
 
-
-
 impl<'env> LMDBTxn<'env> {
-
     pub fn pkt_cursor(&self) -> PktLogCursor {
         let cur = self.txn.open_ro_cursor(self.env.pktlog).unwrap();
-        UniqCursor(cur,PhantomData,"pktlog")
+        UniqCursor(cur, PhantomData, "pktlog")
     }
     pub fn tree_cursor(&self) -> TreeCursor {
         let cur = self.txn.open_ro_cursor(self.env.tree).unwrap();
-        MultiCursor(cur,PhantomData)
+        MultiCursor(cur, PhantomData)
     }
     pub fn hash_cursor(&self) -> HashCursor {
         let cur = self.txn.open_ro_cursor(self.env.hash).unwrap();
-        UniqCursor(cur,PhantomData,"hash")
+        UniqCursor(cur, PhantomData, "hash")
     }
 }
-impl<'o> LMDBTxn<'o>{
-    pub fn refresh(self) -> lmdb::Result<LMDBTxn<'o>>{
+impl<'o> LMDBTxn<'o> {
+    pub fn refresh(self) -> lmdb::Result<LMDBTxn<'o>> {
         tracing::trace!("Refresh");
         let LMDBTxn { txn, env } = self;
-        Ok(LMDBTxn{txn: txn.reset().renew()?,env})
+        Ok(LMDBTxn {
+            txn: txn.reset().renew()?,
+            env,
+        })
     }
-    pub fn refresh_inplace(&mut self) -> lmdb::Result<()>{
+    pub fn refresh_inplace(&mut self) -> lmdb::Result<()> {
         let txn = self.txn.txn();
-        let result  = unsafe {
+        let result = unsafe {
             lmdb_sys::mdb_txn_reset(txn);
             lmdb_sys::mdb_txn_renew(txn)
         };
@@ -193,16 +195,24 @@ impl<'o> LMDBTxn<'o>{
 }
 
 #[cfg(target_pointer_width = "64")]
-pub mod pktlog{
-    pub const PKTLOG_FLAGS : lmdb::DatabaseFlags = lmdb::DatabaseFlags::INTEGER_KEY;
-    pub fn bytes(b:u64) -> [u8;8]{ b.to_ne_bytes()}
-    pub fn val(v:[u8;8]) -> u64 {u64::from_ne_bytes(v)}
+pub mod pktlog {
+    pub const PKTLOG_FLAGS: lmdb::DatabaseFlags = lmdb::DatabaseFlags::INTEGER_KEY;
+    pub fn bytes(b: u64) -> [u8; 8] {
+        b.to_ne_bytes()
+    }
+    pub fn val(v: [u8; 8]) -> u64 {
+        u64::from_ne_bytes(v)
+    }
 }
 #[cfg(not(target_pointer_width = "64"))]
-pub mod pktlog{
-    pub const PKTLOG_FLAGS : lmdb::DatabaseFlags = lmdb::DatabaseFlags::empty();
-    pub fn bytes(b:u64) -> [u8;8]{ b.to_be_bytes()}
-    pub fn val(v:[u8;8]) -> u64{u64::from_be_bytes(v)}
+pub mod pktlog {
+    pub const PKTLOG_FLAGS: lmdb::DatabaseFlags = lmdb::DatabaseFlags::empty();
+    pub fn bytes(b: u64) -> [u8; 8] {
+        b.to_be_bytes()
+    }
+    pub fn val(v: [u8; 8]) -> u64 {
+        u64::from_be_bytes(v)
+    }
 }
 
 impl<'txn> PktLogCursor<'txn> {
@@ -219,7 +229,6 @@ impl<'txn> PktLogCursor<'txn> {
         })
     }
     pub(crate) fn range_uniq_rev(self, start: &u64) -> impl Iterator<Item = (u64, &'txn [u8])> {
-
         let start = *start;
         let it = match self.0.get(Some(&pktlog::bytes(start)), None, ffi::MDB_LAST) {
             Ok(_) | Err(Error::NotFound) => Iter::Ok {

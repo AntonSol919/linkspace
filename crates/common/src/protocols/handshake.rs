@@ -7,11 +7,11 @@
 use std::time::Duration;
 
 use crate::{prelude::*, protocols::unicast_group};
-use anyhow::{ensure };
+use anyhow::ensure;
 pub const HANDSHAKE_D: Domain = ab(b"\xFFhandshake");
 
-pub const ID_SENTINAL_SPACENAME : RootedStaticSpace<17>= rspace1::<8>(b"sentinal");
-pub const ANONYMOUSE_SPACENAME : RootedStaticSpace<18>= rspace1::<9>(b"anonymous");
+pub const ID_SENTINAL_SPACENAME: RootedStaticSpace<17> = rspace1::<8>(b"sentinal");
+pub const ANONYMOUSE_SPACENAME: RootedStaticSpace<18> = rspace1::<9>(b"anonymous");
 
 const MAX_DIFF_SECONDS: usize = 15;
 pub fn valid_stamp_range(stamp: Stamp, max_diff_sec: Option<usize>) -> anyhow::Result<()> {
@@ -45,7 +45,7 @@ pub fn phase0_client_init(id: &SigningKey) -> Phase0 {
             &[],
             now,
             id,
-            ()
+            (),
         )
         .as_netbox(),
     )
@@ -68,7 +68,10 @@ pub fn phase1_server_signs(
     };
     valid_stamp_range(*theirs.get_create_stamp(), max_diff_sec)?;
     let our_group = unicast_group(their_key, id.pubkey());
-    ensure!(our_group != PRIVATE,"Connecting to yourself (using the same key) is currently not supported");
+    ensure!(
+        our_group != PRIVATE,
+        "Connecting to yourself (using the same key) is currently not supported"
+    );
     let links = [Link::new("auth", *theirs.hash())];
     Ok(Phase1(
         keypoint(
@@ -134,7 +137,7 @@ pub fn phase2_client_signs(
         &[],
         now,
         id,
-        ()
+        (),
     )
     .as_netbox();
     Ok((Phase2(proof), their_key))

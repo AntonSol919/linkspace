@@ -23,17 +23,17 @@ use core::ops::{Deref, DerefMut};
 use std::{
     borrow::{Borrow, Cow},
     mem::size_of,
-    str::FromStr, ptr,
+    ptr,
+    str::FromStr,
 };
-
 
 pub use abe;
 pub use abe::eval;
 use abe::{
-    abtxt::{ABTxtError, MAX_STR, as_abtxt},
+    abtxt::{as_abtxt, ABTxtError, MAX_STR},
     ast::{no_ctrs, MatchError},
     cut_prefix_nulls, cut_prefixeq,
-    eval::{ABList },
+    eval::ABList,
     fit_back, thiserror, ABEValidator, FitSliceErr, ToABE, ABE,
 };
 
@@ -47,29 +47,53 @@ pub fn as_abtxt_c(mut b: &[u8], cut: bool) -> std::borrow::Cow<'_, str> {
 }
 
 pub fn ab_slice<X>(i: &[X]) -> &[AB<X>] {
-    unsafe { std::slice::from_raw_parts(i.as_ptr().cast(), i.len())}
+    unsafe { std::slice::from_raw_parts(i.as_ptr().cast(), i.len()) }
 }
 
 use base64_crate::prelude::*;
 
 pub fn b64(b: &[u8], mini: bool) -> String {
-    if mini{
+    if mini {
         mini_b64(b)
     } else {
         base64(b)
     }
 }
-pub use abe::scope::base::{base64,base64_decode,mini_b64};
+pub use abe::scope::base::{base64, base64_decode, mini_b64};
 
-use bytemuck::{Pod,Zeroable};
+use bytemuck::{Pod, Zeroable};
 
-#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable,
-         serde::Serialize,serde::Deserialize)]
+#[derive(
+    Default,
+    Copy,
+    Clone,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Pod,
+    Zeroable,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[repr(transparent)]
 /// newtype around bytes to print/parse [[abe]] text
 pub struct AB<N: ?Sized = Vec<u8>>(pub N);
-#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord,Pod,Zeroable,
-         serde::Serialize,serde::Deserialize)]
+#[derive(
+    Default,
+    Copy,
+    Clone,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Pod,
+    Zeroable,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[repr(transparent)]
 /// newtype around bytes to print/parse b64 (url-safe no-padding)
 pub struct B64<N = [u8; 32]>(pub N);
@@ -79,9 +103,9 @@ impl<'o> From<&'o [u8]> for &'o AB<[u8]> {
         AB::from_ref(d)
     }
 }
-impl<N:?Sized> AB<N>{
+impl<N: ?Sized> AB<N> {
     pub fn from_ref(b: &N) -> &AB<N> {
-        unsafe { std::mem::transmute(b)}
+        unsafe { std::mem::transmute(b) }
     }
 }
 
@@ -136,7 +160,7 @@ where
         let (max_padded, bytes) = self.x_prefix_cut();
         let mode = if max_padded { MAX_STR } else { "a" };
         let st = abe::abtxt::as_abtxt(bytes);
-        let st : &str= st.borrow();
+        let st: &str = st.borrow();
         if self.as_ref().len() == 16 {
             abe::abe!({ mode : st  }).for_each(out)
         } else {
@@ -147,11 +171,11 @@ where
         let (max_padded, bytes) = self.x_prefix_cut();
         let mode = if max_padded { MAX_STR } else { "a" };
         let st = abe::abtxt::as_abtxt(bytes);
-        let st : &str= st.borrow();
+        let st: &str = st.borrow();
         if self.as_ref().len() == 16 {
             format!("[{mode}:{st}]")
         } else {
-            format!("[{mode}:{st}:{}]",self.as_ref().len())
+            format!("[{mode}:{st}:{}]", self.as_ref().len())
         }
     }
 }
@@ -278,7 +302,6 @@ impl<const L: usize> ABEValidator for AB<[u8; L]> {
     }
 }
 
-
 impl<N: AsRef<[u8]>> AsRef<[u8]> for AB<N> {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
@@ -371,26 +394,26 @@ impl<N> AsRef<N> for B64<N> {
 
 impl AsRef<[u8; 32]> for B64<[u128; 2]> {
     fn as_ref(&self) -> &[u8; 32] {
-        unsafe { &*std::ptr::from_ref(self).cast()}
+        unsafe { &*std::ptr::from_ref(self).cast() }
     }
 }
 impl<N> ToABE for B64<N>
 where
-    Self: AsRef<[u8]>{
-
+    Self: AsRef<[u8]>,
+{
     fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
         abe::abe!( { "b" : (self.b64()) } ).for_each(out)
     }
 
     fn to_abe_str(&self) -> String {
-        format!("[b:{}]",self)
+        format!("[b:{}]", self)
     }
 }
 
 impl<N> B64<N> {
     #[inline(always)]
     pub fn into_bytes(self) -> [u8; size_of::<Self>()] {
-        unsafe { *(ptr::from_ref(&self).cast::<[u8;size_of::<Self>()]>()) }
+        unsafe { *(ptr::from_ref(&self).cast::<[u8; size_of::<Self>()]>()) }
     }
     pub fn inner(self) -> N {
         self.0
@@ -404,10 +427,10 @@ impl<const L: usize> TryFrom<ABList> for B64<[u8; L]> {
     type Error = DecodeError;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
         let bytes = value.as_exact_bytes().map_err(|_| {
-            let (c,b) =value.first().unwrap();
-            if let Some(c) = c{
+            let (c, b) = value.first().unwrap();
+            if let Some(c) = c {
                 DecodeError::InvalidByte(0, *c as u8)
-            }else {
+            } else {
                 DecodeError::InvalidByte(b.len(), value[1].0.unwrap() as u8)
             }
         })?;
@@ -430,7 +453,6 @@ impl<const L: usize> ABEValidator for B64<[u8; L]> {
     }
 }
 
-
 impl<N> B64<N>
 where
     Self: AsRef<[u8]>,
@@ -441,11 +463,10 @@ where
     pub fn b64_mini(&self) -> String {
         mini_b64(self.as_ref())
     }
-    pub fn b64_into(&self, output_buf:&mut String){
+    pub fn b64_into(&self, output_buf: &mut String) {
         BASE64_URL_SAFE_NO_PAD.encode_string(self.as_ref(), output_buf)
     }
 }
-
 
 impl<N> Borrow<N> for B64<N> {
     fn borrow(&self) -> &N {
@@ -493,7 +514,7 @@ impl<const N: usize> B64<[u8; N]> {
             return Err(base64::DecodeError::InvalidLength);
         }
         let mut this: [u8; N] = [0; N];
-        let r = BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(s,&mut this)?;
+        let r = BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(s, &mut this)?;
         debug_assert!(r == N);
         Ok(B64(this))
     }
@@ -504,7 +525,6 @@ impl<const L: usize> TryFrom<&[u8]> for B64<[u8; L]> {
         Self::try_fit_slice(value)
     }
 }
-
 
 impl<const N: usize> FromStr for B64<[u8; N]> {
     type Err = base64::DecodeError;
@@ -529,16 +549,12 @@ where
     }
 }
 
-
-
-impl AB<[u8;16]> {
+impl AB<[u8; 16]> {
     pub const fn to_u128(self) -> u128 {
         u128::from_be_bytes(self.0)
-        
     }
-    pub const fn from_u128(value:u128) -> Self {
+    pub const fn from_u128(value: u128) -> Self {
         AB(value.to_be_bytes())
-        
     }
 }
 impl From<AB<[u8; 16]>> for u128 {
@@ -552,11 +568,11 @@ impl From<u128> for AB<[u8; 16]> {
     }
 }
 
-impl B64<[u8;32]>{
-    pub fn to_u256(self) -> U256{
+impl B64<[u8; 32]> {
+    pub fn to_u256(self) -> U256 {
         U256::from_be_bytes(self.0)
     }
-    pub fn from_u256(value:U256) -> Self {
+    pub fn from_u256(value: U256) -> Self {
         B64(value.to_be_bytes())
     }
 }
@@ -586,18 +602,17 @@ impl From<U512> for B64<[u8; 64]> {
 }
 
 #[test]
-fn casts(){
-    let s = ab_slice(&[b"abc",b"123"]);
-    assert_eq!(s[0].0 , b"abc");
-    assert_eq!(s[1].0 , b"123");
-    assert_eq!("abc",AB::from_ref(b"abc").to_string());
-    assert_eq!(B64([1;32]) ^ B64([3;32]),B64([2;32]));
-    assert_eq!(B64([1;32]) ^ B64([3;32]),B64([2;32]));
-    assert_eq!(B64([1u8;32]).into_bytes(), [1;32]);
-    assert_eq!(&[32;32],&B64::from_ref(&[32;32]).0);
+fn casts() {
+    let s = ab_slice(&[b"abc", b"123"]);
+    assert_eq!(s[0].0, b"abc");
+    assert_eq!(s[1].0, b"123");
+    assert_eq!("abc", AB::from_ref(b"abc").to_string());
+    assert_eq!(B64([1; 32]) ^ B64([3; 32]), B64([2; 32]));
+    assert_eq!(B64([1; 32]) ^ B64([3; 32]), B64([2; 32]));
+    assert_eq!(B64([1u8; 32]).into_bytes(), [1; 32]);
+    assert_eq!(&[32; 32], &B64::from_ref(&[32; 32]).0);
 
-
-    let o : &[u8;32] = B64([1u128;2]).as_ref();
+    let o: &[u8; 32] = B64([1u128; 2]).as_ref();
     let i = u128::from_ne_bytes(o[0..16].try_into().unwrap());
-    assert_eq!(i,1);
+    assert_eq!(i, 1);
 }

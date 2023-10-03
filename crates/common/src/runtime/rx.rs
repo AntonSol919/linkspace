@@ -7,16 +7,17 @@ use super::handlers::{FollowHandler, PktStreamHandler, SinglePktHandler, StopRea
 use anyhow::{bail, Context};
 pub use async_executors::{Timer, TimerExt};
 pub use futures::task::{LocalSpawn, LocalSpawnExt};
-use linkspace_core::prelude::{*, lmdb::BTreeEnv };
+use linkspace_core::prelude::{lmdb::BTreeEnv, *};
 use linkspace_pkt::reroute::ShareArcPkt;
 use std::{
-    borrow::{Cow},
+    borrow::Cow,
     cell::{Cell, OnceCell, RefCell},
-    ops::{ ControlFlow},
-    rc::{Rc },
-    time::{Duration, Instant}, path::{Path, PathBuf},
+    ops::ControlFlow,
+    path::{Path, PathBuf},
+    rc::Rc,
+    time::{Duration, Instant},
 };
-use tracing::{warn, Span, debug_span, instrument};
+use tracing::{debug_span, instrument, warn, Span};
 
 pub type PktStream = Box<dyn PktStreamHandler + 'static>;
 pub type Matcher = linkspace_core::matcher::Matcher<PktStream>;
@@ -29,10 +30,9 @@ pub struct Linkspace(Rc<Inner>);
 
 pub struct Inner {
     exec: Executor,
-    files : Option<PathBuf>,
+    files: Option<PathBuf>,
     spawner: OnceCell<Rc<dyn LocalAsync>>,
 }
-
 
 impl std::fmt::Debug for Linkspace {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -43,7 +43,6 @@ enum Pending {
     NewWatch { watch_entry: RxEntry },
     Close { id: QueryID, range: bool },
 }
-
 
 struct Executor {
     env: BTreeEnv,
@@ -58,35 +57,32 @@ struct Executor {
 }
 
 impl Linkspace {
-    pub fn get_reader<'env:'txn,'txn>(&'env self) -> Rc<ReadTxn<'txn>> {
+    pub fn get_reader<'env: 'txn, 'txn>(&'env self) -> Rc<ReadTxn<'txn>> {
         self.0.exec.process_txn.borrow().clone()
     }
-    
+
     pub fn env(&self) -> &BTreeEnv {
         &self.0.exec.env
     }
     pub fn spawner(&self) -> &OnceCell<Rc<dyn LocalAsync>> {
         &self.0.spawner
     }
-    pub fn files(&self) -> Option<&Path>{
+    pub fn files(&self) -> Option<&Path> {
         self.0.files.as_deref()
     }
 
-    
-    
     pub fn new(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         Self::new_opt_rt(env, OnceCell::from(spawner))
     }
 
     pub fn new_opt_rt(env: BTreeEnv, spawner: OnceCell<Rc<dyn LocalAsync>>) -> Linkspace {
-        let reader : ReadTxn<'_>= env.new_read_txn().unwrap();
-        let reader : ReadTxn<'static> = unsafe { std::mem::transmute(reader)};
+        let reader: ReadTxn<'_> = env.new_read_txn().unwrap();
+        let reader: ReadTxn<'static> = unsafe { std::mem::transmute(reader) };
         let at = reader.log_head();
         // TODO make this an option
         let files = Some(env.location().join("files"));
 
-        Linkspace(Rc::new(Inner{
-
+        Linkspace(Rc::new(Inner {
             spawner,
             files,
             exec: Executor {
@@ -99,7 +95,8 @@ impl Linkspace {
                 is_running: Cell::new(false),
                 is_reading: Cell::new(0),
                 //subroutines:RefCell::new(Registry::new())
-            }}))
+            },
+        }))
     }
 
     fn insert_watch(&self, watch_entry: RxEntry) {
@@ -142,7 +139,7 @@ impl Linkspace {
         }
     }
 
-    fn watch_status(&self,id:&QueryIDRef) -> Option<WatchStatus>{
+    fn watch_status(&self, id: &QueryIDRef) -> Option<WatchStatus> {
         let cbs = self.0.exec.callbacks.borrow();
         Some(cbs.get(id)?.status())
     }
@@ -151,46 +148,56 @@ impl Linkspace {
     continuously process callbacks until:
     - now > last_step => returns 0
     - qid = Some and qid is matched => if removed 1, if waiting for more -1
-    - qid = None => no more callbacks (1) 
+    - qid = None => no more callbacks (1)
      **/
     #[instrument(skip(self))]
     pub fn run_while(
         &self,
         last_step: Option<Instant>,
-        user_qid: Option<&QueryIDRef>
+        user_qid: Option<&QueryIDRef>,
     ) -> anyhow::Result<isize> {
         let exec = &self.0.exec;
         if exec.is_running.get() {
             bail!("already running")
         }
-        if exec.is_reading.get() > 0  {
+        if exec.is_reading.get() > 0 {
             tracing::warn!("Using a process_while nested in read txn can eat up memory. it might become an error in the future");
         }
         tracing::trace!(
             last_step_in=?last_step.map(|i| i-Instant::now()),
             "run while");
         let last_new_pkt = Instant::now();
-        let current_state = match user_qid{
-            Some(id) => Some((id,self.watch_status(id).with_context(||anyhow::anyhow!("watch id '{}' not found",AB(id)))?)),
-            _ => None
+        let current_state = match user_qid {
+            Some(id) => Some((
+                id,
+                self.watch_status(id)
+                    .with_context(|| anyhow::anyhow!("watch id '{}' not found", AB(id)))?,
+            )),
+            _ => None,
         };
         // check the break conditions, and update 'next_check' as required for next check
         loop {
             let _log_head = self.process();
-            if let Some((user_qid,old_status)) = current_state{
-                let status = match self.watch_status(user_qid){
+            if let Some((user_qid, old_status)) = current_state {
+                let status = match self.watch_status(user_qid) {
                     Some(v) => v,
                     None => {
                         tracing::debug!("watch was dropped");
                         return Ok(1);
                     }
                 };
-                if status.watch_id != old_status.watch_id { tracing::debug!("Watch was overwritten"); return Ok(1);}
-                if status.nth_query != old_status.nth_query { tracing::debug!("Watch was triggered (is_done=false)"); return Ok(-1);}
+                if status.watch_id != old_status.watch_id {
+                    tracing::debug!("Watch was overwritten");
+                    return Ok(1);
+                }
+                if status.nth_query != old_status.nth_query {
+                    tracing::debug!("Watch was triggered (is_done=false)");
+                    return Ok(-1);
+                }
             }
             let mut next_check = last_new_pkt + Duration::from_micros(Stamp::MAX.get());
             let newtime = Instant::now();
-            let d = |i| i-newtime;
+            let d = |i| i - newtime;
 
             if let Some(term) = last_step {
                 let wait_dur = match term.checked_duration_since(newtime) {
@@ -200,7 +207,7 @@ impl Linkspace {
                         return Ok(0);
                     }
                 };
-                let last_step_constraint = newtime+wait_dur;
+                let last_step_constraint = newtime + wait_dur;
                 tracing::trace!(
                     next_check=?d(next_check),
                     last_step_constraint=?d(last_step_constraint),
@@ -254,9 +261,10 @@ impl Linkspace {
                 }
                 None => {
                     tracing::warn!("holding a read txn across callbacks!");
-                    // the transmute sets the lifetime which is correct. 
+                    // the transmute sets the lifetime which is correct.
                     // the real danger is that the open txn eats up memory
-                    *txn = Rc::new(unsafe{std::mem::transmute(exec.env.new_read_txn().unwrap())});
+                    *txn =
+                        Rc::new(unsafe { std::mem::transmute(exec.env.new_read_txn().unwrap()) });
                 }
             }
             let txn_last = txn.log_head();
@@ -310,11 +318,13 @@ impl Linkspace {
         }
         tracing::debug!(npkts = i, "Updated Finished");
         self.drain_pending(&mut lock);
-        
+
         exec.is_running.set(false);
         exec.process_upto.set(upto);
         std::mem::drop((txn, lock));
-        if !exec.written.get() { return upto};
+        if !exec.written.get() {
+            return upto;
+        };
 
         tracing::trace!("Written true");
         self.process()
@@ -350,31 +360,21 @@ impl Linkspace {
         span: Span,
     ) -> anyhow::Result<i32> {
         let mode = query.get_mode()?;
-        let id :&[u8]= query.qid()?.flatten().expect("watch always requires a :qid:...  option");
+        let id: &[u8] = query
+            .qid()?
+            .flatten()
+            .expect("watch always requires a :qid:...  option");
         let follow = query.get_known_opt(KnownOptions::Follow)?;
         let start = None; //query.get_known_opt(KnownOptions::Start).map(|v| Ptr::try_from(v.clone())).transpose()?;
                           // TODO span should already have these fields.
-        let span = tracing::debug_span!(parent: &span, "with_opts", id=?AB(id), ?follow, ?mode, ?start);
+        let span =
+            tracing::debug_span!(parent: &span, "with_opts", id=?AB(id), ?follow, ?mode, ?start);
         match follow.is_some() {
             true => {
                 let onmatch = FollowHandler { inner: onmatch };
-                Ok(self.watch(
-                    id,
-                    mode,
-                    Cow::Borrowed(query),
-                    onmatch,
-                    start,
-                    span,
-                )?)
+                Ok(self.watch(id, mode, Cow::Borrowed(query), onmatch, start, span)?)
             }
-            false => Ok(self.watch(
-                id,
-                mode,
-                Cow::Borrowed(query),
-                onmatch,
-                start,
-                span,
-            )?),
+            false => Ok(self.watch(id, mode, Cow::Borrowed(query), onmatch, start, span)?),
         }
     }
     /// only checks predicates, does not handle any options.
@@ -399,7 +399,7 @@ impl Linkspace {
             let local_span = tracing::debug_span!(parent: &span, "DB Callback").entered();
             tracing::trace!(?mode);
             let reader = self.get_reader();
-            exec.is_reading.update(|i| i+1);
+            exec.is_reading.update(|i| i + 1);
             let r = reader
                 .query(mode, &q.predicates, &mut counter)?
                 .try_for_each(|dbp| {
@@ -409,17 +409,26 @@ impl Linkspace {
                 });
 
             let strong_count = Rc::strong_count(&reader);
-            if strong_count > 2{
-                if exec.is_reading.get() > 0 || exec.is_running.get(){ tracing::debug!("Assuming open txn is on purpose")}
-                else {warn!(strong_count,"Holding txn open")};
+            if strong_count > 2 {
+                if exec.is_reading.get() > 0 || exec.is_running.get() {
+                    tracing::debug!("Assuming open txn is on purpose")
+                } else {
+                    warn!(strong_count, "Holding txn open")
+                };
             }
-            exec.is_reading.update(|i|i-1);
-            tracing::debug!(?r,"Done with DB");
+            exec.is_reading.update(|i| i - 1);
+            tracing::debug!(?r, "Done with DB");
             if matches!(r, ControlFlow::Break(_)) {
-                return Ok(crate::saturating_cast(counter))
+                return Ok(crate::saturating_cast(counter));
             }
         }
-        match RxEntry::new(watch_id.to_vec(), q.into_owned(), counter, Box::new(onmatch), span) {
+        match RxEntry::new(
+            watch_id.to_vec(),
+            q.into_owned(),
+            counter,
+            Box::new(onmatch),
+            span,
+        ) {
             Ok(e) => {
                 tracing::debug!("Setup Watch");
                 self.insert_watch(e)
@@ -460,11 +469,11 @@ impl Linkspace {
         self.0.exec.callbacks.borrow()
     }
 }
-impl Executor{
+impl Executor {
     /** return when next to process.
     Ok(None) means immediatly, Ok(Some(stamp)) means at stamp a watch can be dropped, Err means no current watches
      **/
-    #[instrument(skip(self),ret)]
+    #[instrument(skip(self), ret)]
     fn next_work(&self) -> Result<Option<Stamp>, ()> {
         if self.is_running.get() {
             tracing::warn!("has_work called during work");
@@ -477,7 +486,6 @@ impl Executor{
         self.callbacks.borrow_mut().gc(now()).ok_or(()).map(Some)
     }
 }
-
 
 fn drop_watch(w: RxEntry, rt: &Linkspace, reason: StopReason) {
     let (mut handler, entry) = w.map(());
@@ -504,11 +512,7 @@ impl LocalSpawn for Linkspace {
     }
 
     fn status_local(&self) -> Result<(), futures::task::SpawnError> {
-        self.0
-            .spawner
-            .get()
-            .expect("No Spawner set")
-            .status_local()
+        self.0.spawner.get().expect("No Spawner set").status_local()
     }
 }
 impl Timer for Linkspace {

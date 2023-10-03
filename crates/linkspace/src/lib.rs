@@ -3,10 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#![deny(
-    missing_docs,
-    missing_debug_implementations,
-)]
+#![deny(missing_docs, missing_debug_implementations)]
 #![feature(
     thread_local,
     write_all_vectored,
@@ -278,20 +275,17 @@ pub mod abe {
     # Ok(())
     # }
     ```
-    
+
     **/
-    pub fn lk_eval<'o>(
-        expr: &str,
-        udata: impl Into<UserData<'o>>,
-    ) -> LkResult<Vec<u8>> {
+    pub fn lk_eval<'o>(expr: &str, udata: impl Into<UserData<'o>>) -> LkResult<Vec<u8>> {
         varscope::lk_eval(scope::scope(udata.into())?, expr, false)
     }
 
     /**
-    Same as lk_eval but accepts bytes outside the range 0x20..0xfe as-is. 
+    Same as lk_eval but accepts bytes outside the range 0x20..0xfe as-is.
     useful for templating with newlines and utf bytes.
 
-    This distinction exists because UTF has a bunch of characters that can hide a surprise - lk_eval input and lk_encode output is only ever ascii. 
+    This distinction exists because UTF has a bunch of characters that can hide a surprise - lk_eval input and lk_encode output is only ever ascii.
     ```
     # use linkspace::{*,prelude::*,abe::*};
     # fn main() -> LkResult{
@@ -300,10 +294,7 @@ pub mod abe {
     # Ok(())}
     ```
     **/
-    pub fn lk_eval_loose<'o>(
-        expr: &str,
-        udata: impl Into<UserData<'o>>,
-    ) -> LkResult<Vec<u8>> {
+    pub fn lk_eval_loose<'o>(expr: &str, udata: impl Into<UserData<'o>>) -> LkResult<Vec<u8>> {
         varscope::lk_eval(scope::scope(udata.into())?, expr, true)
     }
     /**
@@ -346,7 +337,7 @@ pub mod abe {
     assert_eq!(lk_encode(&bytes,"/:"), r#"\0\0\0\x08"#);
     assert_eq!(lk_encode(&bytes,"u32"), "[u32:8]");
 
-    
+
     // the options are a list of '/' separated functions
     // In this example 'u32' wont fit, LNS '#' lookup will succeed, if not the encoding would be base64
 
@@ -359,7 +350,7 @@ pub mod abe {
     assert_eq!(lk_eval(r#"[?:\0\0\0[u8:8]:u32]"#,())?,b"[u32:8]");
     assert_eq!(lk_eval(r#"[:\0\0\0[u8:8]/?:u32]"#,())?,b"[u32:8]");
 
-    // Or as the '?' macro 
+    // Or as the '?' macro
     assert_eq!(lk_eval(r#"[/?:\0\0\0[u8:8]/u32/#/b]"#,())?,b"[u32:8]");
 
     # Ok(())
@@ -503,7 +494,7 @@ pub mod abe {
             ))))
         }
 
-        #[cfg(feature="runtime")]
+        #[cfg(feature = "runtime")]
         /// [scope] with a explicit Linkspace and optionally add the os environment scope (used with `[env:ENV_VAR]`)
         pub fn lk_scope<'o>(
             lk: Option<&'o crate::Linkspace>,
@@ -1129,7 +1120,7 @@ pub mod varscope {
     use crate::abe::scope::LkScope;
     use linkspace_common::abe::{eval::eval, parse_abe};
 
-    /// [crate::lk_eval]/[crate::abe::lk_eval_loose] with a custom scope 
+    /// [crate::lk_eval]/[crate::abe::lk_eval_loose] with a custom scope
     pub fn lk_eval(scope: LkScope, expr: &str, loose: bool) -> LkResult<Vec<u8>> {
         let expr = parse_abe(expr, loose)?;
         let val = eval(&scope.as_dyn(), &expr)?;
@@ -1150,7 +1141,11 @@ pub mod varscope {
         )?)
     }
     /// custom scope version of [super::lk_query_parse]
-    pub fn lk_query_parse(scope: LkScope, mut query: Query, statements: &[&str]) -> LkResult<Query> {
+    pub fn lk_query_parse(
+        scope: LkScope,
+        mut query: Query,
+        statements: &[&str],
+    ) -> LkResult<Query> {
         for stmnt in statements {
             query.0.parse(stmnt.as_bytes(), &scope.as_dyn())?;
         }
@@ -1178,9 +1173,9 @@ pub mod varscope {
         let password = match password {
             Some(v) => Cow::Borrowed(v),
             None => match std::env::var("LK_PASS") {
-                Ok(abe) => {
-                    Cow::Owned(eval(&scope.as_dyn(), &parse_abe_strict_b(abe.as_bytes())?)?.concat())
-                }
+                Ok(abe) => Cow::Owned(
+                    eval(&scope.as_dyn(), &parse_abe_strict_b(abe.as_bytes())?)?.concat(),
+                ),
                 Err(_e) => Cow::Borrowed(&[] as &[u8]),
             },
         };

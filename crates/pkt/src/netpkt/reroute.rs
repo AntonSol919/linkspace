@@ -5,7 +5,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{cell::OnceCell, mem::size_of, ops::Deref};
 
-use crate::{ByteSegments, NetPktArc, NetPktArcPtr, NetPktExt, NetPktBox};
+use crate::{ByteSegments, NetPktArc, NetPktArcPtr, NetPktBox, NetPktExt};
 
 use super::{NetPkt, NetPktHeader};
 
@@ -95,7 +95,10 @@ impl<A> RecvPkt<A> {
             recv: self.recv,
         }
     }
-    pub fn owned(self) -> RecvPkt  where A: NetPkt{
+    pub fn owned(self) -> RecvPkt
+    where
+        A: NetPkt,
+    {
         self.map(|v| v.as_netbox())
     }
 }

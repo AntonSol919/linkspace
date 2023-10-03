@@ -62,14 +62,13 @@ macro_rules! predty {
         }
     };
 }
-impl std::str::FromStr for PredicateType{
+impl std::str::FromStr for PredicateType {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::try_from_id(s.as_bytes()).context("unknown predicate")
     }
 }
-
 
 predty!( enum PredicateType {
     Hash => ("hash",DATA,r"\[b:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\]","the point hash"),

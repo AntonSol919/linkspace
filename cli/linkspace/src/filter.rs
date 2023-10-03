@@ -4,11 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
-    cli::{opts::{CommonOpts }, clap,tracing,  WriteDestSpec, clap::Parser, reader::PktReadOpts},
+    cli::{clap, clap::Parser, opts::CommonOpts, reader::PktReadOpts, tracing, WriteDestSpec},
     prelude::*,
 };
 
-use crate::{watch::{ DGPDWatchCLIOpts, statements2query} };
+use crate::watch::{statements2query, DGPDWatchCLIOpts};
 #[derive(Parser)]
 pub struct Filter {
     /// Don't filter datapoints
@@ -27,20 +27,25 @@ pub struct Filter {
     #[arg(long)]
     recv_now: bool,
     /// re-evaluate the ABE expressions in the query after every packet.
-    #[arg(short,long)]
+    #[arg(short, long)]
     live: bool,
 }
-pub fn select(
-    common: CommonOpts,
-    filter:Filter
-) -> anyhow::Result<()> {
-    let Filter { allow_datapoint, query, write, write_false, pkt_in, live,recv_now } = filter;
+pub fn select(common: CommonOpts, filter: Filter) -> anyhow::Result<()> {
+    let Filter {
+        allow_datapoint,
+        query,
+        write,
+        write_false,
+        pkt_in,
+        live,
+        recv_now,
+    } = filter;
     let mut write = common.open(&write)?;
     let mut write_false = common.open(&write_false)?;
-    let stmnts :Vec<_> = query.iter_statments()?;
-    let query= statements2query(&stmnts, &common.eval_scope())?;
+    let stmnts: Vec<_> = query.iter_statments()?;
+    let query = statements2query(&stmnts, &common.eval_scope())?;
     tracing::debug!(recv_now, ?query.predicates.recv_stamp);
-    if !recv_now && query.predicates.recv_stamp != Default::default(){
+    if !recv_now && query.predicates.recv_stamp != Default::default() {
         anyhow::bail!("Usign the 'recv' predicate in this context refers to the date of reading this packet - not the date it was saved to a database - to suppress this error add --recv-now");
     }
     tracing::trace!(?query, "Query");
@@ -50,7 +55,7 @@ pub fn select(
     for pkt in inp {
         tracing::trace!(?pkt, "recv");
         let pkt = pkt?;
-        if allow_datapoint && pkt.is_datapoint(){
+        if allow_datapoint && pkt.is_datapoint() {
             common.write_multi_dest(&mut write, &**pkt, None)?;
             continue;
         }
@@ -63,15 +68,14 @@ pub fn select(
         if test_ok {
             common.write_multi_dest(&mut write, &**pkt, None)?;
             if live {
-                let scope = (common.eval_scope(),pkt_scope(&**pkt));
-                let query= statements2query(&stmnts, &scope)?;
+                let scope = (common.eval_scope(), pkt_scope(&**pkt));
+                let query = statements2query(&stmnts, &scope)?;
                 e.query = Box::new(query);
-                if let Err(e) =  e.update_tests(){
-                    tracing::info!(?e,"new test is empty");
+                if let Err(e) = e.update_tests() {
+                    tracing::info!(?e, "new test is empty");
                     break;
                 }
             }
-
         } else {
             common.write_multi_dest(&mut write_false, &**pkt, None)?;
         }

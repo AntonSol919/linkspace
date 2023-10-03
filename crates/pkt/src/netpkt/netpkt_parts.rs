@@ -7,9 +7,8 @@ use std::ptr;
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::*;
 
-
 /// Rust enum repr of a [NetPkt]
-#[derive(Clone, Copy, Debug,PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(C, align(4))]
 pub struct NetPktParts<'a> {
     pub net_header: NetPktHeader,
@@ -20,7 +19,11 @@ pub struct NetPktParts<'a> {
 impl<'a> NetPktParts<'a> {
     /// The caller must ensure PktHash matches the Pkt
     #[track_caller]
-    pub fn from_unchecked(net_header: NetPktHeader, hash: LkHash, pkt_parts: PointParts<'a>) -> Self {
+    pub fn from_unchecked(
+        net_header: NetPktHeader,
+        hash: LkHash,
+        pkt_parts: PointParts<'a>,
+    ) -> Self {
         debug_assert_eq!(pkt_parts.compute_hash(), hash);
         NetPktParts {
             net_header,

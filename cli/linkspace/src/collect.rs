@@ -3,17 +3,21 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::{
-    io::Write,
-    time::Instant,
-};
+use std::{io::Write, time::Instant};
 
-use crossbeam_channel::{Sender,bounded};
-use crate::{point::PointOpts };
+use crate::point::PointOpts;
+use crossbeam_channel::{bounded, Sender};
 use linkspace_common::{
-    cli::{clap, clap::Parser, opts::{CommonOpts }, tracing, WriteDest, WriteDestSpec, reader::{Reader, PktReadOpts, check_stdin}},
+    cli::{
+        clap,
+        clap::Parser,
+        opts::CommonOpts,
+        reader::{check_stdin, PktReadOpts, Reader},
+        tracing, WriteDest, WriteDestSpec,
+    },
     core::stamp_fmt::DurationStr,
-    prelude::*, dgs::DGS,
+    dgs::DGS,
+    prelude::*,
 };
 
 #[derive(Parser)]
@@ -104,13 +108,14 @@ impl Collector {
         };
         tracing::debug!(new_pkt=?pkt,"New collect Pkt");
         common.write_multi_dest(&mut self.write, &pkt, Some(&mut self.buf))?;
-        let scope = (common.eval_scope(),pkt_scope(&pkt));
+        let scope = (common.eval_scope(), pkt_scope(&pkt));
         let hash = pkt.hash();
         self.links.extend(
             self.c_opts
                 .chain_tag
                 .as_ref()
-                .map(|tag| tag.eval(&scope)).transpose()?
+                .map(|tag| tag.eval(&scope))
+                .transpose()?
                 .map(|tag| Link { tag, ptr: hash }),
         );
         for l in self.c_opts.build.link.iter() {
@@ -129,13 +134,9 @@ impl Collector {
         }
         anyhow::Ok(Some(()))
     }
-    pub fn new_pkt(
-        &mut self,
-        pkt: NetPktBox,
-        common: &CommonOpts,
-    ) -> anyhow::Result<bool> {
+    pub fn new_pkt(&mut self, pkt: NetPktBox, common: &CommonOpts) -> anyhow::Result<bool> {
         let scope = common.eval_scope();
-        let tag = self.c_opts.collect_tag.eval(&(scope,pkt_scope(&**pkt)))?;
+        let tag = self.c_opts.collect_tag.eval(&(scope, pkt_scope(&**pkt)))?;
 
         self.links.push(Link {
             ptr: pkt.hash(),
@@ -169,7 +170,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         links: initial_links,
         forward: common.open(&c_opts.forward)?,
         write: common.open(&c_opts.write)?,
-        reader: c_opts.build.read.open_reader(false,&eval_scope)?,
+        reader: c_opts.build.read.open_reader(false, &eval_scope)?,
         dgs,
         buf: vec![],
         c_opts,
@@ -177,7 +178,6 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
     };
     match collector.c_opts.min_interval {
         None => {
-            
             let inp = common.inp_reader(&collector.c_opts.pkt_in)?;
             tracing::debug!("Reading packets");
             for p in inp {
@@ -189,9 +189,9 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                     }
                 };
                 let try_collect = collector.new_pkt(pkt, common)?;
-                if try_collect{
+                if try_collect {
                     let collect = collector.collect(common)?;
-                    if collect.is_none(){
+                    if collect.is_none() {
                         return Ok(());
                     }
                 }
@@ -204,7 +204,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
         Some(interval) => {
             tracing::debug!("Setup interval");
             let result: anyhow::Result<()> = std::thread::scope(|s| -> anyhow::Result<()> {
-                let (tx, rx) : (Sender<NetPktBox>,_)= bounded(0);
+                let (tx, rx): (Sender<NetPktBox>, _) = bounded(0);
                 let first = Arc::new(std::sync::Once::new());
                 let f = first.clone();
                 let pkt_in = collector.c_opts.pkt_in.clone();
@@ -213,8 +213,8 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                     for pkt in inp {
                         first.call_once(|| ());
                         tracing::trace!(?pkt, "new pkt");
-                        if let Err(e) = tx.send(pkt?){
-                            tracing::info!(?e,"packet dropped");
+                        if let Err(e) = tx.send(pkt?) {
+                            tracing::info!(?e, "packet dropped");
                             Err(e)?
                         };
                     }
@@ -225,10 +225,10 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                 loop {
                     match rx.recv_deadline(next) {
                         Ok(pkt) => {
-                            if collector.new_pkt(pkt, common)?{
-                                if collector.collect(common)?.is_none(){
-                                    return Ok(())
-                                }else {
+                            if collector.new_pkt(pkt, common)? {
+                                if collector.collect(common)?.is_none() {
+                                    return Ok(());
+                                } else {
                                     next = Instant::now() + interval.0;
                                     tracing::debug!("Restart timeout ");
                                 }
@@ -239,8 +239,8 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                             next = Instant::now() + interval.0;
                             if f.is_completed() {
                                 let collect = collector.collect(common)?;
-                                if collect.is_none(){
-                                    return Ok(())
+                                if collect.is_none() {
+                                    return Ok(());
                                 }
                             }
                         }
@@ -248,12 +248,12 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                             if !collector.links.is_empty() {
                                 collector.collect(common)?;
                             }
-                            return Ok(())
-                        },
+                            return Ok(());
+                        }
                     }
                 }
             });
-            result.map_err(|e|{
+            result.map_err(|e| {
                 tracing::warn!(?e, "spawn return");
                 anyhow::anyhow!("spawn err?")
             })

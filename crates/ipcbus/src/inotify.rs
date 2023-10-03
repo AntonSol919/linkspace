@@ -95,7 +95,7 @@ pub mod multi {
                     let _wd = instance
                         .add_watch(&this.0.path, AddWatchFlags::IN_ACCESS)
                         .unwrap();
-                        let mut file = unsafe { File::from_raw_fd(instance.as_raw_fd()) };
+                    let mut file = unsafe { File::from_raw_fd(instance.as_raw_fd()) };
                     let mut buf = [0; 32];
                     loop {
                         file.read(&mut buf).unwrap();
@@ -127,7 +127,7 @@ pub mod multi {
     }
 }
 
-//// each thread uses poll to watch for changes 
+//// each thread uses poll to watch for changes
 mod solo {
     // let mut events = unsafe{ std::fs::File::from_raw_fd(instance.as_raw_fd())};
     // let mut set = [poll::PollFd::new(instance.as_raw_fd(),poll::PollFlags::POLLIN)];

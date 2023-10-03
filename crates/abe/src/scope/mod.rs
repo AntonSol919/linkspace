@@ -1,6 +1,4 @@
-use crate::eval::{EScope };
-
-
+use crate::eval::EScope;
 
 pub mod base;
 pub use base::BaseNScope;
@@ -19,14 +17,22 @@ pub use bytes::BytesFE;
 pub mod uint;
 pub use uint::UIntFE;
 
-pub type BasicScope= (
+pub type BasicScope = (
     (EScope<BytesFE>, EScope<UIntFE>, EScope<BaseNScope>),
-    ((EScope<Comment>,EScope<Help>), EScope<LogicOps>, EScope<Encode>),
+    (
+        (EScope<Comment>, EScope<Help>),
+        EScope<LogicOps>,
+        EScope<Encode>,
+    ),
 );
-pub const fn basic_scope() -> BasicScope{
+pub const fn basic_scope() -> BasicScope {
     (
         (EScope(BytesFE), EScope(UIntFE), EScope(BaseNScope)),
-        ((EScope(Comment),EScope(Help)), EScope(LogicOps), EScope(Encode)),
+        (
+            (EScope(Comment), EScope(Help)),
+            EScope(LogicOps),
+            EScope(Encode),
+        ),
     )
 }
-pub static BASIC_SCOPE : BasicScope = basic_scope();
+pub static BASIC_SCOPE: BasicScope = basic_scope();

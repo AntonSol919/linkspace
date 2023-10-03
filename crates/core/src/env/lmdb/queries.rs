@@ -20,7 +20,6 @@ pub fn as_recv_ptr((llp, bytes): (u64, &[u8])) -> RecvPktPtr {
     }
 }
 
-
 fn as_netpkt(bytes: &[u8]) -> &NetPktPtr {
     unsafe { NetPktPtr::from_bytes_unchecked(bytes) }
 }
@@ -39,7 +38,7 @@ pub(crate) fn read_pkt<'txn>(
 pub struct ReadTxn<'env>(pub(crate) LMDBTxn<'env>);
 
 impl<'env> ReadTxn<'env> {
-    pub fn refresh(&mut self){
+    pub fn refresh(&mut self) {
         self.0.refresh_inplace().unwrap()
     }
     /// read a pkt and use the local net header
@@ -68,12 +67,7 @@ impl<'env> ReadTxn<'env> {
     pub fn log_range(&self, q: StampRange) -> impl Iterator<Item = RecvPktPtr> {
         let dir = IterDirection::from(q.start, q.end);
         if dir.is_forward() {
-            Either::Left(
-                self.0
-                    .pkt_cursor()
-                    .range_uniq(&q.start)
-                    .map(as_recv_ptr),
-            )
+            Either::Left(self.0.pkt_cursor().range_uniq(&q.start).map(as_recv_ptr))
         } else {
             Either::Right(
                 self.0
@@ -86,10 +80,7 @@ impl<'env> ReadTxn<'env> {
 
     pub fn local_pkt_log(&self, from: Stamp) -> impl Iterator<Item = RecvPktPtr> {
         tracing::trace!(%from,"getting packets after");
-        self.0
-            .pkt_cursor()
-            .range_uniq(&from.get())
-            .map(as_recv_ptr)
+        self.0.pkt_cursor().range_uniq(&from.get()).map(as_recv_ptr)
     }
     pub fn get_pkts_by_logidx(
         &self,

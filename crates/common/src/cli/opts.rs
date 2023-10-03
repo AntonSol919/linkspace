@@ -4,8 +4,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{
-    io::{self },
-    path::{PathBuf, Path},  sync::OnceLock, 
+    io::{self},
+    path::{Path, PathBuf},
+    sync::OnceLock,
 };
 
 use crate::{
@@ -16,12 +17,12 @@ use crate::{
 use anyhow::Context;
 use clap::Parser;
 
-use super::{write_pkt2, WriteDest, WriteDestSpec, reader::PktReadOpts};
+use super::{reader::PktReadOpts, write_pkt2, WriteDest, WriteDestSpec};
 #[derive(Parser, Debug, Clone)]
 pub struct CommonOpts {
-    #[command(flatten,next_help_heading="Instance Options")]
+    #[command(flatten, next_help_heading = "Instance Options")]
     pub linkspace: LinkspaceOpts,
-    #[command(flatten,next_help_heading="General Pkt IO Options")]
+    #[command(flatten, next_help_heading = "General Pkt IO Options")]
     pub io: IOOpts,
 }
 impl std::ops::Deref for CommonOpts {
@@ -39,62 +40,55 @@ pub struct LinkspaceOpts {
         help = "location of the linkspace instance - defaults to $HOME/linkspace"
     )]
     pub dir: Option<PathBuf>,
-    #[arg(
-        long,
-        env = "LK_INIT",
-        help = "create dir if it does not exists"
-    )]
+    #[arg(long, env = "LK_INIT", help = "create dir if it does not exists")]
     pub init: bool,
-    #[arg(long,help="enable [env:OS_VAR] abe scope",default_value_t)]
+    #[arg(long, help = "enable [env:OS_VAR] abe scope", default_value_t)]
     pub env: bool,
-
 
     #[arg(skip)]
     pub open_dir: OnceLock<PathBuf>,
 }
 impl LinkspaceOpts {
     pub fn dir(&self) -> io::Result<&Path> {
-        self.open_dir.get_or_try_init(|| crate::static_env::lk_dir(self.dir.as_deref()))
+        self.open_dir
+            .get_or_try_init(|| crate::static_env::lk_dir(self.dir.as_deref()))
             .map(|o| o.as_path())
     }
-    
 
     pub fn runtime_io(&self) -> io::Result<Linkspace> {
-        crate::static_env::get_lk(self.dir.as_deref(), self.init)    
+        crate::static_env::get_lk(self.dir.as_deref(), self.init)
     }
 
-
-
-    
-    pub fn fake_eval_scope(
-    ) -> impl Scope {
+    pub fn fake_eval_scope() -> impl Scope {
         crate::eval::lk_scope(|| anyhow::bail!("no linkspace instance "), false)
     }
-    pub fn eval_scope(
-        &self,
-    ) -> impl Scope + '_{
+    pub fn eval_scope(&self) -> impl Scope + '_ {
         crate::eval::lk_scope(
-            || self.runtime_io().context("could not open linkspace instance"),
-            self.env)
+            || {
+                self.runtime_io()
+                    .context("could not open linkspace instance")
+            },
+            self.env,
+        )
     }
-    pub fn eval_pkt_scope<'o>(&'o self,pkt:&'o impl NetPkt) -> impl Scope+'o{
-        (self.eval_scope(),pkt_scope(pkt))
+    pub fn eval_pkt_scope<'o>(&'o self, pkt: &'o impl NetPkt) -> impl Scope + 'o {
+        (self.eval_scope(), pkt_scope(pkt))
     }
     pub fn keys_dir(&self) -> io::Result<PathBuf> {
         Ok(self.dir()?.join("keys"))
     }
-    
+
     pub fn runtime(&self) -> anyhow::Result<Linkspace> {
-        self.runtime_io()
-            .with_context(||format!(
+        self.runtime_io().with_context(|| {
+            format!(
                 "Error opening runtime {:?}",
                 crate::static_env::lk_dir(self.dir.as_deref())
-            ))
+            )
+        })
     }
-    
 }
 
-#[derive(Parser, Debug, Clone,Copy)]
+#[derive(Parser, Debug, Clone, Copy)]
 pub struct IOOpts {
     #[arg(
         global = true,
@@ -110,7 +104,7 @@ pub struct IOOpts {
     pub inp: InOpts,
 }
 
-#[derive(Parser, Debug, Clone,Copy)]
+#[derive(Parser, Debug, Clone, Copy)]
 pub struct OutOpts {
     #[arg(
         long,
@@ -119,7 +113,7 @@ pub struct OutOpts {
     )]
     private_write: Option<bool>,
 }
-#[derive(Parser, Debug, Clone,Copy )]
+#[derive(Parser, Debug, Clone, Copy)]
 pub struct InOpts {
     #[arg(
         long,
@@ -180,14 +174,17 @@ impl CommonOpts {
             self.io.inp.private_read
         }
     }
-    pub fn check_private<S:NetPkt>(&self, pkt:S ) -> Result<Option<S>,linkspace_pkt::Error> {
-        match self.write_private(){
-            Some(false) => pkt.check_private().map_err(|e| {tracing::error!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private");e})?,
-            Some(true) => {},
+    pub fn check_private<S: NetPkt>(&self, pkt: S) -> Result<Option<S>, linkspace_pkt::Error> {
+        match self.write_private() {
+            Some(false) => pkt.check_private().map_err(|e| {
+                tracing::error!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private");
+                e
+            })?,
+            Some(true) => {}
             None => {
-                if let Err(e) = pkt.check_private(){
+                if let Err(e) = pkt.check_private() {
                     tracing::info!(?e,pkt=%PktFmtDebug(&pkt),"trying to write private - but no --private or --private-write true/false set - ignoring packet");
-                    return Ok(None)
+                    return Ok(None);
                 }
             }
         }
@@ -205,15 +202,15 @@ impl CommonOpts {
         pkt: &dyn NetPkt,
         buffer: &mut Option<&mut dyn std::io::Write>,
     ) -> std::io::Result<()> {
-        let pkt = match self.check_private(pkt).map_err(linkspace_pkt::Error::io)?{
+        let pkt = match self.check_private(pkt).map_err(linkspace_pkt::Error::io)? {
             Some(p) => p,
             None => return Ok(()),
         };
         let out: &mut dyn std::io::Write = match &mut dest.out {
             super::Out::Db => {
                 self.linkspace.runtime_io()?.env().save_dyn_one(pkt)?;
-                return Ok(())
-            },
+                return Ok(());
+            }
             super::Out::Fd(f) => f,
             super::Out::Buffer => buffer
                 .as_mut()
@@ -248,13 +245,21 @@ impl CommonOpts {
         let mut out = std::io::stdout();
         let scope = self.clone();
         move |p: &dyn NetPkt, _rx: &Linkspace| -> std::io::Result<()> {
-            if!allow_private{p.check_private().map_err(|e|e.io())?}
+            if !allow_private {
+                p.check_private().map_err(|e| e.io())?
+            }
             write_pkt2(&None, p, &scope.eval_scope(), &mut out)
         }
     }
-    pub fn inp_reader(&self,inp: &PktReadOpts) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {
+    pub fn inp_reader(
+        &self,
+        inp: &PktReadOpts,
+    ) -> io::Result<NetPktDecoder<Box<dyn std::io::Read>>> {
         // Do not buffer. cli like handshake must not buffer partial packets and have  subsequent programs fail
-        let reader = inp.open()?.expect("bug: - should be empty reader").into_read();
+        let reader = inp
+            .open()?
+            .expect("bug: - should be empty reader")
+            .into_read();
         Ok(NetPktDecoder {
             reader,
             allow_private: self.read_private().unwrap_or(false),

@@ -21,23 +21,20 @@ use crate::pkt::field_ids::FieldEnum;
 use crate::predicate::pkt_predicates::PktPredicates;
 use either::Either;
 use linkspace_pkt::tree_order::TreeEntryRef;
-use linkspace_pkt::{Stamp, B64, U256 };
+use linkspace_pkt::{Stamp, B64, U256};
 
-use crate::prelude::TestSet;
-use crate::{
-    predicate::{
-        exprs::RuleType,
-        test_pkt::{compile_predicates, PktStreamTest},
-    },
+use crate::predicate::{
+    exprs::RuleType,
+    test_pkt::{compile_predicates, PktStreamTest},
 };
+use crate::prelude::TestSet;
 
 use crate::env::query_mode::{Mode, Order, Table};
 use crate::env::tree_key::treekey_checked;
 
-use crate::env::RecvPktPtr;
-use super::queries::{ReadTxn, read_pkt};
+use super::queries::{read_pkt, ReadTxn};
 use super::tree_iter::TreeKeysIter;
-
+use crate::env::RecvPktPtr;
 
 impl<'txn> ReadTxn<'txn> {
     pub fn scope_iter(
@@ -48,7 +45,9 @@ impl<'txn> ReadTxn<'txn> {
         let req = rules.compile_tree_keys(order.is_asc()).unwrap();
         let lower_bound = req.lower_bound().unwrap();
         let iter_dup = self.0.tree_cursor().iter_dup(order.is_asc());
-        let at = iter_dup.set_range(&lower_bound).map(super::tree_iter::spd)?;
+        let at = iter_dup
+            .set_range(&lower_bound)
+            .map(super::tree_iter::spd)?;
         let mut it = TreeKeysIter {
             req,
             iter_dup,
@@ -61,7 +60,7 @@ impl<'txn> ReadTxn<'txn> {
         &'txn self,
         rules: &PktPredicates,
         ord: Order,
-    ) -> impl Iterator<Item = TreeEntryRef<'txn>> +'txn {
+    ) -> impl Iterator<Item = TreeEntryRef<'txn>> + 'txn {
         let nth_find_set = rules.state.i_branch;
         let mut yields = nth_find_set.iter(0);
         assert!(yields.peek().is_some(), "i_branch is empty");
@@ -128,20 +127,20 @@ impl<'txn> ReadTxn<'txn> {
         &'txn self,
         ord: Order,
         predicates: &PktPredicates,
-    ) -> impl Iterator<Item = RecvPktPtr<'txn>> + 'txn{
+    ) -> impl Iterator<Item = RecvPktPtr<'txn>> + 'txn {
         let pkt_filter = compile_predicates(predicates)
             .0
             .filter(|(_test, kind)| !treekey_checked(*kind))
-            .map(|(test,_)| test)
+            .map(|(test, _)| test)
             .collect::<Vec<_>>();
         let c1 = self.0.pkt_cursor();
         let it = self
             .query_tree_entries(predicates, ord)
             .map(move |v| {
                 super::queries::read_pkt(&c1, v.local_log_ptr())
-                    .map_err(|e|("Btree Error - tree query",v.local_log_ptr(),e))
+                    .map_err(|e| ("Btree Error - tree query", v.local_log_ptr(), e))
                     .unwrap()
-                    .ok_or_else(||("BTree inconsistent - cant find",v.local_log_ptr()))
+                    .ok_or_else(|| ("BTree inconsistent - cant find", v.local_log_ptr()))
                     .unwrap()
             })
             .filter(move |pkt| {
