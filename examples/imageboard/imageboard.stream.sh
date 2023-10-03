@@ -7,7 +7,7 @@ BOARD=${1?Usage: board_name [start_stamp] }
 magick convert -size 1000x1000 xc:transparent PNG32:$BOARD.png
 
 # not strictly necessary, but otherwise pull does nothing
-lk poll-status exchange $LK_GROUP process --write "stdout-expr:exchange - [data]"  || echo "No exchange process active"
+lk status watch exchange $LK_GROUP process --write "stdout-expr:exchange - [data]"  || echo "No exchange process active"
 
 echo Pulling $LK_GROUP $BOARD
 lk pull "imageboard:$LK_GROUP:/$BOARD" --follow -- "create:>:[now:-1D]" 

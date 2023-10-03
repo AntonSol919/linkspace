@@ -300,7 +300,7 @@ def lk_pull(lk: Linkspace, query: Query):
     """
     ...
 
-def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
+def lk_status_watch(lk:Linkspace,qid:bytes,objtype:bytes,
                    timeout:bytes, 
                    instace : bytes | None = None ,
                    callback:Callable[[Pkt],Any] | None = None,
@@ -311,19 +311,19 @@ def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
 
     The status convention is only meant for communication between processes using the same linkspace instance.
-    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+    lk_status_watch accepts any reply made between [now-timeout .. now+timeout].
 
     This function is an application of lk_watch. An immediate check is made of the current database.
     For further processing callback is registered under qid, and is only executed during a lk_process* step. 
 
     For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
-    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+    An application can lk_status_watch a (group,b"exchange",b"process") to determine if a processes is running.
 
     If no instance is set, then all lk_status_set with the same (group,domain,obj_type) will reply.
 
     A minimal example looks like: 
     # 
-    immediate_reply = lk_status_poll(lk,qid=b"status",callback=lambda _ : True,
+    immediate_reply = lk_status_watch(lk,qid=b"status",callback=lambda _ : True,
                timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                group=group,
@@ -357,13 +357,13 @@ def lk_status_set(lk:Linkspace,qid:bytes,
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
 
     The status convention is only meant for communication between processes using the same linkspace instance.
-    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+    lk_status_watch accepts any reply made between [now-timeout .. now+timeout].
 
     This function is an application of lk_watch. An immediate check is made of the current database.
     For further processing get_current_status is registered under qid, and is only executed during a lk_process* step. 
 
     For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
-    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+    An application can lk_status_watch a (group,b"exchange",b"process") to determine if a processes is running.
     """
     ...
 

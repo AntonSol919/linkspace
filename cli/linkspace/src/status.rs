@@ -9,6 +9,7 @@ use std::rc::Rc;
 use anyhow::Context;
 use linkspace::runtime::cb::{ try_cb};
 use linkspace::{ lk_process_while };
+use linkspace_common::cli::clap::Subcommand;
 use linkspace_common::cli::reader::DataReadOpts;
 use linkspace_common::cli::{clap };
 use linkspace_common::runtime::handlers::PktStreamHandler;
@@ -19,6 +20,14 @@ use linkspace_common::{
 
 use linkspace_common::prelude::*;
 
+#[derive(Subcommand)]
+/// convention - (local) status convention 
+pub enum StatusCmd{
+    /// watch a status update (or checks for a recent one)
+    Watch(StatusWatch),
+    /// reply/set a status watch requests
+    Set(StatusSet)
+}
 
 #[derive(Parser, Debug)]
 pub struct StatusArgs {
@@ -43,7 +52,7 @@ impl StatusArgs {
 }
 
 #[derive(Parser, Debug)]
-pub struct SetStatus {
+pub struct StatusSet {
     #[command(flatten)]
     args: StatusArgs,
     /// the status data.
@@ -52,8 +61,8 @@ pub struct SetStatus {
     // #[arg(short,long)]
     //link: Vec<LinkExpr>,
 }
-pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
-    let SetStatus { args, readopts } = ss;
+pub fn status_set(common: CommonOpts,ss: StatusSet) -> anyhow::Result<()> {
+    let StatusSet { args, readopts } = ss;
     let ctx = common.eval_ctx();
     let (domain, group, objtype, instance) = args.eval(&ctx)?;
     use linkspace::prelude::*;
@@ -82,7 +91,7 @@ pub fn set_status(common: CommonOpts,ss: SetStatus) -> anyhow::Result<()> {
 }
 
 #[derive(Parser)]
-pub struct PollStatus {
+pub struct StatusWatch {
     #[command(flatten)]
     args: StatusArgs,
     /// wait for this duration (since last request) before returning an error 
@@ -100,8 +109,8 @@ pub struct PollStatus {
     #[arg(long)]
     write_request: Vec<WriteDestSpec>,
 }
-pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()> {
-    let PollStatus {
+pub fn status_watch(mut common: CommonOpts, ps: StatusWatch) -> anyhow::Result<()> {
+    let StatusWatch {
         args,
         timeout,
         write,
@@ -138,7 +147,7 @@ pub fn poll_status(mut common: CommonOpts, ps: PollStatus) -> anyhow::Result<()>
     let ok = Rc::new(std::cell::Cell::new(false));
     let isokc = ok.clone();
 
-    lk_status_poll(&lk,status, timeout.stamp(), try_cb(move |pkt,lk| -> ControlFlow<()>{
+    lk_status_watch(&lk,status, timeout.stamp(), try_cb(move |pkt,lk| -> ControlFlow<()>{
         if pkt.get_links().is_empty() || pkt.data().is_empty(){
             panic!()
         }

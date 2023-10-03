@@ -245,10 +245,8 @@ enum Command {
         #[command(flatten)]
         watch: DGPDWatchCLIOpts,
     },
-    /// convention - creates a status update request (or checks for a recent one)
-    PollStatus(status::PollStatus),
-    /// convention - reply to status update requests
-    SetStatus(status::SetStatus),
+    
+    Status{#[command(subcommand)] cmd: status::StatusCmd},
 
     /// rewrite packets
     Rewrite(rewrite::Rewrite),
@@ -488,8 +486,8 @@ fn run(command: Command, mut common: CommonOpts) -> anyhow::Result<()> {
             let mut write = common.open(&write)?;
             common.write_multi_dest(&mut write, &req, None)?;
         }
-        Command::PollStatus(ps) => status::poll_status(common, ps)?,
-        Command::SetStatus(ss) => status::set_status(common, ss)?,
+        Command::Status{cmd: status::StatusCmd::Watch(w)} => status::status_watch(common, w)?,
+        Command::Status{cmd: status::StatusCmd::Set(w)} => status::status_set(common, w)?,
         Command::Init => {
             common.linkspace.init = true;
             let lk = common.runtime()?.into();

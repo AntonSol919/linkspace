@@ -488,7 +488,7 @@ pub fn lk_status_set(
     })
 }
 #[pyfunction]
-pub fn lk_status_poll(
+pub fn lk_status_watch(
     lk: &Linkspace,
     qid: &[u8],
     objtype: &[u8],
@@ -514,7 +514,7 @@ pub fn lk_status_poll(
         on_close: None,
         on_err:None
     };
-    lk_status_poll(&lk.0, status_ctx, timeout, handler)
+    lk_status_watch(&lk.0, status_ctx, timeout, handler)
 }
 
 
@@ -605,7 +605,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(crate::lk_key, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_pull, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_status_poll, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_status_watch, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_status_set, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::b64, m)?)?;

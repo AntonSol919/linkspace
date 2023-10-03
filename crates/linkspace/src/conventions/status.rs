@@ -97,7 +97,7 @@ pub fn lk_status_overwatch(status:LkStatus,max_age:Stamp) -> LkResult<Query> {
 
 #[cfg(feature="runtime")]
 /// watch for any points matching 
-pub fn lk_status_poll(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
+pub fn lk_status_watch(lk:&Linkspace,status:LkStatus, d_timeout:Stamp,
                       mut cb: impl crate::runtime::cb::PktHandler + 'static) -> LkResult<bool>{
     use crate::runtime::{lk_watch2,lk_get_all};
     use linkspace_common::prelude::{U16, U32};

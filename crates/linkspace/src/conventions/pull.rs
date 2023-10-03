@@ -6,7 +6,7 @@ It is up to an exchange process to fulfill the query.
 The domain should be conservative with its query.
 Requesting too much can add significant overhead.
 
-You can use [lk_status_poll] to determine if a exchange is active
+You can use [lk_status_watch] to determine if a exchange is active
  **/
 use anyhow::Context;
 use linkspace_common::prelude::EXCHANGE_DOMAIN;
