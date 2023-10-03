@@ -24,7 +24,7 @@ fn main() -> std::result::Result<(), JsValue> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
     set_iter(&js_sys::Object::get_prototype_of(
-        &jspkt::Links::default().into(),
+        &jspkt::Links::empty().into(),
     ));
     Ok(())
 }
@@ -296,7 +296,7 @@ pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {
 
 #[wasm_bindgen]
 pub fn build_info() -> String {
-    static BUILD_INFO : &'static str = concat!(
+    static BUILD_INFO : &str = concat!(
         env!("CARGO_PKG_NAME")," - ",
         env!("CARGO_PKG_VERSION")," - ",
         env!("VERGEN_GIT_BRANCH")," - ",

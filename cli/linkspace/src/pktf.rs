@@ -116,7 +116,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
             if join_delimiter && !first {
                 out.write_all(&delimiter)?
             };
-            out.write_all(&bytes)?;
+            out.write_all(bytes)?;
             if !join_delimiter {
                 out.write_all(&delimiter)?;
             }
@@ -141,7 +141,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
                 Ok(b) =>  write(&b.concat())?,
                 Err(e) => {
                     if let Some(err_fmt) = &error {
-                        write(&err_fmt)?;
+                        write(err_fmt)?;
                     } else {
                         Err(e)?
                     }

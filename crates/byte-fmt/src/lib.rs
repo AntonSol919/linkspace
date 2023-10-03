@@ -517,7 +517,7 @@ where
     Self: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        base64_crate::display::Base64Display::new(&self.as_ref(), &BASE64_URL_SAFE_NO_PAD).fmt(f)
+        base64_crate::display::Base64Display::new(self.as_ref(), &BASE64_URL_SAFE_NO_PAD).fmt(f)
     }
 }
 impl<N> std::fmt::Debug for B64<N>

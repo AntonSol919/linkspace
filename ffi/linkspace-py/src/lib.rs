@@ -74,16 +74,23 @@ impl runtime::cb::PktHandler for PyPktStreamHandler {
                             Ok(true) => return ControlFlow::Continue(()),
                             Ok(false) => {},
                             Err(on_err_err) => {
-                                tracing::warn!(%e,tb=e.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?")),
-                                               %on_err_err,tbee=on_err_err.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?")),
+                                let tb = e.traceback(py).map(|v| v.format().unwrap());
+                                let tbee = on_err_err.traceback(py).map(|v| v.format().unwrap());
+                                tracing::warn!(%e,
+                                               tb=tb.as_deref().unwrap_or("?"),
+                                               %on_err_err,
+                                               tbee=tbee.as_deref().unwrap_or("?"),
                                                "Yo dog i heard you liked errors")
                             },
                         }
                     }else {
-                        let tb = e.traceback(py).map(|v| v.format().unwrap()).unwrap_or(format!("?"));
-                        tracing::warn!(%e,tb,"default error handler (add on_err function to capture this event) ")
+                        let tb = e.traceback(py).map(|v| v.format().unwrap());
+                        tracing::warn!(
+                            %e,
+                            tb=tb.as_deref().unwrap_or("?"),
+                            "default error handler (add on_err function to capture this event) ")
                     }
-                    return ControlFlow::Break(());
+                    ControlFlow::Break(())
                 }
             }
         })
@@ -116,13 +123,14 @@ fn domain_arg(domain:Option<&[u8]>) -> anyhow::Result<Domain>{
     }
 }
 
+type CommonFields = (GroupID, Domain, RootedSpaceBuf, Vec<Link>, Option<Stamp>);
 fn common_args(
     group: Option<&[u8]>,
     domain: Option<&[u8]>,
     space: Option<&PyAny>,
     links: Option<Vec<crate::pynetpkt::Link>>,
     create_stamp: Option<&[u8]>,
-) -> anyhow::Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Option<Stamp>)> {
+) -> anyhow::Result<CommonFields> {
     let group = grp_arg(group)?;
     let domain = domain_arg(domain)?;
     let space = match space {
@@ -147,7 +155,7 @@ fn common_args(
             ptr: B64(l.ptr),
         })
         .collect();
-    let create_stamp = create_stamp.map(|p| Stamp::try_from(p)).transpose()?;
+    let create_stamp = create_stamp.map(Stamp::try_from).transpose()?;
     Ok((group, domain, space, links, create_stamp))
 }
 
@@ -203,7 +211,7 @@ pub fn lk_linkpoint(
 ) -> anyhow::Result<Pkt> {
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, spacename, links, create) = common_args(group, domain, spacename, links, create)?;
-    let pkt = linkspace_rs::point::lk_linkpoint_ref(data,domain, group, &*spacename, &*links, create)?;
+    let pkt = linkspace_rs::point::lk_linkpoint_ref(data,domain, group, &spacename, &links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 #[pyfunction]
@@ -219,7 +227,7 @@ pub fn lk_keypoint(
     let data = data.map(bytelike).transpose()?.unwrap_or(&[]);
     let (group, domain, space, links, create) = common_args(group, domain, spacename, links, create)?;
     let pkt =
-        linkspace_rs::point::lk_keypoint_ref(&key.0,data,domain, group, &*space, &*links, create)?;
+        linkspace_rs::point::lk_keypoint_ref(&key.0,data,domain, group, &space, &links, create)?;
     Ok(pynetpkt::Pkt::from_dyn(&pkt))
 }
 
@@ -258,7 +266,7 @@ pub fn lk_eval<'a>(
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uscope = scope::scope(udata)?;
     let bytes = linkspace_rs::varscope::lk_eval(uscope, expr,loose.unwrap_or(false))?;
-    Ok(PyBytes::new(py, &*bytes))
+    Ok(PyBytes::new(py, &bytes))
 }
 #[pyfunction]
 pub fn lk_eval2str(expr: &str, pkt: Option<&Pkt>, argv: Option<&PyAny>,loose:Option<bool>) -> anyhow::Result<String> {
@@ -299,7 +307,7 @@ pub fn lk_save(runtime: &Linkspace, pkt: &Pkt) -> anyhow::Result<bool> {
     Ok(linkspace_rs::lk_save(&runtime.0, pkt.0.netpktptr())?)
 }
 #[pyfunction]
-pub fn lk_save_all<'o>(runtime: &Linkspace, pkts: &'o PyAny) -> anyhow::Result<usize> {
+pub fn lk_save_all(runtime: &Linkspace, pkts: &PyAny) -> anyhow::Result<usize> {
     let pkts :Vec<Pkt>= pkts.iter()?.map(|o| o.and_then(|o:&PyAny| o.extract())).try_collect()?;
     let lst :Vec<_>= pkts.iter().map(|p| p.0.netpktptr() as &dyn NetPkt).collect();
     Ok(linkspace_rs::runtime::lk_save_all(&runtime.0, &lst)?)
@@ -342,7 +350,7 @@ pub fn lk_query_parse(
     let udata = UserData{argv: Some(&argv), pkt: pptr(pkt)};
     let uscope = scope::scope(udata)?;
     let lst :Vec<&str> = statements.iter().map(|p| p.extract::<&str>()).try_collect()?;
-    let query = linkspace_rs::varscope::lk_query_parse(uscope,query.0, &*lst)?;
+    let query = linkspace_rs::varscope::lk_query_parse(uscope,query.0, &lst)?;
     Ok(Query(query))
 }
 #[pyfunction]
@@ -488,6 +496,7 @@ pub fn lk_status_set(
     })
 }
 #[pyfunction]
+#[allow(clippy::too_many_arguments)]
 pub fn lk_status_watch(
     lk: &Linkspace,
     qid: &[u8],
@@ -532,7 +541,7 @@ pub struct LkInfo {
     pub dir:PathBuf
 }
 #[pyfunction]
-pub fn lk_info<'o>(lk: &Linkspace) -> anyhow::Result<LkInfo> {
+pub fn lk_info(lk: &Linkspace) -> anyhow::Result<LkInfo> {
     let linkspace_rs::runtime::LkInfo{
         kind,
         dir
@@ -623,7 +632,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("PUBLIC", PyBytes::new(py, &consts::PUBLIC.0))?;
     m.add("DEFAULT_PKT", abe::DEFAULT_PKT)?;
 
-    pub static BUILD_INFO : &'static str = concat!(
+    pub static BUILD_INFO : &str = concat!(
         env!("CARGO_PKG_NAME")," - ",
         env!("CARGO_PKG_VERSION")," - ",
         env!("VERGEN_GIT_BRANCH")," - ",
@@ -638,7 +647,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
 
 #[pyfunction]
 #[pyo3(signature=(bytes,mini=false))]
-pub fn b64<'o>(bytes:&[u8], mini:bool) -> String{
+pub fn b64(bytes:&[u8], mini:bool) -> String{
     let b = linkspace_rs::prelude::B64(bytes);
     if mini{b.b64_mini()} else{b.to_string()}
 }
@@ -649,14 +658,14 @@ pub fn space<'o>(py: Python<'o>, components: &PyAny) -> anyhow::Result<&'o PyByt
         .map(|i| i.and_then(PyAny::extract::<&[u8]>))
         .try_collect::<Vec<_>>()?;
     let sp = linkspace_rs::prelude::space_buf(&space);
-    Ok(PyBytes::new(py, &sp.space_bytes()))
+    Ok(PyBytes::new(py, sp.space_bytes()))
 }
 #[pyfunction]
 pub fn blake3_hash<'p>(py: Python<'p>,bytes:&PyAny) -> anyhow::Result<&'p PyBytes>{
     Ok(PyBytes::new(py,&*linkspace_rs::misc::blake3_hash(bytelike(bytes)?)))
 }
 #[pyfunction]
-pub fn bytes2uniform<'p>(bytes:&[u8]) -> anyhow::Result<f64> {
+pub fn bytes2uniform(bytes:&[u8]) -> anyhow::Result<f64> {
     let b : &[u8;8] = bytes[..8].try_into()?;
     Ok(linkspace_rs::misc::bytes2uniform(b))
 }
@@ -666,7 +675,7 @@ pub fn set_group(group:&[u8]){
     linkspace_rs::prelude::set_group(GroupID::try_fit_bytes_or_b64(group).unwrap())
 }
 #[pyfunction]
-pub fn group<'p>(py:Python<'p>) -> &'p PyBytes{
+pub fn group(py:Python) -> &PyBytes{
     PyBytes::new(py,&linkspace_rs::prelude::group().0)
 }
 #[pyfunction]
@@ -674,7 +683,7 @@ pub fn set_domain(domain:&[u8]){
     linkspace_rs::prelude::set_domain(Domain::try_fit_byte_slice(domain).unwrap())
 }
 #[pyfunction]
-pub fn domain<'p>(py:Python<'p>) -> &'p PyBytes{
+pub fn domain(py:Python) -> &PyBytes{
     PyBytes::new(py,&linkspace_rs::prelude::domain().0)
 }
 

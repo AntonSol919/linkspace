@@ -24,13 +24,13 @@ pub struct Signed{
 }
 impl Signed {
     fn as_bytes(&self) -> &[u8] {
-        unsafe{&*std::slice::from_raw_parts(std::ptr::from_ref(self).cast(),size_of::<Self>())}
+        unsafe{std::slice::from_raw_parts(std::ptr::from_ref(self).cast(),size_of::<Self>())}
     }
     pub(crate) fn validate(&self,hash:&[u8;32]) -> Result<(), linkspace_cryptography::Error> {
         linkspace_cryptography::validate_signature(
             &self.pubkey.0,
             &self.signature.0,
-            &hash,
+            hash,
         )
     }
 }
@@ -163,7 +163,7 @@ impl<'tail> Point for PointParts<'tail> {
 
     fn signed(&self) -> Option<&Signed> {
         match &self.fields {
-            PointFields::KeyPoint(_,t) => Some(&t),
+            PointFields::KeyPoint(_,t) => Some(t),
             _ => None,
         }
     }

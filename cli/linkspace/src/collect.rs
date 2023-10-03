@@ -185,7 +185,7 @@ pub fn collect(common: &CommonOpts, c_opts: Collect) -> anyhow::Result<()> {
                     Ok(p) => p,
                     Err(e) => {
                         tracing::error!(e=?e,"skip final");
-                        return Err(e)?;
+                        Err(e)?
                     }
                 };
                 let try_collect = collector.new_pkt(pkt, common)?;

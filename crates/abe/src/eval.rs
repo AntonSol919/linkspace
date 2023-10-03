@@ -1,9 +1,9 @@
-use std::cell::LazyCell;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use std::cell::LazyCell;
 use std::ops::{Try, ControlFlow, Deref};
 use std::rc::Rc;
 use std::sync::Arc;
@@ -188,7 +188,7 @@ impl ABList {
     pub fn as_exact_bytes(&self) -> Result<&[u8], &Self> {
         match &self.0[..]{
             [] => Ok(&[]),
-            [(None,b)] => Ok(&b),
+            [(None,b)] => Ok(b),
             _ => Err(self)
 
         }
@@ -228,7 +228,7 @@ impl ABList {
     fn split_fslash(&self) -> impl Iterator<Item=&[ABLV]>{
         let mut slice = self.0.as_slice();
         std::iter::from_fn(move ||{
-            if slice.len() ==  0 { return None}
+            if slice.is_empty() { return None}
             let i = slice[1..].iter().position(|v| v.0 == Some(Ctr::FSlash)).unwrap_or(slice.len()-1) + 1;
             let (r,rest) = slice.split_at(i);
             slice = rest;
@@ -238,11 +238,11 @@ impl ABList {
 
     /// iterate over logical bytes instead of tuples. i.e. a:b/c => `[a,b,c]` :a/b:c: => `['',a,b,c,'']``
     pub fn iter_bytes(&self) -> impl Iterator<Item=&[u8]>{
-        let head :Option<&[u8]>= self.0.first().map(|o| o.0.map(|_|&[] as &[u8])).flatten();
+        let head :Option<&[u8]>= self.0.first().and_then(|o| o.0.map(|_|&[] as &[u8]));
         head.into_iter().chain(self.0.iter().map(|o| o.1.as_slice()))
     }
     pub fn into_iter_bytes(self) -> impl Iterator<Item=Vec<u8>>{
-        let head :Option<Vec<u8>>= self.0.first().map(|o| o.0.map(|_|vec![])).flatten();
+        let head :Option<Vec<u8>>= self.0.first().and_then(|o| o.0.map(|_|vec![]));
         head.into_iter().chain(self.0.into_iter().map(|o| o.1))
     }
     /// Warning: depending on the context it can be invalid to leave an empty vec behind.
@@ -909,7 +909,7 @@ pub fn encode_abe(
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
                 if cfg!(debug_assertions){
-                    let redo = eval(scope, &parse_abe_strict_b(&st.as_bytes()).expect("bug: encode fmt"))
+                    let redo = eval(scope, &parse_abe_strict_b(st.as_bytes()).expect("bug: encode fmt"))
                         .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
                     let redo = redo.as_exact_bytes()
                         .expect("bug: encode multi");
@@ -935,6 +935,7 @@ macro_rules! scope_macro {
                 help: $help,
             },
             apply: |a, b: &[$crate::ast::ABE], c| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
                 let r: Result<Vec<u8>, $crate::eval::ApplyErr> = $fnc(a, b, c);
                 $crate::eval::ApplyResult::from(r)
             },
@@ -946,6 +947,7 @@ macro_rules! fnc {
     ( $id:expr, $argc:expr, $help:literal,$fnc:expr, { id : $to_abe:expr}) => {
         $crate::fnc!($id,$argc,None,$help,$fnc,
                      |_,bytes:&[u8],options:&[$crate::ABE]| -> $crate::eval::ApplyResult<String>{
+                         #[allow(clippy::redundant_closure_call)]
                          let st : Option<String> = $to_abe(bytes,options);
                          match st {
                              None => $crate::eval::ApplyResult::NoValue,
@@ -968,6 +970,7 @@ macro_rules! fnc {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: false},
             apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
                 $fnc(a,b,init,scope).into()
             },
             to_abe:$crate::eval::none
@@ -977,6 +980,7 @@ macro_rules! fnc {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: true },
             apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
                 $fnc(a,b,init,scope).into()
             },
             to_abe:$to_abe

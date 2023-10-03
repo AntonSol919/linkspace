@@ -68,15 +68,22 @@ macro_rules! top  {
             impl TestTrait for $fname{
                 const TOKEN: u8 = $token;
                 const ENUM : TestOp = TestOp::$fname;
-                fn test_ref<U:UInt>(left: &U,right:&U) -> bool { $test(left,right)}
+                fn test_ref<U:UInt>(left: &U,right:&U) -> bool {
+                    #[allow(clippy::redundant_closure_call)]
+                    $test(left,right)
+                }
                 fn test_uint_slice(left: &[u8], right:&[u8]) -> bool{
                     assert_eq!(left.len(),right.len());
+                    #[allow(clippy::redundant_closure_call)]
                     $test_vec(left,right)
                 }
             }
             impl<U:UInt> TestVal<U> for $fname<U> {
                 #[inline(always)]
-                fn test(&self, val: &U) -> bool { $test(val,&self.0)}
+                fn test(&self, val: &U) -> bool {
+                    #[allow(clippy::redundant_closure_call)]
+                    $test(val,&self.0)
+                }
                 fn iter(&self) -> Box<dyn Iterator<Item=(TestOp,U)>> {
                     Box::new(std::iter::once((TestOp::$fname,self.0)))
                 }

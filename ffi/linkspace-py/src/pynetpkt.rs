@@ -114,7 +114,7 @@ impl Pkt {
     pub fn comp_list<'p>(&self, py: Python<'p>) -> Option<Vec<&'p PyBytes>> {
         self.0.rooted_spacename().map(|p| {
             p.comps_bytes()[0..*p.space_depth() as usize]
-                .into_iter()
+                .iter()
                 .map(|s| PyBytes::new(py, s))
                 .collect()
         })
@@ -149,8 +149,8 @@ impl Pkt {
     
     #[getter]
     /// number of components in the spacename
-    fn depth<'p>(&self) -> Option<u8> {
-        self.0.depth().map(|b| *b)
+    fn depth(&self) -> Option<u8> {
+        self.0.depth().copied()
     }
     #[setter]
     pub fn set_netflags(&mut self, f: u8) {
@@ -295,23 +295,23 @@ impl Link {
         hasher.finish()
     }
     fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        op.matches(self.cmp(&other))
+        op.matches(self.cmp(other))
     }
 }
 
-impl Into<linkspace::prelude::Link> for Link {
-    fn into(self) -> linkspace::prelude::Link {
+impl From<Link> for prelude::Link {
+    fn from(val: Link) -> Self {
         prelude::Link {
-            tag: self.tag.into(),
-            ptr: self.ptr.into(),
+            tag: val.tag.into(),
+            ptr: val.ptr.into(),
         }
     }
 }
-impl Into<Link> for prelude::Link {
-    fn into(self) -> Link {
+impl From<prelude::Link> for Link {
+    fn from(val: prelude::Link) -> Self {
         Link {
-            tag: self.tag.0,
-            ptr: self.ptr.0,
+            tag: val.tag.0,
+            ptr: val.ptr.0,
         }
     }
 }

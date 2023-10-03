@@ -55,7 +55,7 @@ impl BTreeEnv {
             location,
         }));
         {
-            let new = env.save_ptr_one(&***PUBLIC_GROUP_PKT)?.is_new();
+            let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_new();
             if new && std::env::var_os("LK_NO_LNS").is_none() {
                 let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p| (p, SaveState::Pending)).collect();
                 env.save_ptr(&mut roots)?;

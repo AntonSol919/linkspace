@@ -120,7 +120,7 @@ fn comp() {
     assert_eq!(id, tid);
     let it = (4..b.len())
         .rev()
-        .map(|i| PartialHash::try_from(&b[0..i]).expect(&format!("ID FROM {} {}", i, &b[0..i])));
+        .map(|i| PartialHash::try_from(&b[0..i]).unwrap());
     for part in it {
         println!("str cmp {} {:?} ", part.str_matches(&id), part.0);
         let bytes = part.aprox_btree_idx();

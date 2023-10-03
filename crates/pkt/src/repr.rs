@@ -89,8 +89,8 @@ impl<'o> PktFmt<'o>{
         let links_len = pkt.get_links().len();
         if add_recv {
             match pkt.recv(){
-                Some(r) => write!(f,"recv\t{}\n",r),
-                None => write!(f,"recv\t???\n")
+                Some(r) => writeln!(f,"recv\t{}",r),
+                None => writeln!(f,"recv\t???")
             }?;
         }
         write!(f,"type\t{ptype}
@@ -103,7 +103,7 @@ create\t{create}
 links\t{links_len}
 ")?;
         for crate::Link{ptr,tag}in pkt.get_links(){
-            write!(f,"\t{} {ptr}\n",tag.as_str(true))?;
+            writeln!(f,"\t{} {ptr}",tag.as_str(true))?;
         }
     let data = pkt.data();
     let data = &data[0..data.len().min(data_limit)];
@@ -120,6 +120,7 @@ links\t{links_len}
     If it doesn't fit your usecase, just build your own template.
     Note: the lk-c[0..31] and lk-d[0..31] class's are derived from the hash and should be used for color coding when appropriate.
     */
+    #[allow(clippy::type_complexity)]
     pub fn to_html<F: fmt::Write>(&self, f: &mut F,
                    write_escaped_lossy_data: bool,
                    include: Option<&mut dyn FnMut(&dyn NetPkt, &mut F) -> Result>
@@ -137,7 +138,7 @@ links\t{links_len}
         let point = pkt.as_point();
         let ptype = point.point_header_ref().point_type.bits();
         let depth = pkt.get_depth();
-        let with_pubkey = pkt.pubkey().map(|e| format!("lk-pubkey='{e}'")).unwrap_or(String::new());
+        let with_pubkey = pkt.pubkey().map(|e| format!("lk-pubkey='{e}'")).unwrap_or_default();
         write!(f,"<div lk-point='{hash}' lk-ptype='{ptype}' class='lk-c{code}' {with_pubkey}
 lk-data-size='{size}' lk-links-len='{links_len}' lk-depth='{depth}'>")?;
         fmt_b64(pkt.hash_ref(), "hash", f)?;
@@ -173,7 +174,7 @@ lk-data-size='{size}' lk-links-len='{links_len}' lk-depth='{depth}'>")?;
                 let tagb64 = B64(tag.0); // 
                 let tag = EscapeHTML(tag.as_str(true));
                 write!(f,"<li lk-link-tag='{tagb64}'><span lk-tag='{tagb64}'>{tag}</span>")?;
-                fmt_b64(&ptr,"ptr",f)?;
+                fmt_b64(ptr,"ptr",f)?;
                 writeln!(f,"</li>")?;
             }
             write!(f,"</ol>")?;

@@ -95,19 +95,20 @@ impl LMDBEnv{
 impl BTreeEnv{
     pub fn linkspace_info(&self) -> anyhow::Result<()>{
         let reader = self.new_read_txn()?;
+        use linkspace_pkt::tree_order::TreeEntry;
         let log : Vec<(u64,LkHash)> = reader.local_pkt_log(Stamp::ZERO)
             .inspect(|o| tracing::trace!(
                 is_ok=?o.pkt.check(false),
                 recv=%o.recv,
                 hash=%o.pkt.hash(),
-                tree=%linkspace_pkt::tree_order::TreeEntry::from_pkt(o.recv, &o.pkt).map(|o|o.to_string()).unwrap_or(String::new()),
+                tree=%TreeEntry::from_pkt(o.recv, &o.pkt).map(|o|o.to_string()).unwrap_or_default(),
                 address=?o.pkt.as_netpkt_bytes().as_ptr(),
             )
             )
             .map(|o| (o.recv.get(),o.pkt.hash())).collect();
 
-        let mut hashes : Vec<(u64,LkHash)> = reader.0.hash_cursor().range_uniq(&*PRIVATE)
-            .map(|(hash, stamp)| (stamp,B64(*hash).into()))
+        let mut hashes : Vec<(u64,LkHash)> = reader.0.hash_cursor().range_uniq(&PRIVATE)
+            .map(|(hash, stamp)| (stamp,B64(*hash)))
             .collect();
         hashes.sort_by_key(|(s,_)| *s);
         let hashes_ok = log == hashes;

@@ -20,9 +20,9 @@ build-debug:
 	ln -s "$(R)/ffi/linkspace-py/linkspace.pyi"  "$(R)/target/python/linkspace.pyi" 
 
 validate: 
+	cargo clippy -- -D warnings
+	test $$(cargo fmt --all -- --check | tee /dev/fd/2 | wc -c ) -eq 0
 	cargo doc --all --no-deps
 	cargo test
 	cargo build
-	cargo fmt --all -- --check
-	cargo clippy -- -D warnings
 	make -C ./ffi/linkspace-js validate

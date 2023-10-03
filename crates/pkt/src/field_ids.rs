@@ -231,7 +231,10 @@ macro_rules! field_val {
     ([$( ( $fname:ident,$out:ty, $getter:expr )),*]) => {
         $(
             impl SFieldVal<$out> for $fname {
-                fn get_val<'o, T:NetPkt+?Sized>(pkt : &'o T) -> $out { $getter(pkt)}
+                fn get_val<'o, T:NetPkt+?Sized>(pkt : &'o T) -> $out {
+                    #[allow(clippy::redundant_closure_call)]
+                    $getter(pkt)
+                }
             }
         )*
     };
@@ -240,7 +243,10 @@ macro_rules! field_ptr{
     ([$( ( $fname:ident,$out:ty, $getter:expr )),*]) => {
         $(
             impl SFieldPtr<$out> for $fname {
-                fn get_ptr<'o, T:NetPkt+?Sized>(pkt : &'o T) -> &'o $out { $getter(pkt)}
+                fn get_ptr<'o, T:NetPkt+?Sized>(pkt : &'o T) -> &'o $out {
+                    #[allow(clippy::redundant_closure_call)]
+                    $getter(pkt)
+                }
             }
         )*
     };

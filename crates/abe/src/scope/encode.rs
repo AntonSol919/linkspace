@@ -58,7 +58,7 @@ impl EvalScopeImpl for Encode {
               },
               apply: |_, inp, _, scope| {
                   let r = encode(inp,scope)?;
-                  let v = match r.strip_prefix("[").and_then(|o| o.strip_suffix("]")){
+                  let v = match r.strip_prefix('[').and_then(|o| o.strip_suffix(']')){
                       Some(v) => v.as_bytes().to_vec(),
                       None => r.into_bytes(),
                   };
@@ -76,7 +76,7 @@ impl EvalScopeImpl for Encode {
               },
               apply: |_, inp, _, scope| {
                   let r = encode(inp,scope)?;
-                  let v = match r.strip_prefix("[").and_then(|o| o.strip_suffix("]")){
+                  let v = match r.strip_prefix('[').and_then(|o| o.strip_suffix(']')){
                       Some(v) => {
                           let mut it = v.as_bytes().split(|v| *v == b':');
                           it.next();

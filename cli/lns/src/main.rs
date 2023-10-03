@@ -150,15 +150,12 @@ fn main() -> anyhow::Result<()> {
             let name = name.eval(&scope)?;
             let mut pubkey = pubkey.map(|e| e.eval(&scope)).transpose()?;
             let mut data= vec![];
-            match enckey {
-                Some(k) => {
-                    let encpubkey : PubKey= identity::pubkey(&k)?.into();
-                    if let Some(pk) = pubkey { ensure!(pk == encpubkey,"pubkey and enckey don't match. pick one")}
-                    pubkey = Some(encpubkey);
-                    use std::io::Write;
-                    writeln!(&mut data,"{}",k)?;
-                },
-                None => {},
+            if let Some(k) = enckey {
+                let encpubkey : PubKey= identity::pubkey(&k)?.into();
+                if let Some(pk) = pubkey { ensure!(pk == encpubkey,"pubkey and enckey don't match. pick one")}
+                pubkey = Some(encpubkey);
+                use std::io::Write;
+                writeln!(&mut data,"{}",k)?;
             }
             if let Some(n) = copy_from{
                 let alt_name = n.eval(&scope)?;
@@ -173,7 +170,7 @@ fn main() -> anyhow::Result<()> {
             for link_e in auth {
                 let mut auth_link = link_e.eval(&scope)?;
                 let tag = auth_link.tag.cut_prefix_nulls();
-                auth_link.tag = lnstag(Stamp::ZERO,&tag,b'^')?;
+                auth_link.tag = lnstag(Stamp::ZERO,tag,b'^')?;
                 links.push(auth_link)
             }
             if links.is_empty(){

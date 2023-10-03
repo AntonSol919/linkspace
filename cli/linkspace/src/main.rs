@@ -73,7 +73,7 @@ static QUERY_HELP: LazyLock<String> = LazyLock::new(|| {
         if implies.is_empty() {
             //let _ = write!(st, " [{implies}]");
         }
-        let _ = writeln!(st, "");
+        let _ = writeln!(st);
     }
     st.push_str("\nThe following options are available\n\n");
     for f in KnownOptions::iter_all() {
@@ -88,7 +88,7 @@ static PKT_HELP: LazyLock<String> = LazyLock::new(|| {
     String::from_utf8(v).unwrap()
 });
 
-pub static BUILD_INFO : &'static str = concat!(
+pub static BUILD_INFO : &str = concat!(
     env!("CARGO_PKG_NAME")," - ",
     env!("CARGO_PKG_VERSION")," - ",
     env!("VERGEN_GIT_BRANCH")," - ",

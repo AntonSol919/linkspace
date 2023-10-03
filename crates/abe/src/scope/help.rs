@@ -118,7 +118,7 @@ impl<A: Scope> Display for DisplayHelp<A> {
         writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
         writeln!(f, " ':'  => Can be used in sequence '[../func]' (taking the left-side as first argument)")?;
         writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
-        writeln!(f, "")?;
+        writeln!(f)?;
 
         let mut err = Ok(());
         let mut set = HashSet::<&'static str>::new();

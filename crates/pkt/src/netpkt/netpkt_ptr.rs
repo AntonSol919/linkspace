@@ -85,7 +85,7 @@ impl NetPktPtr {
     }
 
     pub fn check(&self, skip_hash:bool) -> Result<(), Error> {
-        let _ = self.point.internal_consitent_length()?;
+        self.point.internal_consitent_length()?;
         if !skip_hash{
             self.point.check_signature()?;
             if self.hash() != self.point.compute_hash() {
@@ -235,7 +235,7 @@ pub fn build() {
     )
     .as_netbox();
     let sp_bytes = sp.clone().byte_segments().0.concat().into_boxed_slice();
-    let b = unsafe { NetPktPtr::from_bytes_unchecked(&*sp_bytes) };
+    let b = unsafe { NetPktPtr::from_bytes_unchecked(&sp_bytes) };
     assert_eq!(sp.tail(), b.tail());
     let h = sp.hash();
 
@@ -246,9 +246,9 @@ pub fn build() {
     assert_eq!(h, b.hash())
 }
 
-impl Into<PartialNetHeader> for NetPktPtr{
-    fn into(self) -> PartialNetHeader {
-        let NetPktPtr { net_header, hash, point } = self;
+impl From<NetPktPtr> for PartialNetHeader{
+    fn from(val: NetPktPtr) -> Self {
+        let NetPktPtr { net_header, hash, point } = val;
         PartialNetHeader { net_header, hash, point_header:point.0}
     }
 }

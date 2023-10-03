@@ -84,7 +84,7 @@ impl Claim {
         links[0].tag[0..8].copy_from_slice(&until.0);
         let path = name.claim_space();
         let group = name.claim_group();
-        let pkt = linkpoint(group, LNS, &path, links, &data, Stamp::ZERO, ()).as_netbox(); 
+        let pkt = linkpoint(group, LNS, &path, links, data, Stamp::ZERO, ()).as_netbox(); 
         ensure!(*pkt.get_create_stamp() < until);
         Self::from(pkt)
     }
@@ -134,5 +134,5 @@ pub fn enckey_pkt(encrypted: &str,private:bool) -> anyhow::Result<([Link;2],NetP
 
 pub fn vote(claim: &Claim,key: &SigningKey,data:&[u8])-> anyhow::Result<NetPktBox>{
     let vote_link = [Link::new("vote",claim.pkt.hash())];
-    Ok(keypoint(claim.name.claim_group(), LNS, claim.pkt.get_rooted_spacename(), &vote_link, &data, now(), key, ()).as_netbox())
+    Ok(keypoint(claim.name.claim_group(), LNS, claim.pkt.get_rooted_spacename(), &vote_link, data, now(), key, ()).as_netbox())
 }

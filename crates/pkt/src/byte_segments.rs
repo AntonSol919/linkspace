@@ -116,7 +116,7 @@ impl<'a> ByteSegments<'a> {
                 core::ptr::copy_nonoverlapping(self.0[i].as_ptr(), dest, len);
             }
             dest = dest.add(len);
-            i = i +1;
+            i += 1;
         }
         dest
     }

@@ -137,7 +137,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
 
                 use std::io::Write;
                 let mut r = vec![];
-                let mut it =   abe::scope::bytes::slice(&links.0,rest)?;
+                let mut it =   abe::scope::bytes::slice(links.0,rest)?;
                 if let Some(link) = it.next(){
                     write!(&mut r, "{link}")?;
                     for link in it {

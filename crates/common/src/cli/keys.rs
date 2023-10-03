@@ -185,7 +185,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
     let mut enckey = match (key.enckey.clone(),&with_rt) {
         (Some(k),_) => Some(k),
         (None,None)=> None ,
-        (None,Some(rt)) => match lns::lookup_enckey(&rt, &name)?{
+        (None,Some(rt)) => match lns::lookup_enckey(rt, &name)?{
             None if error_none => bail!("no key found"),
             None => None,
             Some(_) if error_some => anyhow::bail!("already exists"),
@@ -221,7 +221,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
         };
 
         let pubkey = match &with_rt {
-            Some(rt) => lns::setup_special_keyclaim(&rt, name, &enckey,true)?,
+            Some(rt) => lns::setup_special_keyclaim(rt, name, &enckey,true)?,
             None => B64(pubkey(&enckey)?),
         };
         print(enckey,pubkey);
@@ -246,7 +246,7 @@ pub fn keygen(common: &CommonOpts, opts: KeyGenOpts) -> anyhow::Result<()> {
             let enckey = generate(&password);
             let pubkey = match &with_rt {
                 None => B64(pubkey(&enckey)?),
-                Some(rt) => lns::setup_special_keyclaim(&rt, name, &enckey,false)?
+                Some(rt) => lns::setup_special_keyclaim(rt, name, &enckey,false)?
             };
             print(enckey,pubkey)
         }

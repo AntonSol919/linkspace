@@ -121,7 +121,6 @@ pub fn status_watch(mut common: CommonOpts, ps: StatusWatch) -> anyhow::Result<(
     *common.mut_write_private() = Some(true);
     let scope = common.eval_scope();
     let (domain, group, objtype, instance) = args.eval(&scope)?;
-    let timeout = timeout;
     use linkspace::conventions::status::*;
     let status = LkStatus {
         domain,

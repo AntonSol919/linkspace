@@ -75,7 +75,7 @@ impl SpaceBuf {
         let v : Vec<_> = ablist.unwrap().into_iter()
             .filter_map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Some(Err(SpaceExprError::BadCtr(ctr)))} else if b.is_empty(){ None} else {Some(Ok(b))})
             .try_collect()?;
-        return Ok(SpaceBuf::try_from_iter(v)?);
+        Ok(SpaceBuf::try_from_iter(v)?)
     }
 }
 impl TryFrom<ABList> for SpaceBuf {

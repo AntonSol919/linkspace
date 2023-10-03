@@ -621,7 +621,7 @@ fn concat() {
 fn pop_slice() {
     let mut v = SpaceBuf::from_iter(&[b"hello", b"world"]);
     let x = SpaceBuf::from_iter(&[b"hello"]);
-    assert_eq!(v.drop_prefix(&*x), &*SpaceBuf::from_iter(&[b"world"]));
+    assert_eq!(v.drop_prefix(&x), &*SpaceBuf::from_iter(&[b"world"]));
     v.truncate_last();
     assert_eq!(v, x)
 }
@@ -633,7 +633,7 @@ fn check() {
     assert!(CheckedSpaceIter::EMPTY.space.inner_bytes.is_empty(), "bad empty iter?");
 
     use crate::*;
-    let space = SpaceBuf::try_from_iter(&["hello", "world"]).unwrap();
+    let space = SpaceBuf::try_from_iter(["hello", "world"]).unwrap();
     let mut it = space.checked_iter().unwrap();
     assert_eq!(it.next().unwrap().unwrap(), b"hello" as &[u8]);
     assert_eq!(it.next().unwrap().unwrap(), b"world" as &[u8]);

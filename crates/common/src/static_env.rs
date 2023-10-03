@@ -29,7 +29,7 @@ pub fn get_env(path: &Path, mkdir: bool) -> io::Result<BTreeEnv> {
         Err(_e) if mkdir =>{ std::fs::create_dir_all(path)?; same_file::Handle::from_path(path)?} ,
         Err(e) => return Err(e)
     };
-    if let Some(v) = ENVS.read().unwrap().as_ref().map(|o|o.get(&handle).cloned()).flatten(){
+    if let Some(v) = ENVS.read().unwrap().as_ref().and_then(|o|o.get(&handle).cloned()){
         return Ok(v)
     }
     let env = BTreeEnv::open(path.to_owned(), mkdir)?;

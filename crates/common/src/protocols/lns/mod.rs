@@ -73,7 +73,7 @@ pub fn lnstag(stamp:Stamp,rest:&[u8], kind:u8) -> anyhow::Result<Tag>{
     anyhow::ensure!(rest.len() < 8 );
     let mut t = Tag::default();
     t[0..8].copy_from_slice(&stamp.0);
-    t[0..15][15-rest.len()..].copy_from_slice(&rest);
+    t[0..15][15-rest.len()..].copy_from_slice(rest);
     t[15] = kind;
     Ok(t)
 }

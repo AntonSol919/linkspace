@@ -171,20 +171,17 @@ impl PointThinPtr {
     }
 
     pub fn check_signature(&self) -> Result<(), Error> {
-        match self.fixed() {
-            BarePointFields::LinkPoint {
-                header: _,
-                padding: _,
-                signed: Some(signed),
-            } => {
-                let pbytes = self.pkt_bytes();
-                let sans_signature = &pbytes[..pbytes.len() - size_of::<Signed>()];
-                let hash = linkspace_cryptography::blake3_hash(sans_signature);
-                signed
-                    .validate(hash.as_bytes())
-                    .map_err(|_| Error::InvalidSignature)?;
-            }
-            _ => (),
+        if let BarePointFields::LinkPoint {
+                        header: _,
+                        padding: _,
+                        signed: Some(signed),
+                    } = self.fixed() {
+            let pbytes = self.pkt_bytes();
+            let sans_signature = &pbytes[..pbytes.len() - size_of::<Signed>()];
+            let hash = linkspace_cryptography::blake3_hash(sans_signature);
+            signed
+                .validate(hash.as_bytes())
+                .map_err(|_| Error::InvalidSignature)?;
         };
         Ok(())
     }

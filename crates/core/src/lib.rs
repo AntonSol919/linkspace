@@ -69,7 +69,7 @@ macro_rules! try_opt {
 pub struct StaticPkts<const N: usize>(pub [u8;N]);
 pub static LNS_ROOTS: StaticPkts<520> = StaticPkts(*include_bytes!("./lnsroots.pkt"));
 impl<const N:usize> StaticPkts<N>{
-    pub fn iter<'o>(&'o self) -> impl Iterator<Item= &'o NetPktPtr> + 'o {
+    pub fn iter(&self) -> impl Iterator<Item= &NetPktPtr> + '_ {
         let mut bytes = &self.0 as &[u8];
         std::iter::from_fn(move ||{
             if bytes.is_empty() { return None;}

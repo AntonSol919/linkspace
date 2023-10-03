@@ -532,7 +532,7 @@ pub mod abe {
                 .ok_or_else(|| anyhow::anyhow!("no linkspace instance was set"))
             };
             Ok(LkScope(InlineScope::Std((
-                udata.pkt.map(|v| pkt_scope(v)),
+                udata.pkt.map(pkt_scope),
                 lk_scope(get, enable_env),
                 argv,
             ))))
@@ -855,7 +855,7 @@ pub mod runtime {
         let mut i = 0;
         let reader = lk.0.get_reader();
         let opt_pkt = reader.query(mode, &query.0.predicates, &mut i)?.next();
-        Ok(opt_pkt.map(|v| (cb)(v)))
+        Ok(opt_pkt.map(cb))
     }
     /** read a single packet from the database by its hash without copying.
     This means that [NetPkt::net_header_mut] is unavailable.
@@ -868,7 +868,7 @@ pub mod runtime {
     ) -> anyhow::Result<Option<A>> {
         let reader = lk.0.get_reader();
         let opt = reader.read(&hash)?;
-        Ok(opt.map(|v| (cb)(v)))
+        Ok(opt.map(cb))
     }
 
     /**

@@ -29,7 +29,7 @@ impl Pkt {
 #[wasm_bindgen]
 impl Pkt {
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> String {
+    pub fn to_string_js(&self) -> String {
         #[cfg(feature = "abe")]
         {linkspace_pkt::pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
 
@@ -41,7 +41,7 @@ impl Pkt {
     #[wasm_bindgen(js_name = toHTML)]
     pub fn to_html(&self, include_lossy_escaped_data:Option<bool>) -> Result<String,JsValue>{
         #[cfg(feature = "abe")]
-        { todo!()}
+        { todo!("abe not yet impl {include_lossy_escaped_data:?}")}
 
         #[cfg(not(feature = "abe"))]
         {
@@ -186,9 +186,10 @@ pub struct LinkRes {
 }
 #[wasm_bindgen]
 impl Links{
-    pub fn default()-> Links { Links{ idx:0, pkt:Pkt::empty()}}
-    #[wasm_bindgen]
-    pub fn next(&mut self) -> LinkRes{
+    pub fn empty()-> Links { Links{ idx:0, pkt:Pkt::empty()}}
+    /// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols
+    #[wasm_bindgen(js_name = next)]
+    pub fn next_js(&mut self) -> LinkRes{
         let val = self.pkt.0.get_links().get(self.idx).copied().map(Link);
         self.idx +=1;
         LinkRes { done: val.is_none(), value: val }
@@ -226,7 +227,7 @@ impl Link {
         js_sys::JSON::parse(&string)
     }
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> Result<String,JsValue>{
+    pub fn to_string_js(&self) -> Result<String,JsValue>{
         let mut tag = self.0.tag.0;
         let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
         Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))

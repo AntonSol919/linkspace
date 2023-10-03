@@ -23,8 +23,8 @@ pack:
 	wasm-pack pack
 
 validate: 
-	RUSTFLAGS="-D warnings" cargo doc --no-deps
+	cargo clippy -- -D warnings
+	test $$(cargo fmt --all -- --check | tee /dev/fd/2 | wc -c ) -eq 0
+	cargo doc --all --no-deps
 	cargo test
 	cargo build
-	cargo fmt --all -- --check
-	cargo clippy -- -D warnings

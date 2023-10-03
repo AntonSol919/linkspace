@@ -59,6 +59,7 @@ macro_rules! sp_iter_match {
 macro_rules! sp_match {
 	  ($e:expr, [ $($tail:tt),*]) => {
         {
+            #[allow(clippy::unused_unit)]
             let r : Option<_> = try {
                 let mut iter = $e.iter();
                 sp_iter_match!(iter,[$($tail),*])

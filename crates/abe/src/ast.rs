@@ -534,9 +534,9 @@ pub fn tokenize_abe(
     plain_cset: u32,
     err_cset: u32,
 ) -> Result<Vec<(u8,bool,&str)>, ASTParseError> {
-    Ok(tokenize_abe_b(st.as_bytes(), plain_cset, err_cset)
+    tokenize_abe_b(st.as_bytes(), plain_cset, err_cset)
         .map(|i| i.map(|(c,i, b)| (c,i,unsafe { std::str::from_utf8_unchecked(b) })))
-        .try_collect()?)
+        .try_collect()
 }
 
 #[test]

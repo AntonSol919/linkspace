@@ -42,11 +42,10 @@ pub enum GetLinksMode{
 
 #[allow(clippy::type_complexity)]
 pub fn get_links(lk: &linkspace::Linkspace, pkt:&dyn NetPkt, level: usize, mode:GetLinksMode, out:Rc<RefCell<dyn FnMut(&dyn NetPkt)-> std::io::Result<()>>> )-> anyhow::Result<()>{
-    let mut count = 0u64;
-    for link in pkt.get_links()
+    for (count,link) in pkt.get_links().iter().enumerate()
     {
-        let qid = [&count.to_be_bytes() as &[u8],&*link.ptr].concat();
-        count +=1;
+        let count_be = (count as u64).to_be_bytes();
+        let qid = [&count_be as &[u8],&*link.ptr].concat();
         let q = lk_query_push(lk_hash_query(link.ptr), "", "qid", &qid)?;
         let print_fnc = out.clone();
         let res = lk_watch(lk, &q, try_cb(move |p,lk| -> anyhow::Result<()>{

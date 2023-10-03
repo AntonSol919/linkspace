@@ -36,7 +36,7 @@ pub fn eval_cmd(common: CommonOpts, opts: EvalOpts) -> anyhow::Result<()> {
     let EvalOpts { json, abe, data, no_loose } = opts;
     let loose = !no_loose;
 
-    let abe = linkspace_common::prelude::parse_abe(&abe,loose)?;
+    let abe = linkspace_common::prelude::parse_abe(abe,loose)?;
 
     let mut arglist = vec![];
     let scope = common.eval_scope();

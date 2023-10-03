@@ -61,7 +61,7 @@ fn correct_public_ids() {
     use linkspace_cryptography::blake3_hash;
     let bytes = PUBLIC_GROUP_PKT.as_point().pkt_segments();
     assert_eq!(&bytes.0[0],&[0,1,0,16,72,101,108,108,111,44,32,83,111,108,33,10]);
-    assert_eq!(blake3_hash(&bytes.0[0]), PUBLIC_GROUP_PKT.hash().0);
+    assert_eq!(blake3_hash(bytes.0[0]), PUBLIC_GROUP_PKT.hash().0);
     
     assert_eq!(PUBLIC, PUBLIC_GROUP_B64.parse().unwrap(),"{:?}",PUBLIC_GROUP_PKT.hash().0);
     assert_eq!(PUBLIC, PUBLIC_GROUP_PKT.hash());

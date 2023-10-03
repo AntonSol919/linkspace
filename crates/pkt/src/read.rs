@@ -47,7 +47,7 @@ fn parsing() {
     let extra = data.as_slice().as_ptr().align_offset(8);
     let _ = data.splice(0..0, 0..extra as u8).collect::<Vec<_>>();
     let data = &data[extra..];
-    let cow_read = read_pkt(&data,true).unwrap();
+    let cow_read = read_pkt(data,true).unwrap();
     assert!(matches!(cow_read,Cow::Borrowed(_)));
     let box_parse = cow_read.as_netbox();
     let arc_parse = cow_read.as_netarc();

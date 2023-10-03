@@ -36,7 +36,7 @@ impl LMDBEnv{
                 start = last.max(start);
             }
             Ok((None,_)) => unreachable!(),
-            Err(e) if matches!(e,Error::NotFound) => {},
+            Err(Error::NotFound) => {},
             Err(e) => return Err(e)
         };
 
@@ -49,7 +49,7 @@ impl LMDBEnv{
                     Ok(()) => {
                         at +=1;
                     },
-                    Err(e) if matches!(e,Error::KeyExist) => {
+                    Err(Error::KeyExist)=> {
                         *state = SaveState::Exists;
                         tracing::trace!(p=%p.hash_ref(),"already exists");
                     },

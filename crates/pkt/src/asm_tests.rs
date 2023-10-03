@@ -91,7 +91,7 @@ fn sanity() {
     use linkspace_cryptography::*;
     
     {
-        let mut kpy : NetPktParts<'_> = keypoint.clone();
+        let mut kpy : NetPktParts<'_> = Clone::clone(&keypoint);
 
         // the signature is for the hash of the linkpoint
         let (fields,signed) = match kpy.fields {

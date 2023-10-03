@@ -17,7 +17,7 @@ impl<R: LKS> EvalScopeImpl for FileEnv<R> {
         let info = match self.0.lk(){
             Ok(o) => match o.files(){
                 Some(o) => format!("Reading files from {o:?}"),
-                None => format!("no abe files directory set"),
+                None => "no abe files directory set".to_string(),
             }
             Err(e) => e.to_string(),
         };

@@ -267,7 +267,6 @@ impl Linkspace {
             (txn.clone(), rx_last, txn_last)
         };
         let _g = tracing::error_span!("Processing txn", ?from, ?upto).entered();
-        let txn = txn;
         tracing::trace!("Lock cbs");
         let mut lock = exec.callbacks.borrow_mut();
         self.drain_pending(&mut lock);

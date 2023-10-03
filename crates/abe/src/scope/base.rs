@@ -18,9 +18,7 @@ fn enc_bin(bytes:&[u8],opts:&[ABE], radix:u32) -> ApplyResult<String>{
     let len_set :Vec<usize>= opts.iter().map(|v| -> anyhow::Result<usize>{
         Ok(std::str::from_utf8(crate::ast::as_bytes(v)?)?.parse::<usize>()?)
     }).try_collect()?;
-    if !len_set.is_empty() {
-        if !len_set.contains(&bytes.len()) { return ApplyResult::NoValue;}
-    }
+    if !len_set.is_empty() && !len_set.contains(&bytes.len()) { return ApplyResult::NoValue;}
     use std::fmt::Write;
     match radix {
         2 => {
@@ -70,7 +68,7 @@ impl EvalScopeImpl for BaseNScope {
             ( @C "bs", 1..=1, None, "decode base64 standard padded",
                |_,i:&[&[u8]],_,_| Ok(BASE64_STANDARD.decode(i[0])?),
                |_,b:&[u8],_| -> ApplyResult<String>{
-                   ApplyResult::Value(format!("[bs:{}]",BASE64_STANDARD.encode(b).replace("/", "\\/")))
+                   ApplyResult::Value(format!("[bs:{}]",BASE64_STANDARD.encode(b).replace('/', "\\/")))
                }
             )
 

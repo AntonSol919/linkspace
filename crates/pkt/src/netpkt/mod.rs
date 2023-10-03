@@ -89,10 +89,12 @@ pub trait NetPkt: Debug {
         // TODO. we can avoid this copy
         let mut segments = self.as_point().pkt_segments();
         segments.0[0] = &segments.0[0][size_of::<PointHeader>()..];
-        let arc = unsafe{NetPktArc::from_header_and_copy(h.into(), false,|o:&mut [u8]| {
-            segments.write_segments_unchecked(o.as_mut_ptr());
-        })}.expect("a copy should be valid");
-        arc
+        let arc = unsafe{
+            NetPktArc::from_header_and_copy(h.into(), false,|o:&mut [u8]| {
+                segments.write_segments_unchecked(o.as_mut_ptr());
+            })
+        };
+        arc.expect("a copy should be valid")
     }
 }
 
