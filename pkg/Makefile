@@ -21,7 +21,6 @@ common:
 	mkdir -p $(PKG_DIR)/bin
 	rsync -rvkP --exclude "*private*" --exclude "_*" $(R)/../examples $(PKG_DIR)
 	cp -r $(R)/../emulate $(PKG_DIR)
-	cp $(R)/../join-testexchange $(PKG_DIR)
 	rsync -rvkP $(R)/common/ $(PKG_DIR)
 
 cli-%:
