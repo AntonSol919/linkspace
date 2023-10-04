@@ -1,3 +1,9 @@
+# v0.5.0
+
+- Rename abe context to scope in public api
+- add gitea ci workflow
+- Make spacename decoding forgiving of superfluous '/'
+
 # v0.4.0
 
 - Rename 'pathname' to 'spacename'
