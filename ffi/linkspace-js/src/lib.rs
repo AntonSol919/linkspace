@@ -24,7 +24,7 @@ fn main() -> std::result::Result<(), JsValue> {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
     set_iter(&js_sys::Object::get_prototype_of(
-        &jspkt::Links::default().into(),
+        &jspkt::Links::empty().into(),
     ));
     Ok(())
 }
@@ -125,7 +125,8 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
     } else if let Some(st) = spacename.dyn_ref::<Uint8Array>() {
         SpaceBuf::try_from_inner(st.to_vec())?.try_into_rooted()?
     } else {
-        let it = js_sys::try_iter(&spacename)?.ok_or("unknown format - expected spacename bytes or array")?;
+        let it = js_sys::try_iter(&spacename)?
+            .ok_or("unknown format - expected spacename bytes or array")?;
         let spacename = it.map(|b| bytelike(&b?)).try_collect::<Vec<_>>()?;
         RootedSpaceBuf::try_from_iter(spacename)?
     };
@@ -135,9 +136,11 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
         vec![]
     } else if let Some(bytes) = links.dyn_ref::<Uint8Array>() {
         use std::mem::size_of;
-        let length =bytes.length() as usize;
-        if length % size_of::<linkspace_pkt::Link>() != 0 { return Err("wrong number of bytes to turn into links".into());}
-        let mut  links = vec![Link::DEFAULT;length / size_of::<linkspace_pkt::Link>()];
+        let length = bytes.length() as usize;
+        if length % size_of::<linkspace_pkt::Link>() != 0 {
+            return Err("wrong number of bytes to turn into links".into());
+        }
+        let mut links = vec![Link::DEFAULT; length / size_of::<linkspace_pkt::Link>()];
         unsafe {
             let as_bytes = std::slice::from_raw_parts_mut(links.as_mut_ptr().cast::<u8>(), length);
             bytes.copy_to(as_bytes);
@@ -296,13 +299,17 @@ pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {
 
 #[wasm_bindgen]
 pub fn build_info() -> String {
-    static BUILD_INFO : &'static str = concat!(
-        env!("CARGO_PKG_NAME")," - ",
-        env!("CARGO_PKG_VERSION")," - ",
-        env!("VERGEN_GIT_BRANCH")," - ",
-        env!("VERGEN_GIT_DESCRIBE"), " - ", 
+    static BUILD_INFO: &str = concat!(
+        env!("CARGO_PKG_NAME"),
+        " - ",
+        env!("CARGO_PKG_VERSION"),
+        " - ",
+        env!("VERGEN_GIT_BRANCH"),
+        " - ",
+        env!("VERGEN_GIT_DESCRIBE"),
+        " - ",
         env!("VERGEN_RUSTC_SEMVER")
     );
-    
+
     BUILD_INFO.to_string()
 }

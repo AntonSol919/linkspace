@@ -18,7 +18,7 @@ group = lk_eval(group_expr)
 
 
 # You can parse multiple statements as abe.
-# The usual ABE context is available, and you can extend it with argv
+# The usual ABE scope is available, and you can extend it with argv
 query_string = """
 domain:=:imageboard
 group:=:[0]

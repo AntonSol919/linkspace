@@ -1,6 +1,13 @@
-use base64::{prelude::{BASE64_URL_SAFE_NO_PAD,BASE64_STANDARD}, DecodeError, Engine};
+use base64::{
+    prelude::{BASE64_STANDARD, BASE64_URL_SAFE_NO_PAD},
+    DecodeError, Engine,
+};
 
-use crate::{eval::{EvalScopeImpl, ScopeFunc, ApplyResult, ApplyErr}, fncs, ABE, cut_prefix_nulls};
+use crate::{
+    cut_prefix_nulls,
+    eval::{ApplyErr, ApplyResult, EvalScopeImpl, ScopeFunc},
+    fncs, ABE,
+};
 
 fn bin(inp: &[&[u8]], radix: u32) -> Result<Vec<u8>, ApplyErr> {
     // FIXME probably want to better handle leading '000000000'
@@ -14,26 +21,33 @@ fn bin(inp: &[&[u8]], radix: u32) -> Result<Vec<u8>, ApplyErr> {
 }
 
 // FIXME ambiguous lengths
-fn enc_bin(bytes:&[u8],opts:&[ABE], radix:u32) -> ApplyResult<String>{
-    let len_set :Vec<usize>= opts.iter().map(|v| -> anyhow::Result<usize>{
-        Ok(std::str::from_utf8(crate::ast::as_bytes(v)?)?.parse::<usize>()?)
-    }).try_collect()?;
-    if !len_set.is_empty() {
-        if !len_set.contains(&bytes.len()) { return ApplyResult::NoValue;}
+fn enc_bin(bytes: &[u8], opts: &[ABE], radix: u32) -> ApplyResult<String> {
+    let len_set: Vec<usize> = opts
+        .iter()
+        .map(|v| -> anyhow::Result<usize> {
+            Ok(std::str::from_utf8(crate::ast::as_bytes(v)?)?.parse::<usize>()?)
+        })
+        .try_collect()?;
+    if !len_set.is_empty() && !len_set.contains(&bytes.len()) {
+        return ApplyResult::NoValue;
     }
     use std::fmt::Write;
     match radix {
         2 => {
-            let mut st = String::with_capacity(bytes.len()*8);
-            bytes.iter().for_each(|b|{let _ = write!(&mut st,"{b:08b}");});
+            let mut st = String::with_capacity(bytes.len() * 8);
+            bytes.iter().for_each(|b| {
+                let _ = write!(&mut st, "{b:08b}");
+            });
             ApplyResult::Value(format!("[b{radix}:{st}]"))
-        },
+        }
         16 => {
-            let mut st = String::with_capacity(bytes.len()*2);
-            bytes.iter().for_each(|b|{let _ = write!(&mut st,"{b:02X}");});
+            let mut st = String::with_capacity(bytes.len() * 2);
+            bytes.iter().for_each(|b| {
+                let _ = write!(&mut st, "{b:02X}");
+            });
             ApplyResult::Value(format!("[b{radix}:{st}]"))
-        },
-        _ => ApplyResult::Err(anyhow::anyhow!("fixme: radix supported"))
+        }
+        _ => ApplyResult::Err(anyhow::anyhow!("fixme: radix supported")),
     }
 }
 
@@ -42,7 +56,10 @@ fn enc_bin(bytes:&[u8],opts:&[ABE], radix:u32) -> ApplyResult<String>{
 pub struct BaseNScope;
 impl EvalScopeImpl for BaseNScope {
     fn about(&self) -> (String, String) {
-        ("base-n".into(), "base{2,8,16,32,64} encoding - (b64 is url-safe no-padding)".into())
+        (
+            "base-n".into(),
+            "base{2,8,16,32,64} encoding - (b64 is url-safe no-padding)".into(),
+        )
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
@@ -70,15 +87,13 @@ impl EvalScopeImpl for BaseNScope {
             ( @C "bs", 1..=1, None, "decode base64 standard padded",
                |_,i:&[&[u8]],_,_| Ok(BASE64_STANDARD.decode(i[0])?),
                |_,b:&[u8],_| -> ApplyResult<String>{
-                   ApplyResult::Value(format!("[bs:{}]",BASE64_STANDARD.encode(b).replace("/", "\\/")))
+                   ApplyResult::Value(format!("[bs:{}]",BASE64_STANDARD.encode(b).replace('/', "\\/")))
                }
             )
 
         ])
     }
 }
-
-
 
 pub fn base64(b: impl AsRef<[u8]>) -> String {
     BASE64_URL_SAFE_NO_PAD.encode(b.as_ref())

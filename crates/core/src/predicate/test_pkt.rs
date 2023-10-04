@@ -64,7 +64,9 @@ pub struct SpacePrefix(SpaceBuf);
 impl PktStreamTest for SpacePrefix {
     fn test(&self, pkt: &NetPktPtr) -> bool {
         // FIXME: impl rspace starts_with and replace this
-        pkt.spacename().map(|p| p.starts_with(&self.0)).unwrap_or(false)
+        pkt.spacename()
+            .map(|p| p.starts_with(&self.0))
+            .unwrap_or(false)
     }
     fn get_field(&self) -> RuleType {
         RuleType::SpacePrefix

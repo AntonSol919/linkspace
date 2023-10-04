@@ -4,21 +4,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-
 use std::fmt::Display;
 
-use abe::{ast::{Ctr,  MatchErrorKind} };
+use abe::ast::{Ctr, MatchErrorKind};
 use linkspace_core::prelude::*;
 
-pub const MAX_LNS_NAME_LEN : usize = MAX_SPACE_DEPTH-1;
-pub const MAX_LNS_NAME_SIZE : usize = MAX_SPACENAME_SIZE-8;
+pub const MAX_LNS_NAME_LEN: usize = MAX_SPACE_DEPTH - 1;
+pub const MAX_LNS_NAME_SIZE: usize = MAX_SPACENAME_SIZE - 8;
 
 use thiserror::Error;
 
 use super::CLAIM_PREFIX;
 
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
-pub enum NameError{
+pub enum NameError {
     #[error("LNS names are colon separated bytes")]
     ContainsFSlash,
     #[error("LNS names require at least one component")]
@@ -28,57 +27,89 @@ pub enum NameError{
     #[error("LNS names only allow upto {MAX_LNS_NAME_SIZE}-len() bytes combined")]
     MaxSize,
     #[error("LNS names are reversed spacenames - {0}")]
-    Space(#[from]SpaceError)
+    Space(#[from] SpaceError),
 }
 
 pub type NameExpr = TypedABE<Name>;
 
-#[derive(Clone,PartialEq,Eq)]
+#[derive(Clone, PartialEq, Eq)]
 /// A reversed space constrained to fit lns
-pub struct Name { space: SpaceBuf,name_type:NameType}
-#[derive(Copy,Clone,PartialEq,Eq)]
+pub struct Name {
+    space: SpaceBuf,
+    name_type: NameType,
+}
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum NameType {
     Public,
     Local,
 }
 impl NameType {
-    pub fn from_tail(b:&[u8]) -> Self{
+    pub fn from_tail(b: &[u8]) -> Self {
         match b {
             b"local" => NameType::Local,
-            _ => NameType::Public
+            _ => NameType::Public,
         }
     }
 }
 
-
 impl Name {
-    pub fn root() -> Self { Name{space: SpaceBuf::new(), name_type:NameType::Public}}
-    pub fn local() -> Self { Name{space: space_buf(&[b"local"]), name_type:NameType::Local}}
-    
-    pub fn claim_space(&self) -> RootedSpaceBuf { CLAIM_PREFIX.rooted().join(&self.space).rooted()}
+    pub fn root() -> Self {
+        Name {
+            space: SpaceBuf::new(),
+            name_type: NameType::Public,
+        }
+    }
+    pub fn local() -> Self {
+        Name {
+            space: space_buf(&[b"local"]),
+            name_type: NameType::Local,
+        }
+    }
+
+    pub fn claim_space(&self) -> RootedSpaceBuf {
+        CLAIM_PREFIX.rooted().join(&self.space).rooted()
+    }
     pub fn claim_group(&self) -> GroupID {
-        match self.name_type{
+        match self.name_type {
             NameType::Local => PRIVATE,
             NameType::Public => PUBLIC,
         }
     }
-    pub fn from_space(space:&Space) -> Result<Name,NameError>{
+    pub fn from_space(space: &Space) -> Result<Name, NameError> {
         tracing::debug!(%space,"name from");
         let rcomps = space.to_array();
-        if rcomps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
-        if rcomps.is_empty(){ return Err(NameError::MinLen)}
+        if rcomps.len() > MAX_LNS_NAME_LEN {
+            return Err(NameError::MaxLen);
+        }
+        if rcomps.is_empty() {
+            return Err(NameError::MinLen);
+        }
         let name_type = NameType::from_tail(rcomps.first().unwrap());
-        if space.space_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { space: space.into_spacebuf() ,name_type})
+        if space.space_bytes().len() > MAX_LNS_NAME_SIZE {
+            return Err(NameError::MaxSize);
+        }
+        Ok(Name {
+            space: space.into_spacebuf(),
+            name_type,
+        })
     }
-    pub fn from(comps: &[&[u8]]) -> Result<Name,NameError>{
-        if comps.is_empty(){ return Err(NameError::MinLen)}
-        if comps.len() > MAX_LNS_NAME_LEN { return Err(NameError::MaxLen)}
+    pub fn from(comps: &[&[u8]]) -> Result<Name, NameError> {
+        if comps.is_empty() {
+            return Err(NameError::MinLen);
+        }
+        if comps.len() > MAX_LNS_NAME_LEN {
+            return Err(NameError::MaxLen);
+        }
         let special = NameType::from_tail(comps.last().unwrap());
         let it = comps.iter().rev();
         let space = SpaceBuf::try_from_iter(it)?;
-        if space.space_bytes().len() > MAX_LNS_NAME_SIZE { return Err(NameError::MaxSize)}
-        Ok(Name { space ,name_type: special})
+        if space.space_bytes().len() > MAX_LNS_NAME_SIZE {
+            return Err(NameError::MaxSize);
+        }
+        Ok(Name {
+            space,
+            name_type: special,
+        })
     }
     pub fn space(&self) -> &Space {
         &self.space
@@ -91,23 +122,23 @@ impl Name {
 impl TryFrom<ABList> for Name {
     type Error = NameError;
     fn try_from(value: ABList) -> Result<Self, Self::Error> {
-        if value.iter().any(|v| v.0 == Some(Ctr::FSlash)){
+        if value.iter().any(|v| v.0 == Some(Ctr::FSlash)) {
             return Err(NameError::ContainsFSlash);
         }
-        let lst :Vec<_>= value.iter_bytes().collect();
+        let lst: Vec<_> = value.iter_bytes().collect();
         Name::from(&lst)
     }
 }
 impl ToABE for Name {
     fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
-        if self.space.is_empty(){
-            return out(ABE::Expr(ast::Expr::Lst(abev!({ "LNS-ROOT" }))))
+        if self.space.is_empty() {
+            return out(ABE::Expr(ast::Expr::Lst(abev!({ "LNS-ROOT" }))));
         }
         let arr = self.space.to_array();
         let mut it = arr.iter().rev();
         let first = it.next().unwrap();
         out(ABE::Expr(ast::Expr::Bytes(first.to_vec())));
-        for comp in it{
+        for comp in it {
             abe!( : (**comp) ).for_each(&mut *out)
         }
     }
@@ -123,18 +154,25 @@ impl std::fmt::Debug for Name {
     }
 }
 
-
 impl ABEValidator for Name {
     fn check(b: &[ABE]) -> Result<(), ast::MatchError> {
         let mut comp = 0;
-        for i in b{
+        for i in b {
             match i {
-                ABE::Ctr(Ctr::Colon) => comp +=1,
-                ABE::Ctr(Ctr::FSlash) => {MatchErrorKind::ExpectedColon.atp::<()>(i)?;},
-                ABE::Expr(_) => {},
+                ABE::Ctr(Ctr::Colon) => comp += 1,
+                ABE::Ctr(Ctr::FSlash) => {
+                    MatchErrorKind::ExpectedColon.atp::<()>(i)?;
+                }
+                ABE::Expr(_) => {}
             }
         }
-        if comp > MAX_LNS_NAME_LEN{ MatchErrorKind::MaxLen { max: MAX_SPACE_DEPTH, has: comp }.at::<()>(b)?;}
+        if comp > MAX_LNS_NAME_LEN {
+            MatchErrorKind::MaxLen {
+                max: MAX_SPACE_DEPTH,
+                has: comp,
+            }
+            .at::<()>(b)?;
+        }
         Ok(())
     }
 }

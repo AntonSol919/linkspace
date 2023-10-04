@@ -27,10 +27,7 @@ pub fn attach(env: BTreeEnv, spawner: Rc<dyn LocalAsync>) -> Linkspace {
         .unwrap();
     rx
 }
-pub fn run_until<O, Fut>(
-    rx: Linkspace,
-    fnc: impl FnOnce(Linkspace) -> Fut,
-) -> Result<O, SpawnError>
+pub fn run_until<O, Fut>(rx: Linkspace, fnc: impl FnOnce(Linkspace) -> Fut) -> Result<O, SpawnError>
 where
     Fut: Future<Output = O>,
 {

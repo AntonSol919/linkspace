@@ -5,11 +5,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use linkspace_common::{
     cli::{clap, clap::Args, opts::CommonOpts, tracing, Out, WriteDestSpec},
-    predicate_aliases::{ExtWatchCLIOpts },
-    prelude::{query_mode::Mode,  *}, dgs::DGSDExpr,
+    dgs::DGSDExpr,
+    predicate_aliases::ExtWatchCLIOpts,
+    prelude::{query_mode::Mode, *},
 };
 
-#[derive(Debug, Args, Clone,Default)]
+#[derive(Debug, Args, Clone, Default)]
 #[group(skip)]
 pub struct DGPDWatchCLIOpts {
     #[arg(required_unless_present("bare"))]
@@ -22,56 +23,58 @@ pub struct DGPDWatchCLIOpts {
 }
 
 impl DGPDWatchCLIOpts {
-    pub fn iter_statments(self) -> anyhow::Result<Vec<TypedABE<ABList>>>{
+    pub fn iter_statments(self) -> anyhow::Result<Vec<TypedABE<ABList>>> {
         tracing::trace!("Collecting predicates");
         let dgpd = self
             .dgpd
             .filter(|_| !self.bare)
-            .map(|dgpd| dgpd.predicate_exprs()).transpose()?;
+            .map(|dgpd| dgpd.predicate_exprs())
+            .transpose()?;
         let aliases = self.watch_opts.aliases.as_predicates();
         let exprs = self.watch_opts.exprs.into_iter();
         let it = dgpd.into_iter().flatten().chain(aliases).map(Into::into);
         Ok(it.chain(exprs).collect())
     }
-    pub fn into_query(self, ctx: &impl Scope) -> anyhow::Result<Query> {
-        statements2query(&self.iter_statments()?, ctx)
+    pub fn into_query(self, scope: &impl Scope) -> anyhow::Result<Query> {
+        statements2query(&self.iter_statments()?, scope)
     }
 }
-pub fn statements2query(it: &[TypedABE<ABList>], ctx: &impl Scope) -> anyhow::Result<Query> {
+pub fn statements2query(it: &[TypedABE<ABList>], scope: &impl Scope) -> anyhow::Result<Query> {
     let mut query = Query::default();
-    for e in it{
+    for e in it {
         tracing::trace!(?e, "add expr");
-        let e = e.eval(ctx)?;
+        let e = e.eval(scope)?;
         tracing::trace!(?e, "val");
         query.add_stmt(e)?;
     }
     Ok(query)
 }
 
-
-#[derive(Args,Clone,Copy,Default)]
+#[derive(Args, Clone, Copy, Default)]
 #[group(skip)]
-pub struct PrintABE{
+pub struct PrintABE {
     /// print the query
-    #[arg(short,long,alias="print",short)]
+    #[arg(short, long, alias = "print", short)]
     pub print_expr: bool,
     /// print in ascii-byte-text format (ABE without '[..]' expressions)
-    #[arg(long,alias="text",conflicts_with="print_expr")]
+    #[arg(long, alias = "text", conflicts_with = "print_expr")]
     pub print_text: bool,
 }
 impl PrintABE {
-    pub fn do_print(&self) -> bool { self.print_expr || self.print_text}
-    pub fn print_query(&self, query:&Query, out : &mut dyn std::io::Write) -> std::io::Result<()>{
+    pub fn do_print(&self) -> bool {
+        self.print_expr || self.print_text
+    }
+    pub fn print_query(&self, query: &Query, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         if self.print_expr {
             writeln!(out, "{}", query.to_str(true))?
-        }else if self.print_text {
-            writeln!(out,"{}", query.to_str(false))?
+        } else if self.print_text {
+            writeln!(out, "{}", query.to_str(false))?
         }
         Ok(())
     }
 }
 
-#[derive(Args,Default)]
+#[derive(Args, Default)]
 #[group(skip)]
 pub struct CLIQuery {
     #[command(flatten)]
@@ -84,8 +87,8 @@ pub struct CLIQuery {
 impl CLIQuery {
     // FIXME: printing here is confusing
     pub fn into_query(self, common: &CommonOpts) -> anyhow::Result<Option<Query>> {
-        let ctx = common.eval_ctx();
-        let mut select = self.opts.into_query(&ctx)?;
+        let scope = common.eval_scope();
+        let mut select = self.opts.into_query(&scope)?;
         let inner_mode = select.mode()?;
         if inner_mode.is_none() || inner_mode != self.mode {
             let st = self.mode.unwrap_or_default().to_string();
@@ -103,7 +106,11 @@ impl CLIQuery {
         self
     }
 }
-pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -> anyhow::Result<()> {
+pub fn watch(
+    common: CommonOpts,
+    cli_query: CLIQuery,
+    write: Vec<WriteDestSpec>,
+) -> anyhow::Result<()> {
     let write = common.open(&write)?;
     if write.iter().any(|v| matches!(v.out, Out::Db)) {
         anyhow::bail!("db and null dest not supported");
@@ -120,4 +127,3 @@ pub fn watch(common: CommonOpts, cli_query: CLIQuery,write:Vec<WriteDestSpec>) -
     };
     Ok(())
 }
-

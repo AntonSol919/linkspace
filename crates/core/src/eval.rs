@@ -8,18 +8,25 @@ use crate::consts::PUBLIC;
 use crate::consts::TEST_GROUP;
 pub use crate::stamp_fmt::StampEF;
 pub use linkspace_pkt::abe::eval::*;
+use linkspace_pkt::abe::scope::{basic_scope, BasicScope};
 pub use linkspace_pkt::abe::*;
 use linkspace_pkt::GroupID;
 use linkspace_pkt::SpaceFE;
 use linkspace_pkt::B64;
-use linkspace_pkt::abe::scope::{BasicScope,basic_scope};
 
-
-pub type CoreScope= (BasicScope, EScope<StaticLNS>, (EScope<StampEF>,EScope<SpaceFE>));
+pub type CoreScope = (
+    BasicScope,
+    EScope<StaticLNS>,
+    (EScope<StampEF>, EScope<SpaceFE>),
+);
 pub const fn core_scope() -> CoreScope {
-    (basic_scope(), EScope(StaticLNS), (EScope(StampEF{fixed_now:None}),EScope(SpaceFE)))
+    (
+        basic_scope(),
+        EScope(StaticLNS),
+        (EScope(StampEF { fixed_now: None }), EScope(SpaceFE)),
+    )
 }
-pub static CORE_SCOPE : CoreScope = core_scope();
+pub static CORE_SCOPE: CoreScope = core_scope();
 
 #[derive(Copy, Clone, Debug)]
 pub struct StaticLNS;
@@ -80,7 +87,6 @@ impl EvalScopeImpl for StaticLNS {
                     }
                 },
             },
-            
         ]
     }
 }

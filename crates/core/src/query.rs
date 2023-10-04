@@ -5,15 +5,16 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{fmt::Display, ops::ControlFlow};
 
-use anyhow::{ensure, Context };
+use anyhow::{ensure, Context};
 use linkspace_pkt::{
     abe::{
         self,
+        abconf::ABConf,
         ast::Ctr,
-        eval::{eval, ABList,  EvalScopeImpl, Scope, ScopeFunc},
-        fncs, abconf::ABConf,
+        eval::{eval, ABList, EvalScopeImpl, Scope, ScopeFunc},
+        fncs,
     },
-    Domain, GroupID, RootedSpaceBuf, PubKey, AB,
+    Domain, GroupID, PubKey, RootedSpaceBuf, AB,
 };
 use tracing::debug_span;
 
@@ -43,11 +44,11 @@ Options starting with a field id are immediately interpreted and added to the pr
 #[derive(Debug, Clone, Default)]
 pub struct Query {
     pub predicates: PktPredicates,
-    pub conf: ABConf
+    pub conf: ABConf,
 }
 impl Display for Query {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Display::fmt(&self.conf,f)?;
+        Display::fmt(&self.conf, f)?;
         self.predicates.fmt(f)?;
         Ok(())
     }
@@ -67,24 +68,24 @@ pub enum KnownOptions {
 }
 impl KnownOptions {
     //todo make static
-    pub fn as_bytes(self) -> Vec<u8>{
+    pub fn as_bytes(self) -> Vec<u8> {
         self.to_string().into_bytes()
     }
     pub fn iter_all() -> impl Iterator<Item = Self> {
         use KnownOptions::*;
-        [Mode, Qid, Follow, NotifyClose ].into_iter()
+        [Mode, Qid, Follow, NotifyClose].into_iter()
     }
 }
 
 impl Query {
-    pub const DEFAULT : Self = Query{
+    pub const DEFAULT: Self = Query {
         predicates: PktPredicates::DEFAULT,
-        conf: ABConf::DEFAULT
+        conf: ABConf::DEFAULT,
     };
     pub fn to_str(&self, canonical: bool) -> String {
         use std::fmt::Write;
         let mut out = String::new();
-        for opt in &*self.conf{
+        for opt in &*self.conf {
             writeln!(out, "{opt}").unwrap();
         }
         for p in self.predicates.iter() {
@@ -94,8 +95,10 @@ impl Query {
     }
     pub fn add_option(&mut self, name: &str, values: &[&[u8]]) {
         let mut ab = ABList::DEFAULT;
-        ab.push_v((Some(Ctr::Colon),name.as_bytes().to_vec()));
-        values.iter().for_each(|o| ab.push_v((Some(Ctr::Colon),o.to_vec())));
+        ab.push_v((Some(Ctr::Colon), name.as_bytes().to_vec()));
+        values
+            .iter()
+            .for_each(|o| ab.push_v((Some(Ctr::Colon), o.to_vec())));
         self.conf.push(ab);
     }
 
@@ -107,21 +110,24 @@ impl Query {
         self.conf.push(opt);
         Ok(())
     }
-    pub fn options(&self) -> &ABConf{
+    pub fn options(&self) -> &ABConf {
         &self.conf
     }
-    pub fn get_known_opt(&self, opt: KnownOptions) -> anyhow::Result<Option<Option<&[u8]>>>{
+    pub fn get_known_opt(&self, opt: KnownOptions) -> anyhow::Result<Option<Option<&[u8]>>> {
         self.get_option(opt.to_string().as_bytes())
     }
     /// get an option - i.e. the first statement starting with :name - '/name' returns an error
     pub fn get_option(&self, name: &[u8]) -> anyhow::Result<Option<Option<&[u8]>>> {
-        self.conf.has_optional_value(&[&[],name]).transpose().map_err(|e| anyhow::anyhow!("option contains '/' : {e}"))
+        self.conf
+            .has_optional_value(&[&[], name])
+            .transpose()
+            .map_err(|e| anyhow::anyhow!("option contains '/' : {e}"))
     }
     pub fn qid(&self) -> anyhow::Result<Option<Option<&[u8]>>> {
         self.get_known_opt(KnownOptions::Qid)
     }
     pub fn mode(&self) -> anyhow::Result<Option<Mode>> {
-        match self.get_known_opt(KnownOptions::Mode)?.flatten(){
+        match self.get_known_opt(KnownOptions::Mode)?.flatten() {
             None => Ok(None),
             Some(v) => Ok(Some(std::str::from_utf8(v)?.parse()?)),
         }
@@ -129,16 +135,21 @@ impl Query {
     pub fn get_mode(&self) -> anyhow::Result<Mode> {
         self.mode().map(|o| o.unwrap_or(Mode::TREE_DESC))
     }
-    pub fn add_stmt(&mut self, stmt:ABList) -> anyhow::Result<()>{
-        if stmt[0].0.is_some(){
+    pub fn add_stmt(&mut self, stmt: ABList) -> anyhow::Result<()> {
+        if stmt[0].0.is_some() {
             self.add_option_abl(stmt)
         } else {
-            self.predicates.add_ext_predicate(stmt.try_into().with_context(|| anyhow::anyhow!("could not turn stmt into valid extpred"))?)
-        } 
+            self.predicates.add_ext_predicate(
+                stmt.try_into()
+                    .with_context(|| anyhow::anyhow!("could not turn stmt into valid extpred"))?,
+            )
+        }
     }
     pub fn parse(&mut self, multiline_stament: &[u8], scope: &dyn Scope) -> anyhow::Result<()> {
         for line in multiline_stament.split(|ch| *ch == b'\n') {
-            if line.is_empty(){ continue;}
+            if line.is_empty() {
+                continue;
+            }
             let e = eval(scope, &abe::parse_abe_strict_b(line)?)?;
             self.add_stmt(e)?;
         }
@@ -148,12 +159,15 @@ impl Query {
     pub fn hash_eq(h: linkspace_pkt::LkHash) -> Self {
         let mut predicates = PktPredicates::default();
         predicates.hash.add(TestOp::Equal, h.into());
-        predicates.state.i_query.add(TestOp::Equal,0u32);
-        let mut q= Query {
+        predicates.state.i_query.add(TestOp::Equal, 0u32);
+        let mut q = Query {
             predicates,
-            conf:Default::default()
+            conf: Default::default(),
         };
-        q.add_option(&KnownOptions::Mode.to_string(), &[Mode::HASH_ASC.to_string().as_bytes()]);
+        q.add_option(
+            &KnownOptions::Mode.to_string(),
+            &[Mode::HASH_ASC.to_string().as_bytes()],
+        );
         q
     }
     /// does not restrict depth
@@ -173,12 +187,10 @@ impl Query {
 pub type CompiledQuery = Box<dyn FnMut(&dyn linkspace_pkt::NetPkt) -> (bool, ControlFlow<()>)>;
 impl Query {
     /// currently rather slow.
-    pub fn compile(
-        self,
-    ) -> anyhow::Result<CompiledQuery>{
+    pub fn compile(self) -> anyhow::Result<CompiledQuery> {
         let mut we = WatchEntry::new(vec![], self, 0, (), debug_span!("todo span"))?;
         Ok(Box::new(move |pkt| we.test_dyn(pkt)))
-    } 
+    }
 }
 
 impl<'o> EvalScopeImpl for &'o Query {

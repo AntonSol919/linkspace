@@ -14,17 +14,14 @@ pub struct FileEnv<R>(pub(crate) R);
 
 impl<R: LKS> EvalScopeImpl for FileEnv<R> {
     fn about(&self) -> (String, String) {
-        let info = match self.0.lk(){
-            Ok(o) => match o.files(){
+        let info = match self.0.lk() {
+            Ok(o) => match o.files() {
                 Some(o) => format!("Reading files from {o:?}"),
-                None => format!("no abe files directory set"),
-            }
+                None => "no abe files directory set".to_string(),
+            },
             Err(e) => e.to_string(),
         };
-        (
-            "filesystem env".into(),
-           info 
-        )
+        ("filesystem env".into(), info)
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         &[ScopeFunc {
@@ -47,9 +44,11 @@ impl<R: LKS> EvalScopeImpl for FileEnv<R> {
 impl Linkspace {
     #[instrument(ret, skip(bytes))]
     pub fn set_files_data(&self, path: &Path, bytes: &[u8], overwrite: bool) -> anyhow::Result<()> {
-
         tracing::trace!(bytes=%AB(bytes));
-        let path = self.files().context("no files location set")?.join(check_path(path)?);
+        let path = self
+            .files()
+            .context("no files location set")?
+            .join(check_path(path)?);
         let r: anyhow::Result<()> = try {
             std::fs::create_dir_all(path.parent().unwrap())?;
             let mut file = if overwrite {
@@ -69,13 +68,12 @@ impl Linkspace {
         r.with_context(|| anyhow::anyhow!("Target {}", path.to_string_lossy()))
     }
     #[instrument(ret)]
-    // notfound_err simplifies context errors
-    pub fn files_data(
-        &self,
-        path: &Path,
-        notfound_err: bool,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
-        let path = self.files().context("no files location set")?.join(check_path(path)?);
+    // notfound_err simplifies scope errors
+    pub fn files_data(&self, path: &Path, notfound_err: bool) -> anyhow::Result<Option<Vec<u8>>> {
+        let path = self
+            .files()
+            .context("no files location set")?
+            .join(check_path(path)?);
         use std::io::ErrorKind::*;
         match std::fs::read(&path) {
             Ok(k) => Ok(Some(k)),
@@ -85,8 +83,6 @@ impl Linkspace {
             }
         }
     }
-
-    
 }
 pub fn check_path(path: &Path) -> anyhow::Result<&Path> {
     if let Some(c) = path

@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    io::{self },
+    io::{self},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -42,7 +42,6 @@ impl Debug for BTreeEnv {
     }
 }
 impl BTreeEnv {
-    
     pub fn open(path: PathBuf, make_dir: bool) -> io::Result<BTreeEnv> {
         let lmdb = db::open(&path, make_dir)?;
         let location = path.canonicalize()?;
@@ -55,7 +54,7 @@ impl BTreeEnv {
             location,
         }));
         {
-            let new = env.save_ptr_one(&***PUBLIC_GROUP_PKT)?.is_new();
+            let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_new();
             if new && std::env::var_os("LK_NO_LNS").is_none() {
                 let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p| (p, SaveState::Pending)).collect();
                 env.save_ptr(&mut roots)?;
@@ -63,7 +62,9 @@ impl BTreeEnv {
         }
         Ok(env)
     }
-    pub fn location(&self) -> &Path { &self.0.location}
+    pub fn location(&self) -> &Path {
+        &self.0.location
+    }
     #[track_caller]
     pub fn new_read_txn(&self) -> anyhow::Result<ReadTxn> {
         Ok(ReadTxn(self.0.lmdb.read_txn()?))

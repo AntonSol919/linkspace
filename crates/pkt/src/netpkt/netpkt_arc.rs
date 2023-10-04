@@ -3,19 +3,23 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::{NetPkt, NetPktPtr, PartialNetHeader, Error };
+use crate::{Error, NetPkt, NetPktPtr, PartialNetHeader};
 use std::{
-    borrow::Borrow, fmt::Debug, mem::size_of, ops::Deref, ptr::{ self}, sync::atomic::AtomicUsize,
+    borrow::Borrow,
+    fmt::Debug,
+    mem::size_of,
+    ops::Deref,
+    ptr::{self},
+    sync::atomic::AtomicUsize,
 };
 use triomphe::{Arc, HeaderSlice};
 
 #[derive(Clone)]
 /// Arc around the byte repr [NetPkt]
-/// 
+///
 /// Send + Sync + cheap Clone, [super::NetPktHeader] is immutable
 // see [Reroute] for mutating netheader.
 pub struct NetPktArc(pub(crate) Arc<HeaderSlice<NetPktPtr, [u8]>>);
-
 
 impl From<&dyn NetPkt> for NetPktArc {
     fn from(value: &dyn NetPkt) -> Self {
@@ -49,16 +53,21 @@ impl NetPktArcPtr {
     pub fn netpktptr(&self) -> &NetPktPtr {
         &self.0
     }
-    /// Get a look at the outer [NetPktArc] 
+    /// Get a look at the outer [NetPktArc]
     #[inline]
     pub fn with_arc<U>(&self, f: impl FnOnce(&NetPktArc) -> U) -> U {
-        let size : usize = self.as_point().point_header_ref().padded_content_size().into();
+        let size: usize = self
+            .as_point()
+            .point_header_ref()
+            .padded_content_size()
+            .into();
         let ptr: *const NetPktPtr = ptr::from_ref(self.netpktptr());
-        let inner_arc : *const () =unsafe{ ptr.cast::<u8>().sub(size_of::<AtomicUsize>()).cast::<()>()};
+        let inner_arc: *const () =
+            unsafe { ptr.cast::<u8>().sub(size_of::<AtomicUsize>()).cast::<()>() };
 
         let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, size);
-        let ptr : &(*const ArcInner,()) = &(inner,()); // Yes we're casting a reference to a pointer 
-        let npa : &NetPktArc = unsafe { &*std::ptr::from_ref(ptr).cast::<NetPktArc>()};
+        let ptr: &(*const ArcInner, ()) = &(inner, ()); // Yes we're casting a reference to a pointer
+        let npa: &NetPktArc = unsafe { &*std::ptr::from_ref(ptr).cast::<NetPktArc>() };
         f(npa)
     }
 }
@@ -78,17 +87,18 @@ impl Debug for NetPktArc {
 }
 impl NetPktArc {
     pub fn thin_arc(&self) -> &NetPktArcPtr {
-        unsafe { &*(ptr::from_ref(&self.0.header).cast::<NetPktArcPtr>())}
+        unsafe { &*(ptr::from_ref(&self.0.header).cast::<NetPktArcPtr>()) }
     }
     pub fn into_raw_arc(self) -> *const NetPktArcPtr {
-        Arc::into_raw(self.0).cast() 
+        Arc::into_raw(self.0).cast()
     }
     /// # Safety
     ///
     /// must be created through [Self::into_raw_arc]
     pub unsafe fn from_raw_arc(ptr: *const NetPktArcPtr) -> Self {
         assert!(!ptr.is_null());
-        let byte_size : usize = unsafe { (*ptr).as_point().point_header_ref().padded_content_size() }.into();
+        let byte_size: usize =
+            unsafe { (*ptr).as_point().point_header_ref().padded_content_size() }.into();
         let inner_arc: *const () = ptr.cast::<u8>().sub(size_of::<AtomicUsize>()).cast::<()>();
         let inner: *const ArcInner = std::ptr::from_raw_parts(inner_arc, byte_size);
         let arc: Arc<HeaderSlice<NetPktPtr, [u8]>> = unsafe { std::mem::transmute(inner) };
@@ -97,17 +107,19 @@ impl NetPktArc {
     /// # Safety
     ///
     /// copy_from must input the correct bytes.
-    pub unsafe fn from_header_and_copy(partial: PartialNetHeader,skip_hash:bool, copy_from:impl FnOnce(&mut [u8])) -> Result<Self,Error>{
+    pub unsafe fn from_header_and_copy(
+        partial: PartialNetHeader,
+        skip_hash: bool,
+        copy_from: impl FnOnce(&mut [u8]),
+    ) -> Result<Self, Error> {
         let h = crate::NetPktPtr {
             net_header: partial.net_header,
             hash: partial.hash,
             point: crate::PointThinPtr(partial.point_header),
         };
-        let byte_size : usize= h.point.point_header().padded_content_size().into() ;
-        let arc = triomphe::Arc::from_header_and_fn(
-            h,byte_size,copy_from
-        );
-        let pkt= NetPktArc(arc);
+        let byte_size: usize = h.point.point_header().padded_content_size().into();
+        let arc = triomphe::Arc::from_header_and_fn(h, byte_size, copy_from);
+        let pkt = NetPktArc(arc);
         pkt.check(skip_hash)?;
         Ok(pkt)
     }
@@ -200,7 +212,7 @@ pub fn build() {
     println!("Raw {:p}", raw);
     let href = unsafe { &*(raw) }.net_header_ref();
     println!("raw data {:p}", href);
-    let arced = unsafe{NetPktArc::from_raw_arc(raw)};
+    let arced = unsafe { NetPktArc::from_raw_arc(raw) };
     println!("arced back {:p}", arced.0);
     println!("arced back data {:p}", arced.net_header_ref());
 

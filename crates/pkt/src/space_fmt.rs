@@ -11,12 +11,10 @@ use byte_fmt::{
         ast::{is_fslash, take_ctr_expr, ABEError, Ctr, MatchError},
         convert::TypedABE,
         eval::ABList,
-        ABEValidator, ToABE, ABE, scope::{basic_scope, uint::parse_b},
+        scope::{basic_scope, uint::parse_b},
+        ABEValidator, ToABE, ABE,
     },
-    eval::{
-         ApplyErr, ApplyResult,  EvalScopeImpl, Scope, ScopeMacro, ScopeMacroInfo,
-        ScopeFunc,
-    },
+    eval::{ApplyErr, ApplyResult, EvalScopeImpl, Scope, ScopeFunc, ScopeMacro, ScopeMacroInfo},
     *,
 };
 use core::fmt::{self, Debug, Display};
@@ -64,18 +62,30 @@ impl ABEValidator for RootedSpaceBuf {
 
 impl SpaceBuf {
     pub fn try_from_ablist(mut ablist: ABList) -> Result<Self, SpaceExprError> {
-        match ablist.first(){
+        match ablist.first() {
             None => return Ok(SpaceBuf::new()),
-            Some((ctr,bytes)) if *ctr != Some(Ctr::FSlash) && bytes.is_empty() => { ablist.pop_front(); }
+            Some((ctr, bytes)) if *ctr != Some(Ctr::FSlash) && bytes.is_empty() => {
+                ablist.pop_front();
+            }
             _ => {}
         }
         if let Ok(b) = ablist.as_exact_bytes() {
             return Ok(Space::from_slice(b)?.into_spacebuf());
         }
-        let v : Vec<_> = ablist.unwrap().into_iter()
-            .filter_map(|(ctr,b)| if ctr != Some(Ctr::FSlash) { Some(Err(SpaceExprError::BadCtr(ctr)))} else if b.is_empty(){ None} else {Some(Ok(b))})
+        let v: Vec<_> = ablist
+            .unwrap()
+            .into_iter()
+            .filter_map(|(ctr, b)| {
+                if ctr != Some(Ctr::FSlash) {
+                    Some(Err(SpaceExprError::BadCtr(ctr)))
+                } else if b.is_empty() {
+                    None
+                } else {
+                    Some(Ok(b))
+                }
+            })
             .try_collect()?;
-        return Ok(SpaceBuf::try_from_iter(v)?);
+        Ok(SpaceBuf::try_from_iter(v)?)
     }
 }
 impl TryFrom<ABList> for SpaceBuf {
@@ -89,7 +99,7 @@ impl ABEValidator for SpaceBuf {
     fn check(mut b: &[ABE]) -> Result<(), MatchError> {
         if b.len() == 1 {
             abe::ast::as_expr(&b[0])?;
-            return Ok(())
+            return Ok(());
         }
         while !b.is_empty() {
             let (_, next) = take_ctr_expr(b, is_fslash)?;
@@ -121,9 +131,9 @@ pub fn fmt_segm2(seg: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         let b64 = B64(b).to_string();
         write!(f, "/[b:{b64}]")?;
     } else if let Ok(b) = <[u8; 16]>::try_from(seg) {
-        match as_abtxt(&b){
-            std::borrow::Cow::Borrowed(b) => write!(f,"/{b}")?,
-            std::borrow::Cow::Owned(_) => write!(f,"/{}",AB(b).to_abe_str())?,
+        match as_abtxt(&b) {
+            std::borrow::Cow::Borrowed(b) => write!(f, "/{b}")?,
+            std::borrow::Cow::Owned(_) => write!(f, "/{}", AB(b).to_abe_str())?,
         }
     } else {
         write!(f, "/{}", AB(seg))?
@@ -308,14 +318,14 @@ impl EvalScopeImpl for SpaceFE {
                 .transpose()?
                 .unwrap_or(start + 1)
                 .max(9);
-            ensure!(start <= 8 ,"space max depth is 8");
-            ensure!(end >= start ,"end < start");
+            ensure!(start <= 8, "space max depth is 8");
+            ensure!(end >= start, "end < start");
             Ok(start..end)
         }
-        fn encode_sp(_:&SpaceFE,b:&[u8],_:&[ABE]) -> ApplyResult<String>{
-           Space::from_slice(b).ok().map(|p|format!("[/{p}]")).into()
+        fn encode_sp(_: &SpaceFE, b: &[u8], _: &[ABE]) -> ApplyResult<String> {
+            Space::from_slice(b).ok().map(|p| format!("[/{p}]")).into()
         }
-        
+
         crate::abe::fncs!([
             ("?space", 1..=1, "decode space", |_, i: &[&[u8]]| Ok(
                 Space::from_slice(i[0])?.to_string().into_bytes()

@@ -10,7 +10,7 @@ use crate::{netpkt::NetPktHeader, *};
 pub struct PointHeader {
     pub reserved: u8,
     pub point_type: PointTypeFlags,
-    /// You don't want this raw value - the size of all fields - without the padding between the space and optional signature. 
+    /// You don't want this raw value - the size of all fields - without the padding between the space and optional signature.
     pub uset_bytes: U16,
 }
 
@@ -30,27 +30,35 @@ pub struct LinkPointHeader {
 }
 impl LinkPointHeader {
     pub fn as_bytes(&self) -> &[u8; size_of::<Self>()] {
-        unsafe {&*std::ptr::from_ref(self).cast()}
+        unsafe { &*std::ptr::from_ref(self).cast() }
     }
 }
 
 impl PointHeader {
-    pub const ERROR: Self = match PointHeader::new_content_len(PointTypeFlags::ERROR_POINT,0){
+    pub const ERROR: Self = match PointHeader::new_content_len(PointTypeFlags::ERROR_POINT, 0) {
         Ok(o) => o,
         Err(_) => panic!(),
     };
 
     #[allow(clippy::as_conversions)]
-    pub (crate) const fn new_content_len(kind: PointTypeFlags, content_len: usize) -> Result<Self, Error> {
+    pub(crate) const fn new_content_len(
+        kind: PointTypeFlags,
+        content_len: usize,
+    ) -> Result<Self, Error> {
         let point_size = content_len.saturating_add(size_of::<PointHeader>());
         Self::new_point_size(kind, point_size)
     }
-    pub (crate) const fn new_point_size(kind: PointTypeFlags, point_size: usize) -> Result<Self, Error> {
-        if point_size > MAX_POINT_SIZE { return Err(Error::ContentLen)};
+    pub(crate) const fn new_point_size(
+        kind: PointTypeFlags,
+        point_size: usize,
+    ) -> Result<Self, Error> {
+        if point_size > MAX_POINT_SIZE {
+            return Err(Error::ContentLen);
+        };
         PointHeader {
             point_type: kind,
             reserved: 0,
-            uset_bytes: U16::new(point_size as u16) 
+            uset_bytes: U16::new(point_size as u16),
         }
         .check()
     }
@@ -59,14 +67,14 @@ impl PointHeader {
         if self.reserved != 0 {
             return Err(Error::HeaderReservedSet(self.reserved));
         }
-        let len = self.ucontent_size() as usize ;
+        let len = self.ucontent_size() as usize;
         if len > MAX_CONTENT_SIZE {
             return Err(Error::ContentLen);
         }
         let ok = match self.point_type {
             PointTypeFlags::DATA_POINT => true,
             PointTypeFlags::LINK_POINT => len >= size_of::<LinkPointHeader>(),
-            PointTypeFlags::KEY_POINT => len >= size_of::<LinkPointHeader>()+size_of::<Signed>(),
+            PointTypeFlags::KEY_POINT => len >= size_of::<LinkPointHeader>() + size_of::<Signed>(),
             PointTypeFlags::ERROR_POINT => true,
             e => return Err(Error::UnknownPktType(e.bits())),
         };
@@ -77,29 +85,34 @@ impl PointHeader {
         }
     }
     pub fn as_bytes(&self) -> &[u8; 4] {
-        unsafe {&*std::ptr::from_ref(self).cast()}
+        unsafe { &*std::ptr::from_ref(self).cast() }
     }
     /// Size of a point (type,length,content,?signature). This is without the hash or padding between content and signature.
-    pub (crate) const fn upoint_size(&self) -> u16{
-        self.uset_bytes.get() 
+    pub(crate) const fn upoint_size(&self) -> u16 {
+        self.uset_bytes.get()
     }
-    pub (crate) const fn padding(&self) -> u16 {
+    pub(crate) const fn padding(&self) -> u16 {
         self.padded_point_size() - self.upoint_size()
     }
-    pub (crate)const fn padded_point_size(&self) -> u16 {
-        assert!(std::mem::size_of::<usize>()<= 8, "some code depends on this assumption");
-        self.upoint_size().div_ceil(8)*8
+    pub(crate) const fn padded_point_size(&self) -> u16 {
+        assert!(
+            std::mem::size_of::<usize>() <= 8,
+            "some code depends on this assumption"
+        );
+        self.upoint_size().div_ceil(8) * 8
     }
     #[allow(clippy::as_conversions)]
-    pub (crate) const fn ucontent_size(&self) -> u16{
-        self.upoint_size().saturating_sub( size_of::<PointHeader>() as u16)
+    pub(crate) const fn ucontent_size(&self) -> u16 {
+        self.upoint_size()
+            .saturating_sub(size_of::<PointHeader>() as u16)
     }
-    pub (crate) const fn padded_content_size(&self) -> u16 {
-        self.padded_point_size().saturating_sub( size_of::<PointHeader>() as u16)
+    pub(crate) const fn padded_content_size(&self) -> u16 {
+        self.padded_point_size()
+            .saturating_sub(size_of::<PointHeader>() as u16)
     }
-    /// Size of a netpkt. The pointsize plus pointhash and netpktheader + padding 
+    /// Size of a netpkt. The pointsize plus pointhash and netpktheader + padding
     #[allow(clippy::as_conversions)]
-    pub const fn size(&self) -> u16{
+    pub const fn size(&self) -> u16 {
         self.padded_point_size() + size_of::<LkHash>() as u16 + size_of::<NetPktHeader>() as u16
     }
 }

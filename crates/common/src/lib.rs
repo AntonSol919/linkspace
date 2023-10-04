@@ -36,12 +36,11 @@ pub use linkspace_core as core;
 pub use linkspace_pkt as pkt;
 
 pub mod dgs;
-pub mod thread_local;
 pub mod pkt_reader;
 pub mod pkt_stream_utils;
 pub mod prelude;
 pub mod protocols;
-
+pub mod thread_local;
 
 #[cfg(feature = "cli")]
 pub mod cli;
@@ -51,19 +50,20 @@ pub mod predicate_aliases;
 #[cfg(test)]
 pub mod tests;
 
-
-#[cfg(feature="runtime")]
-pub mod runtime;
-#[cfg(feature="runtime")]
-pub mod static_env;
-#[cfg(feature="runtime")]
+#[cfg(feature = "runtime")]
 pub mod eval;
+#[cfg(feature = "runtime")]
+pub mod runtime;
+#[cfg(feature = "runtime")]
+pub mod static_env;
 
-
-
-pub fn saturating_cast(val:u32) -> i32{
+pub fn saturating_cast(val: u32) -> i32 {
     val.min(i32::MAX as u32) as i32
 }
-pub fn saturating_neg_cast(val:u32) -> i32{
-    if val > (i32::MAX as u32 + 1) { i32::MIN} else { -(val as i32) }
+pub fn saturating_neg_cast(val: u32) -> i32 {
+    if val > (i32::MAX as u32 + 1) {
+        i32::MIN
+    } else {
+        -(val as i32)
+    }
 }

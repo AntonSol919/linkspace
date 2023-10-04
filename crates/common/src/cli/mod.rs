@@ -9,17 +9,15 @@ pub mod reader;
 use abe::{
     abev,
     ast::{as_bytes, single},
-     TypedABE, parse_abe_strict_b, 
+    parse_abe_strict_b, TypedABE,
 };
 use anyhow::{bail, Context};
 pub use clap;
-use linkspace_pkt::{ NetPkt, };
+use linkspace_pkt::NetPkt;
 pub use tracing;
 
-use linkspace_core::prelude::{Scope,pkt_scope};
-use std::{
-    io::{stderr,  stdout, },
-};
+use linkspace_core::prelude::{pkt_scope, Scope};
+use std::io::{stderr, stdout};
 
 pub type PreProc = Option<TypedABE<Vec<u8>>>;
 pub fn write_pkt2(
@@ -34,9 +32,9 @@ pub fn write_pkt2(
             out.write_all_vectored(&mut bytes.io_slices())?;
         }
         Some(expr) => {
-            let v = expr.eval(&(scope,pkt_scope(&pkt)));
-            if let Err(err) = &v{
-                tracing::warn!(?err,?expr,"error pre-processing with expression");
+            let v = expr.eval(&(scope, pkt_scope(&pkt)));
+            if let Err(err) = &v {
+                tracing::warn!(?err, ?expr, "error pre-processing with expression");
             }
             let v = v.map_err(std::io::Error::other)?;
             out.write_all(&v)?;
@@ -115,7 +113,7 @@ impl WriteDestSpec {
             out: (),
         }
     }
-    pub fn open(&self, scope: &dyn  Scope) -> std::io::Result<Option<WriteDest>> {
+    pub fn open(&self, scope: &dyn Scope) -> std::io::Result<Option<WriteDest>> {
         let WriteDest { path, prep, out: _ } = self;
         let pathv = path.eval(scope).map_err(std::io::Error::other)?;
         let mut path_str = "";

@@ -91,7 +91,7 @@ def lk_keypoint(key: SigningKey,
                 links:list[Link] | None=None,data:bytes|str | None=None,
                 create:bytes | None =None) -> Pkt: ...
 
-def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, parse_unencoded: bool = False ) -> bytes:
+def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, loose: bool = False ) -> bytes:
     """
     Evaluate an ascii-byte-expression. An ascii representation of arbitrary bytes.
     See the guide and rust docs for examples
@@ -99,12 +99,12 @@ def lk_eval(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, parse_
         abe:
         pkt:
         argv:
-        parse_unencoded: accept bytes outside the range 0x20..0xfe - i.e. read newlines and utf8 as-is.
+        loose: accept bytes outside the range 0x20..0xfe - i.e. read newlines and utf8 as-is.
     """
     ...
 
-def lk_eval2str(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, parse_unencoded: bool = False ) -> str:
-    """ lk_eval that attempts to read the result of lk_eval as a utf-8 string"""
+def lk_eval2str(abe:str,pkt:Pkt|None=None,argv:list[bytes|str] | None = None, loose: bool = False ) -> str:
+    """ lk_eval that attempts to cast the result of lk_eval as a utf-8 string"""
     ...
 
 def lk_encode(
@@ -181,7 +181,7 @@ def lk_open(dir:str|None = None,create:bool=False) -> Linkspace:
     Most notable to [lk_save], [lk_get], and [lk_watch] packets.
     The database is shared across threads and processes.
     The runtime (i.e. lk_watch) is not. 
-    The first call (per thread) sets the default instance for functions like [lk_eval] (see [varctx] for more options).
+    The first call (per thread) sets the default instance for functions like [lk_eval] (see [varscope] for more options).
 
     Args:
         dir: $LK_DIR | $HOME/linkspace
@@ -221,7 +221,7 @@ def lk_query_parse(q:Query, *statement : str,
                    pkt:Pkt|None=None, argv:list[bytes|str]|None=None):
     """
     Add one or more statements in ABE format. Use lk_query_push if the encoding step is superfluous.
-    Each is evaluated with pkt and argv as context
+    Each is evaluated with pkt and argv in scope
 
     See the guide or rust docs for a full list of predicates and options
     """
@@ -300,7 +300,7 @@ def lk_pull(lk: Linkspace, query: Query):
     """
     ...
 
-def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
+def lk_status_watch(lk:Linkspace,qid:bytes,objtype:bytes,
                    timeout:bytes, 
                    instace : bytes | None = None ,
                    callback:Callable[[Pkt],Any] | None = None,
@@ -311,19 +311,19 @@ def lk_status_poll(lk:Linkspace,qid:bytes,objtype:bytes,
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
 
     The status convention is only meant for communication between processes using the same linkspace instance.
-    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+    lk_status_watch accepts any reply made between [now-timeout .. now+timeout].
 
     This function is an application of lk_watch. An immediate check is made of the current database.
     For further processing callback is registered under qid, and is only executed during a lk_process* step. 
 
     For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
-    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+    An application can lk_status_watch a (group,b"exchange",b"process") to determine if a processes is running.
 
     If no instance is set, then all lk_status_set with the same (group,domain,obj_type) will reply.
 
     A minimal example looks like: 
     # 
-    immediate_reply = lk_status_poll(lk,qid=b"status",callback=lambda _ : True,
+    immediate_reply = lk_status_watch(lk,qid=b"status",callback=lambda _ : True,
                timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",
                group=group,
@@ -357,13 +357,13 @@ def lk_status_set(lk:Linkspace,qid:bytes,
     I.e. allows multiple processes to loosely communicate by agreeing on a objtype name and what the status packets should contain. 
 
     The status convention is only meant for communication between processes using the same linkspace instance.
-    lk_status_poll accepts any reply made between [now-timeout .. now+timeout].
+    lk_status_watch accepts any reply made between [now-timeout .. now+timeout].
 
     This function is an application of lk_watch. An immediate check is made of the current database.
     For further processing get_current_status is registered under qid, and is only executed during a lk_process* step. 
 
     For example, an exchange process must lk_status_set for (group,b"exchange","process", exchangename).
-    An application can lk_status_poll a (group,b"exchange",b"process") to determine if a processes is running.
+    An application can lk_status_watch a (group,b"exchange",b"process") to determine if a processes is running.
     """
     ...
 

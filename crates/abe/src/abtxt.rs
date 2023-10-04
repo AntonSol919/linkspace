@@ -116,7 +116,7 @@ pub(crate) fn next_byte(
             };
             return Ok(Byte::Byte { byte, rest });
         }
-        b'\t' | b'\r'  => return Err(ABTxtError::ParseError { idx, byte }),
+        b'\t' | b'\r' => return Err(ABTxtError::ParseError { idx, byte }),
         0x20..=0x7e => return Ok(Byte::Byte { byte: *b, rest }),
         _b => return Err(ABTxtError::ParseError { idx, byte }),
     };

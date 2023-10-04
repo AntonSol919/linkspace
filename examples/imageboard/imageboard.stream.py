@@ -10,7 +10,7 @@ create_stamp = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 
 
 lk = lk_open(create=True)
-ok = lk_status_poll(lk,
+ok = lk_status_watch(lk,
                qid=b"ex",
                timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",

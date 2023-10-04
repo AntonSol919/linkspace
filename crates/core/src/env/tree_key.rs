@@ -8,10 +8,10 @@ use linkspace_pkt::FieldEnum;
 use crate::prelude::RuleType;
 
 /// check if this type can be answered by a treekey
-pub const fn treekey_checked(r:RuleType) -> bool {
+pub const fn treekey_checked(r: RuleType) -> bool {
     match r {
         #[allow(clippy::match_like_matches_macro)]
-        RuleType::Field(f) => match f{
+        RuleType::Field(f) => match f {
             FieldEnum::PktHashF => true,
             FieldEnum::PubKeyF => true,
             FieldEnum::GroupIDF => true,

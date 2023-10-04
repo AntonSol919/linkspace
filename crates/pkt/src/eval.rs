@@ -8,7 +8,7 @@ use anyhow::{anyhow, bail, Context};
 use byte_fmt::abe::ast::Ctr;
 use byte_fmt::abe::scope::basic_scope;
 use byte_fmt::abe::{eval::*, ToABE, ABE};
-use byte_fmt::abe::{scope_macro, fncs};
+use byte_fmt::abe::{fncs, scope_macro};
 
 pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     let pkt_env = EScope(NetPktFieldsEval(pkt));
@@ -18,21 +18,30 @@ pub fn pkt_scope(pkt: &dyn NetPkt) -> impl Scope + '_ {
     (pkt_env, pkt_def, (link_select, recv))
 }
 
-
 #[track_caller]
 pub fn pkt_fmt(pkt: &dyn NetPkt) -> String {
-    let scope = (basic_scope(),pkt_scope(pkt));
+    let scope = (basic_scope(), pkt_scope(pkt));
     String::from_utf8(abe::eval::eval(&scope, &DEFAULT_FMT).unwrap().concat()).unwrap()
 }
 #[track_caller]
 pub fn netpkt_fmt(pkt: &dyn NetPkt) -> String {
-    let scope = (basic_scope(),pkt_scope(pkt));
-    String::from_utf8(abe::eval::eval(&scope, &DEFAULT_NETPKT_FMT).unwrap().concat()).unwrap()
+    let scope = (basic_scope(), pkt_scope(pkt));
+    String::from_utf8(
+        abe::eval::eval(&scope, &DEFAULT_NETPKT_FMT)
+            .unwrap()
+            .concat(),
+    )
+    .unwrap()
 }
 #[track_caller]
 pub fn point_fmt(pkt: &dyn NetPkt) -> String {
-    let scope = (basic_scope(),pkt_scope(pkt));
-    String::from_utf8(abe::eval::eval(&scope, &DEFAULT_POINT_FMT).unwrap().concat()).unwrap()
+    let scope = (basic_scope(), pkt_scope(pkt));
+    String::from_utf8(
+        abe::eval::eval(&scope, &DEFAULT_POINT_FMT)
+            .unwrap()
+            .concat(),
+    )
+    .unwrap()
 }
 macro_rules! as_scopefn {
     ($el:tt , $name:expr) => {
@@ -53,7 +62,7 @@ macro_rules! as_scopefn {
                 id: $name,
                 init_eq: Some(true),
                 argc: 0..=1,
-                help: concat!("?(str|abe) - netpkt.", $name ),
+                help: concat!("?(str|abe) - netpkt.", $name),
                 to_abe: false,
             },
         }
@@ -111,17 +120,23 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
     }
 }
 
-pub fn lptr(l:&Link)->&LkHash{&l.ptr}
-pub fn ptrv(l:&Link)->Vec<u8>{l.ptr.to_vec()}
-#[derive(Copy,Clone)]
+pub fn lptr(l: &Link) -> &LkHash {
+    &l.ptr
+}
+pub fn ptrv(l: &Link) -> Vec<u8> {
+    l.ptr.to_vec()
+}
+#[derive(Copy, Clone)]
 pub struct SelectLink<'o>(pub &'o [Link]);
-// TODO . this should be done with ExtendedTestOp 
+// TODO . this should be done with ExtendedTestOp
 impl<'o> SelectLink<'o> {
-    pub fn first_eq(self,tag:Tag) -> Option<&'o Link>{
+    pub fn first_eq(self, tag: Tag) -> Option<&'o Link> {
         self.0.iter().find(|l| l.tag == tag)
     }
-    pub fn first_tailmask(self,tail:&[u8]) -> Option<&'o Link>{
-        if tail.len() > 16 { return None};
+    pub fn first_tailmask(self, tail: &[u8]) -> Option<&'o Link> {
+        if tail.len() > 16 {
+            return None;
+        };
         self.0.iter().find(|l| l.tag.ends_with(tail))
     }
 }
@@ -132,29 +147,37 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
     }
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
         fncs!([
-            ("links",0..=4, Some(true),"[delim='\\n',start=0,stop=len,step=1] - python like slice indexing",|links:&Self,i:&[&[u8]]|{
-                let (delim,rest) = i.split_first().unwrap_or((&(&[b'\n'] as &[u8]),&[]));
-
-                use std::io::Write;
-                let mut r = vec![];
-                let mut it =   abe::scope::bytes::slice(&links.0,rest)?;
-                if let Some(link) = it.next(){
-                    write!(&mut r, "{link}")?;
-                    for link in it {
-                        r.extend_from_slice(delim); 
-                        write!(&mut r, "{link}")?;
-                    }
-                }
-                Ok(r)
-            }),
             (
-            "link",
-                1..=1, Some(true),
-            "[suffix] get first link with tag ending in suffix",
-            |links: &Self, i: &[&[u8]]| {
-                links.first_tailmask(i[0]).map(ptrv).context("no such link")
-            }
-        )])
+                "links",
+                0..=4,
+                Some(true),
+                "[delim='\\n',start=0,stop=len,step=1] - python like slice indexing",
+                |links: &Self, i: &[&[u8]]| {
+                    let (delim, rest) = i.split_first().unwrap_or((&(&[b'\n'] as &[u8]), &[]));
+
+                    use std::io::Write;
+                    let mut r = vec![];
+                    let mut it = abe::scope::bytes::slice(links.0, rest)?;
+                    if let Some(link) = it.next() {
+                        write!(&mut r, "{link}")?;
+                        for link in it {
+                            r.extend_from_slice(delim);
+                            write!(&mut r, "{link}")?;
+                        }
+                    }
+                    Ok(r)
+                }
+            ),
+            (
+                "link",
+                1..=1,
+                Some(true),
+                "[suffix] get first link with tag ending in suffix",
+                |links: &Self, i: &[&[u8]]| {
+                    links.first_tailmask(i[0]).map(ptrv).context("no such link")
+                }
+            )
+        ])
     }
     fn list_macros(&self) -> &[ScopeMacro<&Self>] {
         &[scope_macro!(
@@ -163,20 +186,25 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
             |links: &Self, abe: &[ABE], scope| {
                 let abe = match &abe {
                     &[ABE::Ctr(Ctr::Colon), r @ ..] => r,
-                    _ => anyhow::bail!("links expects")
+                    _ => anyhow::bail!("links expects"),
                 };
                 let mut out = vec![];
-                for (i,link) in links.0.iter().enumerate() {
+                for (i, link) in links.0.iter().enumerate() {
                     let scope = (
-                        EScope(LinkEnv { link, idx: (i as u16).into() }),
-                        scope
+                        EScope(LinkEnv {
+                            link,
+                            idx: (i as u16).into(),
+                        }),
+                        scope,
                     );
                     match eval(&scope, abe) {
                         Ok(ablist) => match ablist.into_exact_bytes() {
                             Ok(o) => {
                                 out.extend_from_slice(&o);
                             }
-                            Err(_e) => bail!("links expects result to be undelimited bytes (fixme)")
+                            Err(_e) => {
+                                bail!("links expects result to be undelimited bytes (fixme)")
+                            }
                         },
                         Err(e) => return Err(e.into()),
                     }
@@ -190,7 +218,7 @@ impl<'o> EvalScopeImpl for SelectLink<'o> {
 #[derive(Copy, Clone, Debug)]
 pub struct LinkEnv<'o> {
     link: &'o Link,
-    idx : U16,
+    idx: U16,
 }
 impl<'o> EvalScopeImpl for LinkEnv<'o> {
     fn list_funcs(&self) -> &[ScopeFunc<&Self>] {
@@ -238,7 +266,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
     }
 }
 
-fn eval_recv(b: Stamp, args:&[&[u8]]) -> anyhow::Result<Vec<u8>>{
+fn eval_recv(b: Stamp, args: &[&[u8]]) -> anyhow::Result<Vec<u8>> {
     let ok = match args.get(0).copied().unwrap_or(b"") {
         b"abe" => b.to_abe_str().into_bytes(),
         b"str" => b.to_string().into_bytes(),
@@ -247,7 +275,6 @@ fn eval_recv(b: Stamp, args:&[&[u8]]) -> anyhow::Result<Vec<u8>>{
     };
     Ok(ok)
 }
-
 
 #[derive(Copy, Clone, Debug)]
 pub struct RecvStamp<'o> {
@@ -268,15 +295,14 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
                 0..=1,
                 Some(true),
                 "recv stamp - returns now if unavailable in context",
-                |t: &Self, args: &[&[u8]]| eval_recv(t.pkt.get_recv(),args)
+                |t: &Self, args: &[&[u8]]| eval_recv(t.pkt.get_recv(), args)
             ),
             (
                 "recv_now",
                 0..=1,
                 Some(true),
                 "recv stamp - returns an error if not available in context",
-                |t: &Self, args: &[&[u8]]|
-                eval_recv(
+                |t: &Self, args: &[&[u8]]| eval_recv(
                     t.pkt.recv().context("no recv available in context")?,
                     args
                 )
@@ -288,9 +314,8 @@ impl<'o> EvalScopeImpl for RecvStamp<'o> {
 #[test]
 fn pktfmt() {
     let pkt = datapoint(b"hello", ());
-    let ctx = core_ctx();
-    let ctx = pkt_ctx(ctx, &pkt);
-    let abe = abe::parse_abe("[pkt] [data]",false).unwrap();
-    let st = eval(&ctx,&abe).unwrap().concat();
+    let scope = (basic_scope(), pkt_scope(&pkt));
+    let abe = abe::parse_abe("[pkt] [data]", false).unwrap();
+    let st = eval(&scope, &abe).unwrap().concat();
     let _v = std::str::from_utf8(&st).unwrap();
 }

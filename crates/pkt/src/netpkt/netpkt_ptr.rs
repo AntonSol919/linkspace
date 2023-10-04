@@ -10,7 +10,7 @@ use std::{borrow::Borrow, ptr};
 
 #[doc(hidden)]
 /// A (fat) pointer to valid netpkt bytes
-/// 
+///
 /// A fat pointer to it can only be constructed through a valid NetPktBytes
 /// WARN: it is likely that this will be removed. NetPktPtr does everything but better except please miri
 #[derive(Debug)]
@@ -53,12 +53,12 @@ impl NetPktPtr {
     #[inline(always)]
     pub fn as_sized(&self) -> &NetPktFatPtr {
         let (_layout, metadata) = netpktbox_layout(self.point.point_header());
-        unsafe { &*ptr::from_raw_parts( ptr::from_ref(self).cast::<()>(), metadata) }
+        unsafe { &*ptr::from_raw_parts(ptr::from_ref(self).cast::<()>(), metadata) }
     }
     #[inline(always)]
     pub fn as_mut_sized(&mut self) -> &mut NetPktFatPtr {
         let (_layout, metadata) = netpktbox_layout(self.point.point_header());
-        unsafe { &mut *ptr::from_raw_parts_mut( ptr::from_mut(self).cast::<()>(), metadata) }
+        unsafe { &mut *ptr::from_raw_parts_mut(ptr::from_mut(self).cast::<()>(), metadata) }
     }
     /// # Safety
     ///
@@ -72,7 +72,7 @@ impl NetPktPtr {
             &b
         );
         assert!(b.as_ptr().align_offset(4) == 0, "Unaligned cast");
-        let netpkt = &*{ b.as_ptr().cast::<Self>()};
+        let netpkt = &*{ b.as_ptr().cast::<Self>() };
         debug_assert!(netpkt.check(true).is_ok());
         assert!(netpkt.size() as usize == b.len());
         netpkt
@@ -84,9 +84,9 @@ impl NetPktPtr {
         }
     }
 
-    pub fn check(&self, skip_hash:bool) -> Result<(), Error> {
-        let _ = self.point.internal_consitent_length()?;
-        if !skip_hash{
+    pub fn check(&self, skip_hash: bool) -> Result<(), Error> {
+        self.point.internal_consitent_length()?;
+        if !skip_hash {
             self.point.check_signature()?;
             if self.hash() != self.point.compute_hash() {
                 return Err(Error::HashMismatch);
@@ -122,9 +122,7 @@ impl NetPktFatPtr {
     ///
     /// Must be constructed with [Self::into_raw_box]
     pub unsafe fn from_raw_box(ptr: *mut NetPktPtr) -> Box<Self> {
-        Box::from_raw(
-            ptr::from_mut((*ptr).as_mut_sized())
-        )
+        Box::from_raw(ptr::from_mut((*ptr).as_mut_sized()))
     }
 }
 
@@ -133,10 +131,15 @@ impl NetPkt for NetPktPtr {
         let header = NetPktPtr {
             net_header: self.net_header,
             hash: self.hash,
-            point: PointThinPtr(self.point.0)
+            point: PointThinPtr(self.point.0),
         };
         let bytes = &self.as_netpkt_bytes()[size_of::<NetPktPtr>()..];
-        unsafe {NetPktArc::from_header_and_copy(header.into(),true,|d:&mut [u8]| d.copy_from_slice(bytes)).unwrap()}
+        unsafe {
+            NetPktArc::from_header_and_copy(header.into(), true, |d: &mut [u8]| {
+                d.copy_from_slice(bytes)
+            })
+            .unwrap()
+        }
     }
 
     #[inline(always)]
@@ -208,18 +211,15 @@ impl NetPkt for NetPktFatPtr {
 
 pub fn netpktbox_layout(
     pkt_header: &PointHeader,
-) -> (
-    std::alloc::Layout,
-    <NetPktFatPtr as ptr::Pointee>::Metadata,
-) {
+) -> (std::alloc::Layout, <NetPktFatPtr as ptr::Pointee>::Metadata) {
     use std::alloc::Layout;
-    let clen : usize = pkt_header.padded_content_size().div_ceil(8).into();
-    let layout =         Layout::new::<PartialNetHeader>()
-            .extend(Layout::new::<u64>().repeat(clen).unwrap().0)
-            .unwrap()
-            .0
-            .pad_to_align();
-    (layout,clen)
+    let clen: usize = pkt_header.padded_content_size().div_ceil(8).into();
+    let layout = Layout::new::<PartialNetHeader>()
+        .extend(Layout::new::<u64>().repeat(clen).unwrap().0)
+        .unwrap()
+        .0
+        .pad_to_align();
+    (layout, clen)
 }
 
 #[test]
@@ -235,20 +235,28 @@ pub fn build() {
     )
     .as_netbox();
     let sp_bytes = sp.clone().byte_segments().0.concat().into_boxed_slice();
-    let b = unsafe { NetPktPtr::from_bytes_unchecked(&*sp_bytes) };
+    let b = unsafe { NetPktPtr::from_bytes_unchecked(&sp_bytes) };
     assert_eq!(sp.tail(), b.tail());
     let h = sp.hash();
 
     let raw = NetPktFatPtr::into_raw_box(sp);
     let h2 = unsafe { &*raw }.hash();
     assert_eq!(h, h2);
-    let b = unsafe{NetPktFatPtr::from_raw_box(raw)};
+    let b = unsafe { NetPktFatPtr::from_raw_box(raw) };
     assert_eq!(h, b.hash())
 }
 
-impl Into<PartialNetHeader> for NetPktPtr{
-    fn into(self) -> PartialNetHeader {
-        let NetPktPtr { net_header, hash, point } = self;
-        PartialNetHeader { net_header, hash, point_header:point.0}
+impl From<NetPktPtr> for PartialNetHeader {
+    fn from(val: NetPktPtr) -> Self {
+        let NetPktPtr {
+            net_header,
+            hash,
+            point,
+        } = val;
+        PartialNetHeader {
+            net_header,
+            hash,
+            point_header: point.0,
+        }
     }
 }

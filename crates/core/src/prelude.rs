@@ -6,13 +6,13 @@
 pub use std::ops::ControlFlow::*;
 pub use std::sync::Arc;
 
-pub use linkspace_pkt::{*,eval,exprs,Error};
+pub use linkspace_pkt::{eval, exprs, Error, *};
 
 pub use crate::consts::*;
-#[cfg(feature="lmdb")]
+#[cfg(feature = "lmdb")]
 pub use crate::env::lmdb::queries::*;
-pub use crate::env::tree_key::*;
 pub use crate::env::save_state::*;
+pub use crate::env::tree_key::*;
 pub use crate::env::*;
 pub use crate::eval::*;
 pub use crate::matcher::*;

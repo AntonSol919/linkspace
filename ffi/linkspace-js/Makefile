@@ -1,6 +1,6 @@
-.PHONY: build setup_env
+.PHONY: build setup_env watch validate pack
 
-build:
+build: setup_env
 	wasm-pack build --target web
 
 watch:
@@ -21,3 +21,10 @@ pack:
 	jq '.files = ["*"]' ./pkg/package.json > ./pkg/tmp.json
 	mv ./pkg/tmp.json ./pkg/package.json
 	wasm-pack pack
+
+validate:
+	cargo check --target wasm32-unknown-unknown
+	cargo clippy -- -D warnings
+	test $$(cargo fmt --all -- --check | tee /dev/fd/2 | wc -c ) -eq 0
+	cargo doc --all --no-deps
+	cargo test

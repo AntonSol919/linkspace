@@ -7,11 +7,11 @@ pub mod header;
 pub mod partial;
 pub mod reroute;
 
+pub mod cmp;
 pub mod netpkt_arc;
 pub mod netpkt_parts;
 pub mod netpkt_ptr;
 pub mod serde_impl;
-pub mod cmp;
 pub mod tree_order;
 //pub mod slot;
 
@@ -66,7 +66,8 @@ pub trait NetPkt: Debug {
             if ptr.is_null() {
                 alloc::handle_alloc_error(layout);
             }
-            let ptr: *mut NetPktFatPtr =std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr.cast(), metadata);
+            let ptr: *mut NetPktFatPtr =
+                std::ptr::from_raw_parts_mut::<NetPktFatPtr>(ptr.cast(), metadata);
 
             {
                 let s = std::slice::from_raw_parts_mut(ptr.cast::<u8>(), layout.size());
@@ -85,14 +86,16 @@ pub trait NetPkt: Debug {
             hash: self.hash(),
             point: PointThinPtr(self.as_point().point_header()),
         };
-        
+
         // TODO. we can avoid this copy
         let mut segments = self.as_point().pkt_segments();
         segments.0[0] = &segments.0[0][size_of::<PointHeader>()..];
-        let arc = unsafe{NetPktArc::from_header_and_copy(h.into(), false,|o:&mut [u8]| {
-            segments.write_segments_unchecked(o.as_mut_ptr());
-        })}.expect("a copy should be valid");
-        arc
+        let arc = unsafe {
+            NetPktArc::from_header_and_copy(h.into(), false, |o: &mut [u8]| {
+                segments.write_segments_unchecked(o.as_mut_ptr());
+            })
+        };
+        arc.expect("a copy should be valid")
     }
 }
 
@@ -144,7 +147,7 @@ where
     fn net_header(&self) -> NetPktHeader {
         *self.net_header_ref()
     }
-    /// Padded size 
+    /// Padded size
     fn size(&self) -> u16 {
         self.as_point().point_header_ref().size()
     }
@@ -154,15 +157,19 @@ where
     {
         NetPktParts::from(self)
     }
-    fn to_default_str(&self) -> String{ PktFmt(&self).to_string()}
+    fn to_default_str(&self) -> String {
+        PktFmt(&self).to_string()
+    }
 }
 
-impl<T> Point for T where T: NetPktExt{
-    
+impl<T> Point for T
+where
+    T: NetPktExt,
+{
     fn parts(&self) -> PointParts {
         self.as_point().parts()
     }
-    
+
     fn data(&self) -> &[u8] {
         self.as_point().data()
     }
@@ -170,15 +177,13 @@ impl<T> Point for T where T: NetPktExt{
     fn tail(&self) -> Option<Tail> {
         self.as_point().tail()
     }
-    fn padding(&self) -> &[u8]{
+    fn padding(&self) -> &[u8] {
         self.as_point().padding()
     }
-    
+
     fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         self.as_point().linkpoint_header()
     }
-
-
 
     fn pkt_segments(&self) -> ByteSegments {
         self.as_point().pkt_segments()
@@ -188,7 +193,7 @@ impl<T> Point for T where T: NetPktExt{
         self.as_point().point_header_ref()
     }
 
-    fn signed(&self) -> Option<&Signed>  {
+    fn signed(&self) -> Option<&Signed> {
         self.as_point().signed()
     }
 }

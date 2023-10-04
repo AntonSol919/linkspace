@@ -3,14 +3,13 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use crate::{*};
-use js_sys::{Object };
-use linkspace_pkt::{Tag, LkHash, NetPkt, Point, PointExt,  NetPktExt, NetPktArc };
+use crate::*;
+use js_sys::Object;
+use linkspace_pkt::{LkHash, NetPkt, NetPktArc, NetPktExt, Point, PointExt, Tag};
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
 
 use crate::bytelike;
-
 
 // Ideally this is an ArrayBuffer and we give out readonly views
 #[derive(Clone)]
@@ -21,17 +20,18 @@ impl Pkt {
         Pkt(p.as_netarc())
     }
     pub fn empty() -> Self {
-        Pkt(unsafe {try_datapoint_ref(b"", NetOpts::Default).unwrap_unchecked()}.as_netarc())
+        Pkt(unsafe { try_datapoint_ref(b"", NetOpts::Default).unwrap_unchecked() }.as_netarc())
     }
 }
-
 
 #[wasm_bindgen]
 impl Pkt {
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> String {
+    pub fn to_string_js(&self) -> String {
         #[cfg(feature = "abe")]
-        {linkspace_pkt::pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)}
+        {
+            linkspace_pkt::pkt_fmt(&self.0.netpktptr() as &dyn NetPkt)
+        }
 
         #[cfg(not(feature = "abe"))]
         PktFmt(&self.0.netpktptr()).to_string()
@@ -39,17 +39,19 @@ impl Pkt {
     }
     // TODO pass js function to format data field
     #[wasm_bindgen(js_name = toHTML)]
-    pub fn to_html(&self, include_lossy_escaped_data:Option<bool>) -> Result<String,JsValue>{
+    pub fn to_html(&self, include_lossy_escaped_data: Option<bool>) -> Result<String, JsValue> {
         #[cfg(feature = "abe")]
-        { todo!()}
+        {
+            todo!("abe not yet impl {include_lossy_escaped_data:?}")
+        }
 
         #[cfg(not(feature = "abe"))]
         {
             let mut buf = String::new();
 
             PktFmt(&self.0.netpktptr())
-                .to_html(&mut buf,include_lossy_escaped_data.unwrap_or(true), None)
-                .map_err(|e|e.to_string())?;
+                .to_html(&mut buf, include_lossy_escaped_data.unwrap_or(true), None)
+                .map_err(|e| e.to_string())?;
             Ok(buf)
         }
     }
@@ -92,7 +94,7 @@ impl Pkt {
     }
     #[wasm_bindgen(getter)]
     pub fn create(&self) -> Option<Box<[u8]>> {
-        self.0.create_stamp().map(|b|b.0.into())
+        self.0.create_stamp().map(|b| b.0.into())
     }
     #[wasm_bindgen(getter)]
     pub fn group(&self) -> Option<Box<[u8]>> {
@@ -110,30 +112,54 @@ impl Pkt {
     pub fn recv(&self) -> Option<Box<[u8]>> {
         self.0.recv().map(|p| p.0.into())
     }
-    #[wasm_bindgen(getter)] pub fn comp0(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp0().into()}
-    #[wasm_bindgen(getter)] pub fn comp1(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp1().into()}
-    #[wasm_bindgen(getter)] pub fn comp2(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp2().into()}
-    #[wasm_bindgen(getter)] pub fn comp3(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp3().into()}
-    #[wasm_bindgen(getter)] pub fn comp4(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp4().into()}
-    #[wasm_bindgen(getter)] pub fn comp5(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp5().into()}
-    #[wasm_bindgen(getter)] pub fn comp6(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp6().into()}
-    #[wasm_bindgen(getter)] pub fn comp7(&self) -> Box<[u8]> {self.0.get_rooted_spacename().comp7().into()}
+    #[wasm_bindgen(getter)]
+    pub fn comp0(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp0().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp1(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp1().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp2(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp2().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp3(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp3().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp4(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp4().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp5(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp5().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp6(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp6().into()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn comp7(&self) -> Box<[u8]> {
+        self.0.get_rooted_spacename().comp7().into()
+    }
     pub fn comp_list(&self) -> Option<js_sys::Array> {
         self.0.rooted_spacename().map(|p| {
             p.comps_bytes()[0..p.depth()]
                 .iter()
-                .map(|s| -> js_sys::Uint8Array { (*s).into()})
+                .map(|s| -> js_sys::Uint8Array { (*s).into() })
                 .collect()
         })
     }
 
     #[wasm_bindgen(getter)]
     pub fn pubkey(&self) -> Option<Box<[u8]>> {
-        self.0.pubkey().map(|b|  b.0.into())
+        self.0.pubkey().map(|b| b.0.into())
     }
     #[wasm_bindgen(getter)]
     pub fn signature(&self) -> Option<Box<[u8]>> {
-        self.0.signature().map(|b|  b.0.into())
+        self.0.signature().map(|b| b.0.into())
     }
 
     #[wasm_bindgen(getter)]
@@ -146,104 +172,121 @@ impl Pkt {
     }
     #[wasm_bindgen(getter)]
     pub fn links(&self) -> Links {
-        Links {idx : 0 , pkt: self.clone()}
+        Links {
+            idx: 0,
+            pkt: self.clone(),
+        }
     }
-    pub fn links_array(&self) -> js_sys::Array{
+    pub fn links_array(&self) -> js_sys::Array {
         use std::mem::size_of;
-        if let Some(b) = self.links_bytes(){
+        if let Some(b) = self.links_bytes() {
             (0..self.0.get_links().len() as u32)
                 .map(|i| {
-                    let start = i*size_of::<Link>() as u32;
+                    let start = i * size_of::<Link>() as u32;
                     let start_hash = start + size_of::<Tag>() as u32;
                     let end = start_hash + size_of::<LkHash>() as u32;
-                    js_sys::Array::of2(
-                        &b.subarray(start,start_hash),
-                        &b.subarray(start_hash,end)
-                    )
-            }).collect()
-        }else {
+                    js_sys::Array::of2(&b.subarray(start, start_hash), &b.subarray(start_hash, end))
+                })
+                .collect()
+        } else {
             js_sys::Array::new()
         }
     }
-    pub fn links_bytes(&self) -> Option<js_sys::Uint8Array>{
+    pub fn links_bytes(&self) -> Option<js_sys::Uint8Array> {
         self.0.tail().map(|t| t.links_as_bytes().into())
     }
 }
 
-
-
 #[wasm_bindgen]
 #[derive(Clone)]
-pub struct Links{
+pub struct Links {
     idx: usize,
-    pkt: Pkt
+    pkt: Pkt,
 }
 
 #[wasm_bindgen]
 pub struct LinkRes {
     pub done: bool,
-    pub value:Option<Link>
+    pub value: Option<Link>,
 }
 #[wasm_bindgen]
-impl Links{
-    pub fn default()-> Links { Links{ idx:0, pkt:Pkt::empty()}}
-    #[wasm_bindgen]
-    pub fn next(&mut self) -> LinkRes{
+impl Links {
+    pub fn empty() -> Links {
+        Links {
+            idx: 0,
+            pkt: Pkt::empty(),
+        }
+    }
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols
+    #[wasm_bindgen(js_name = next)]
+    pub fn next_js(&mut self) -> LinkRes {
         let val = self.pkt.0.get_links().get(self.idx).copied().map(Link);
-        self.idx +=1;
-        LinkRes { done: val.is_none(), value: val }
+        self.idx += 1;
+        LinkRes {
+            done: val.is_none(),
+            value: val,
+        }
     }
 }
 
-
 /// Link for a linkpoint
-#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[wasm_bindgen]
 #[repr(transparent)]
-pub struct Link(pub(crate)linkspace_pkt::Link);
+pub struct Link(pub(crate) linkspace_pkt::Link);
 
 #[wasm_bindgen]
 impl Link {
-
     #[wasm_bindgen(constructor)]
-    pub fn new(tag: &JsValue, ptr: &JsValue) -> Result<Link,JsValue> {
+    pub fn new(tag: &JsValue, ptr: &JsValue) -> Result<Link, JsValue> {
         let tag = bytelike(tag)?;
         let ptr = bytelike(ptr)?;
-        Ok(Link(linkspace_pkt::Link{
+        Ok(Link(linkspace_pkt::Link {
             tag: Tag::try_fit_byte_slice(&tag).ok().ok_or("invalid tag")?,
-            ptr: LkHash::try_fit_bytes_or_b64(&ptr).ok().ok_or("invalid hash")?,
+            ptr: LkHash::try_fit_bytes_or_b64(&ptr)
+                .ok()
+                .ok_or("invalid hash")?,
         }))
     }
     #[wasm_bindgen(js_name = toJSON)]
-    pub fn as_json(&self) -> Result<JsValue,JsValue>{
-        let string = format!("{{\"tag\":{:?},\"ptr\":\"{}\"}}",self.0.tag.0,self.0.ptr);
+    pub fn as_json(&self) -> Result<JsValue, JsValue> {
+        let string = format!("{{\"tag\":{:?},\"ptr\":\"{}\"}}", self.0.tag.0, self.0.ptr);
         js_sys::JSON::parse(&string)
     }
     #[wasm_bindgen(js_name = toAbeJSON)]
-    pub fn as_abe_json(&self) -> Result<JsValue,JsValue>{
+    pub fn as_abe_json(&self) -> Result<JsValue, JsValue> {
         // we have to debug output the abe string representation
-        let string = format!("{{\"abe_tag\":{:?},\"ptr\":\"{}\"}}",self.0.tag.to_string(),self.0.ptr);
+        let string = format!(
+            "{{\"abe_tag\":{:?},\"ptr\":\"{}\"}}",
+            self.0.tag.to_string(),
+            self.0.ptr
+        );
         js_sys::JSON::parse(&string)
     }
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> Result<String,JsValue>{
+    pub fn to_string_js(&self) -> Result<String, JsValue> {
         let mut tag = self.0.tag.0;
         let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
-        Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))
+        Ok(format!(
+            "{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",
+            tag, self.0.ptr
+        ))
     }
     #[wasm_bindgen(js_name = toHTML)]
-    pub fn to_html(&self) -> Result<String,JsValue>{
+    pub fn to_html(&self) -> Result<String, JsValue> {
         let mut tag = self.0.tag.0;
         let tag = TextDecoder::new()?.decode_with_u8_array(&mut tag)?;
-        Ok(format!("{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",tag,self.0.ptr))
+        Ok(format!(
+            "{{\"utf16_tag\":\"{}\",\"ptr\":\"{}\"}}",
+            tag, self.0.ptr
+        ))
     }
     #[wasm_bindgen(getter)]
     pub fn ptr(&self) -> Box<[u8]> {
         self.0.ptr.0.into()
     }
     #[wasm_bindgen(getter)]
-    pub fn tag(&self) -> Box<[u8]>{
+    pub fn tag(&self) -> Box<[u8]> {
         self.0.tag.0.into()
     }
 }
-

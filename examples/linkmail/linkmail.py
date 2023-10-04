@@ -75,7 +75,7 @@ def user_write_mail(links = [],notes = "") -> Tuple[str,List[Link],str]:
 
 def get_exchange_status(watch_finish=False):
     status =[] 
-    lk_status_poll(lk,qid=b"status",
+    lk_status_watch(lk,qid=b"status",
                callback=lambda pkt: status.append(pkt) ,
                timeout=lk_eval("[us:+2s]"),
                domain=b"exchange",

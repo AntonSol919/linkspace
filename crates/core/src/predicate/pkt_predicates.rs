@@ -245,18 +245,16 @@ impl PktPredicates {
             RuleType::Field(f) => {
                 self.pkt_types
                     .try_add(TestOp::Mask1, f.info().pkts.bits())
-                    .with_context(|| format!("incompatible pkt typs:{rule:?}" ))?;
+                    .with_context(|| format!("incompatible pkt typs:{rule:?}"))?;
                 match f {
                     FieldEnum::PktTypeF => self.pkt_types.try_add(op, U8::try_from(val)?.0)?,
-                    FieldEnum::SizeF => {
-                        self.size.try_add(op, U16::try_from(val)?.get())?
-                    }
+                    FieldEnum::SizeF => self.size.try_add(op, U16::try_from(val)?.get())?,
                     FieldEnum::PktHashF => {
                         self.hash.try_add(op, LkHash::try_from(val)?.into())?;
                         if op == TestOp::Equal {
                             self.state.i_query.try_add(TestOp::Equal, 0u32)?;
                         }
-                    },
+                    }
                     FieldEnum::DomainF => self
                         .domain
                         .try_add(op, Domain::try_from(val)?.uint().get())?,
@@ -323,7 +321,7 @@ impl PktPredicates {
                 ensure!(op == TestOp::Equal, "prefix only supports equallity ");
                 let sp = SpaceBuf::try_from(val)?;
                 self.prefix(sp)?;
-            },
+            }
             RuleType::Limit(l) => {
                 self.state.idx(*l).add(op, U32::try_from(val)?.get());
                 self.state.is_valid()?;

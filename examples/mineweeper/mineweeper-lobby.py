@@ -17,7 +17,7 @@ key = lk_key(lk)
 common_q = lk_query_parse(lk_query(),"domain:=:mineweeper","group:=:"+group_name)
 keypoint = functools.partial(lk_keypoint,key=key,domain=b"mineweeper",group=group)
 
-recent_ok = lk_status_poll(
+recent_ok = lk_status_watch(
     lk,qid=b"status",callback=lambda _ : True,timeout=lk_eval("[us:+2s]"),
     domain=b"exchange",
     group=group,

@@ -1,6 +1,10 @@
 use std::str::FromStr;
 
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ApplyErr}, fncs, cut_ending_nulls2};
+use crate::{
+    cut_ending_nulls2,
+    eval::{ApplyErr, EvalScopeImpl, ScopeFunc},
+    fncs,
+};
 use anyhow::anyhow;
 
 pub fn parse_b<T: FromStr>(b: &[u8]) -> Result<T, ApplyErr>

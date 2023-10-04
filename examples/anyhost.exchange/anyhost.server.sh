@@ -14,7 +14,7 @@ function fin (){
 }
 trap "fin" EXIT
 
-lk set-status exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nwe're hosting")" --data-repeat &
+lk status set exchange $LK_GROUP process anyhost-client --data-str "$(lk e "OK\nPID:$$\nwe're hosting")" --data-repeat &
 
 socat tcp-listen:$PORT,fork exec:"anyhost.handshake.sh serve anyhost.serve-io.sh",fdout=4 &
 

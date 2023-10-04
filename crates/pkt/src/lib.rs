@@ -28,19 +28,20 @@
     write_all_vectored,
     lazy_cell
 )]
-pub use byte_fmt::*;
 use byte_fmt::abe::FitSliceErr;
+pub use byte_fmt::*;
+use core::fmt::Display;
 use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
-use core::fmt::Display;
 use serde::{Deserialize, Serialize};
 pub use space::*;
 pub use space_fmt::*;
 
+mod builder;
 pub mod byte_segments;
-pub mod eval;
 pub mod consts;
+pub mod eval;
 pub mod exprs;
 pub mod field_ids;
 pub mod link;
@@ -48,38 +49,34 @@ pub mod netpkt;
 pub mod point;
 pub mod point_parts;
 pub mod point_ptr;
+pub mod read;
 pub mod repr;
+pub mod rooted_space;
 pub mod space;
 pub mod space_fmt;
 pub mod space_macro;
-pub mod rooted_space;
-pub mod utils;
-pub mod read;
-mod builder;
 mod stamp;
+pub mod utils;
 
-
-
-pub use consts::*;
+pub use builder::*;
 pub use byte_segments::*;
+pub use consts::*;
 pub use endian_types::*;
 pub use eval::*;
 pub use exprs::*;
 pub use field_ids::*;
-pub use rooted_space::*;
 pub use linkspace_cryptography::SigningKey;
 pub use netpkt::*;
 pub use point::*;
 pub use point_parts::*;
 pub use point_ptr::*;
 pub use repr::*;
+pub use rooted_space::*;
 pub use space::*;
 pub use space_fmt::*;
 pub use stamp::*;
-pub use builder::*;
 
 pub mod asm_tests;
-
 
 // ==== pkt field types
 /// Blake3 hash of the packet content. Alias for `B64<[u8;32]\>`
@@ -91,29 +88,32 @@ pub type Domain = AB<[u8; 16]>;
 /// Alias for `AB<[u8;16]>`
 pub type Tag = AB<[u8; 16]>;
 
-/// A [Tag] and [LkHash] 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash,Serialize,Deserialize)]
+/// A [Tag] and [LkHash]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 #[repr(C, align(4))]
 pub struct Link {
     pub tag: Tag,
     /// Usually a [LkHash], sometimes a [PubKey] or [GroupID]
     pub ptr: LkHash,
 }
-impl From<(Tag,LkHash)> for Link {
-    fn from((tag,ptr): (Tag,LkHash)) -> Self {
-        Link{tag,ptr}
+impl From<(Tag, LkHash)> for Link {
+    fn from((tag, ptr): (Tag, LkHash)) -> Self {
+        Link { tag, ptr }
     }
 }
-impl TryFrom<(&str,LkHash)> for Link {
+impl TryFrom<(&str, LkHash)> for Link {
     type Error = FitSliceErr;
 
-    fn try_from((tag,ptr): (&str,LkHash)) -> Result<Self, Self::Error> {
-        Ok(Link{tag: Tag::try_fit_byte_slice(tag.as_bytes())?,ptr})
+    fn try_from((tag, ptr): (&str, LkHash)) -> Result<Self, Self::Error> {
+        Ok(Link {
+            tag: Tag::try_fit_byte_slice(tag.as_bytes())?,
+            ptr,
+        })
     }
 }
-impl Display for Link{
+impl Display for Link {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f,"{}:{}",self.tag,self.ptr)
+        write!(f, "{}:{}", self.tag, self.ptr)
     }
 }
 /// Taproot Schnorr publickey. Alias for `B64<[u8;32]>`
@@ -122,8 +122,6 @@ pub type PubKey = B64<[u8; 32]>;
 pub type Signature = B64<[u8; 64]>;
 /// A Big endian u64 of microseconds since EPOCH
 pub type Stamp = U64;
-
-
 
 /** General trait for accessing point field.
 
@@ -143,14 +141,14 @@ pub trait Point: core::fmt::Debug {
     fn fields(&self) -> PointFields {
         self.parts().fields
     }
-    
+
     fn data(&self) -> &[u8];
     fn tail(&self) -> Option<Tail>;
     /// Points are padded with upto 7 \xFF bytes and are u64 aligned - this is accessible here for completeness sake.
     fn padding(&self) -> &[u8];
     /// Return a LinkPointHeader, works for both key and link points.
     fn linkpoint_header(&self) -> Option<&LinkPointHeader>;
-    fn signed(&self) -> Option<&Signed> ;
+    fn signed(&self) -> Option<&Signed>;
     /// A utility function to translate this format into bytes for hashing & io
     fn pkt_segments(&self) -> ByteSegments;
     fn point_header_ref(&self) -> &PointHeader;
@@ -191,9 +189,9 @@ where
         }
         None
     }
-    fn as_keypoint(&self) -> Option<(LinkPoint,Signed)> {
-        if let PointFields::KeyPoint(a,b) = self.parts().fields {
-            return Some((a,b));
+    fn as_keypoint(&self) -> Option<(LinkPoint, Signed)> {
+        if let PointFields::KeyPoint(a, b) = self.parts().fields {
+            return Some((a, b));
         }
         None
     }
@@ -208,7 +206,7 @@ where
         self.linkpoint_header().map(|v| &v.domain)
     }
     fn get_domain(&self) -> &Domain {
-        unwrap_or(self.domain(), &AB([0;16]))
+        unwrap_or(self.domain(), &AB([0; 16]))
     }
     fn create_stamp(&self) -> Option<&Stamp> {
         self.linkpoint_header().map(|v| &v.create_stamp)
@@ -266,15 +264,19 @@ where
     fn get_links(&self) -> &[Link] {
         self.links().unwrap_or_default()
     }
-    fn select(&self) -> SelectLink{ SelectLink(self.get_links())}
+    fn select(&self) -> SelectLink {
+        SelectLink(self.get_links())
+    }
     fn compute_hash(&self) -> LkHash {
         linkspace_cryptography::hash_segments(&self.pkt_segments().0).into()
     }
-    
 
-    fn check_private(&self) -> Result<(),crate::Error>{
-        if self.group().copied() == Some(PRIVATE) { Err(crate::Error::PrivateGroup)}
-        else {Ok(())}
+    fn check_private(&self) -> Result<(), crate::Error> {
+        if self.group().copied() == Some(PRIVATE) {
+            Err(crate::Error::PrivateGroup)
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -370,26 +372,27 @@ pub enum Error {
     #[error("pointheader has reserved bit set {0}")]
     HeaderReservedSet(u8),
     #[error("missing bytes - pkt is {netpkt_size} long")]
-    MissingBytes{netpkt_size:u16},
+    MissingBytes { netpkt_size: u16 },
     #[error("the [#:0] group can't be used in this context")]
-    PrivateGroup
+    PrivateGroup,
 }
 impl Error {
-    pub fn requires_more(self) -> Option<usize>{
+    pub fn requires_more(self) -> Option<usize> {
         match self {
             Error::MissingHeader => Some(MIN_NETPKT_SIZE),
-            Error::MissingBytes{netpkt_size} => Some(netpkt_size.into()),
-            _ => None
+            Error::MissingBytes { netpkt_size } => Some(netpkt_size.into()),
+            _ => None,
         }
     }
-    pub fn io(self) -> std::io::Error { std::io::Error::other(self)}
+    pub fn io(self) -> std::io::Error {
+        std::io::Error::other(self)
+    }
 }
 impl From<Error> for std::io::Error {
     fn from(val: Error) -> Self {
         val.io()
     }
 }
-
 
 pub trait SigningExt {
     fn pubkey(&self) -> PubKey;
@@ -400,17 +403,11 @@ impl SigningExt for SigningKey {
     }
 }
 
-
 // Seems to be better at generating cmov instructions
 #[inline(always)]
-pub const fn unwrap_or<'o,T>(opt:Option<&'o T>, mut default:&'o T) -> &'o T{
+pub const fn unwrap_or<'o, T>(opt: Option<&'o T>, mut default: &'o T) -> &'o T {
     if let Some(val) = opt {
         default = val;
     }
     default
 }
-
-
-
-
-

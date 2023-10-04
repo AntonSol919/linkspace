@@ -34,8 +34,6 @@ impl<T> NetPktDecoder<T> {
     }
 }
 
-
-
 impl<T: Read> Iterator for NetPktDecoder<T> {
     type Item = Result<NetPktBox, Error>;
 
@@ -70,7 +68,10 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
         let mut pkt = unsafe { partial_header.alloc() };
         {
             let s: &mut [u8] = unsafe {
-                std::slice::from_raw_parts_mut((&mut *pkt) as *mut NetPktFatPtr as *mut u8, len as usize)
+                std::slice::from_raw_parts_mut(
+                    (&mut *pkt) as *mut NetPktFatPtr as *mut u8,
+                    len as usize,
+                )
             };
             tracing::trace!("Read rest");
             let r = self
@@ -79,8 +80,8 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
             try_opt!(r);
         };
         try_opt!(pkt.check(self.skip_hash));
-        if !self.allow_private{
-            if let Err(e) = pkt.check_private(){
+        if !self.allow_private {
+            if let Err(e) = pkt.check_private() {
                 return Some(Err(Error::Pkt(e)));
             }
         }
@@ -91,4 +92,3 @@ impl<T: Read> Iterator for NetPktDecoder<T> {
         Some(Ok(pkt))
     }
 }
-

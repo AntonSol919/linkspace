@@ -8,7 +8,7 @@ use crate::*;
 Serializable length delimited &[&[u8]]. e.g. /hello/world.
 Holds an upto 8 components.
 [Space] and [SpaceBuf] are similar to [std::path::Path] and [std::path::PathBuf], except that the components are length delimited, and allow the null and '/' byte.
-[RootedSpace] and [RootedSpaceBuf] are Space's with a [u8;8] prefix that holds the number of components and their offset. 
+[RootedSpace] and [RootedSpaceBuf] are Space's with a [u8;8] prefix that holds the number of components and their offset.
 */
 use std::{borrow::Borrow, ops::Deref, ptr};
 
@@ -17,8 +17,11 @@ use std::{borrow::Borrow, ops::Deref, ptr};
 pub struct SpaceBytes<X: ?Sized> {
     inner_bytes: X,
 }
-impl<X> SpaceBytes<X> where Self: AsRef<Space>{
-    pub fn try_from_inner(inner_bytes: X) -> Result<Self,SpaceError> {
+impl<X> SpaceBytes<X>
+where
+    Self: AsRef<Space>,
+{
+    pub fn try_from_inner(inner_bytes: X) -> Result<Self, SpaceError> {
         let sp = SpaceBytes { inner_bytes };
         sp.as_ref().check_components()?;
         Ok(sp)
@@ -49,7 +52,6 @@ pub enum SpaceError {
 
 /// Explicitly Space bytes (analogous to [[str]])
 pub type Space = SpaceBytes<[u8]>;
-
 
 /// Owned Space bytes (analogous to String)
 pub type SpaceBuf = SpaceBytes<Vec<u8>>;
@@ -125,7 +127,7 @@ impl Space {
         }
     }
     pub const fn from_unchecked(b: &[u8]) -> &Space {
-        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(),b.len())}
+        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(), b.len()) }
     }
     pub const fn space_bytes(&self) -> &[u8] {
         &self.inner_bytes
@@ -140,7 +142,6 @@ impl<const N: usize> StaticSpace<N> {
         }
         SpaceBytes { inner_bytes: bytes }
     }
-    
 
     pub const fn as_static(&'static self) -> &'static Space {
         Space::from_unchecked(&self.inner_bytes)
@@ -164,7 +165,7 @@ impl<X: AsRef<[u8]>> SpaceBytes<X> {
             inner_bytes: self.inner_bytes.as_ref().to_vec(),
         }
     }
-    pub fn calc_depth(&self) -> usize{
+    pub fn calc_depth(&self) -> usize {
         self.as_space().iter().count()
     }
     pub fn as_space(&self) -> &Space {
@@ -200,7 +201,7 @@ impl SpaceBuf {
             inner_bytes: vec![],
         }
     }
-    
+
     pub const fn from_vec_unchecked(bytes: Vec<u8>) -> SpaceBuf {
         SpaceBuf { inner_bytes: bytes }
     }
@@ -223,7 +224,6 @@ impl SpaceBuf {
     ) -> Result<SpaceBuf, SpaceError> {
         SpaceBytes::new().extend_from_iter(iter)
     }
-
 
     pub fn truncate_last(&mut self) {
         if let Some(l) = self.iter().last().map(|v| v.len() + 1) {
@@ -293,7 +293,6 @@ impl SpaceBuf {
     }
 }
 
-
 impl Space {
     pub const fn is_empty(&self) -> bool {
         self.inner_bytes.is_empty()
@@ -322,7 +321,7 @@ impl Space {
 
         while !this.is_empty() {
             last = Some(this);
-            let len :usize = this.inner_bytes[0].into();
+            let len: usize = this.inner_bytes[0].into();
             this = Space::from_unchecked(&this.inner_bytes[len + 1..]);
         }
         match last {
@@ -396,17 +395,17 @@ impl Space {
         self.strip_prefix(prefix)
             .expect(" Target does not start with prefix")
     }
-    pub fn to_array(&self) -> arrayvec::ArrayVec<&[u8],MAX_SPACE_DEPTH>{
+    pub fn to_array(&self) -> arrayvec::ArrayVec<&[u8], MAX_SPACE_DEPTH> {
         arrayvec::ArrayVec::from_iter(self.iter())
     }
     pub fn iter(&self) -> &SpaceIter {
-        unsafe{&*ptr::from_raw_parts(ptr::from_ref(self).cast(),self.inner_bytes.len())}
+        unsafe { &*ptr::from_raw_parts(ptr::from_ref(self).cast(), self.inner_bytes.len()) }
     }
     pub const fn checked_iter(&self) -> Result<&CheckedSpaceIter, SpaceError> {
         if self.inner_bytes.len() > MAX_SPACENAME_SIZE {
             return Err(SpaceError::MaxDepth);
         };
-        Ok(unsafe{&*ptr::from_raw_parts(ptr::from_ref(self).cast(),self.inner_bytes.len())})
+        Ok(unsafe { &*ptr::from_raw_parts(ptr::from_ref(self).cast(), self.inner_bytes.len()) })
     }
     /// Return the components and the space upto and including that component
     pub fn track(&self) -> Track {
@@ -440,7 +439,8 @@ pub struct CheckedSpaceIter {
 }
 
 impl CheckedSpaceIter {
-    pub const EMPTY: &'static Self = unsafe { &*ptr::from_raw_parts(ptr::from_ref(Space::empty()).cast(), 0)};
+    pub const EMPTY: &'static Self =
+        unsafe { &*ptr::from_raw_parts(ptr::from_ref(Space::empty()).cast(), 0) };
     #[allow(clippy::as_conversions)]
     pub const fn next_sp_c(&self) -> Option<Result<(&Space, &Self), SpaceError>> {
         if self.space.inner_bytes.is_empty() {
@@ -456,9 +456,9 @@ impl CheckedSpaceIter {
         if self.space.inner_bytes.len() <= len {
             return Some(Err(SpaceError::TailLength));
         }
-        let (segm,rest) = self.space.inner_bytes.split_at(len+1);
-        let rest : *const Self= std::ptr::from_raw_parts(rest.as_ptr().cast(),rest.len());
-        Some(Ok((Space::from_unchecked(segm),unsafe{&*rest})))
+        let (segm, rest) = self.space.inner_bytes.split_at(len + 1);
+        let rest: *const Self = std::ptr::from_raw_parts(rest.as_ptr().cast(), rest.len());
+        Some(Ok((Space::from_unchecked(segm), unsafe { &*rest })))
     }
     pub const fn next_c(&self) -> Option<Result<(&[u8], &Self), SpaceError>> {
         match self.next_sp_c() {
@@ -491,7 +491,9 @@ pub struct SpaceIter {
 }
 impl std::fmt::Debug for SpaceIter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SpaceIter").field("space", &self.space.to_string()).finish()
+        f.debug_struct("SpaceIter")
+            .field("space", &self.space.to_string())
+            .finish()
     }
 }
 impl SpaceIter {
@@ -540,7 +542,6 @@ fn try_pop() {
     common.inner_bytes[2] = 251;
     assert_eq!(common.check_components(), Err(SpaceError::ComponentSize));
 }
-
 
 #[macro_export]
 macro_rules! len_prefix_concat {
@@ -621,7 +622,7 @@ fn concat() {
 fn pop_slice() {
     let mut v = SpaceBuf::from_iter(&[b"hello", b"world"]);
     let x = SpaceBuf::from_iter(&[b"hello"]);
-    assert_eq!(v.drop_prefix(&*x), &*SpaceBuf::from_iter(&[b"world"]));
+    assert_eq!(v.drop_prefix(&x), &*SpaceBuf::from_iter(&[b"world"]));
     v.truncate_last();
     assert_eq!(v, x)
 }
@@ -630,10 +631,13 @@ fn pop_slice() {
 fn check() {
     let mut empty = CheckedSpaceIter::EMPTY;
     assert!(empty.next().is_none(), "bad empty iter?");
-    assert!(CheckedSpaceIter::EMPTY.space.inner_bytes.is_empty(), "bad empty iter?");
+    assert!(
+        CheckedSpaceIter::EMPTY.space.inner_bytes.is_empty(),
+        "bad empty iter?"
+    );
 
     use crate::*;
-    let space = SpaceBuf::try_from_iter(&["hello", "world"]).unwrap();
+    let space = SpaceBuf::try_from_iter(["hello", "world"]).unwrap();
     let mut it = space.checked_iter().unwrap();
     assert_eq!(it.next().unwrap().unwrap(), b"hello" as &[u8]);
     assert_eq!(it.next().unwrap().unwrap(), b"world" as &[u8]);
@@ -696,9 +700,14 @@ impl Space {
         let mut it = self.checked_iter()?;
         let mut count = 0u8;
         for i in 0..8 {
-            data[i] = unsafe {u8::try_from(data.len()).unwrap_unchecked().checked_sub(8).unwrap_unchecked()};
+            data[i] = unsafe {
+                u8::try_from(data.len())
+                    .unwrap_unchecked()
+                    .checked_sub(8)
+                    .unwrap_unchecked()
+            };
             if let Some(v) = it.next().transpose()? {
-                data.push( unsafe {v.len().try_into().unwrap_unchecked()});
+                data.push(unsafe { v.len().try_into().unwrap_unchecked() });
                 data.extend_from_slice(v);
                 count += 1;
             }

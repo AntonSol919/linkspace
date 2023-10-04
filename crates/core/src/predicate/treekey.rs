@@ -12,9 +12,7 @@ TODO. components needs to be integrated here
 use anyhow::Context;
 use linkspace_pkt::*;
 
-use crate::{
-    stamp_range::{ StampRange},
-};
+use crate::stamp_range::StampRange;
 
 use super::{bitset_test::BitTestSet, TestSet, UInt};
 
@@ -53,4 +51,3 @@ impl TreeKeys {
         Ok(btree_key)
     }
 }
-

@@ -7,9 +7,7 @@ use crate::{
     netpkt::{NetFlags, NetPktHeader},
     *,
 };
-use byte_fmt::{
-    abe::{print_abe, ToABE}, 
-};
+use byte_fmt::abe::{print_abe, ToABE};
 use core::str::FromStr;
 use std::fmt::Debug;
 
@@ -231,7 +229,10 @@ macro_rules! field_val {
     ([$( ( $fname:ident,$out:ty, $getter:expr )),*]) => {
         $(
             impl SFieldVal<$out> for $fname {
-                fn get_val<'o, T:NetPkt+?Sized>(pkt : &'o T) -> $out { $getter(pkt)}
+                fn get_val<'o, T:NetPkt+?Sized>(pkt : &'o T) -> $out {
+                    #[allow(clippy::redundant_closure_call)]
+                    $getter(pkt)
+                }
             }
         )*
     };
@@ -240,7 +241,10 @@ macro_rules! field_ptr{
     ([$( ( $fname:ident,$out:ty, $getter:expr )),*]) => {
         $(
             impl SFieldPtr<$out> for $fname {
-                fn get_ptr<'o, T:NetPkt+?Sized>(pkt : &'o T) -> &'o $out { $getter(pkt)}
+                fn get_ptr<'o, T:NetPkt+?Sized>(pkt : &'o T) -> &'o $out {
+                    #[allow(clippy::redundant_closure_call)]
+                    $getter(pkt)
+                }
             }
         )*
     };
@@ -266,14 +270,20 @@ field_val!([
         .bits())),
     (SizeF, u16, |pkt: &'o T| (pkt
         .as_point()
-        .point_header().size()
-        )),
-    (DataSizeF, u16, |pkt: &'o T| pkt.as_point().data().len().try_into().expect("bug: impossible tail")),
-    (
-        LinksLenF,
-        u16,
-        |pkt: &'o T| pkt.as_point().get_links().len().try_into().expect("bug: impossible links")
-    ),
+        .point_header()
+        .size())),
+    (DataSizeF, u16, |pkt: &'o T| pkt
+        .as_point()
+        .data()
+        .len()
+        .try_into()
+        .expect("bug: impossible tail")),
+    (LinksLenF, u16, |pkt: &'o T| pkt
+        .as_point()
+        .get_links()
+        .len()
+        .try_into()
+        .expect("bug: impossible links")),
     (CreateF, u64, |pkt: &'o T| pkt
         .as_point()
         .get_create_stamp()
@@ -292,8 +302,12 @@ field_val!([
 ]);
 
 field_ptr!([
-    (RSpaceNameF, RootedSpace, |pkt: &'o T| pkt.as_point().get_rooted_spacename()),
-    (SpaceNameF, Space, |pkt: &'o T| pkt.as_point().get_spacename()),
+    (RSpaceNameF, RootedSpace, |pkt: &'o T| pkt
+        .as_point()
+        .get_rooted_spacename()),
+    (SpaceNameF, Space, |pkt: &'o T| pkt
+        .as_point()
+        .get_spacename()),
     (SpaceComp0F, [u8], |pkt: &'o T| pkt
         .as_point()
         .get_rooted_spacename()
@@ -396,15 +410,13 @@ impl FieldEnum {
             FieldEnum::PktTypeF => out.write_all(std::slice::from_ref(
                 &pkt.as_point().point_header_ref().point_type.bits(),
             )),
-            FieldEnum::SizeF => out.write_all( &U16::from(pkt.size()).0),
+            FieldEnum::SizeF => out.write_all(&U16::from(pkt.size()).0),
             FieldEnum::DataSizeF => out.write_all(&DataSizeF::get_val(pkt).to_be_bytes()),
             FieldEnum::LinksLenF => out.write_all(&LinksLenF::get_val(pkt).to_be_bytes()),
             FieldEnum::DomainF => out.write_all(&DomainF::get_ptr(pkt).0),
             FieldEnum::SpaceNameF => out.write_all(SpaceNameF::get_ptr(pkt).space_bytes()),
             FieldEnum::RSpaceNameF => out.write_all(RSpaceNameF::get_ptr(pkt).rooted_bytes()),
-            FieldEnum::DepthF => {
-                out.write_all(std::slice::from_ref(pkt.as_point().get_depth()))
-            }
+            FieldEnum::DepthF => out.write_all(std::slice::from_ref(pkt.as_point().get_depth())),
             FieldEnum::SpaceComp0F => out.write_all(SpaceComp0F::get_ptr(pkt)),
             FieldEnum::SpaceComp1F => out.write_all(SpaceComp1F::get_ptr(pkt)),
             FieldEnum::SpaceComp2F => out.write_all(SpaceComp2F::get_ptr(pkt)),
@@ -436,7 +448,7 @@ impl FieldEnum {
             FieldEnum::LinksLenF => write!(out, "{}", LinksLenF::get_val(pkt)),
             FieldEnum::DomainF => write!(out, "{}", DomainF::get_ptr(pkt).as_str(true)),
             FieldEnum::SpaceNameF => write!(out, "{}", SpaceNameF::get_ptr(pkt)),
-            FieldEnum::RSpaceNameF => write!(out, "{}", RSpaceNameF::get_ptr(pkt).space()),// TODO might be wrong
+            FieldEnum::RSpaceNameF => write!(out, "{}", RSpaceNameF::get_ptr(pkt).space()), // TODO might be wrong
             FieldEnum::DepthF => write!(out, "{}", DepthF::get_ptr(pkt)),
             FieldEnum::SpaceComp0F => write!(out, "{}", AB(SpaceComp0F::get_ptr(pkt))),
             FieldEnum::SpaceComp1F => write!(out, "{}", AB(SpaceComp1F::get_ptr(pkt))),
@@ -450,7 +462,7 @@ impl FieldEnum {
             FieldEnum::CreateF => write!(out, "{}", CreateF::get_ptr(pkt)),
             FieldEnum::PubKeyF => write!(out, "{}", PubKeyF::get_ptr(pkt)),
             FieldEnum::SignatureF => write!(out, "{}", SignatureF::get_ptr(pkt)),
-            FieldEnum::DataF => write!(out,"{}",AB(pkt.as_point().data()))
+            FieldEnum::DataF => write!(out, "{}", AB(pkt.as_point().data())),
         }?;
         Ok(())
     }
@@ -497,15 +509,20 @@ impl FieldEnum {
 }
 
 #[test]
-fn fields(){
-    use abe::scope::*;
-    let rspace = rspace_buf(&[b"hello",b"world"]);
-    let p = linkpoint([1;32].into(), [2;16].into(), &rspace, &[], &[], now(), ());
-    let abe = abe::parse_abe("[spacename]",false).unwrap();
-    let space = abe::eval::eval(&pkt_ctx(core_ctx(), &p),&abe).unwrap().into_exact_bytes().unwrap();
+fn fields() {
+    use crate::abe::scope::basic_scope;
+    let rspace = rspace_buf(&[b"hello", b"world"]);
+    let p = linkpoint([1; 32].into(), [2; 16].into(), &rspace, &[], &[], now(), ());
+    let abe = abe::parse_abe("[spacename]", false).unwrap();
+    let space = abe::eval::eval(&(basic_scope(), pkt_scope(&p)), &abe)
+        .unwrap()
+        .into_exact_bytes()
+        .unwrap();
     let pbox = p.as_netbox();
-    let space1 = abe::eval::eval(&pkt_ctx(core_ctx(), &pbox),&abe).unwrap().into_exact_bytes().unwrap();
-    assert_eq!(space,rspace.space_bytes());
-    assert_eq!(space,space1)
+    let space1 = abe::eval::eval(&(basic_scope(), pkt_scope(&pbox)), &abe)
+        .unwrap()
+        .into_exact_bytes()
+        .unwrap();
+    assert_eq!(space, rspace.space_bytes());
+    assert_eq!(space, space1)
 }
-

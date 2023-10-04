@@ -4,14 +4,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-
 use crate::consts::B64_HASH_LENGTH;
 pub use arrayvec;
 use arrayvec::ArrayString;
+use base64_crate::prelude::*;
 use linkspace_pkt::{base64_crate, LkHash};
 use std::{convert::TryFrom, fmt, str::FromStr};
 use thiserror::Error;
-use base64_crate::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -29,9 +28,7 @@ Note that this is a string comparison.
 b64 decoding rules regarding 1 or 2 characters are ignored
 */
 
-#[derive(
-    Default, Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord,
-)]
+#[derive(Default, Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord)]
 
 pub struct PartialHash(pub ArrayString<B64_HASH_LENGTH>);
 impl PartialHash {
@@ -43,7 +40,9 @@ impl PartialHash {
             return None;
         }
         let mut res = [0; 32];
-        BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(self.0.as_bytes(), res.as_mut_slice()).ok()?;
+        BASE64_URL_SAFE_NO_PAD
+            .decode_slice_unchecked(self.0.as_bytes(), res.as_mut_slice())
+            .ok()?;
         Some(res.into())
     }
     pub fn as_str(&self) -> &str {
@@ -69,7 +68,9 @@ impl PartialHash {
         st[0..self.0.as_bytes().len()].copy_from_slice(self.0.as_bytes());
 
         let st = unsafe { std::str::from_utf8_unchecked(&st) };
-        BASE64_URL_SAFE_NO_PAD.decode_slice_unchecked(st,res.as_mut_slice()).unwrap();
+        BASE64_URL_SAFE_NO_PAD
+            .decode_slice_unchecked(st, res.as_mut_slice())
+            .unwrap();
         res
     }
     pub fn try_from_strlike(v: impl AsRef<[u8]>) -> Result<PartialHash, Error> {
@@ -79,7 +80,7 @@ impl PartialHash {
         }
         let mut b = [b'A'; B64_HASH_LENGTH];
         b[..b64.len()].copy_from_slice(b64);
-        // TODO , just  check character table 
+        // TODO , just  check character table
         BASE64_URL_SAFE_NO_PAD.decode(&b[0..b64.len() & !3usize])?;
         let mut arr = ArrayString::from_byte_string(&b).unwrap();
         arr.truncate(b64.len());
@@ -120,7 +121,7 @@ fn comp() {
     assert_eq!(id, tid);
     let it = (4..b.len())
         .rev()
-        .map(|i| PartialHash::try_from(&b[0..i]).expect(&format!("ID FROM {} {}", i, &b[0..i])));
+        .map(|i| PartialHash::try_from(&b[0..i]).unwrap());
     for part in it {
         println!("str cmp {} {:?} ", part.str_matches(&id), part.0);
         let bytes = part.aprox_btree_idx();

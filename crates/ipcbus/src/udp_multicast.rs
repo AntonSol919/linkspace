@@ -64,17 +64,17 @@ fn recv(socket: Arc<Socket>, mut tx: impl FnMut(&[u8])) -> std::io::Result<()> {
 
 pub fn setup_socket(port: u16) -> (Socket, (Socket, SockAddr)) {
     let addr = [239, 255, 50, 10];
-    let mut send_socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP)).unwrap();
+    let send_socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP)).unwrap();
     send_socket.set_multicast_ttl_v4(0).unwrap();
     send_socket
         .set_multicast_if_v4(&Ipv4Addr::LOCALHOST)
         .unwrap();
-    bind_to_device(&mut send_socket);
+    bind_to_device(&send_socket);
 
-    let mut recv_socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP)).unwrap();
-    bind_to_device(&mut recv_socket);
+    let recv_socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP)).unwrap();
+    bind_to_device(&recv_socket);
     recv_socket.set_reuse_address(true).unwrap();
-    reuse_port(&mut recv_socket);
+    reuse_port(&recv_socket);
 
     let listen_addr: SocketAddr = (addr, port).into();
     recv_socket.bind(&listen_addr.into()).unwrap();
@@ -88,7 +88,7 @@ pub fn setup_socket(port: u16) -> (Socket, (Socket, SockAddr)) {
     )
 }
 #[cfg(not(windows))]
-pub fn reuse_port(socket: &mut Socket) {
+pub fn reuse_port(socket: &Socket) {
     use std::os::unix::prelude::AsRawFd;
     unsafe {
         let optval: libc::c_int = 1;
@@ -105,7 +105,7 @@ pub fn reuse_port(socket: &mut Socket) {
     }
 }
 #[cfg(windows)]
-pub fn reuse_port(_socket: &mut Socket) {}
+pub fn reuse_port(_socket: &Socket) {}
 
 #[cfg(target_vendor = "apple")]
 pub fn bind_to_device(socket: &mut Socket) {
@@ -123,7 +123,7 @@ pub fn bind_to_device(socket: &mut Socket) {
     };
 }
 #[cfg(any(target_os = "android", target_os = "fuchsia", target_os = "linux"))]
-pub fn bind_to_device(socket: &mut Socket) {
+pub fn bind_to_device(socket: &Socket) {
     use std::os::unix::prelude::AsRawFd;
     let dev = std::ffi::OsString::from("lo");
     if let Err(e) = nix::sys::socket::setsockopt(
@@ -136,4 +136,4 @@ pub fn bind_to_device(socket: &mut Socket) {
 }
 
 #[cfg(windows)]
-pub fn bind_to_device(_socket: &mut Socket) {}
+pub fn bind_to_device(_socket: &Socket) {}

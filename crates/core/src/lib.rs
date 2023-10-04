@@ -50,7 +50,6 @@ pub mod query;
 pub mod stamp_fmt;
 pub mod stamp_range;
 
-
 #[macro_export]
 macro_rules! try_opt {
     ($expr:expr $(,)?) => {
@@ -66,19 +65,21 @@ macro_rules! try_opt {
 }
 
 #[repr(align(32))]
-pub struct StaticPkts<const N: usize>(pub [u8;N]);
+pub struct StaticPkts<const N: usize>(pub [u8; N]);
 pub static LNS_ROOTS: StaticPkts<520> = StaticPkts(*include_bytes!("./lnsroots.pkt"));
-impl<const N:usize> StaticPkts<N>{
-    pub fn iter<'o>(&'o self) -> impl Iterator<Item= &'o NetPktPtr> + 'o {
+impl<const N: usize> StaticPkts<N> {
+    pub fn iter(&self) -> impl Iterator<Item = &NetPktPtr> + '_ {
         let mut bytes = &self.0 as &[u8];
-        std::iter::from_fn(move ||{
-            if bytes.is_empty() { return None;}
+        std::iter::from_fn(move || {
+            if bytes.is_empty() {
+                return None;
+            }
             let pkt = crate::pkt::read::read_pkt(bytes, true).unwrap();
-            match pkt{
+            match pkt {
                 std::borrow::Cow::Borrowed(o) => {
                     bytes = &bytes[pkt::NetPktExt::size(&o) as usize..];
                     Some(o)
-                },
+                }
                 std::borrow::Cow::Owned(_) => panic!(),
             }
         })

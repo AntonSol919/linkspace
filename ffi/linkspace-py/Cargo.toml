@@ -13,6 +13,7 @@ build = "build.rs"
 [lib]
 name = "linkspace"
 crate-type = ["cdylib"]
+doc = false
 
 [dependencies]
 linkspace = { path = "../../crates/linkspace", version ="0.4.0"}

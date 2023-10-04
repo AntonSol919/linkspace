@@ -5,7 +5,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 */
-use crate::{space::*, MAX_ROOTED_SPACENAME_SIZE, MAX_SPACE_DEPTH, MAX_SPACENAME_COMPONENT_SIZE};
+use crate::{space::*, MAX_ROOTED_SPACENAME_SIZE, MAX_SPACENAME_COMPONENT_SIZE, MAX_SPACE_DEPTH};
 use std::{borrow::Borrow, ops::Deref, ptr};
 
 /// An RootedSpace is an [[Space]] with 8 bytes prefix: [depth(i.e. #components), \[component_offset;7\]]
@@ -35,10 +35,9 @@ impl<const U: usize> AsRef<RootedSpace> for RootedStaticSpace<U> {
     }
 }
 
-
-#[allow(clippy::as_conversions,clippy::cast_possible_truncation)]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub const fn rspace1<const C0: usize>(c0: &[u8; C0]) -> RootedStaticSpace<{ C0 + 9 }> {
-    assert!(C0 < MAX_SPACENAME_COMPONENT_SIZE );
+    assert!(C0 < MAX_SPACENAME_COMPONENT_SIZE);
     let mut r = [0u8; C0 + 9];
     r[0] = 1;
     let mut i = 1;
@@ -112,7 +111,7 @@ impl RootedSpaceBuf {
         self
     }
 
-    #[allow(clippy::as_conversions,clippy::cast_possible_truncation)]
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn try_append_component(&mut self, component: &[u8]) -> Result<&mut Self, SpaceError> {
         let bs = &mut self.rooted_bytes;
         if component.len() > MAX_SPACENAME_COMPONENT_SIZE {
@@ -124,7 +123,7 @@ impl RootedSpaceBuf {
         if bs.is_empty() {
             *bs = vec![0; 8]
         }
-        if bs[0] >= MAX_SPACE_DEPTH as u8{
+        if bs[0] >= MAX_SPACE_DEPTH as u8 {
             return Err(SpaceError::CapacityError);
         }
         if bs.len() + component.len() + 1 > MAX_ROOTED_SPACENAME_SIZE {
@@ -193,8 +192,7 @@ impl RootedSpace {
         Self::EMPTY
     }
     pub const fn from_unchecked(b: &[u8]) -> &RootedSpace {
-
-        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(), b.len())}
+        unsafe { &*ptr::from_raw_parts(b.as_ptr().cast(), b.len()) }
     }
 
     pub const fn check_components(&self) -> Result<(), SpaceError> {
@@ -261,7 +259,7 @@ impl RootedSpace {
 
     /// component count
     pub const fn space_depth(&self) -> &u8 {
-        match self.rooted_bytes.first(){
+        match self.rooted_bytes.first() {
             Some(v) => v,
             None => &0,
         }
@@ -403,5 +401,3 @@ fn space_roots() {
     i.check_components().unwrap();
     //    let arrr = [0,1,2,3,4,5,6,7].map(|v|i.comp(v));
 }
-
-

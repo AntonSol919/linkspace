@@ -1,21 +1,21 @@
-use std::cell::LazyCell;
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::ops::{Try, ControlFlow, Deref};
+use std::cell::LazyCell;
+use std::ops::{ControlFlow, Deref, Try};
 use std::rc::Rc;
 use std::sync::Arc;
 
-use anyhow::{ anyhow};
+use anyhow::anyhow;
 use bstr::BStr;
 use std::fmt::{Debug, Display};
-use std::{ convert::Infallible, ops::FromResidual};
+use std::{convert::Infallible, ops::FromResidual};
 use thiserror::Error;
 
 use crate::abtxt::as_abtxt;
-use crate::{ast::* };
+use crate::ast::*;
 
 const fn as_str(o: Option<Ctr>) -> &'static str {
     match o {
@@ -45,12 +45,11 @@ macro_rules! dbgprintln {
 }
 
 /** a list of (ctr,bytes) components.
-It is an error for the lst to be empty - and for a Option<Ctr> to be None except for the first entry.
+It is an error for the lst to be empty - and for a `Option<Ctr>` to be None except for the first entry.
 **/
 #[derive(Clone, PartialEq)]
 pub struct ABList(Vec<ABLV>);
 pub type ABLV = (Option<Ctr>, Vec<u8>);
-
 
 impl From<ABList> for Vec<u8> {
     fn from(v: ABList) -> Self {
@@ -59,7 +58,7 @@ impl From<ABList> for Vec<u8> {
 }
 impl From<Vec<u8>> for ABList {
     fn from(value: Vec<u8>) -> Self {
-        ABList(vec![(None,value)])
+        ABList(vec![(None, value)])
     }
 }
 impl From<ABList> for Vec<ABE> {
@@ -75,7 +74,7 @@ impl IntoIterator for ABList {
         self.items().map(|i| i.into())
     }
 }
-impl Deref for ABList{
+impl Deref for ABList {
     type Target = [ABLV];
 
     fn deref(&self) -> &Self::Target {
@@ -99,12 +98,15 @@ pub fn clist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I) -> ABList {
 pub fn flist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I) -> ABList {
     delmited_ablist(elements, Ctr::FSlash)
 }
-pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I, delimiter: Ctr) -> ABList {
+pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(
+    elements: I,
+    delimiter: Ctr,
+) -> ABList {
     let mut lst: Vec<_> = elements
         .into_iter()
-        .map(|b| (Some(delimiter),b.as_ref().to_vec()))
+        .map(|b| (Some(delimiter), b.as_ref().to_vec()))
         .collect();
-    if let Some(v) = lst.first_mut(){
+    if let Some(v) = lst.first_mut() {
         v.0 = None;
     }
     ABList(lst)
@@ -112,7 +114,7 @@ pub fn delmited_ablist<I: IntoIterator<Item = A>, A: AsRef<[u8]>>(elements: I, d
 
 impl Display for ABList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (ctr,bytes) in &self.0 {
+        for (ctr, bytes) in &self.0 {
             f.write_str(as_str(*ctr))?;
             f.write_str(&as_abtxt(bytes))?;
         }
@@ -122,10 +124,10 @@ impl Display for ABList {
 
 impl Debug for ABList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        struct ABDebug<I>(Option<Ctr>,I);
+        struct ABDebug<I>(Option<Ctr>, I);
         impl<I: AsRef<[u8]>> Debug for ABDebug<I> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str( as_str(self.0))?;
+                f.write_str(as_str(self.0))?;
                 f.write_str(&as_abtxt(self.1.as_ref()))
             }
         }
@@ -141,24 +143,27 @@ impl Default for ABList {
 }
 
 impl ABList {
-    
-    pub const DEFAULT : Self = ABList(vec![]);
+    pub const DEFAULT: Self = ABList(vec![]);
 
     pub fn items(self) -> impl Iterator<Item = ABItem> {
         self.0.into_iter().flat_map(|(ctr, b)| {
-            ctr.map(ABItem::Ctr)
-                .into_iter()
-                .chain(if b.is_empty() { None} else { Some(ABItem::Bytes(b))})
+            ctr.map(ABItem::Ctr).into_iter().chain(if b.is_empty() {
+                None
+            } else {
+                Some(ABItem::Bytes(b))
+            })
         })
     }
     pub fn item_refs(&self) -> impl Iterator<Item = ABItem<&[u8]>> {
         self.0.iter().flat_map(|(ctr, b)| {
-            ctr.map(ABItem::Ctr)
-                .into_iter()
-                .chain(if b.is_empty() { None} else { Some(ABItem::Bytes(b.as_slice()))})
+            ctr.map(ABItem::Ctr).into_iter().chain(if b.is_empty() {
+                None
+            } else {
+                Some(ABItem::Bytes(b.as_slice()))
+            })
         })
     }
-    pub fn push_v(&mut self, item: ABLV){
+    pub fn push_v(&mut self, item: ABLV) {
         self.0.push(item)
     }
     pub fn push(self, item: ABItem) -> Self {
@@ -168,33 +173,32 @@ impl ABList {
         }
     }
     pub fn push_bytes(mut self, bytes: &[u8]) -> Self {
-        match self.0.last_mut(){
-            Some((_c,b)) => b.extend_from_slice(bytes),
-            None => self.0.push((None,bytes.to_vec())),
+        match self.0.last_mut() {
+            Some((_c, b)) => b.extend_from_slice(bytes),
+            None => self.0.push((None, bytes.to_vec())),
         }
         self
     }
     pub fn push_ctr(mut self, ctr: Ctr) -> Self {
-        self.0.push((Some(ctr),vec![]));
+        self.0.push((Some(ctr), vec![]));
         self
     }
     pub fn into_exact_bytes(mut self) -> Result<Vec<u8>, Self> {
         match &self.0[..] {
             [] => Ok(vec![]),
-            [(None,_)] => Ok(self.0.pop().unwrap().1),
-            _ => Err(self)
+            [(None, _)] => Ok(self.0.pop().unwrap().1),
+            _ => Err(self),
         }
     }
     pub fn as_exact_bytes(&self) -> Result<&[u8], &Self> {
-        match &self.0[..]{
+        match &self.0[..] {
             [] => Ok(&[]),
-            [(None,b)] => Ok(&b),
-            _ => Err(self)
-
+            [(None, b)] => Ok(b),
+            _ => Err(self),
         }
     }
 
-    pub fn as_slice(&self) -> &[ABLV]{
+    pub fn as_slice(&self) -> &[ABLV] {
         &self.0
     }
     /// Merges (bytes, ctr) into a sequence of bytes.
@@ -202,12 +206,12 @@ impl ABList {
     /// Use display to print propery escaped values.
     pub fn concat(self) -> Vec<u8> {
         let mut it = self.0.into_iter();
-        let (ctr,mut bytes) = match it.next(){
+        let (ctr, mut bytes) = match it.next() {
             Some(v) => v,
-            None => return vec![]
+            None => return vec![],
         };
-        if ctr.is_some(){
-            bytes.insert(0,as_str(ctr).as_bytes()[0]);
+        if ctr.is_some() {
+            bytes.insert(0, as_str(ctr).as_bytes()[0]);
         }
         for (c, b) in it {
             bytes.extend_from_slice(as_str(c).as_bytes());
@@ -223,71 +227,79 @@ impl ABList {
     a/b:c => [(0,a)] , [(/,b),(:,c)]
     :a/b:c => [(:,a)] , [(/,b),(:,c)]
     /a/b:c => Dont care - handled by eval already
-    
+
     */
-    fn split_fslash(&self) -> impl Iterator<Item=&[ABLV]>{
+    fn split_fslash(&self) -> impl Iterator<Item = &[ABLV]> {
         let mut slice = self.0.as_slice();
-        std::iter::from_fn(move ||{
-            if slice.len() ==  0 { return None}
-            let i = slice[1..].iter().position(|v| v.0 == Some(Ctr::FSlash)).unwrap_or(slice.len()-1) + 1;
-            let (r,rest) = slice.split_at(i);
+        std::iter::from_fn(move || {
+            if slice.is_empty() {
+                return None;
+            }
+            let i = slice[1..]
+                .iter()
+                .position(|v| v.0 == Some(Ctr::FSlash))
+                .unwrap_or(slice.len() - 1)
+                + 1;
+            let (r, rest) = slice.split_at(i);
             slice = rest;
             Some(r)
         })
     }
 
-    /// iterate over logical bytes instead of tuples. i.e. a:b/c => [a,b,c] :a/b:c: => ['',a,b,c,'']
-    pub fn iter_bytes(&self) -> impl Iterator<Item=&[u8]>{
-        let head :Option<&[u8]>= self.0.first().map(|o| o.0.map(|_|&[] as &[u8])).flatten();
-        head.into_iter().chain(self.0.iter().map(|o| o.1.as_slice()))
+    /// iterate over logical bytes instead of tuples. i.e. a:b/c => `[a,b,c]` :a/b:c: => `['',a,b,c,'']``
+    pub fn iter_bytes(&self) -> impl Iterator<Item = &[u8]> {
+        let head: Option<&[u8]> = self.0.first().and_then(|o| o.0.map(|_| &[] as &[u8]));
+        head.into_iter()
+            .chain(self.0.iter().map(|o| o.1.as_slice()))
     }
-    pub fn into_iter_bytes(self) -> impl Iterator<Item=Vec<u8>>{
-        let head :Option<Vec<u8>>= self.0.first().map(|o| o.0.map(|_|vec![])).flatten();
+    pub fn into_iter_bytes(self) -> impl Iterator<Item = Vec<u8>> {
+        let head: Option<Vec<u8>> = self.0.first().and_then(|o| o.0.map(|_| vec![]));
         head.into_iter().chain(self.0.into_iter().map(|o| o.1))
     }
     /// Warning: depending on the context it can be invalid to leave an empty vec behind.
-    pub fn get_mut(&mut self) -> &mut Vec<ABLV>{
+    pub fn get_mut(&mut self) -> &mut Vec<ABLV> {
         &mut self.0
     }
-    pub fn unwrap(self) -> Vec<ABLV>{
+    pub fn unwrap(self) -> Vec<ABLV> {
         self.0
     }
-    pub fn pop_front(&mut self) -> Option<ABLV>{
-        self.0.splice(0..1,None).next()
+    pub fn pop_front(&mut self) -> Option<ABLV> {
+        self.0.splice(0..1, None).next()
     }
-    
 }
 pub type ApplyErr = anyhow::Error;
 
-impl<'o> TryFrom<&'o [ABE]> for ABList{
+impl<'o> TryFrom<&'o [ABE]> for ABList {
     type Error = &'o ABE;
 
-    fn try_from(abe :&'o [ABE]) -> Result<Self, Self::Error> {
-        if let Some(expr) = abe.iter().find(|v| matches!(v, ABE::Expr(Expr::Lst(_)))){ return Err(expr)}
-        let abl = abe.iter().map(|v| match v {
-            ABE::Ctr(c) => ABItem::Ctr(*c),
-            ABE::Expr(Expr::Bytes(b)) => ABItem::Bytes(b.clone()),
-            ABE::Expr(Expr::Lst(_))=>unreachable!()
-        }).collect();
+    fn try_from(abe: &'o [ABE]) -> Result<Self, Self::Error> {
+        if let Some(expr) = abe.iter().find(|v| matches!(v, ABE::Expr(Expr::Lst(_)))) {
+            return Err(expr);
+        }
+        let abl = abe
+            .iter()
+            .map(|v| match v {
+                ABE::Ctr(c) => ABItem::Ctr(*c),
+                ABE::Expr(Expr::Bytes(b)) => ABItem::Bytes(b.clone()),
+                ABE::Expr(Expr::Lst(_)) => unreachable!(),
+            })
+            .collect();
         Ok(abl)
     }
 }
-
-
 
 #[derive(Debug)]
 /// Utility that impl's try for both None and Err
 /// Semantically the None value means the caller has to decide whether to continue.
 // TODO: This might benefit a lot from Cow
-pub enum ApplyResult<V=Vec<u8>> {
+pub enum ApplyResult<V = Vec<u8>> {
     NoValue,
     Value(V),
     Err(ApplyErr),
 }
 
 impl<V> ApplyResult<V> {
-
-    pub fn map<X>(self,f:impl FnOnce(V) -> X) -> ApplyResult<X>{
+    pub fn map<X>(self, f: impl FnOnce(V) -> X) -> ApplyResult<X> {
         match self {
             ApplyResult::NoValue => ApplyResult::NoValue,
             ApplyResult::Value(v) => ApplyResult::Value(f(v)),
@@ -318,14 +330,17 @@ impl<V> ApplyResult<V> {
             self
         }
     }
-    pub fn require(self,msg:&'static str) -> Self {
+    pub fn require(self, msg: &'static str) -> Self {
         match self {
             ApplyResult::NoValue => ApplyResult::Err(anyhow!("no result").context(msg)),
             ApplyResult::Value(v) => ApplyResult::Value(v),
-            ApplyResult::Err(e) => ApplyResult::Err(e)
+            ApplyResult::Err(e) => ApplyResult::Err(e),
         }
     }
-    pub fn context<C>(self,context: C) -> Self where  C: Display + Send + Sync + 'static{
+    pub fn context<C>(self, context: C) -> Self
+    where
+        C: Display + Send + Sync + 'static,
+    {
         match self {
             ApplyResult::NoValue => ApplyResult::NoValue,
             ApplyResult::Value(o) => ApplyResult::Value(o),
@@ -333,12 +348,12 @@ impl<V> ApplyResult<V> {
         }
     }
 }
-impl<V> FromResidual<ApplyResult<V>> for ApplyResult<V>{
+impl<V> FromResidual<ApplyResult<V>> for ApplyResult<V> {
     fn from_residual(residual: ApplyResult<V>) -> Self {
         residual
     }
 }
-impl<V> Try for ApplyResult<V>{
+impl<V> Try for ApplyResult<V> {
     type Output = V;
 
     type Residual = ApplyResult<V>;
@@ -355,12 +370,12 @@ impl<V> Try for ApplyResult<V>{
     }
 }
 
-impl<V> From<Option<V>> for ApplyResult<V>{
+impl<V> From<Option<V>> for ApplyResult<V> {
     fn from(value: Option<V>) -> Self {
         value.map(ApplyResult::Value)?
     }
 }
-impl<V> From<V> for ApplyResult<V>{
+impl<V> From<V> for ApplyResult<V> {
     fn from(value: V) -> Self {
         ApplyResult::Value(value)
     }
@@ -370,7 +385,7 @@ impl<V> FromResidual<Option<Infallible>> for ApplyResult<V> {
         AR::NoValue
     }
 }
-impl<V,E: Into<ApplyErr>> From<Option<Result<V, E>>> for ApplyResult<V> {
+impl<V, E: Into<ApplyErr>> From<Option<Result<V, E>>> for ApplyResult<V> {
     fn from(v: Option<Result<V, E>>) -> Self {
         match v {
             Some(v) => v.map_err(Into::into).into(),
@@ -378,7 +393,7 @@ impl<V,E: Into<ApplyErr>> From<Option<Result<V, E>>> for ApplyResult<V> {
         }
     }
 }
-impl<V,E: Into<ApplyErr>> FromResidual<Result<Infallible, E>> for ApplyResult<V> {
+impl<V, E: Into<ApplyErr>> FromResidual<Result<Infallible, E>> for ApplyResult<V> {
     fn from_residual(residual: Result<Infallible, E>) -> Self {
         AR::Err(residual.unwrap_err().into())
     }
@@ -422,7 +437,7 @@ pub type Describer<'cb> = &'cb mut dyn FnMut(
 );
 
 pub trait Scope {
-    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_macro(&self, _id: &[u8], _abe: &[ABE], _scope: &dyn Scope) -> ApplyResult {
         ApplyResult::NoValue
     }
     fn try_apply_func(
@@ -430,7 +445,7 @@ pub trait Scope {
         id: &[u8],
         inp_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult;
     fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String>;
     fn describe(&self, cb: Describer) {
@@ -441,7 +456,13 @@ pub trait Scope {
 #[derive(Copy, Clone)]
 pub struct EScope<T>(pub T);
 impl<T: EvalScopeImpl> Scope for EScope<T> {
-    fn try_apply_func(&self, id: &[u8], inp: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        inp: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
         for ScopeFunc { apply, info, .. } in self.0.list_funcs() {
             if info.id.as_bytes() == id {
                 if info.init_eq.is_some() && info.init_eq != Some(init) {
@@ -450,7 +471,7 @@ impl<T: EvalScopeImpl> Scope for EScope<T> {
                 if !info.argc.contains(&inp.len()) {
                     return ApplyResult::arg_err(inp, &format!("between {:?}", info.argc));
                 }
-                return apply(&self.0, inp, init, ctx);
+                return apply(&self.0, inp, init, scope);
             }
         }
         ApplyResult::NoValue
@@ -525,7 +546,7 @@ impl Scope for () {
         _id: &[u8],
         _args: &[&[u8]],
         _init: bool,
-        _ctx: &dyn Scope,
+        _scope: &dyn Scope,
     ) -> ApplyResult {
         AR::NoValue
     }
@@ -548,10 +569,10 @@ impl<A: Scope> Scope for Option<A> {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult {
         self.as_ref()
-            .map(|x| x.try_apply_func(id, inpt_and_args, init, ctx))
+            .map(|x| x.try_apply_func(id, inpt_and_args, init, scope))
             .unwrap_or(ApplyResult::NoValue)
     }
     fn describe(&self, cb: Describer) {
@@ -586,9 +607,9 @@ impl Scope for &dyn Scope {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> ApplyResult {
-        (**self).try_apply_func(id, inpt_and_args, init, ctx)
+        (**self).try_apply_func(id, inpt_and_args, init, scope)
     }
 
     fn describe(&self, cb: Describer) {
@@ -604,8 +625,14 @@ impl<A: Scope> Scope for &A {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -619,8 +646,14 @@ impl<A: Scope> Scope for Rc<A> {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -634,8 +667,14 @@ impl<A: Scope> Scope for Arc<A> {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -646,10 +685,16 @@ impl<A: Scope> Scope for Arc<A> {
 }
 
 impl<A: Scope, B: Scope> Scope for (A, B) {
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
         self.0
-            .try_apply_func(id, args, init, ctx)
-            .or_else(|| self.1.try_apply_func(id, args, init, ctx))
+            .try_apply_func(id, args, init, scope)
+            .or_else(|| self.1.try_apply_func(id, args, init, scope))
     }
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
         self.0
@@ -667,8 +712,14 @@ impl<A: Scope, B: Scope> Scope for (A, B) {
     }
 }
 impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
+        ((&self.0, &self.1), &self.2).try_apply_func(id, args, init, scope)
     }
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scope: &dyn Scope) -> ApplyResult {
         ((&self.0, &self.1), &self.2).try_apply_macro(id, abe, scope)
@@ -688,14 +739,19 @@ impl<A: Scope, B: Scope, C: Scope> Scope for (A, B, C) {
     }
 }
 
-
-impl<T:Scope> Scope for LazyCell<T>{
+impl<T: Scope> Scope for LazyCell<T> {
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
         (**self).try_apply_macro(id, abe, scopes)
     }
 
-    fn try_apply_func(&self, id: &[u8], args: &[&[u8]], init: bool, ctx: &dyn Scope) -> ApplyResult {
-        (**self).try_apply_func(id, args, init, ctx)
+    fn try_apply_func(
+        &self,
+        id: &[u8],
+        args: &[&[u8]],
+        init: bool,
+        scope: &dyn Scope,
+    ) -> ApplyResult {
+        (**self).try_apply_func(id, args, init, scope)
     }
     fn describe(&self, cb: Describer) {
         (**self).describe(cb)
@@ -710,17 +766,17 @@ impl<A: Scope> Scope for anyhow::Result<A> {
         id: &[u8],
         inpt_and_args: &[&[u8]],
         init: bool,
-        ctx: &dyn Scope,
+        o_scope: &dyn Scope,
     ) -> ApplyResult {
-        match &self{
-            Ok(scope) => scope.try_apply_func(id, inpt_and_args, init, ctx),
-            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+        match &self {
+            Ok(scope) => scope.try_apply_func(id, inpt_and_args, init, o_scope),
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}")),
         }
     }
     fn describe(&self, cb: Describer) {
         match self {
             Ok(s) => s.describe(cb),
-            Err(e)=> cb(
+            Err(e) => cb(
                 &format!("{} Err({e})", std::any::type_name::<A>()),
                 "",
                 &mut std::iter::empty(),
@@ -729,21 +785,20 @@ impl<A: Scope> Scope for anyhow::Result<A> {
         }
     }
     fn try_apply_macro(&self, id: &[u8], abe: &[ABE], scopes: &dyn Scope) -> ApplyResult {
-        match &self{
+        match &self {
             Ok(scope) => scope.try_apply_macro(id, abe, scopes),
-            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}")),
         }
     }
     fn try_encode(&self, id: &[u8], options: &[ABE], bytes: &[u8]) -> ApplyResult<String> {
-        match &self{
+        match &self {
             Ok(scope) => scope.try_encode(id, options, bytes),
-            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}"))
+            Err(e) => ApplyResult::Err(anyhow::anyhow!("Scope level error: {e:?}")),
         }
     }
 }
 
-
-fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalError> {
+fn match_expr(depth: usize, scope: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalError> {
     match expr {
         ABE::Ctr(c) => {
             dbgprintln!("Match/Return Ctr({c})  (depth={depth})");
@@ -760,9 +815,9 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                     let (id, rest): (&[u8], &[ABE]) = match tail {
                         [] => return Err(EvalError::Other(anyhow!("missing eval name"))),
                         [ABE::Expr(Expr::Lst(_)), ..] => {
-                            return Err(EvalError::Other(
-                                anyhow!("var eval name resolution disabled")
-                            ))
+                            return Err(EvalError::Other(anyhow!(
+                                "var eval name resolution disabled"
+                            )))
                         }
                         [ABE::Ctr(Ctr::Colon), ref rest @ ..] => {
                             let mut result = vec![];
@@ -775,33 +830,31 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                         [ABE::Expr(Expr::Bytes(ref id)), ref r @ ..] => (id, r),
                     };
                     dbgprintln!("Eval('{}')", as_abtxt(id));
-                    match ctx.try_apply_macro(id, rest, &ctx) {
+                    match scope.try_apply_macro(id, rest, &scope) {
                         ApplyResult::NoValue => return Err(EvalError::NoSuchSubEval(id.to_vec())),
                         ApplyResult::Value(b) => {
                             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&b));
-                            return Ok(ABItem::Bytes(b))   
-                        },
+                            return Ok(ABItem::Bytes(b));
+                        }
                         ApplyResult::Err(e) => return Err(EvalError::SubEval(id.to_vec(), e)),
                     }
                 }
-                [ABE::Expr(Expr::Lst(_)), ..] | [ABE::Expr(_), ABE::Expr(_) ]=> {
-                    Err(EvalError::Other(anyhow!("function names can not be expressions")))?
-                }
-                _ => _eval(depth + 1, ctx, ls)?,
+                [ABE::Expr(Expr::Lst(_)), ..] | [ABE::Expr(_), ABE::Expr(_)] => Err(
+                    EvalError::Other(anyhow!("function names can not be expressions")),
+                )?,
+                _ => _eval(depth + 1, scope, ls)?,
             };
 
             fn call(
                 scope: &impl Scope,
                 id: &[u8],
                 mut input_and_args: &[&[u8]],
-                init:bool
+                init: bool,
             ) -> Result<Vec<u8>, EvalError> {
-                dbgprintln!(
-                    "Call({init},id={},inp={:?} )",
-                    as_abtxt(id),
-                    input_and_args
-                );
-                if init { input_and_args = &input_and_args[1..]}
+                dbgprintln!("Call({init},id={},inp={:?} )", as_abtxt(id), input_and_args);
+                if init {
+                    input_and_args = &input_and_args[1..]
+                }
                 match scope.try_apply_func(id, input_and_args, init, &scope) {
                     ApplyResult::NoValue => Err(EvalError::NoSuchFunc(id.to_vec())),
                     ApplyResult::Value(b) => Ok(b),
@@ -809,27 +862,30 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
                 }
             }
             let it = inner_abl.split_fslash();
-            
-            let mut stack : [&[u8]; 16];
+
+            let mut stack: [&[u8]; 16];
             let mut carry = vec![];
 
             for sub_expr in it {
                 dbgprintln!("calling {sub_expr:?}");
                 let size = sub_expr.len();
-                stack = [&[];16];
-                let mut id_and_args = sub_expr.iter().map(|(_,c)|c.as_slice());
-                stack.iter_mut().zip(&mut id_and_args).for_each(|(s,v)| *s = v);
-                if id_and_args.next().is_some(){
+                stack = [&[]; 16];
+                let mut id_and_args = sub_expr.iter().map(|(_, c)| c.as_slice());
+                stack
+                    .iter_mut()
+                    .zip(&mut id_and_args)
+                    .for_each(|(s, v)| *s = v);
+                if id_and_args.next().is_some() {
                     return Err(EvalError::Other(anyhow!("more than 16 args not supported")));
                 }
                 let ctr = sub_expr.first().and_then(|f| f.0);
-                if ctr == Some(Ctr::Colon){
+                if ctr == Some(Ctr::Colon) {
                     carry = stack.concat();
-                }else {
+                } else {
                     let id = stack[0];
                     stack[0] = carry.as_slice();
                     let args = &stack[..size];
-                    carry = call(&ctx, id, args, ctr.is_none())?;
+                    carry = call(&scope, id, args, ctr.is_none())?;
                 }
             }
             dbgprintln!("Return bytes('{}') (depth={depth})", as_abtxt(&carry));
@@ -838,9 +894,9 @@ fn match_expr(depth: usize, ctx: &dyn Scope, expr: &ABE) -> Result<ABItem, EvalE
     }
 }
 
-pub fn eval(ctx: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
+pub fn eval(scope: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalError> {
     dbgprintln!("init ({})", print_abe(abe));
-    match _eval(0, ctx, abe) {
+    match _eval(0, scope, abe) {
         Ok(l) => {
             dbgprintln!("result ({})", l);
             Ok(l)
@@ -853,11 +909,11 @@ pub fn eval(ctx: &dyn Scope, abe: &[ABE]) -> std::result::Result<ABList, EvalErr
 }
 pub fn _eval(
     depth: usize,
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     abe: &[ABE],
 ) -> std::result::Result<ABList, EvalError> {
     abe.iter()
-        .map(|expr| match_expr(depth, ctx, expr))
+        .map(|expr| match_expr(depth, scope, expr))
         .try_collect()
 }
 
@@ -877,19 +933,19 @@ pub enum EncodeError {
 /// :scope/{opts}:
 /// e.g. lns:{known}/b64/uint will attempt to encode bytes through locally known lns, otherwise use b64, and finnally attempt uint
 pub fn encode(
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     bytes: &[u8],
     options: &str,
-    ignore_encoder_errors:bool
+    ignore_encoder_errors: bool,
 ) -> std::result::Result<String, EncodeError> {
     let lst = parse_abe_strict_b(options.as_bytes()).map_err(EncodeError::ParseError)?;
-    encode_abe(ctx, bytes, &lst,ignore_encoder_errors)
+    encode_abe(scope, bytes, &lst, ignore_encoder_errors)
 }
 pub fn encode_abe(
-    ctx: &dyn Scope,
+    scope: &dyn Scope,
     bytes: &[u8],
     options: &[ABE],
-    ignore_encoder_errors:bool
+    ignore_encoder_errors: bool,
 ) -> std::result::Result<String, EncodeError> {
     // TODO options should prob be ABList
     let mut it = options.split(|v| v.is_fslash());
@@ -897,29 +953,40 @@ pub fn encode_abe(
         it.next();
     }
     for scope_opts in it {
-        let (func_id,args) :(&[u8],&[ABE]) = match scope_opts {
-            [ABE::Ctr(Ctr::Colon)] => (&[],&[]),
+        let (func_id, args): (&[u8], &[ABE]) = match scope_opts {
+            [ABE::Ctr(Ctr::Colon)] => (&[], &[]),
             [] => return Ok(as_abtxt(bytes).into_owned()),
-            [ABE::Expr(Expr::Bytes(b))] => (b.as_slice(),&[]),
-            [ABE::Expr(Expr::Bytes(b)),ABE::Ctr(Ctr::Colon), ref rest @ .. ] => (b.as_slice(),rest),
-            e => return Err(EncodeError::OptionError(anyhow!("expected function id + args ( got '{}')",print_abe(e)))),
+            [ABE::Expr(Expr::Bytes(b))] => (b.as_slice(), &[]),
+            [ABE::Expr(Expr::Bytes(b)), ABE::Ctr(Ctr::Colon), ref rest @ ..] => {
+                (b.as_slice(), rest)
+            }
+            e => {
+                return Err(EncodeError::OptionError(anyhow!(
+                    "expected function id + args ( got '{}')",
+                    print_abe(e)
+                )))
+            }
         };
         //eprintln!("Try {}",as_abtxt(func_id));
-        match ctx.try_encode(func_id, args, bytes) {
+        match scope.try_encode(func_id, args, bytes) {
             ApplyResult::NoValue => {}
             ApplyResult::Value(st) => {
-                if cfg!(debug_assertions){
-                    let redo = eval(ctx, &parse_abe_strict_b(&st.as_bytes()).expect("bug: encode fmt"))
-                        .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
-                    let redo = redo.as_exact_bytes()
-                        .expect("bug: encode multi");
+                if cfg!(debug_assertions) {
+                    let redo = eval(
+                        scope,
+                        &parse_abe_strict_b(st.as_bytes()).expect("bug: encode fmt"),
+                    )
+                    .unwrap_or_else(|_| panic!("bug: encode-eval ({})", &st));
+                    let redo = redo.as_exact_bytes().expect("bug: encode multi");
                     assert_eq!(redo,bytes, "bug: eval(encode) for {bytes:?}({}) gave {st}, but but re-evaluated would be {redo:?}({})",
                                BStr::new(&bytes), BStr::new(&redo) );
                 }
                 return Ok(st);
             }
             ApplyResult::Err(e) => {
-                if !ignore_encoder_errors{return Err(EncodeError::ScopeEncode(as_abtxt(func_id).to_string(), e))}
+                if !ignore_encoder_errors {
+                    return Err(EncodeError::ScopeEncode(as_abtxt(func_id).to_string(), e));
+                }
             }
         }
     }
@@ -935,6 +1002,7 @@ macro_rules! scope_macro {
                 help: $help,
             },
             apply: |a, b: &[$crate::ast::ABE], c| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
                 let r: Result<Vec<u8>, $crate::eval::ApplyErr> = $fnc(a, b, c);
                 $crate::eval::ApplyResult::from(r)
             },
@@ -946,6 +1014,7 @@ macro_rules! fnc {
     ( $id:expr, $argc:expr, $help:literal,$fnc:expr, { id : $to_abe:expr}) => {
         $crate::fnc!($id,$argc,None,$help,$fnc,
                      |_,bytes:&[u8],options:&[$crate::ABE]| -> $crate::eval::ApplyResult<String>{
+                         #[allow(clippy::redundant_closure_call)]
                          let st : Option<String> = $to_abe(bytes,options);
                          match st {
                              None => $crate::eval::ApplyResult::NoValue,
@@ -959,16 +1028,17 @@ macro_rules! fnc {
         $crate::fnc!($id,$argc,None,$help,$fnc)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr ) => {
-        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), none)
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_scope:&dyn $crate::eval::Scope| $fnc(a,b), none)
     };
     ( $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr ) => {
-        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_ctx:&dyn $crate::eval::Scope| $fnc(a,b), $to_abe)
+        $crate::fnc!(@C $id , $argc , $init, $help, |a,b,_init:bool,_scope:&dyn $crate::eval::Scope| $fnc(a,b), $to_abe)
     };
     ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, none) => {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: false},
-            apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                $fnc(a,b,init,ctx).into()
+            apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
+                $fnc(a,b,init,scope).into()
             },
             to_abe:$crate::eval::none
         }
@@ -976,8 +1046,9 @@ macro_rules! fnc {
     ( @C $id:expr, $argc:expr, $init:expr, $help:literal,$fnc:expr, $to_abe:expr) => {
         $crate::eval::ScopeFunc{
             info: $crate::eval::ScopeFuncInfo { id: $id, init_eq: $init, argc: $argc, help: $help, to_abe: true },
-            apply: |a,b:&[&[u8]],init:bool,ctx:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
-                $fnc(a,b,init,ctx).into()
+            apply: |a,b:&[&[u8]],init:bool,scope:&dyn $crate::eval::Scope| -> $crate::eval::ApplyResult {
+                #[allow(clippy::redundant_closure_call)]
+                $fnc(a,b,init,scope).into()
             },
             to_abe:$to_abe
         }
@@ -994,11 +1065,6 @@ macro_rules! fncs {
         &[ $( $crate::fnc!($($fni)*) ),*]
     };
 }
-
-
-
-
-
 
 /// Note that this destroys context information. \/ and / resolve to the same
 pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
@@ -1017,74 +1083,70 @@ pub fn dump_abe_bytes(out: &mut Vec<u8>, abe: &[ABE]) {
     }
 }
 
-
-
-
 #[test]
-fn try_applyresult(){
-    
-    fn one() -> ApplyResult<isize>{
+fn try_applyresult() {
+    fn one() -> ApplyResult<isize> {
         let v = ApplyResult::Value(1)?;
         ApplyResult::Value(v)
     }
-    fn one_opt() -> ApplyResult<isize>{
-        let v:isize = Some(1)?;
+    fn one_opt() -> ApplyResult<isize> {
+        let v: isize = Some(1)?;
         ApplyResult::Value(v)
     }
-    fn one_ok() -> ApplyResult<isize>{
-        let v:isize = Ok::<isize,anyhow::Error>(1)?;
+    fn one_ok() -> ApplyResult<isize> {
+        let v: isize = Ok::<isize, anyhow::Error>(1)?;
         ApplyResult::Value(v)
     }
-    fn one_ok_some() -> ApplyResult<isize>{
-        let v:isize = Ok::<Option<isize>,anyhow::Error>(Some(1))??;
+    fn one_ok_some() -> ApplyResult<isize> {
+        let v: isize = Ok::<Option<isize>, anyhow::Error>(Some(1))??;
         ApplyResult::Value(v)
     }
-    assert!(matches!(one(),ApplyResult::Value(1)));
-    assert!(matches!(one_ok(),ApplyResult::Value(1)));
-    assert!(matches!(one_opt(),ApplyResult::Value(1)));
-    assert!(matches!(one_ok_some(),ApplyResult::Value(1)));
+    assert!(matches!(one(), ApplyResult::Value(1)));
+    assert!(matches!(one_ok(), ApplyResult::Value(1)));
+    assert!(matches!(one_opt(), ApplyResult::Value(1)));
+    assert!(matches!(one_ok_some(), ApplyResult::Value(1)));
 
-    fn none() -> ApplyResult<isize>{
+    fn none() -> ApplyResult<isize> {
         let _v: ApplyResult<isize> = None?;
         ApplyResult::Value(1)
     }
-    fn none_v() -> ApplyResult<isize>{
-        let v:isize = None?;
+    fn none_v() -> ApplyResult<isize> {
+        let v: isize = None?;
         ApplyResult::Value(v)
     }
-    fn none_errv() -> ApplyResult<isize>{
-        let v:Result<isize,anyhow::Error> = None?;
+    fn none_errv() -> ApplyResult<isize> {
+        let v: Result<isize, anyhow::Error> = None?;
         ApplyResult::Value(v?)
-    } 
-    fn none_ok() -> ApplyResult<isize>{
-        let v:isize = Ok::<_,anyhow::Error>(None)??;
+    }
+    fn none_ok() -> ApplyResult<isize> {
+        let v: isize = Ok::<_, anyhow::Error>(None)??;
         ApplyResult::Value(v)
     }
-    assert!(matches!(none(),ApplyResult::NoValue));
-    assert!(matches!(none_v(),ApplyResult::NoValue));
-    assert!(matches!(none_errv(),ApplyResult::NoValue));
-    assert!(matches!(none_ok(),ApplyResult::NoValue));
+    assert!(matches!(none(), ApplyResult::NoValue));
+    assert!(matches!(none_v(), ApplyResult::NoValue));
+    assert!(matches!(none_errv(), ApplyResult::NoValue));
+    assert!(matches!(none_ok(), ApplyResult::NoValue));
 
-    fn err() -> ApplyResult<isize>{
+    fn err() -> ApplyResult<isize> {
         let _v: ApplyResult<isize> = Err(anyhow!("err"))?;
         ApplyResult::Value(1)
     }
-    fn err_v() -> ApplyResult<isize>{
+    fn err_v() -> ApplyResult<isize> {
         let _v: isize = Err(anyhow!("err"))?;
         ApplyResult::Value(1)
     }
-    fn some_err_v() -> ApplyResult<isize>{
+    fn some_err_v() -> ApplyResult<isize> {
         let _v: isize = Some(Err(anyhow!("err")))??;
         ApplyResult::Value(1)
-    } 
-    assert!(matches!(err(),ApplyResult::Err(_)));
-    assert!(matches!(err_v(),ApplyResult::Err(_)));
-    assert!(matches!(some_err_v(),ApplyResult::Err(_)));
+    }
+    assert!(matches!(err(), ApplyResult::Err(_)));
+    assert!(matches!(err_v(), ApplyResult::Err(_)));
+    assert!(matches!(some_err_v(), ApplyResult::Err(_)));
 
-    fn required() -> ApplyResult<isize>{
+    fn required() -> ApplyResult<isize> {
         use anyhow::Context;
-        let v : Option<isize> = None;
+        let v: Option<isize> = None;
         v.context("missing")?.into()
     }
-    assert!(matches!(required(),ApplyResult::Err(_)));
+    assert!(matches!(required(), ApplyResult::Err(_)));
 }

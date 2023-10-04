@@ -7,6 +7,7 @@ homepage = "https://www.linkspace.dev"
 documentation = "https://www.linkspace.dev/guide/index.html"
 repository = "https://github.com/AntonSol919/linkspace"
 
+
 [workspace]
 resolver = "2"
 members = [
@@ -17,6 +18,9 @@ members = [
 exclude = [
         "ffi/linkspace-js", # wasm-pack target config is poorly supported - so js is build as an individual crate.
 ]
+
+
+
 
 [workspace.dependencies]
 
@@ -50,6 +54,9 @@ nix = "0.26.2"
 
 [profile.dev.package.linkspace-argon2-identity]
 opt-level = 3
+[profile.dev.package.rust-argon2]
+opt-level = 3
+
 [profile.dev.package.linkspace-cryptography]
 opt-level = 3
 [profile.dev.package.linkspace-pkt]

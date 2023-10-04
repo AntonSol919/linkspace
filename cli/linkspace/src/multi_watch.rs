@@ -5,10 +5,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::thread::JoinHandle;
 
-use anyhow::{ Context};
+use anyhow::Context;
 use linkspace_common::{
-    cli::{clap, clap::Args, opts::{CommonOpts }, tracing, reader::PktReadOpts  },
-    prelude::{*  },
+    cli::{clap, clap::Args, opts::CommonOpts, reader::PktReadOpts, tracing},
+    prelude::*,
     runtime::{handlers::NotifyClose, threads::run_until_spawn_thread},
 };
 
@@ -21,12 +21,12 @@ Read multiple queries from pkts on stdin.
 #[group(skip)]
 pub struct MultiWatch {
     #[command(flatten)]
-    inp:PktReadOpts,
+    inp: PktReadOpts,
     #[command(flatten)]
     print: PrintABE,
-    /// by default evaluation in ctx is limited to static functions. enable 'live' queries.
+    /// by default evaluation in scope is limited to static functions. enable 'live' queries.
     #[arg(short, long)]
-    full_ctx: bool,
+    full_scope: bool,
 
     /// Continue after closing stdin
     #[arg(short, long)]
@@ -72,18 +72,24 @@ pub fn setup_watch(
     (common, mv): &(CommonOpts, MultiWatch),
 ) -> anyhow::Result<()> {
     let mut query = Query::default();
-    let cli_scope = common.eval_ctx();
-    query.parse(pkt.data(), if mv.full_ctx {&cli_scope} else {&CORE_SCOPE})?;
-    
+    let cli_scope = common.eval_scope();
+    query.parse(
+        pkt.data(),
+        if mv.full_scope {
+            &cli_scope
+        } else {
+            &CORE_SCOPE
+        },
+    )?;
+
     let mut ok = mv.constraint.or.is_empty();
-    for opt in mv.constraint.or.iter(){
-        if query.parse(opt.as_bytes(), &cli_scope).is_ok(){
+    for opt in mv.constraint.or.iter() {
+        if query.parse(opt.as_bytes(), &cli_scope).is_ok() {
             ok = true;
             break;
         }
     }
-    anyhow::ensure!(ok,"cant find valid set");
-
+    anyhow::ensure!(ok, "cant find valid set");
 
     if mv.print.do_print() {
         mv.print.print_query(&query, &mut std::io::stdout())?;
@@ -99,7 +105,7 @@ pub fn setup_watch(
 #[derive(Args, Clone)]
 #[group(skip)]
 pub struct OrConstrait {
-    /** Add one or more query constraints. e.g. --or 'group:=:[#:pub]\ndomain:=:example' --or "domain:=:[hello]"
+    /** Add one or more query constraints. e.g. --or 'group:=:[#:pub]\ndomain:=:example' --or 'domain:=:hello'
 
     Queries will have the additional predicate/options added and will be ignored if they result in the empty set.
     NOTE: This means a query without any group or domain would imply the first option
@@ -108,4 +114,3 @@ pub struct OrConstrait {
     #[arg(long)]
     pub or: Vec<String>,
 }
-

@@ -6,7 +6,7 @@
 #![feature(unix_sigpipe)]
 use linkspace_common::{
     anyhow::{self, Context},
-    cli::{clap::Parser, keys::KeyOpts, opts::{CommonOpts}, *, reader::PktReadOpts},
+    cli::{clap::Parser, keys::KeyOpts, opts::CommonOpts, reader::PktReadOpts, *},
     pkt_reader,
     prelude::NetPktFatPtr,
 };
@@ -121,9 +121,9 @@ fn main() -> anyhow::Result<()> {
         }
         Handshake::Serve => {
             tracing::trace!("Init server");
-            let phase0 = match inp.next(){
+            let phase0 = match inp.next() {
                 Some(p) => Phase0(p.context("Reading phase0")?),
-                None => anyhow::bail!("client hung up immediately")
+                None => anyhow::bail!("client hung up immediately"),
             };
             let phase1 = phase1_server_signs(&phase0, id, max_diff_secs)?;
             writer(&phase1.0)?;

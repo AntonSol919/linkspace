@@ -68,15 +68,22 @@ macro_rules! top  {
             impl TestTrait for $fname{
                 const TOKEN: u8 = $token;
                 const ENUM : TestOp = TestOp::$fname;
-                fn test_ref<U:UInt>(left: &U,right:&U) -> bool { $test(left,right)}
+                fn test_ref<U:UInt>(left: &U,right:&U) -> bool {
+                    #[allow(clippy::redundant_closure_call)]
+                    $test(left,right)
+                }
                 fn test_uint_slice(left: &[u8], right:&[u8]) -> bool{
                     assert_eq!(left.len(),right.len());
+                    #[allow(clippy::redundant_closure_call)]
                     $test_vec(left,right)
                 }
             }
             impl<U:UInt> TestVal<U> for $fname<U> {
                 #[inline(always)]
-                fn test(&self, val: &U) -> bool { $test(val,&self.0)}
+                fn test(&self, val: &U) -> bool {
+                    #[allow(clippy::redundant_closure_call)]
+                    $test(val,&self.0)
+                }
                 fn iter(&self) -> Box<dyn Iterator<Item=(TestOp,U)>> {
                     Box::new(std::iter::once((TestOp::$fname,self.0)))
                 }
@@ -200,7 +207,7 @@ pub struct Bound<U> {
     pub low: U,
     pub high: U,
 }
-impl<U:UInt> Default for Bound<U>{
+impl<U: UInt> Default for Bound<U> {
     fn default() -> Self {
         Self::DEFAULT
     }
@@ -278,7 +285,6 @@ impl<U: UInt> Bound<U> {
         std::mem::replace(&mut self.low, Self::DEFAULT.low)
     }
 }
-
 
 impl<U: UInt> Mask<U> {
     pub const DEFAULT: Self = {
@@ -449,8 +455,8 @@ impl<U: UInt> std::fmt::Debug for Mask<U> {
 }
 
 impl<U: UInt> TestSet<U> {
-    pub fn new_eq(v: U) -> TestSet<U>{
-        let mut t= Self::DEFAULT;
+    pub fn new_eq(v: U) -> TestSet<U> {
+        let mut t = Self::DEFAULT;
         t.add(TestOp::Equal, v);
         t
     }
@@ -630,8 +636,12 @@ impl<U: UInt> TestSet<U> {
 }
 impl Bound<u64> {
     pub fn stamp_range(&self, ascending: bool) -> StampRange {
-        let (start,end) = if ascending {(self.low,self.high) }else {(self.high,self.low)};
-        StampRange{start,end}
+        let (start, end) = if ascending {
+            (self.low, self.high)
+        } else {
+            (self.high, self.low)
+        };
+        StampRange { start, end }
     }
 }
 impl<U: UInt> TestSet<U> {
@@ -655,11 +665,11 @@ impl<U: UInt> Bound<U> {
 impl<V: UInt> TestSet<V> {
     /**
     Returns an iterator of booleans starting signifying if the element is in set.
-    ```
-    TestSet {+:1, <:8} == [1,3,5,7]
-    iter_contains(3) -> [true,false,true,false,true]
-    //The 'at' param tracks the last yield,
-    //This is useful in situations such as
+    ```text
+    // TestSet {+:1, <:8} == [1,3,5,7]
+    // iter_contains(3) -> [true,false,true,false,true]
+    // The 'at' param tracks the last yield,
+    // This is useful in situations such as
     let mut at = 3;
     let i = vec![4,2,6].iter().zip(set.iter_contains(&mut at)).filter_map(|(v,b)| b.and_then(v)).collect();
     assert_eq!(i,[4,6]); assert_eq(at,6);

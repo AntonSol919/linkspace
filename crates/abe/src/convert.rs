@@ -5,7 +5,6 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use std::{fmt::Display, marker::PhantomData, ops::Deref, str::FromStr, string::FromUtf8Error};
 
-
 use serde::{Deserialize, Serialize};
 
 use crate::{ast::*, eval::*};
@@ -52,25 +51,22 @@ impl From<Vec<ABE>> for TypedABE<Vec<u8>> {
 }
 
 impl<A: ABEValidator> TypedABE<A> {
-    pub fn unwrap(self) -> Vec<ABE>{
+    pub fn unwrap(self) -> Vec<ABE> {
         self.0
     }
     pub fn eval_default(
         &self,
         default: A,
-        ctx: &dyn Scope,
+        scope: &dyn Scope,
     ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
-        let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
+        let ablst = eval(scope, &self.0).map_err(ABEError::Eval)?;
         if ablst.is_empty() {
             return Ok(default);
         }
         ablst.try_into().map_err(ABEError::TryFrom)
     }
-    pub fn eval(
-        &self,
-        ctx: &dyn Scope,
-    ) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
-        let ablst = eval(ctx, &self.0).map_err(ABEError::Eval)?;
+    pub fn eval(&self, scope: &dyn Scope) -> Result<A, ABEError<<A as TryFrom<ABList>>::Error>> {
+        let ablst = eval(scope, &self.0).map_err(ABEError::Eval)?;
         ablst.try_into().map_err(ABEError::TryFrom)
     }
     pub fn from(value: Vec<ABE>) -> Result<Self, MatchError> {
@@ -153,10 +149,9 @@ impl ABEValidator for ABList {
 pub type AnyABE = TypedABE<ABList>;
 impl From<Vec<ABE>> for AnyABE {
     fn from(value: Vec<ABE>) -> Self {
-        TypedABE(value,PhantomData)
+        TypedABE(value, PhantomData)
     }
 }
-
 
 impl ABEValidator for String {
     fn check(b: &[ABE]) -> Result<(), MatchError> {
@@ -189,12 +184,12 @@ pub trait ToABE {
         self.write_abe(&mut |abe| st.push_str(&abe.to_string()));
         st
     }
-    fn to_abe(&self) -> Vec<ABE>{
+    fn to_abe(&self) -> Vec<ABE> {
         let mut v = vec![];
         self.write_abe(&mut |abe| v.push(abe));
         v
     }
-    fn write_abe(&self, out: &mut dyn FnMut(ABE)){
+    fn write_abe(&self, out: &mut dyn FnMut(ABE)) {
         self.to_abe().into_iter().for_each(out)
     }
 }

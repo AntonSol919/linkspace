@@ -6,12 +6,10 @@
 use super::Linkspace;
 pub use linkspace_core::matcher::BareWatch;
 use linkspace_core::{
-    pkt::NetPkt, query::{Query, KnownOptions},
+    pkt::NetPkt,
+    query::{KnownOptions, Query},
 };
-use linkspace_pkt::{
-    reroute::{ReroutePkt},
-    NetFlags, PointExt, NetPktBox,
-};
+use linkspace_pkt::{reroute::ReroutePkt, NetFlags, NetPktBox, PointExt};
 use std::ops::{ControlFlow, Try};
 
 pub struct SinglePktHandler<T>(pub Option<T>);
@@ -67,16 +65,14 @@ pub struct NotifyClose<F> {
     pub origin: Option<NetPktBox>,
 }
 impl<F> NotifyClose<F> {
-    pub fn new(inner: F, q:&Query, origin: &dyn NetPkt) -> Self {
-        let origin = if matches!(q.get_known_opt(KnownOptions::NotifyClose), Ok(Some(_))){
+    pub fn new(inner: F, q: &Query, origin: &dyn NetPkt) -> Self {
+        let origin = if matches!(q.get_known_opt(KnownOptions::NotifyClose), Ok(Some(_))) {
             Some(origin.as_netbox())
-        } else { None};
-        NotifyClose {
-            inner,
-            origin
-        }
+        } else {
+            None
+        };
+        NotifyClose { inner, origin }
     }
-    
 }
 
 impl<F: PktStreamHandler> PktStreamHandler for NotifyClose<F> {
@@ -85,7 +81,7 @@ impl<F: PktStreamHandler> PktStreamHandler for NotifyClose<F> {
     }
 
     fn stopped(&mut self, _watch: BareWatch, _rx: &Linkspace, _reason: StopReason) {
-        if let Some(echo) = self.origin.take(){
+        if let Some(echo) = self.origin.take() {
             self.inner.handle_pkt(&echo, _rx);
         }
         self.inner.stopped(_watch, _rx, _reason)

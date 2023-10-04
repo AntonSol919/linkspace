@@ -81,16 +81,22 @@ impl PointThinPtr {
         &*(b.as_ptr().cast::<PointThinPtr>())
     }
     #[inline(always)]
-    pub (crate) fn linkpoint_header(&self) -> Option<&LinkPointHeader>{
+    pub(crate) fn linkpoint_header(&self) -> Option<&LinkPointHeader> {
         let mut v = None;
         if self.0.point_type.contains(PointTypeFlags::LINK) {
-            v = Some(unsafe {&*self.pkt_bytes().as_ptr().add(size_of::<PointHeader>()).cast::<LinkPointHeader>()});
+            v = Some(unsafe {
+                &*self
+                    .pkt_bytes()
+                    .as_ptr()
+                    .add(size_of::<PointHeader>())
+                    .cast::<LinkPointHeader>()
+            });
         }
         v
     }
     /// This must be called with a verified point type.
     #[inline(always)]
-    pub(crate)fn fixed(&self) -> BarePointFields {
+    pub(crate) fn fixed(&self) -> BarePointFields {
         let (_point, rest) = unsafe {
             self.pkt_bytes()
                 .split_at_unchecked(size_of::<PointHeader>())
@@ -165,26 +171,28 @@ impl PointThinPtr {
             BarePointFields::Error { padding, .. } => padding,
             BarePointFields::Unknown(_) => &[],
         };
-        if padding.len() > 7 {return Err(Error::PaddingBitsNotU8Max);}
-        if !padding.iter().all(|o|*o ==255){return Err(Error::PaddingBitsNotU8Max);}
+        if padding.len() > 7 {
+            return Err(Error::PaddingBitsNotU8Max);
+        }
+        if !padding.iter().all(|o| *o == 255) {
+            return Err(Error::PaddingBitsNotU8Max);
+        }
         Ok(())
     }
 
     pub fn check_signature(&self) -> Result<(), Error> {
-        match self.fixed() {
-            BarePointFields::LinkPoint {
-                header: _,
-                padding: _,
-                signed: Some(signed),
-            } => {
-                let pbytes = self.pkt_bytes();
-                let sans_signature = &pbytes[..pbytes.len() - size_of::<Signed>()];
-                let hash = linkspace_cryptography::blake3_hash(sans_signature);
-                signed
-                    .validate(hash.as_bytes())
-                    .map_err(|_| Error::InvalidSignature)?;
-            }
-            _ => (),
+        if let BarePointFields::LinkPoint {
+            header: _,
+            padding: _,
+            signed: Some(signed),
+        } = self.fixed()
+        {
+            let pbytes = self.pkt_bytes();
+            let sans_signature = &pbytes[..pbytes.len() - size_of::<Signed>()];
+            let hash = linkspace_cryptography::blake3_hash(sans_signature);
+            signed
+                .validate(hash.as_bytes())
+                .map_err(|_| Error::InvalidSignature)?;
         };
         Ok(())
     }

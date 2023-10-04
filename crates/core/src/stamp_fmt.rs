@@ -3,10 +3,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use std::{ str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration};
 
 use crate::pkt::abe::eval::*;
-use anyhow::{bail, Context, anyhow};
+use anyhow::{anyhow, bail, Context};
 use linkspace_pkt::{checked_stamp_add, checked_stamp_sub, stamp_add, stamp_sub, Stamp};
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +50,7 @@ impl StampFmt {
     }
 }
 
-pub const DELTA_FORMATS: [(&str, Duration);9] = [
+pub const DELTA_FORMATS: [(&str, Duration); 9] = [
     (
         "Y",
         Duration::SECOND
@@ -222,41 +222,47 @@ impl FromStr for DurationStr {
     }
 }
 
-#[derive(Copy, Clone, Debug,Default)]
-pub struct StampEF{pub fixed_now: Option<Stamp>}
+#[derive(Copy, Clone, Debug, Default)]
+pub struct StampEF {
+    pub fixed_now: Option<Stamp>,
+}
 impl StampEF {
-    pub fn now(&self) -> Stamp { self.fixed_now.unwrap_or_else(linkspace_pkt::now)}
-    pub fn apply(&self,mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
+    pub fn now(&self) -> Stamp {
+        self.fixed_now.unwrap_or_else(linkspace_pkt::now)
+    }
+    pub fn apply(&self, mut stamp: Stamp, mut args: &[&[u8]]) -> Result<Vec<u8>, ApplyErr> {
         let mut result = None;
         while result.is_none() && !args.is_empty() {
             (stamp, args) = match args {
                 [[], args @ ..] => (stamp, args),
-                [[b'+',b'+', r @ ..], args @ ..] => (
+                [[b'+', b'+', r @ ..], args @ ..] => (
                     checked_stamp_add(stamp, parse_duration_str(r)?).unwrap_or(Stamp::MAX),
                     args,
                 ),
                 [[b'+', r @ ..], args @ ..] => (
-                    checked_stamp_add(stamp, parse_duration_str(r)?).context("stamp overflow. use '++' for saturating add")?,
+                    checked_stamp_add(stamp, parse_duration_str(r)?)
+                        .context("stamp overflow. use '++' for saturating add")?,
                     args,
                 ),
-                [[b'-',b'-', r @ ..], args @ ..] => (
+                [[b'-', b'-', r @ ..], args @ ..] => (
                     checked_stamp_sub(stamp, parse_duration_str(r)?).unwrap_or(Stamp::ZERO),
                     args,
                 ),
                 [[b'-', r @ ..], args @ ..] => (
-                    checked_stamp_sub(stamp, parse_duration_str(r)?).context("stamp underflow. use '--' for saturating sub")?,
+                    checked_stamp_sub(stamp, parse_duration_str(r)?)
+                        .context("stamp underflow. use '--' for saturating sub")?,
                     args,
                 ),
                 [b"ticks", rest @ ..] => {
                     args = rest;
-                    result = Some(delta_stamp(Stamp::ZERO,stamp).into_bytes());
+                    result = Some(delta_stamp(Stamp::ZERO, stamp).into_bytes());
                     break;
-                },
+                }
                 [b"val", rest @ ..] => {
                     args = rest;
-                    result = Some(delta_stamp_p(Stamp::ZERO,stamp,9,9).into_bytes());
+                    result = Some(delta_stamp_p(Stamp::ZERO, stamp, 9, 9).into_bytes());
                     break;
-                },
+                }
                 [b"delta", rest @ ..] => {
                     args = rest;
                     result = Some(delta_stamp(self.now(), stamp).into_bytes());
@@ -270,7 +276,7 @@ impl StampEF {
                     let st: String = dt
                         .ok()
                         .and_then(|dt| dt.format(&default).ok())
-                        .unwrap_or_else(|| delta_stamp_p(Stamp::ZERO,stamp,9,9));
+                        .unwrap_or_else(|| delta_stamp_p(Stamp::ZERO, stamp, 9, 9));
                     result = Some(st.into_bytes());
                     break;
                 }

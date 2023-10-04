@@ -4,7 +4,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::{str::FromStr, hash::{Hash, Hasher}};
+use std::{
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
 
 use ::linkspace::misc::FieldEnum;
 use ::linkspace::prelude::*;
@@ -21,7 +24,7 @@ impl Pkt {
     pub fn from_arc(p: NetPktArc) -> Self {
         Pkt(ReroutePkt::new(RecvPkt {
             recv: p.recv().unwrap_or_else(now),
-            pkt: p
+            pkt: p,
         }))
     }
     pub fn from_dyn(p: &dyn NetPkt) -> Self {
@@ -41,7 +44,7 @@ impl<'o> From<RecvPktPtr<'o>> for Pkt {
 #[pymethods]
 impl Pkt {
     pub fn __str__(&self) -> String {
-        String::from_utf8(lk_eval("[pkt]", self.0.netpktptr() as &dyn NetPkt,true).unwrap()).unwrap()
+        String::from_utf8(lk_eval("[pkt]", self.0.netpktptr() as &dyn NetPkt).unwrap()).unwrap()
     }
     pub fn __getitem__<'p>(&self, py: Python<'p>, field: &str) -> anyhow::Result<&'p PyBytes> {
         let field = FieldEnum::from_str(field)?;
@@ -96,25 +99,53 @@ impl Pkt {
     }
     #[getter]
     pub fn spacename<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.spacename().map(|p| PyBytes::new(py, p.space_bytes()))
+        self.0
+            .spacename()
+            .map(|p| PyBytes::new(py, p.space_bytes()))
     }
     #[getter]
     pub fn rooted_spacename<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
-        self.0.rooted_spacename().map(|p| PyBytes::new(py, p.rooted_bytes()))
+        self.0
+            .rooted_spacename()
+            .map(|p| PyBytes::new(py, p.rooted_bytes()))
     }
-    
-    #[getter] pub fn comp0<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp0())}
-    #[getter] pub fn comp1<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp1())}
-    #[getter] pub fn comp2<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp2())}
-    #[getter] pub fn comp3<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp3())}
-    #[getter] pub fn comp4<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp4())}
-    #[getter] pub fn comp5<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp5())}
-    #[getter] pub fn comp6<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp6())}
-    #[getter] pub fn comp7<'p>(&self, py: Python<'p>) -> &'p PyBytes {PyBytes::new(py,self.0.get_rooted_spacename().comp7())}
+
+    #[getter]
+    pub fn comp0<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp0())
+    }
+    #[getter]
+    pub fn comp1<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp1())
+    }
+    #[getter]
+    pub fn comp2<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp2())
+    }
+    #[getter]
+    pub fn comp3<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp3())
+    }
+    #[getter]
+    pub fn comp4<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp4())
+    }
+    #[getter]
+    pub fn comp5<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp5())
+    }
+    #[getter]
+    pub fn comp6<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp6())
+    }
+    #[getter]
+    pub fn comp7<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.get_rooted_spacename().comp7())
+    }
     pub fn comp_list<'p>(&self, py: Python<'p>) -> Option<Vec<&'p PyBytes>> {
         self.0.rooted_spacename().map(|p| {
             p.comps_bytes()[0..*p.space_depth() as usize]
-                .into_iter()
+                .iter()
                 .map(|s| PyBytes::new(py, s))
                 .collect()
         })
@@ -146,16 +177,15 @@ impl Pkt {
     fn signature<'p>(&self, py: Python<'p>) -> Option<&'p PyBytes> {
         self.0.signed().map(|b| PyBytes::new(py, &b.signature.0))
     }
-    
+
     #[getter]
     /// number of components in the spacename
-    fn depth<'p>(&self) -> Option<u8> {
-        self.0.depth().map(|b| *b)
+    fn depth(&self) -> Option<u8> {
+        self.0.depth().copied()
     }
     #[setter]
     pub fn set_netflags(&mut self, f: u8) {
-        self.0.net_header.flags =
-            linkspace::prelude::NetFlags::from_bits(f).unwrap();
+        self.0.net_header.flags = linkspace::prelude::NetFlags::from_bits(f).unwrap();
     }
     #[setter]
     pub fn set_hop(&mut self, b: [u8; 4]) {
@@ -223,7 +253,7 @@ impl Pkt {
     }
 
     #[getter]
-    fn size(&self) -> u16{
+    fn size(&self) -> u16 {
         self.0.size()
     }
 }
@@ -239,9 +269,15 @@ impl Links {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
-    fn __len__(&self) -> usize{ self.pkt.get_links().len()}
-    fn __getitem__(&self,idx:isize) -> Option<Link>{
-        let idx = if idx < 0 { self.__len__().wrapping_add_signed(idx)} else {idx as usize};
+    fn __len__(&self) -> usize {
+        self.pkt.get_links().len()
+    }
+    fn __getitem__(&self, idx: isize) -> Option<Link> {
+        let idx = if idx < 0 {
+            self.__len__().wrapping_add_signed(idx)
+        } else {
+            idx as usize
+        };
         self.pkt.get_links().get(idx).copied().map(Into::into)
     }
 
@@ -250,7 +286,7 @@ impl Links {
         self.idx += 1;
         this.map(Into::into)
     }
-    fn __hash__(&self) -> u64{
+    fn __hash__(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         self.pkt.get_links().hash(&mut hasher);
         hasher.finish()
@@ -259,7 +295,7 @@ impl Links {
 
 /// Link for a linkpoint
 #[pyclass]
-#[derive(Clone,Copy,Eq,PartialEq,Ord,PartialOrd,Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(C)]
 pub struct Link {
     pub tag: [u8; 16],
@@ -268,11 +304,11 @@ pub struct Link {
 #[pymethods]
 impl Link {
     #[getter]
-    fn ptr<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+    fn ptr<'o>(&self, py: Python<'o>) -> &'o PyBytes {
         PyBytes::new(py, &self.ptr)
     }
     #[getter]
-    fn tag<'o>(&self,py:Python<'o>) -> &'o PyBytes {
+    fn tag<'o>(&self, py: Python<'o>) -> &'o PyBytes {
         PyBytes::new(py, &self.tag)
     }
     #[new]
@@ -289,29 +325,29 @@ impl Link {
         let ptr = PyBytes::new(py, &self.ptr).repr().unwrap();
         format!("Link({tag},{ptr})")
     }
-    pub fn __hash__(&self) -> u64{
+    pub fn __hash__(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         self.hash(&mut hasher);
         hasher.finish()
     }
     fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
-        op.matches(self.cmp(&other))
+        op.matches(self.cmp(other))
     }
 }
 
-impl Into<linkspace::prelude::Link> for Link {
-    fn into(self) -> linkspace::prelude::Link {
+impl From<Link> for prelude::Link {
+    fn from(val: Link) -> Self {
         prelude::Link {
-            tag: self.tag.into(),
-            ptr: self.ptr.into(),
+            tag: val.tag.into(),
+            ptr: val.ptr.into(),
         }
     }
 }
-impl Into<Link> for prelude::Link {
-    fn into(self) -> Link {
+impl From<prelude::Link> for Link {
+    fn from(val: prelude::Link) -> Self {
         Link {
-            tag: self.tag.0,
-            ptr: self.ptr.0,
+            tag: val.tag.0,
+            ptr: val.ptr.0,
         }
     }
 }

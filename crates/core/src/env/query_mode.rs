@@ -50,7 +50,10 @@ impl Default for Mode {
     }
 }
 impl Mode {
-    pub const HASH_ASC: Mode = Mode { table: Table::Hash, order: Order::Asc};
+    pub const HASH_ASC: Mode = Mode {
+        table: Table::Hash,
+        order: Order::Asc,
+    };
     pub const TREE_DESC: Mode = Mode {
         table: Table::Tree,
         order: Order::Desc,

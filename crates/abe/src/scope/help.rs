@@ -1,6 +1,12 @@
 use std::{collections::HashSet, fmt::Display};
 
-use crate::{eval::{ScopeFunc, EvalScopeImpl, ApplyResult,  ScopeFuncInfo, none, ScopeMacro, ScopeMacroInfo, Scope}, scope_macro};
+use crate::{
+    eval::{
+        none, ApplyResult, EvalScopeImpl, Scope, ScopeFunc, ScopeFuncInfo, ScopeMacro,
+        ScopeMacroInfo,
+    },
+    scope_macro,
+};
 
 #[derive(Copy, Clone)]
 pub struct Help;
@@ -39,7 +45,7 @@ impl EvalScopeImpl for Help {
                         };
                         out.into_bytes()
                     } else {
-                        DisplayHelp(scope).to_string().into_bytes() 
+                        DisplayHelp(scope).to_string().into_bytes()
                     }
                 })
             },
@@ -57,12 +63,12 @@ impl EvalScopeImpl for Help {
         &[scope_macro!(
             "help",
             "desribe current eval context",
-            |_, _, scope| { Ok(DisplayHelp(scope).to_string().into_bytes())}
+            |_, _, scope| { Ok(DisplayHelp(scope).to_string().into_bytes()) }
         )]
     }
 }
 
-pub (crate) fn fmt_describer(
+pub(crate) fn fmt_describer(
     f: &mut dyn std::fmt::Write,
     seen: &mut HashSet<&'static str>,
     name: &str,
@@ -106,20 +112,27 @@ pub (crate) fn fmt_describer(
     Ok(())
 }
 
-
 /// impl Display for inner Scope
 pub struct DisplayHelp<A>(pub A);
 
 impl<A: Scope> Display for DisplayHelp<A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "The context has one or more scopes active")?;
         writeln!(f, "Each scope has functions and macros")?;
-        writeln!(f, "For each function the option set  ['[' , '/' , '?'] is given")?;
+        writeln!(
+            f,
+            "For each function the option set  ['[' , '/' , '?'] is given"
+        )?;
         writeln!(f, "These refers to its use as:")?;
         writeln!(f, " '['  => Can be used to open   '[func/..]'")?;
-        writeln!(f, " ':'  => Can be used in a pipe '[../func]'")?;
-        writeln!(f, " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]")?;
-        writeln!(f, "")?;
+        writeln!(
+            f,
+            " ':'  => Can be used in sequence '[../func]' (taking the left-side as first argument)"
+        )?;
+        writeln!(
+            f,
+            " '?'  => Can be encoded (i.e. 'reversed') to some extend '[../?:func]' || [?:..:func]"
+        )?;
+        writeln!(f)?;
 
         let mut err = Ok(());
         let mut set = HashSet::<&'static str>::new();
@@ -132,4 +145,3 @@ impl<A: Scope> Display for DisplayHelp<A> {
         err
     }
 }
-

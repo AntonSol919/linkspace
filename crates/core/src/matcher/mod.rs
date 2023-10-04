@@ -1,14 +1,13 @@
-
-use std::{ops::ControlFlow, cell::Cell};
+use std::{cell::Cell, ops::ControlFlow};
 
 // Copyright Anton Sol
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use anyhow::{ensure };
+use anyhow::ensure;
 use linkspace_pkt::{abe::TypedABE, reroute::RecvPkt, NetPkt, NetPktExt, Stamp};
-use tracing::{Span, instrument};
+use tracing::{instrument, Span};
 
 use crate::{
     env::RecvPktPtr,
@@ -26,16 +25,16 @@ pub type QueryIDExpr = TypedABE<Vec<u8>>;
 /// [[WatchEntry]] with no associated context
 pub type BareWatch = WatchEntry<()>;
 #[thread_local]
-static WATCH_ID:Cell<usize>=Cell::new(0);
+static WATCH_ID: Cell<usize> = Cell::new(0);
 
-#[derive(Copy,Clone)]
-pub struct WatchStatus{
-    pub watch_id : usize,
-    pub nth_query: u32
+#[derive(Copy, Clone)]
+pub struct WatchStatus {
+    pub watch_id: usize,
+    pub nth_query: u32,
 }
 
 #[derive(Debug)]
-/// Stored predicates, predicate state, identity, and associated ctx \<C\> ( usually a callback )
+/// Stored predicates, predicate state, identity, and associated scope \<C\> ( usually a callback )
 pub struct WatchEntry<C> {
     pub watch_id: usize,
     pub query_id: QueryID,
@@ -51,11 +50,14 @@ pub struct WatchEntry<C> {
     pub span: tracing::Span,
 }
 impl<C> WatchEntry<C> {
-    pub fn status(&self) -> WatchStatus{
-        WatchStatus { watch_id: self.watch_id, nth_query:self.nth_query }
+    pub fn status(&self) -> WatchStatus {
+        WatchStatus {
+            watch_id: self.watch_id,
+            nth_query: self.nth_query,
+        }
     }
 
-    pub fn update_tests(&mut self) -> anyhow::Result<()>{
+    pub fn update_tests(&mut self) -> anyhow::Result<()> {
         let (it, recv_bounds) = compile_predicates(&self.query.predicates);
         self.tests = it.map(|(t, _)| t).collect();
         self.i_new = self.query.predicates.state.i_new;
@@ -79,11 +81,11 @@ impl<C> WatchEntry<C> {
         let mut watch = WatchEntry {
             watch_id: WATCH_ID.update(|i| i.saturating_add(1)),
             query_id: id,
-            tests:vec![],
-            recv_bounds:Bound::DEFAULT,
-            i_new:TestSet::DEFAULT,
-            nth_new:0,
-            i_query:TestSet::DEFAULT,
+            tests: vec![],
+            recv_bounds: Bound::DEFAULT,
+            i_new: TestSet::DEFAULT,
+            nth_new: 0,
+            i_query: TestSet::DEFAULT,
             nth_query,
             ctx,
             span,
@@ -160,7 +162,7 @@ impl<C> WatchEntry<C> {
         self.nth_query += 1;
         (
             accepted_nth,
-            if self.nth_new > self.i_new.bound.high || self.nth_query > self.i_query.bound.high{
+            if self.nth_new > self.i_new.bound.high || self.nth_query > self.i_query.bound.high {
                 ControlFlow::Break(())
             } else {
                 ControlFlow::Continue(())
@@ -180,10 +182,11 @@ impl<C> Default for Matcher<C> {
     }
 }
 impl<C> Matcher<C> {
-    pub fn get(&self, id: &QueryIDRef) -> Option<&WatchEntry<C>>{
-        self
-            .watch_entries
-            .binary_search_by_key(&id, |e| &e.query_id).ok().and_then(|i|self.watch_entries.get(i))
+    pub fn get(&self, id: &QueryIDRef) -> Option<&WatchEntry<C>> {
+        self.watch_entries
+            .binary_search_by_key(&id, |e| &e.query_id)
+            .ok()
+            .and_then(|i| self.watch_entries.get(i))
     }
     pub fn register(&mut self, watch_e: WatchEntry<C>) -> Option<WatchEntry<C>> {
         let ok = watch_e.recv_bounds.high > linkspace_pkt::now().get();
@@ -261,7 +264,7 @@ impl<C> Matcher<C> {
                 false
             }
         });
-        tracing::trace!(old_len,len=self.watch_entries.len());
+        tracing::trace!(old_len, len = self.watch_entries.len());
         if self.watch_entries.is_empty() {
             None
         } else {
