@@ -20,8 +20,8 @@ lmdb = ["lmdb-rkv", "lmdb-rkv-sys", "libc","ipcbus"]
 
 [dependencies]
 
-linkspace-pkt = { path = "../pkt", version="0.4.0"}
-linkspace-cryptography = { path = "../cryptography",version="0.4.0"}
+linkspace-pkt = { path = "../pkt", version="0.5.0"}
+linkspace-cryptography = { path = "../cryptography",version="0.5.0"}
 
 arrayvec.workspace=true
 anyhow.workspace=true
