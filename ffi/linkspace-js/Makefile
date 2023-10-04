@@ -22,7 +22,8 @@ pack:
 	mv ./pkg/tmp.json ./pkg/package.json
 	wasm-pack pack
 
-validate: build
+validate:
+	cargo check --target wasm32-unknown-unknown
 	cargo clippy -- -D warnings
 	test $$(cargo fmt --all -- --check | tee /dev/fd/2 | wc -c ) -eq 0
 	cargo doc --all --no-deps
