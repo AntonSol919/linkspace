@@ -48,21 +48,29 @@ pub struct TreeValue {
     links_len: U16,
     data_size: U16,
 }
+impl TreeValue {
+    pub fn from_pkt(logptr: Stamp, pkt: impl NetPkt) -> TreeValue {
+        TreeValue {
+            create: *pkt.get_create_stamp(),
+            hash: pkt.hash(),
+            logptr,
+            links_len: U16::new(pkt.get_links().len() as u16),
+            data_size: U16::new(pkt.data().len() as u16),
+        }
+    }
+    pub fn into_bytes(self) -> TreeValueBytes {
+        unsafe { *(&self as *const TreeValue as *const TreeValueBytes) }
+    }
+}
 pub type TreeValueBytes = [u8; size_of::<TreeValue>()];
 impl TreeEntry {
     pub fn from_pkt(rstamp: Stamp, pkt: impl NetPkt) -> Option<Self> {
         let fields = pkt.as_point().fields();
         let (sp, space, key) = fields.common_idx()?;
-        let val = TreeValue {
-            create: sp.create_stamp,
-            hash: pkt.hash(),
-            logptr: rstamp,
-            links_len: U16::new(pkt.get_links().len() as u16),
-            data_size: U16::new(pkt.data().len() as u16),
-        };
+        let val = TreeValue::from_pkt(rstamp, &pkt);
         Some(TreeEntry {
             btree_key: TreeKey::from_fields(sp.group, sp.domain, *space.space_depth(), space, key),
-            val: unsafe { *(&val as *const TreeValue as *const TreeValueBytes) },
+            val: val.into_bytes(),
         })
     }
 }

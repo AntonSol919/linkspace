@@ -27,7 +27,7 @@ use crate::predicate::{
     exprs::RuleType,
     test_pkt::{compile_predicates, PktStreamTest},
 };
-use crate::prelude::TestSet;
+use crate::prelude::{Bound, TestSet};
 
 use crate::env::query_mode::{Mode, Order, Table};
 use crate::env::tree_key::treekey_checked;
@@ -75,7 +75,7 @@ impl<'txn> ReadTxn<'txn> {
             if yields.peek().is_none() {
                 key_ptr = keys_iter.as_mut().and_then(|v| v.next_entry());
             }
-            tracing::debug!(?key_ptr, "Walk Branch");
+            tracing::trace!(?key_ptr, "Walk Branch");
             while cnt {
                 let next_item = {
                     key_ptr
@@ -92,10 +92,10 @@ impl<'txn> ReadTxn<'txn> {
                         })
                         .unwrap_or(false);
                     if next_range {
-                        tracing::debug!("Reset");
+                        tracing::trace!("Reset");
                         continue;
                     } else {
-                        tracing::debug!("No more ranges");
+                        tracing::trace!("No more ranges");
                         cnt = false;
                         return None;
                     };
@@ -106,7 +106,7 @@ impl<'txn> ReadTxn<'txn> {
                     && hash.test(next_item.hash().into())
                     && links_len.test(next_item.links_len().into())
                     && data_size.test(next_item.data_size().into());
-                tracing::debug!(ok, ?next_item, "key entry");
+                tracing::trace!(ok, ?next_item, "key entry");
                 if ok {
                     let yielding = yields.next();
                     tracing::trace!(?yielding,hash=?next_item.hash(),"Branch entry");
@@ -143,11 +143,7 @@ impl<'txn> ReadTxn<'txn> {
                     .ok_or_else(|| ("BTree inconsistent - cant find", v.local_log_ptr()))
                     .unwrap()
             })
-            .filter(move |pkt| {
-                let ok = pkt_filter.test(pkt);
-                tracing::trace!(ok,pkt=%linkspace_pkt::PktFmtDebug(pkt),"filter tree");
-                ok
-            });
+            .filter(move |pkt| pkt_filter.test(pkt));
         let nth_log_set = predicates.state.i_db.iter(0);
 
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
@@ -161,15 +157,11 @@ impl<'txn> ReadTxn<'txn> {
         let (it, recv) = compile_predicates(rules);
         let tests = it.map(|(t, _)| t).collect::<Vec<_>>().into_boxed_slice();
         let log_range = recv.stamp_range(ord.is_asc());
-        tracing::debug!(?ord, range=?log_range, pre_chks=?tests, "Query Log");
-
         let it = self.log_range(log_range);
 
         let nth_find_set = rules.state.i_branch.iter(0);
         let it = it.zip(nth_find_set).filter_map(|(v, ok)| ok.then_some(v));
-        let it = it
-            .inspect(|p| tracing::trace!(pkt=?&**p,"pkt"))
-            .filter(move |pkt| tests.test(**pkt));
+        let it = it.filter(move |pkt| tests.test(**pkt));
 
         let nth_log_set = rules.state.i_db.iter(0);
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
@@ -178,6 +170,7 @@ impl<'txn> ReadTxn<'txn> {
     pub fn query_hash_entries(
         &'txn self,
         hashset: TestSet<U256>,
+        recv_bound: Bound<u64>,
         ord: Order,
     ) -> impl Iterator<Item = Stamp> + '_ {
         use crate::predicate::value_test::*;
@@ -200,7 +193,7 @@ impl<'txn> ReadTxn<'txn> {
                     .range_uniq(&greater_eq)
                     .map(|(hash, stamp)| (B64(*hash).into(), stamp))
                     .take_while(move |(v, _)| *v <= less_eq)
-                    .filter(move |(v, _)| mask.test(v))
+                    .filter(move |(v, stamp): &(U256, _)| recv_bound.test(*stamp) && mask.test(v))
                     .map(|(_, stamp)| stamp.into())
             }
             Order::Desc => {
@@ -213,24 +206,20 @@ impl<'txn> ReadTxn<'txn> {
         ord: Order,
         rules: &'txn PktPredicates,
     ) -> impl Iterator<Item = RecvPktPtr<'txn>> {
-        let pkt_filter = compile_predicates(rules)
-            .0
+        let (it, recv_bound) = compile_predicates(rules);
+        let pkt_filter = it
             .filter(|(_, kind)| *kind != RuleType::Field(FieldEnum::PktHashF))
             .map(|(test, _)| test)
             .collect::<Vec<_>>();
         let c1 = self.0.pkt_cursor();
         let it = self
-            .query_hash_entries(rules.hash, ord)
+            .query_hash_entries(rules.hash, recv_bound, ord)
             .map(move |v| {
                 read_pkt(&c1, v)
                     .expect("BTree Is inconsistent")
                     .expect("BTree Is inconsistent")
             })
-            .filter(move |pkt| {
-                let ok = pkt_filter.test(pkt);
-                tracing::trace!(ok,pkt=%linkspace_pkt::pkt_fmt(pkt.pkt),"filter log");
-                ok
-            });
+            .filter(move |pkt| pkt_filter.test(pkt));
         let nth_log_set = rules.state.i_db.iter(0);
 
         it.zip(nth_log_set).filter_map(|(v, ok)| ok.then_some(v))
@@ -242,27 +231,33 @@ impl<'txn> ReadTxn<'txn> {
         pred: &'txn PktPredicates,
         nth_pkt: &'txn mut u32,
     ) -> anyhow::Result<impl Iterator<Item = RecvPktPtr<'txn>>> {
-        tracing::debug!(?mode,%pred);
+        let span = tracing::debug_span!("query db",?mode,%pred);
+        let e = span.enter();
 
-        match mode.table {
+        let it = match mode.table {
             Table::Hash => {
                 let it = self.query_hash(mode.order, pred);
                 let filter = pred.state.i_query.iter_contains(nth_pkt);
                 let it = it.zip(filter).filter_map(|(v, ok)| ok.then_some(v));
-                Ok(Either::Left(it))
+                Either::Left(it)
             }
             Table::Tree => {
                 let it = self.query_tree(mode.order, pred);
                 let filter = pred.state.i_query.iter_contains(nth_pkt);
                 let it = it.zip(filter).filter_map(|(v, ok)| ok.then_some(v));
-                Ok(Either::Right(Either::Left(it)))
+                Either::Right(Either::Left(it))
             }
             Table::Log => {
                 let it = self.query_log2(mode.order, pred);
                 let filter = pred.state.i_query.iter_contains(nth_pkt);
                 let it = it.zip(filter).filter_map(|(v, ok)| ok.then_some(v));
-                Ok(Either::Right(Either::Right(it)))
+                Either::Right(Either::Right(it))
             }
-        }
+        };
+        std::mem::drop(e);
+        let it = it.inspect(move |pkt| {
+            tracing::debug!(parent:&span,pkt=?linkspace_pkt::PktFmtDebug(pkt),"yielding")
+        });
+        Ok(it)
     }
 }

@@ -131,9 +131,15 @@ impl Debug for ABList {
                 f.write_str(&as_abtxt(self.1.as_ref()))
             }
         }
-        f.debug_list()
-            .entries(self.iter().map(|(c, v)| ABDebug(*c, v)))
-            .finish()
+        struct Abl<'o>(&'o ABList);
+        impl<'o> Debug for Abl<'o> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_list()
+                    .entries(self.0.iter().map(|(c, v)| ABDebug(*c, v)))
+                    .finish()
+            }
+        }
+        f.debug_tuple("ABList").field(&Abl(self)).finish()
     }
 }
 impl Default for ABList {

@@ -334,19 +334,34 @@ pub fn lk_open(dir: &str, create: bool) -> anyhow::Result<Linkspace> {
 }
 #[pyfunction]
 pub fn lk_save(runtime: &Linkspace, pkt: &Pkt) -> anyhow::Result<bool> {
-    Ok(linkspace_rs::lk_save(&runtime.0, pkt.0.netpktptr())?)
+    let pkts = [pkt.0.netpktptr() as &dyn NetPkt];
+    Ok(linkspace_rs::runtime::lk_save_all(&runtime.0, &pkts)? > 0)
 }
+// TODO: fix double allocation
 #[pyfunction]
 pub fn lk_save_all(runtime: &Linkspace, pkts: &PyAny) -> anyhow::Result<usize> {
-    let pkts: Vec<Pkt> = pkts
+    let lst: smallvec::SmallVec<[Pkt; 8]> = pkts
         .iter()?
         .map(|o| o.and_then(|o: &PyAny| o.extract()))
         .try_collect()?;
-    let lst: Vec<_> = pkts
-        .iter()
-        .map(|p| p.0.netpktptr() as &dyn NetPkt)
-        .collect();
+    let lst: smallvec::SmallVec<[&dyn NetPkt; 8]> =
+        lst.iter().map(|o| o.0.netpktptr() as &dyn NetPkt).collect();
     Ok(linkspace_rs::runtime::lk_save_all(&runtime.0, &lst)?)
+}
+#[pyfunction]
+pub fn lk_save_all_ext<'o>(
+    py: Python<'o>,
+    runtime: &Linkspace,
+    pkts: &PyAny,
+) -> anyhow::Result<(&'o PyBytes, &'o PyBytes)> {
+    let lst: smallvec::SmallVec<[Pkt; 8]> = pkts
+        .iter()?
+        .map(|o| o.and_then(|o: &PyAny| o.extract()))
+        .try_collect()?;
+    let lst: smallvec::SmallVec<[&dyn NetPkt; 8]> =
+        lst.iter().map(|o| o.0.netpktptr() as &dyn NetPkt).collect();
+    let (start, end) = linkspace_rs::runtime::lk_save_all_ext(&runtime.0, &lst)?;
+    Ok((PyBytes::new(py, &start.0), PyBytes::new(py, &end.0)))
 }
 
 #[pyclass]
@@ -641,6 +656,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_open, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_save, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_save_all, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_save_all_ext, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_hash, m)?)?;

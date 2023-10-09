@@ -247,7 +247,7 @@ impl Linkspace {
     }
 
     /// check the log for new packets and execute callbacks
-    #[instrument(skip(self))]
+    #[instrument(skip(self), ret)]
     pub fn process(&self) -> Stamp {
         let exec = &self.0.exec;
         exec.written.set(false);
@@ -256,7 +256,6 @@ impl Linkspace {
             let rx_last = exec.process_upto.get();
             match Rc::get_mut(&mut txn) {
                 Some(txn) => {
-                    tracing::trace!(?rx_last, "refresh txn");
                     txn.refresh();
                 }
                 None => {
@@ -274,12 +273,10 @@ impl Linkspace {
             }
             (txn.clone(), rx_last, txn_last)
         };
-        let _g = tracing::error_span!("Processing txn", ?from, ?upto).entered();
-        tracing::trace!("Lock cbs");
+        let _g = tracing::error_span!("process log", ?from, ?upto).entered();
         let mut lock = exec.callbacks.borrow_mut();
         self.drain_pending(&mut lock);
         exec.is_running.set(true);
-        let i = 0;
         let mut count = Rc::strong_count(&txn);
         let mut validate = || {
             if Rc::strong_count(&txn) != count {
@@ -291,8 +288,7 @@ impl Linkspace {
             if pkt.net_header().flags.contains(NetFlags::SILENT) {
                 tracing::trace!("(not) skipping silent pkt - TODO make this a option");
             }
-            let _g = tracing::error_span!("Matching",pkt=%PktFmtDebug(&pkt)).entered();
-            tracing::debug!("Testing New Pkt");
+            let _g = tracing::info_span!("matching",pkt=?PktFmtDebug(&pkt)).entered();
 
             let pkt = ShareArcPkt {
                 arc: OnceCell::new(),
@@ -316,7 +312,6 @@ impl Linkspace {
                 },
             );
         }
-        tracing::debug!(npkts = i, "Updated Finished");
         self.drain_pending(&mut lock);
 
         exec.is_running.set(false);
@@ -325,7 +320,6 @@ impl Linkspace {
         if !exec.written.get() {
             return upto;
         };
-
         tracing::trace!("Written true");
         self.process()
     }

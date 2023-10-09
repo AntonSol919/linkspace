@@ -11,12 +11,12 @@ use super::db::LMDBEnv;
 
 impl LMDBEnv {
     /// return first stamp used and last stamp. If first == last then nothing was written.
+    #[tracing::instrument(skip_all, err)]
     pub fn save<P: NetPkt>(&self, pkts: &mut [(P, SaveState)]) -> lmdb::Result<(u64, u64)> {
         use lmdb::Error;
         use lmdb_sys::*;
 
         let lmdb_e = &self;
-        tracing::trace!(pkts_list_len = pkts.len(), "opening write txn");
         let txn = lmdb_e.env.begin_rw_txn()?;
 
         let pktlog = RwCursor::new(&txn, lmdb_e.pktlog)?;
@@ -26,10 +26,10 @@ impl LMDBEnv {
             Ok((Some(recv), _)) => {
                 let last: u64 = super::db::pktlog::val(recv.try_into().unwrap());
                 if last > start {
-                    eprintln!("db log saved entries from the future? - this could become undefined behavior")
+                    eprintln!("db log saved entries from the future? - this could become undefined behavior");
+
+                    start = last + 1;
                 }
-                tracing::trace!(last, start, "attempting to write");
-                start = last.max(start);
             }
             Ok((None, _)) => unreachable!(),
             Err(Error::NotFound) => {}
@@ -49,16 +49,13 @@ impl LMDBEnv {
                         *state = SaveState::Exists;
                         tracing::trace!(p=%p.hash_ref(),"already exists");
                     }
-                    Err(e) => {
-                        tracing::trace!(?e, "write err");
-                        Err(e)?
-                    }
+                    Err(e) => Err(e)?,
                 }
             }
         }
         std::mem::drop(hash);
         let total_new = at - start;
-        tracing::trace!(total_new, at, "hashes inserted");
+        tracing::trace!(total_new, start, end = at, "new txn for");
 
         if total_new == 0 {
             return Ok((start, at));
@@ -93,7 +90,6 @@ impl LMDBEnv {
             }
         }
 
-        tracing::trace!("pktlog inserted");
         std::mem::drop(pktlog);
         at = start;
 
@@ -103,20 +99,17 @@ impl LMDBEnv {
             if matches!(state, SaveState::Pending) {
                 *state = SaveState::Written;
                 let entry = TreeEntry::from_pkt(at.into(), &pkt);
-                tracing::trace!(pkt=%linkspace_pkt::PktFmtDebug(&pkt),?entry,"tree entry");
                 let te = entry.map(|te| (te.btree_key.take(), te.val));
                 if let Some((key, val)) = te {
                     tree.put(&key, &val, WriteFlags::empty())?;
                     assert!(val.len() == std::mem::size_of::<TreeValueBytes>());
-                    tracing::trace!(?key, ?val, "save ok");
                 }
                 at += 1;
             }
         }
         std::mem::drop(tree);
-        tracing::trace!("tree entries ok");
 
         txn.commit()?;
-        Ok((start, at - 1))
+        Ok((start, at))
     }
 }

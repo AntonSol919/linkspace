@@ -220,14 +220,14 @@ impl PktPredicates {
             .chain(limits)
     }
 
-    /// warn - becomes invalid on state on error
+    /// warn - becomes invalid after error
     pub fn add_ext_predicate(&mut self, predicate: ExtPredicate) -> anyhow::Result<()> {
         for p in predicate.try_iter()? {
             self.add_predicate(&p)?;
         }
         Ok(())
     }
-    /// warn - becomes invalid on state on error
+    /// warn - becomes invalid after error
     pub fn add_predicate(&mut self, pred: &Predicate) -> anyhow::Result<()> {
         self.and(pred)
             .with_context(|| pred.clone())

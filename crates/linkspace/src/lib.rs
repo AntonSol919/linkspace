@@ -19,8 +19,12 @@
 The functions re-exported below is essentially the entire linkspace interface.
 Bindings in other languages follow the same pattern.
 
-[prelude] includes some additional utilities.
-Some internals structs defs are currently leaking and will be removed.
+It is designed to be small, low level, compatible across languages, and allow zero copy where possible.
+That makes some functions awkward.
+E.g. [lk_get_all] only accepts a callback instead of returning a list/vector.
+Creating a utility function in your programming language that copies the packets into a list is plenty fast for 99% of users.
+
+[prelude] imports common functions and types with a few utilities for creating them.
 "#]
 
 /// The only error format linkspace supports - alias for anyhow::Error
@@ -584,6 +588,9 @@ pub mod query {
     # Ok(()) }
     ```
 
+    Unlike predicates, options are non-associative. i.e. the order in which they're added matters.
+    'push' and 'parse' add them to the top of the query.
+    In string form you find the matching option by reading from top to bottom.
     */
     #[derive(Clone)]
     /// a set of predicates and options to select/filter packets
@@ -607,7 +614,7 @@ pub mod query {
     use anyhow::Context;
     pub use linkspace_common::core::predicate::predicate_type::PredicateType;
     pub use linkspace_common::core::query::KnownOptions;
-    use linkspace_common::prelude::{ExtPredicate, PktPredicates};
+    use linkspace_common::prelude::ExtPredicate;
 
     use crate::abe::scope::UserData;
 
@@ -624,7 +631,8 @@ pub mod query {
     /// Add a single statement to a [Query], potentially skipping an encode step.
     /// i.e. fast path for adding a single statement - lk_query_parse(q,"{field}:{op}:{lk_encode(bytes)}")
     ///
-    /// Also accepts options in the form ```lk_query_push(q,"","mode",b"tree-asc")```;
+    /// Also accepts options in the form ```lk_query_push(q,"","mode",b"tree-asc")```.
+    /// Unlike predicates, options don't join and instead are pushed to the front of the query;
     pub fn lk_query_push(mut query: Query, field: &str, test: &str, val: &[u8]) -> LkResult<Query> {
         if field.is_empty() {
             query.0.add_option(test, &[val]);
@@ -649,8 +657,7 @@ pub mod query {
     /// Clear a [Query] for reuse
     pub fn lk_query_clear(query: &mut Query) {
         //if fields.is_some() || keep_options { todo!()}
-        query.0.predicates = PktPredicates::DEFAULT;
-        query.0.conf.0.clear();
+        *query = Q.clone();
     }
     /// Get the string representation of a [Query]
     pub fn lk_query_print(query: &Query, as_expr: bool) -> String {
@@ -899,17 +906,17 @@ pub mod runtime {
     }
 
     /// close lk_watch watches based on the query id ':qid:example' in the query.
-    pub fn lk_stop(rt: &Linkspace, id: &[u8], range: bool) {
+    pub fn lk_stop(lk: &Linkspace, id: &[u8], range: bool) {
         if range {
-            rt.0.close_range(id)
+            lk.0.close_range(id)
         } else {
-            rt.0.close(id)
+            lk.0.close(id)
         }
     }
 
     /// process the log of new packets and trigger callbacks. Updates the reader to the latest state.
-    pub fn lk_process(rt: &Linkspace) -> Stamp {
-        rt.0.process()
+    pub fn lk_process(lk: &Linkspace) -> Stamp {
+        lk.0.process()
     }
     /**
     continuously process callbacks until:

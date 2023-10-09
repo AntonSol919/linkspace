@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use anyhow::{bail, ensure};
+use anyhow::Context;
 
 use crate::{ast::Ctr, eval::ABList};
 
@@ -12,8 +12,11 @@ hello:world/thing
 :some:other:options:\f\f\f
 /ok
 ```
+
+Options grow from bottom to top. i.e. reading/selecting starts from the latest added entry.
+
 **/
-pub struct ABConf(pub Vec<ABList>);
+pub struct ABConf(Vec<ABList>);
 
 pub fn parse_ablist_b(st: &[u8]) -> anyhow::Result<crate::eval::ABList> {
     let abe = crate::ast::parse_abe_strict_b(st)?;
@@ -22,18 +25,6 @@ pub fn parse_ablist_b(st: &[u8]) -> anyhow::Result<crate::eval::ABList> {
         .map_err(|e| anyhow::anyhow!("expr not supported - {e}"))
 }
 
-impl std::ops::Deref for ABConf {
-    type Target = [ABList];
-
-    fn deref(&self) -> &Self::Target {
-        self.0.as_slice()
-    }
-}
-impl From<Vec<ABList>> for ABConf {
-    fn from(value: Vec<ABList>) -> Self {
-        ABConf::new(value)
-    }
-}
 impl ABConf {
     pub const DEFAULT: Self = ABConf(vec![]);
 
@@ -94,7 +85,7 @@ impl ABConf {
         &'a self,
         starts_with: &'b [&[u8]],
     ) -> impl Iterator<Item = &'a ABList> + 'b {
-        self.0.iter().filter(move |a| {
+        self.0.iter().rev().filter(move |a| {
             if a.len() < starts_with.len() {
                 return false;
             }
@@ -105,57 +96,21 @@ impl ABConf {
             ok
         })
     }
-    pub fn try_from_txt(b: &[u8]) -> anyhow::Result<Self> {
-        Self::try_from(b, false, Some(ABConfFmt::ABCTxt))
-    }
-    pub fn try_from(b: &[u8], header: bool, format: Option<ABConfFmt>) -> anyhow::Result<Self> {
-        let (b, fmt) = match (header, format) {
-            (true, _) => {
-                ensure!(b.len() >= 8, "missing header");
-                let (h, b) = b.split_at(8);
-                let fmt = ABConfFmt::try_from(h.try_into().unwrap())?;
-                if let Some(argf) = format {
-                    ensure!(fmt == argf, "header is {fmt}, expected {argf}");
-                }
-                (b, fmt)
-            }
-            (false, None) => bail!("requires a header or a preset format"),
-            (false, Some(f)) => (b, f),
-        };
-        let abc = match fmt {
-            ABConfFmt::ABCTxt => b
-                .split(|c| *c == b'\n')
-                .map(|v| parse_ablist_b(v).map_err(|v| anyhow::anyhow!("data contains expr {v:?}")))
-                .try_collect()?,
-        };
-        Ok(ABConf(abc))
-    }
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.to_string().into_bytes()
-    }
-
-    pub fn serialize(
-        &self,
-        header: bool,
-        fmt: ABConfFmt,
-        write: &mut dyn std::io::Write,
-    ) -> std::io::Result<()> {
-        if header {
-            write!(write, "{fmt}")?
-        };
-        match fmt {
-            ABConfFmt::ABCTxt => {
-                for abl in &self.0 {
-                    writeln!(write, "{abl}")?;
-                }
-                Ok(())
-            }
+    pub fn try_from(mut inp: &[u8]) -> anyhow::Result<Self> {
+        if let Some(r) = inp.strip_prefix(b":%") {
+            inp = r.strip_prefix(b"abctxt\n").context("unknown conf format")?;
         }
+        let mut abc: Vec<_> = inp
+            .split(|c| *c == b'\n')
+            .map(|v| parse_ablist_b(v).map_err(|v| anyhow::anyhow!("data contains expr {v:?}")))
+            .try_collect()?;
+        abc.reverse();
+        Ok(ABConf(abc))
     }
 }
 impl Display for ABConf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for abl in &self.0 {
+        for abl in self.0.iter().rev() {
             writeln!(f, "{abl}")?;
         }
         Ok(())
@@ -163,27 +118,8 @@ impl Display for ABConf {
 }
 impl Debug for ABConf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(self.0.iter()).finish()
-    }
-}
-
-#[derive(Copy, Clone, Default, PartialEq)]
-pub enum ABConfFmt {
-    #[default]
-    ABCTxt,
-}
-impl ABConfFmt {
-    pub fn try_from(head: &[u8; 8]) -> anyhow::Result<Self> {
-        match head {
-            b"#abctxt\n" => Ok(ABConfFmt::ABCTxt),
-            e => bail!("unknown fmt {}", String::from_utf8_lossy(e)),
-        }
-    }
-}
-impl Display for ABConfFmt {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ABConfFmt::ABCTxt => f.write_str("#abctxt\n"),
-        }
+        f.debug_struct("ABConf")
+            .field("reversed_list", &self.0)
+            .finish()
     }
 }

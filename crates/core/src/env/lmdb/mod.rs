@@ -53,12 +53,13 @@ impl BTreeEnv {
             log_head,
             location,
         }));
-        {
-            let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_new();
-            if new && std::env::var_os("LK_NO_LNS").is_none() {
-                let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p| (p, SaveState::Pending)).collect();
-                env.save_ptr(&mut roots)?;
-            }
+        if std::env::var_os("LK_FORCE_EMPTY").is_some() {
+            return Ok(env);
+        }
+        let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_new();
+        if new && std::env::var_os("LK_NO_LNS").is_none() {
+            let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p| (p, SaveState::Pending)).collect();
+            env.save_ptr(&mut roots)?;
         }
         Ok(env)
     }

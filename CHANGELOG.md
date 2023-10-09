@@ -1,3 +1,8 @@
+# v0.5.1
+
+- Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
+- improve tracing log events 
+
 # v0.5.0
 
 - Rename abe context to scope in public api

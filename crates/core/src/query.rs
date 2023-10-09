@@ -85,9 +85,7 @@ impl Query {
     pub fn to_str(&self, canonical: bool) -> String {
         use std::fmt::Write;
         let mut out = String::new();
-        for opt in &*self.conf {
-            writeln!(out, "{opt}").unwrap();
-        }
+        writeln!(out, "{}", &self.conf).unwrap();
         for p in self.predicates.iter() {
             writeln!(out, "{}", p.to_str(canonical)).unwrap();
         }
@@ -139,10 +137,9 @@ impl Query {
         if stmt[0].0.is_some() {
             self.add_option_abl(stmt)
         } else {
-            self.predicates.add_ext_predicate(
-                stmt.try_into()
-                    .with_context(|| anyhow::anyhow!("could not turn stmt into valid extpred"))?,
-            )
+            let ex_predicate = crate::prelude::ExtPredicate::try_from(stmt)
+                .with_context(|| anyhow::anyhow!("could not turn stmt into valid extpred"))?;
+            self.predicates.add_ext_predicate(ex_predicate)
         }
     }
     pub fn parse(&mut self, multiline_stament: &[u8], scope: &dyn Scope) -> anyhow::Result<()> {
@@ -188,7 +185,7 @@ pub type CompiledQuery = Box<dyn FnMut(&dyn linkspace_pkt::NetPkt) -> (bool, Con
 impl Query {
     /// currently rather slow.
     pub fn compile(self) -> anyhow::Result<CompiledQuery> {
-        let mut we = WatchEntry::new(vec![], self, 0, (), debug_span!("todo span"))?;
+        let mut we = WatchEntry::new(vec![], self, 0, (), debug_span!("<Compiled>"))?;
         Ok(Box::new(move |pkt| we.test_dyn(pkt)))
     }
 }

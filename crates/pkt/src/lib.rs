@@ -138,9 +138,6 @@ Impl'ed by [[PointPtr]] and [[PointParts]]
 pub trait Point: core::fmt::Debug {
     /// The rusty enum repr of a point.
     fn parts(&self) -> PointParts;
-    fn fields(&self) -> PointFields {
-        self.parts().fields
-    }
 
     fn data(&self) -> &[u8];
     fn tail(&self) -> Option<Tail>;

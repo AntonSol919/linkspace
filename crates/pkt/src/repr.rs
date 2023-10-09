@@ -233,10 +233,33 @@ impl<X: Display> Display for EscapeHTML<X> {
     }
 }
 
-// quick hack
+/// Wrapper around NetPkt where Display is the Default pkt repr and Debug is a rusty DebugStruct
 pub struct PktFmtDebug<'o>(pub &'o dyn NetPkt);
 impl<'o> core::fmt::Display for PktFmtDebug<'o> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         PktFmt(self.0).to_str(f, true, 160)
+    }
+}
+impl<'o> core::fmt::Debug for PktFmtDebug<'o> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut f = f.debug_struct("NetPkt");
+        if let Some(recv) = self.0.recv() {
+            f.field("recv", &recv);
+        }
+        if self.0.net_header_ref() != &Default::default() {
+            f.field("net_header", self.0.net_header_ref());
+        }
+        if let Some((head, space, key)) = self.0.fields().common_idx() {
+            f.field("group", &head.group)
+                .field("domain", &head.domain)
+                .field("create", &head.create_stamp)
+                .field("space", &space);
+
+            if let Some(k) = key {
+                f.field("key", k);
+            }
+            f.field("links", &self.0.get_links());
+        }
+        f.field("data", &AB(self.0.data())).finish()
     }
 }
