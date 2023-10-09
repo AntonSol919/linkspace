@@ -23,7 +23,8 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
         &lk_datapoint_ref(b"2")?,                // ef6IfBb6szkE-MIENvuiQo5AZqz9o2cjWLkTfjI3SeM
         &lk_datapoint_ref(b"3")?,                // Zsu1AIcF7LrGWRbTgA3AdwtObQB0pXIcC3-mv_eeXLc
     ];
-    let (range_start, range_end) = lk_save_all_ext(&lk, pkts, false)?;
+    let (range_start, range_end) = lk_save_all_ext(&lk, pkts)?;
+    lk_process(&lk);
     assert_eq!(range_end.get() - range_start.get(), 3);
 
     tracing::warn!(%range_start,%range_end,"save ok");
@@ -72,7 +73,8 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
             Some(1.into()),
         )?,
     ];
-    let (start, _) = lk_save_all_ext(&lk, pkts, false)?;
+    let (start, _) = lk_save_all_ext(&lk, pkts)?;
+    lk_process(&lk);
     let q = lk_query_push(q, "", "mode", b"tree-asc")?;
     let q = lk_query_push(q, "recv", ">", &start.0)?;
     eprintln!("TREE QUERY = {q}");
