@@ -86,6 +86,9 @@ impl Debug for NetPktArc {
     }
 }
 impl NetPktArc {
+    pub fn refcount(&self) -> usize {
+        Arc::count(&self.0)
+    }
     pub fn thin_arc(&self) -> &NetPktArcPtr {
         unsafe { &*(ptr::from_ref(&self.0.header).cast::<NetPktArcPtr>()) }
     }

@@ -74,9 +74,9 @@ impl runtime::cb::PktHandler for PyPktStreamHandler {
             Ok(true) => ControlFlow::Break(()),
             Ok(false) => ControlFlow::Continue(()),
             Err(e) => {
-                if let Some(f) = &self.on_err {
+                if let Some(on_error) = &self.on_err {
                     let apkt = Pkt::from_dyn(pkt);
-                    match call_cont_py(py, f, (&e, apkt, &self.on_match)) {
+                    match call_cont_py(py, on_error, (&e, apkt )) {
                         Ok(true) => return ControlFlow::Continue(()),
                         Ok(false) => {}
                         Err(on_err_err) => {

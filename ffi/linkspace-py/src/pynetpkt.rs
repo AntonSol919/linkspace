@@ -80,8 +80,10 @@ impl Pkt {
 
     #[getter]
     /// data
-    pub fn data<'p>(&self, py: Python<'p>) -> &'p PyBytes {
-        PyBytes::new(py, self.0.netpktptr().data())
+    pub fn data(&self) -> PktData {
+        PktData {
+            pkt: self.0.pkt.pkt.clone(),
+        }
     }
     #[getter]
     /// domain
@@ -349,5 +351,77 @@ impl From<prelude::Link> for Link {
             tag: val.tag.0,
             ptr: val.ptr.0,
         }
+    }
+}
+
+pub use pkt_data::PktData;
+mod pkt_data {
+    use linkspace_pkt::NetPktArc;
+    use linkspace_pkt::Point;
+    use pyo3::prelude::*;
+    use pyo3::ffi;
+    use std::os::raw::{c_int};
+
+    #[pyclass]
+    pub struct PktData {
+        pub(crate) pkt: NetPktArc,
+    }
+
+    #[pymethods]
+    impl PktData {
+        unsafe fn __getbuffer__(
+            slf: PyRef<Self>,
+            view: *mut ffi::Py_buffer,
+            flags: c_int,
+        ) -> PyResult<()> {
+            let bytes = slf.pkt.data();
+
+            if view.is_null() {
+                return Err(pyo3::exceptions::PyBufferError::new_err("View is null"));
+            }
+
+            if (flags & ffi::PyBUF_WRITABLE) == ffi::PyBUF_WRITABLE {
+                return Err(pyo3::exceptions::PyBufferError::new_err(
+                    "Object is not writable",
+                ));
+            }
+
+            unsafe {
+                (*view).obj = slf.as_ptr();
+                ffi::Py_INCREF((*view).obj);
+            }
+
+
+            unsafe {
+                (*view).buf = bytes.as_ptr() as *mut std::os::raw::c_void;
+                (*view).len = bytes.len() as isize;
+                (*view).readonly = 1;
+                (*view).itemsize = 1;
+
+                (*view).format = std::ptr::null_mut();
+                if (flags & ffi::PyBUF_FORMAT) == ffi::PyBUF_FORMAT {
+                    let msg = std::ffi::CStr::from_bytes_with_nul(b"B\0").unwrap();
+                    (*view).format = msg.as_ptr() as *mut _;
+                }
+
+                (*view).ndim = 1;
+                (*view).shape = std::ptr::null_mut();
+                if (flags & ffi::PyBUF_ND) == ffi::PyBUF_ND {
+                    (*view).shape = (&((*view).len)) as *const _ as *mut _;
+                }
+
+                (*view).strides = std::ptr::null_mut();
+                if (flags & ffi::PyBUF_STRIDES) == ffi::PyBUF_STRIDES {
+                    (*view).strides = &((*view).itemsize) as *const _ as *mut _;
+                }
+
+                (*view).suboffsets = std::ptr::null_mut();
+                (*view).internal = std::ptr::null_mut();
+            }
+
+            Ok(())
+        }
+
+        unsafe fn __releasebuffer__(&self, _view: *mut ffi::Py_buffer) {}
     }
 }
