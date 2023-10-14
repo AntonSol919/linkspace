@@ -14,7 +14,7 @@ use std::{fmt::Debug, io::Write, marker::PhantomData, path::Path};
 
 pub use lmdb::Error;
 
-use super::misc::assert_align;
+use super::super::misc::assert_align;
 
 #[cfg(target_pointer_width = "32")]
 const DEFAULT_MAP_SIZE: usize = 2usize.pow(31) - 4;

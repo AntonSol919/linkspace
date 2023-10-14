@@ -10,8 +10,8 @@ pub use linkspace_pkt::{eval, exprs, Error, *};
 
 pub use crate::consts::*;
 #[cfg(feature = "lmdb")]
-pub use crate::env::lmdb::queries::*;
-pub use crate::env::save_state::*;
+pub use crate::env::lmdb::get::*;
+pub use crate::env::misc::*;
 pub use crate::env::tree_key::*;
 pub use crate::env::*;
 pub use crate::eval::*;

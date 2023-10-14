@@ -33,6 +33,21 @@ impl StampRange {
     }
     pub const ALL_ASC: StampRange = StampRange::new(Stamp::ZERO, Stamp::MAX);
     pub const ALL_DSC: StampRange = StampRange::new(Stamp::MAX, Stamp::ZERO);
+    /// Ascending range excluding start
+    pub const fn after(start: Stamp) -> StampRange {
+        StampRange {
+            start: start.get() + 1,
+            end: u64::MAX,
+        }
+    }
+
+    /// Ascending range include start
+    pub const fn asc_from(start: Stamp) -> StampRange {
+        StampRange {
+            start: start.get() + 1,
+            end: u64::MAX,
+        }
+    }
     #[must_use]
     pub const fn rev(self) -> StampRange {
         StampRange {

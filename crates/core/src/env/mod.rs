@@ -5,9 +5,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // the db is duck type compatible between inmem and lmdb
 
-use linkspace_pkt::{reroute::RecvPkt, NetPkt, NetPktPtr};
+use linkspace_pkt::{reroute::RecvPkt, NetPktPtr};
 
-pub mod save_state;
+pub mod misc;
 pub mod tree_key;
 
 #[cfg(feature = "lmdb")]
@@ -15,12 +15,3 @@ pub mod lmdb;
 pub mod query_mode;
 
 pub type RecvPktPtr<'o> = RecvPkt<&'o NetPktPtr>;
-
-pub trait Env {
-    type RecvPkt<'o>: NetPkt;
-}
-
-#[cfg(feature = "lmdb")]
-impl Env for lmdb::BTreeEnv {
-    type RecvPkt<'o> = RecvPktPtr<'o>;
-}

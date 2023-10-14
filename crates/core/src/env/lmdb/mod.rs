@@ -13,16 +13,15 @@ use lmdb_sys::MDB_envinfo;
 use self::{
     db::LMDBEnv,
     db_info::{DbInfo, LMDBVersion},
-    queries::ReadTxn,
+    get::ReadTxn,
 };
 
-use super::save_state::SaveState;
+use super::misc::SaveState;
 
 pub mod db;
 pub mod db_info;
-pub mod misc;
+pub mod get;
 pub mod queries;
-pub mod queries2;
 pub mod save;
 pub mod tree_iter;
 
@@ -56,7 +55,7 @@ impl BTreeEnv {
         if std::env::var_os("LK_FORCE_EMPTY").is_some() {
             return Ok(env);
         }
-        let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_new();
+        let new = env.save_ptr_one(&PUBLIC_GROUP_PKT)?.is_written();
         if new && std::env::var_os("LK_NO_LNS").is_none() {
             let mut roots: Vec<_> = LNS_ROOTS.iter().map(|p| (p, SaveState::Pending)).collect();
             env.save_ptr(&mut roots)?;

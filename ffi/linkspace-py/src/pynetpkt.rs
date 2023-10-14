@@ -358,9 +358,9 @@ pub use pkt_data::PktData;
 mod pkt_data {
     use linkspace_pkt::NetPktArc;
     use linkspace_pkt::Point;
-    use pyo3::prelude::*;
     use pyo3::ffi;
-    use std::os::raw::{c_int};
+    use pyo3::prelude::*;
+    use std::os::raw::c_int;
 
     #[pyclass]
     pub struct PktData {
@@ -390,7 +390,6 @@ mod pkt_data {
                 (*view).obj = slf.as_ptr();
                 ffi::Py_INCREF((*view).obj);
             }
-
 
             unsafe {
                 (*view).buf = bytes.as_ptr() as *mut std::os::raw::c_void;

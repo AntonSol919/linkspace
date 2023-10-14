@@ -5,7 +5,7 @@ use linkspace_pkt::{
 };
 use lmdb::{RwCursor, Transaction, WriteFlags};
 
-use crate::env::save_state::SaveState;
+use crate::env::misc::SaveState;
 
 use super::db::LMDBEnv;
 

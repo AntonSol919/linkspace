@@ -1,7 +1,8 @@
 # v0.5.1
 
+- Python Pkt.data field uses buffer protocol to be zero copy.
 - Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
-- improve tracing log events 
+- improve tracing events for database actions
 
 # v0.5.0
 

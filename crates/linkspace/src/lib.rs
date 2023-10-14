@@ -794,7 +794,7 @@ pub mod runtime {
 
     /// save a packet. Returns true if new and false if its old.
     pub fn lk_save(lk: &Linkspace, pkt: &dyn NetPkt) -> std::io::Result<bool> {
-        lk.0.env().save_dyn_one(pkt).map(|o| o.is_new())
+        lk.0.env().save_dyn_one(pkt).map(|o| o.is_written())
     }
     /// save multiple packets at once - returns the number of new packets written
     pub fn lk_save_all(lk: &Linkspace, pkts: &[&dyn NetPkt]) -> std::io::Result<usize> {
