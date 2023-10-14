@@ -31,12 +31,10 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
     let q = lk_query_push(lk_query(&Q), "recv", ">", &range_start.0)?;
 
     let q = lk_query_push(q, "", "mode", b"log-asc")?;
-    eprintln!("QUERY = {q}");
     let frst_match = lk_get(&lk, &q)?.context("expected some match")?;
     assert_eq!(frst_match.data(), b"2");
 
     let q = lk_query_push(q, "", "mode", b"hash-asc")?;
-    eprintln!("QUERY = {q}");
     let mut lst = vec![];
     let total = lk_get_all(&lk, &q, &mut |p| {
         lst.push(p.as_netbox());
@@ -77,7 +75,6 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
     lk_process(&lk);
     let q = lk_query_push(q, "", "mode", b"tree-asc")?;
     let q = lk_query_push(q, "recv", ">", &start.0)?;
-    eprintln!("TREE QUERY = {q}");
     let mut lst = vec![];
     let total = lk_get_all(&lk, &q, &mut |p| {
         lst.push(p.as_netbox());
