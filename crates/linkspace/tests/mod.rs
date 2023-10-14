@@ -40,7 +40,7 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
         lst.push(p.as_netbox());
         false
     })?;
-    assert_eq!(total, -2);
+    assert_eq!(total, 2);
     assert_eq!(lst[0].data(), b"3"); // base64 'Zsu...' < 'ef6...'
     assert_eq!(lst[1].data(), b"2");
 
@@ -80,7 +80,7 @@ fn lk_watch_checks_recv_stamp() -> LkResult<()> {
         lst.push(p.as_netbox());
         false
     })?;
-    assert_eq!(total.abs(), 2);
+    assert_eq!(total, 2);
     assert_eq!(lst[0].data(), b"1");
     assert_eq!(lst[1].data(), b"2");
 

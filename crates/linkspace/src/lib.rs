@@ -812,6 +812,8 @@ pub mod runtime {
 
     /// Run callback for every match for the query in the database.
     /// Break early if the callback returns true.
+    /// returns number of matches
+    /// if return from break return is -1*Number of matches
     /// If break => number of matches
     /// If no break ( cb only returned false ) => -1 * Number of matches
     pub fn lk_get_all(
@@ -829,11 +831,10 @@ pub mod runtime {
                 break;
             }
         }
-        Ok(if breaks {
-            saturating_cast(c)
-        } else {
-            saturating_neg_cast(c)
-        })
+        if breaks {
+            return Ok(saturating_neg_cast(c));
+        }
+        Ok(saturating_cast(c))
     }
 
     /// get the first result from the database matching the query.
@@ -847,13 +848,13 @@ pub mod runtime {
     pub fn lk_get_ref<A>(
         lk: &Linkspace,
         query: &Query,
-        cb: &mut dyn FnMut(RecvPktPtr) -> A,
+        cb: &mut dyn FnMut(&dyn NetPkt) -> A,
     ) -> LkResult<Option<A>> {
         let mode = query.0.get_mode()?;
         let mut i = 0;
         let reader = lk.0.get_reader();
         let opt_pkt = reader.query(mode, &query.0.predicates, &mut i)?.next();
-        Ok(opt_pkt.map(cb))
+        Ok(opt_pkt.map(|p| cb(&p)))
     }
     /** read a single packet from the database by its hash without copying.
     This means that [NetPkt::net_header_mut] is unavailable.

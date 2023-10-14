@@ -136,10 +136,9 @@ def lk_get_all(lk:Linkspace, query:Query,cb:Callable[[Pkt],bool|None]) -> int:
         query:
         cb : callable
             - ``pkt``: Pkt
-            Returns: bool,optional
+            Returns: bool, 'should_break' bool
     Returns:
-        If cb returned True, returns number of packets matching the query. Otherwise -1 * number of matches.
-    
+        Number of matching packets - if cb returned True(break)  returns -1 * number of matches
     """
     ...
 
