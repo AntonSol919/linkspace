@@ -2,10 +2,12 @@
 
 - Python bump MIN version to python3.11 ( required for buffer protocol abi )
 - Python Pkt.data field uses buffer protocol to be zero copy.
+- expose 'now' function for python and js 
 - Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
 - improve tracing events for database actions
 - lk_get_all negative return is used if 'break', otherwise positive 
 - change lk_get_hash into lk_get_hashes 
+- JS : improve errors
 
 # v0.5.0
 

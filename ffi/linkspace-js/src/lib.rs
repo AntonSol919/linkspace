@@ -8,9 +8,9 @@
 pub mod consts;
 pub mod jspkt;
 pub mod utils;
-
 use js_sys::{Object, Uint8Array};
 use linkspace_pkt::{PartialNetHeader, MIN_NETPKT_SIZE, *};
+use smallvec::SmallVec;
 use utils::*;
 use wasm_bindgen::prelude::*;
 
@@ -79,11 +79,12 @@ export function set_iter(obj) {
 };
 export function pkt_obj(pkt){
 if (pkt.data == undefined) { console.error("BUG: - the packet was deallocated?");}
-return { group: pkt.group, domain:pkt.domain, spacename:pkt.spacename, links:pkt.links_bytes(), create:pkt.create}
+return { group: pkt.group, domain:pkt.domain, space:pkt.space, links:pkt.links_bytes(), create:pkt.create}
 };
 "#)]
 #[wasm_bindgen]
 extern "C" {
+
     fn set_iter(obj: &js_sys::Object);
     pub fn pkt_obj(obj: Pkt) -> Object;
 
@@ -93,7 +94,7 @@ extern "C" {
     #[wasm_bindgen(structural, method, getter)]
     pub fn domain(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
-    pub fn spacename(this: &Fields) -> JsValue;
+    pub fn space(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
     pub fn links(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
@@ -102,8 +103,9 @@ extern "C" {
     pub fn identity(val: JsValue) -> Option<jspkt::Link>;
 
 }
-fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Stamp)> {
-    let group = opt_bytelike(&obj.group())?
+fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Stamp), JsErr> {
+    let group = opt_bytelike(&obj.group())
+        .map_err(|_| "invalid group")?
         .map(|group| {
             GroupID::try_fit_bytes_or_b64(&group)
                 .ok()
@@ -111,7 +113,8 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
         })
         .transpose()?
         .unwrap_or(PUBLIC);
-    let domain = opt_bytelike(&obj.domain())?
+    let domain = opt_bytelike(&obj.domain())
+        .map_err(|_| "invalid domain")?
         .map(|domain| {
             Domain::try_fit_byte_slice(&domain)
                 .ok()
@@ -119,7 +122,7 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
         })
         .transpose()?
         .unwrap_or(AB::default());
-    let spacename = obj.spacename();
+    let spacename = obj.space();
     let spacename = if spacename.is_falsy() {
         RootedSpaceBuf::new()
     } else if let Some(st) = spacename.dyn_ref::<Uint8Array>() {
@@ -127,7 +130,12 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
     } else {
         let it = js_sys::try_iter(&spacename)?
             .ok_or("unknown format - expected spacename bytes or array")?;
-        let spacename = it.map(|b| bytelike(&b?)).try_collect::<Vec<_>>()?;
+        let mut spacename = SmallVec::<[Bytes; 8]>::new();
+        for (i, el) in it.enumerate() {
+            spacename.push(
+                bytelike(&el?).map_err(|_| JsErr::from(&*format!("Error reading space[{i}]")))?,
+            );
+        }
         RootedSpaceBuf::try_from_iter(spacename)?
     };
     let links = obj.links();
@@ -149,12 +157,12 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
     } else {
         static ERR: &str = "expected [Link] iter";
         let it = js_sys::try_iter(&links)?.ok_or(ERR)?;
-        it.map(|link| -> Result<_> { Ok(identity(link?).ok_or(ERR)?.0) })
+        it.map(|link| -> Result<_, JsErr> { Ok(identity(link?).ok_or(ERR)?.0) })
             .try_collect::<Vec<_>>()?
     };
     let create_stamp = obj.create();
     let create_stamp = if create_stamp.is_falsy() {
-        now()
+        linkspace_pkt::now()
     } else {
         static ERR: &str = "expected stamp [u8;8] or falsy";
         Stamp::try_from(&*create_stamp.dyn_ref::<Uint8Array>().ok_or(ERR)?.to_vec())
@@ -296,7 +304,10 @@ pub fn lk_encode(bytes: &[u8], _ignored: &str) -> String {
 pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {
     Box::new(*blake3::hash(bytes).as_bytes())
 }
-
+#[wasm_bindgen]
+pub fn now() -> Box<[u8]> {
+    Box::new(linkspace_pkt::now().0)
+}
 #[wasm_bindgen]
 pub fn build_info() -> String {
     static BUILD_INFO: &str = concat!(

@@ -1,5 +1,6 @@
 use js_sys::{JsString, JSON};
 use wasm_bindgen::prelude::*;
+pub type Result<T, E = JsError> = std::result::Result<T, E>;
 #[wasm_bindgen]
 pub struct JsErr(Variant);
 enum Variant {
@@ -55,18 +56,50 @@ impl JsErr {
         JSON::stringify(&self.to_json())
     }
 }
+impl std::error::Error for JsErr {}
+impl std::fmt::Debug for JsErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Variant::JsVal(v) => write!(f, "{v:?}"),
+            Variant::PktErr(e) => write!(f, "{e:?}"),
+            Variant::KeyErr(e) => write!(f, "{e:?}"),
+        }
+    }
+}
+impl std::fmt::Display for JsErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Variant::JsVal(v) => match v.as_string() {
+                Some(s) => write!(f, "{s}"),
+                None => write!(f, "{v:?}"),
+            },
+            Variant::PktErr(e) => write!(f, "{e}"),
+            Variant::KeyErr(e) => write!(f, "{e}"),
+        }
+    }
+}
 
-pub type Result<T, E = JsErr> = std::result::Result<T, E>;
-pub fn bytelike(obj: &JsValue) -> Result<Vec<u8>, JsValue> {
+use smallvec::SmallVec;
+pub type Bytes = SmallVec<[u8; 15]>;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+pub fn bytelike(obj: &JsValue) -> Result<Bytes, JsErr> {
     if let Some(st) = obj.as_string() {
-        return Ok(st.into_bytes());
+        return Ok(st.into_bytes().into());
     };
     let bytes = obj
         .dyn_ref::<js_sys::Uint8Array>()
         .ok_or("expected string or Uint8Array")?;
-    Ok(bytes.to_vec()) // todo use copy_into
+    let mut result = SmallVec::from_elem(0, bytes.length() as usize);
+    bytes.copy_to(&mut result);
+    Ok(result)
 }
-pub fn opt_bytelike(obj: &JsValue) -> Result<Option<Vec<u8>>, JsValue> {
+pub fn opt_bytelike(obj: &JsValue) -> Result<Option<Bytes>, JsErr> {
     if obj.is_falsy() {
         return Ok(None);
     }

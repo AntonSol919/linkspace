@@ -32,6 +32,8 @@ wee_alloc = { version = "0.4.2", optional = true }
 # Hopefully picks up the linkspace workspace versions - (-js is excluded from the workspace because profiles are poorly supported)
 base64 = { version="*", default-features = false}
 blake3 = "*"
+anyhow = "*"
+smallvec = {version="1",features=["const_new","const_generics","union"]}
 [build-dependencies]
 vergen = { version = "8", features = ["git", "gitcl", "rustc"] }
 

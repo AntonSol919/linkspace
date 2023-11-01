@@ -702,6 +702,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::b64, m)?)?;
     m.add_function(wrap_pyfunction!(crate::space, m)?)?;
     m.add_function(wrap_pyfunction!(crate::blake3_hash, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::now, m)?)?;
     m.add_function(wrap_pyfunction!(crate::bytes2uniform, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::group, m)?)?;
@@ -778,4 +779,8 @@ pub fn set_domain(domain: &[u8]) {
 #[pyfunction]
 pub fn domain(py: Python) -> &PyBytes {
     PyBytes::new(py, &linkspace_rs::prelude::domain().0)
+}
+#[pyfunction]
+pub fn now(py: Python) -> &PyBytes {
+    PyBytes::new(py, &linkspace_rs::prelude::now().0)
 }
