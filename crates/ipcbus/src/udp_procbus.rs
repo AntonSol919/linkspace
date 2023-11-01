@@ -140,22 +140,21 @@ impl ProcBus {
         });
     }
 
-    pub fn proc_listener(&self) -> EventListener {
-        self.0.proc.listen()
-    }
     pub fn val(&self) -> u64 {
         self.0.val.load(Ordering::SeqCst)
     }
     pub fn next_deadline(&self, deadline: Option<Instant>) -> Option<u64> {
         tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Waiting");
+        let mut listener = EventListener::new(&self.0.proc);
+        let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
         match deadline {
             Some(d) => {
-                if !self.0.proc.listen().wait_deadline(d) {
+                if listener.as_mut().wait_deadline(d).is_none() {
                     tracing::trace!("Timeout");
                     return None;
                 }
             }
-            None => self.0.proc.listen().wait(),
+            None => listener.wait(),
         };
         tracing::trace!("Wakeup");
         Some(self.0.val.load(Ordering::SeqCst))

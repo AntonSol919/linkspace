@@ -10,7 +10,7 @@ pub mod multi {
     use std::{
         fs::FileTimes,
         io::{self, Read},
-        os::fd::{AsRawFd, FromRawFd},
+        os::fd::FromRawFd,
         path::Path,
         sync::atomic::{AtomicU64, Ordering},
         time::SystemTime,
@@ -88,6 +88,7 @@ pub mod multi {
         }
 
         pub fn setup_ipc_thread(&self) {
+            use std::os::fd::{AsFd, AsRawFd};
             let this = ProcBus(self.0.clone());
             self.0.watch_thread.get_or_init(move || {
                 std::thread::spawn(move || {
@@ -95,7 +96,7 @@ pub mod multi {
                     let _wd = instance
                         .add_watch(&this.0.path, AddWatchFlags::IN_ACCESS)
                         .unwrap();
-                    let mut file = unsafe { File::from_raw_fd(instance.as_raw_fd()) };
+                    let mut file = unsafe { File::from_raw_fd(instance.as_fd().as_raw_fd()) };
                     let mut buf = [0; 32];
                     loop {
                         file.read(&mut buf).unwrap();
@@ -105,20 +106,20 @@ pub mod multi {
             });
         }
 
-        pub fn proc_listener(&self) -> EventListener {
-            self.0.proc.listen()
-        }
-
         pub fn next_d(&self, deadline: Option<Instant>) -> Option<u64> {
+            let mut listener = EventListener::new(&self.0.proc);
+            let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
             match deadline {
                 Some(d) => {
-                    if !self.0.proc.listen().wait_deadline(d) {
+                    if listener.as_mut().wait_deadline(d).is_none() {
+                        tracing::trace!("Timeout");
                         return None;
                     }
                 }
-                None => self.0.proc.listen().wait(),
+                None => listener.wait(),
             };
-            Some(self.val_ptr().load(Ordering::Relaxed))
+            tracing::trace!("Wakeup");
+            Some(self.val_ptr().load(Ordering::SeqCst))
         }
         pub async fn next_async(&self) -> u64 {
             self.0.proc.listen().await;
