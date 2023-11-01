@@ -3,6 +3,8 @@
 - Python Pkt.data field uses buffer protocol to be zero copy.
 - Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
 - improve tracing events for database actions
+- lk_get_all negative return is used if 'break', otherwise positive 
+- change lk_get_hash into lk_get_hashes 
 
 # v0.5.0
 

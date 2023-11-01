@@ -81,7 +81,18 @@ impl<'env> ReadTxn<'env> {
     pub fn pkts_after(&self, after: Stamp) -> impl Iterator<Item = RecvPktPtr> {
         self.local_pkt_log(Stamp::new(after.get() + 1))
     }
-
+    /*
+    pub fn get_pkts_by_tree(
+        &self,
+        group: GroupID,
+        domain: Domain,
+        spacename: &Space,
+        subspaces : bool,
+        keys: Option<PubKey>
+    ) -> impl Iterator<Item = &NetPktPtr> {
+        todo!()
+    }
+    */
     pub fn get_pkts_by_hash(
         &self,
         idx: impl Iterator<Item = LkHash>,

@@ -623,7 +623,7 @@ pub mod query {
     pub fn lk_query(copy_from: &Query) -> Query {
         Query(copy_from.0.clone())
     }
-    /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count. See [runtime::lk_get_hash] if you don't care to watch the db.
+    /// Create a new [Query] specifically for a hash. Sets the right mode and 'i' count. See [runtime::lk_get_hashes] if you don't care to watch the db.
     pub fn lk_hash_query(hash: LkHash) -> Query {
         Query(linkspace_common::core::query::Query::hash_eq(hash))
     }
@@ -841,10 +841,7 @@ pub mod runtime {
     pub fn lk_get(lk: &Linkspace, query: &Query) -> LkResult<Option<NetPktBox>> {
         lk_get_ref(lk, query, &mut |v| v.as_netbox())
     }
-    /** read a single packet directly without copying.
-    This means that [NetPkt::net_header_mut] is unavailable.
-    To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
-    **/
+    /** read a single packet directly without copying when possible. **/
     pub fn lk_get_ref<A>(
         lk: &Linkspace,
         query: &Query,
@@ -856,22 +853,26 @@ pub mod runtime {
         let opt_pkt = reader.query(mode, &query.0.predicates, &mut i)?.next();
         Ok(opt_pkt.map(|p| cb(&p)))
     }
-    /** read a single packet from the database by its hash without copying.
-    This means that [NetPkt::net_header_mut] is unavailable.
-    To mutate the header, wrap the result in [crate::misc::ReroutePkt] or copy with [NetPkt::as_netbox]..
-     **/
-    pub fn lk_get_hash<A>(
+
+    /// todo
+    pub fn lk_get_hashes(
         lk: &Linkspace,
-        hash: LkHash,
-        cb: &mut dyn FnMut(RecvPktPtr) -> A,
-    ) -> anyhow::Result<Option<A>> {
-        let reader = lk.0.get_reader();
-        let opt = reader.read(&hash)?;
-        Ok(opt.map(cb))
+        hashes: &[LkHash],
+        cb: &mut dyn FnMut(&dyn NetPkt) -> bool,
+    ) -> LkResult<i32> {
+        let mut c = 0;
+        let r = lk.0.get_reader();
+        for p in r.get_pkts_by_hash(hashes.iter().copied()) {
+            c += 1;
+            if (cb)(&p) {
+                return Ok(saturating_neg_cast(c));
+            }
+        }
+        Ok(saturating_cast(c))
     }
 
     /**
-    Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid) )
+    Registers the query under its 'qid' ( .e.g. set by lk_query_parse(q,":qid:myqid") )
     Before returning, calls cb for every packet in the database.
     The absolute return value is the number of times the callback was called.
     A positive value means the callback finished already.

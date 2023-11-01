@@ -1,4 +1,5 @@
 from typing import Any,Callable
+from collections.abc import Iterable
 
 DEFAULT_PKT: str
 PRIVATE: bytes
@@ -142,8 +143,8 @@ def lk_get_all(lk:Linkspace, query:Query,cb:Callable[[Pkt],bool|None]) -> int:
     """
     ...
 
-def lk_get_hash(lk:Linkspace,hash:str|bytes) -> Pkt | None:
-    """Read a single packet hash from the database"""
+def lk_get_hashes(lk:Linkspace,hash:str|bytes|Iterable[str|bytes], cb:Callable[[Pkt],bool|None]) -> int:
+    """Read packets hash from the database"""
     ...
 
 

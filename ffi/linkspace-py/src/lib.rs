@@ -12,6 +12,7 @@
 
 use anyhow::{anyhow, Context};
 use linkspace_rs::runtime::cb::StopReason;
+use smallvec::SmallVec;
 use std::{
     ops::ControlFlow,
     path::{Path, PathBuf},
@@ -455,9 +456,31 @@ pub fn lk_get_all(py: Python, lk: &Linkspace, query: &Query, cb: PyFunc) -> anyh
     Ok(count)
 }
 #[pyfunction]
-pub fn lk_get_hash(lk: &Linkspace, hash: &PyAny) -> anyhow::Result<Option<Pkt>> {
-    let hash = LkHash::try_fit_bytes_or_b64(bytelike(hash)?)?;
-    linkspace_rs::runtime::lk_get_hash(&lk.0, hash, &mut |pkt| Pkt::from_dyn(&pkt))
+pub fn lk_get_hashes(py: Python, lk: &Linkspace, hash: &PyAny, cb: PyFunc) -> anyhow::Result<i32> {
+    let mut cb_err = Ok(());
+    let mut cb = |pkt: &dyn NetPkt| {
+        let pkt = Pkt::from_dyn(pkt);
+        let mut breaks = false;
+        cb_err = call_cont_py(py, &cb, (pkt,)).map(|c| breaks = c);
+        breaks
+    };
+    let count = match bytelike(hash) {
+        Ok(h) => {
+            let hash = LkHash::try_fit_bytes_or_b64(h)?;
+            linkspace_rs::runtime::lk_get_hashes(&lk.0, &[hash], &mut cb)
+        }
+        Err(_) => {
+            let hashes: SmallVec<[LkHash; 8]> = hash
+                .iter()?
+                .map(|o| -> anyhow::Result<LkHash> {
+                    Ok(LkHash::try_fit_bytes_or_b64(bytelike(o?)?)?)
+                })
+                .try_collect()?;
+            linkspace_rs::runtime::lk_get_hashes(&lk.0, &hashes, &mut cb)
+        }
+    };
+    cb_err?;
+    count
 }
 
 #[pyfunction]
@@ -659,7 +682,7 @@ fn linkspace(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::lk_save_all_ext, m)?)?;
 
     m.add_function(wrap_pyfunction!(crate::lk_get, m)?)?;
-    m.add_function(wrap_pyfunction!(crate::lk_get_hash, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::lk_get_hashes, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_get_all, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_watch, m)?)?;
     m.add_function(wrap_pyfunction!(crate::lk_process, m)?)?;
