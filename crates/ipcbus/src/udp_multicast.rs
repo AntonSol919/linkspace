@@ -124,13 +124,9 @@ pub fn bind_to_device(socket: &mut Socket) {
 }
 #[cfg(any(target_os = "android", target_os = "fuchsia", target_os = "linux"))]
 pub fn bind_to_device(socket: &Socket) {
-    use std::os::unix::prelude::AsRawFd;
+    use nix::sys::socket::{setsockopt, sockopt};
     let dev = std::ffi::OsString::from("lo");
-    if let Err(e) = nix::sys::socket::setsockopt(
-        socket.as_raw_fd(),
-        nix::sys::socket::sockopt::BindToDevice,
-        &dev,
-    ) {
+    if let Err(e) = setsockopt(socket, sockopt::BindToDevice, &dev) {
         tracing::info!(e=?e,"could not bind to loopback device. Nothing bad will happen - setcap cap_net_raw=+eip [executable path] might fix this error")
     }
 }
