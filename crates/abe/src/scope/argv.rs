@@ -28,7 +28,7 @@ impl<'o> EvalScopeImpl for ArgV<'o> {
         fncs!([
             ("0", 0..=0, Some(true), "argv[0]", |t: &Self, _| Ok(t
                 .0
-                .get(0)
+                .first()
                 .context("no 0 value")?
                 .to_vec())),
             ("1", 0..=0, Some(true), "argv[1]", |t: &Self, _| Ok(t

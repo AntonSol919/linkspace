@@ -102,7 +102,7 @@ impl<'o> EvalScopeImpl for NetPktPrintDefault<'o> {
             }, none),
             ( @C "pkt-quick",0..=2,Some(true),"[add recv? =false , data_limit = max] same as pkt but without dynamic lookup",|pkt:&Self,arg:&[&[u8]],_,_| {
                 let mut buf = String::new();
-                let add_recv_field = !matches!(arg.get(0).copied(), None | Some(b"false") | Some(b""));
+                let add_recv_field = !matches!(arg.first().copied(), None | Some(b"false") | Some(b""));
                 let data_limit = arg.get(1).map(|o| Ok::<usize,anyhow::Error>(std::str::from_utf8(o)?.parse()?)).transpose()?.unwrap_or(usize::MAX);
                 PktFmt(pkt.0).to_str(&mut buf,add_recv_field,data_limit)?;
                 Ok(buf.into_bytes())
@@ -228,7 +228,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                 0..=1,
                 "[?(str|abe)] - 32 byte pointer",
                 |lk: &Self, i: &[&[u8]]| {
-                    match i.get(0).copied().unwrap_or(b"") {
+                    match i.first().copied().unwrap_or(b"") {
                         b"abe" => Ok(lk.link.ptr.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.link.ptr.to_string().into_bytes()),
                         b"" => Ok(lk.link.ptr.0.to_vec()),
@@ -241,7 +241,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                 0..=1,
                 "[?(str|abe)] - 16 byte tag ",
                 |lk: &Self, i: &[&[u8]]| {
-                    match i.get(0).copied().unwrap_or(b"") {
+                    match i.first().copied().unwrap_or(b"") {
                         b"abe" => Ok(lk.link.tag.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.link.tag.as_str(true).into_owned().into_bytes()),
                         b"" => Ok(lk.link.tag.0.to_vec()),
@@ -254,7 +254,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
                 0..=1,
                 "[?(str|abe)] - u16 idx",
                 |lk: &Self, i: &[&[u8]]| {
-                    match i.get(0).copied().unwrap_or(b"") {
+                    match i.first().copied().unwrap_or(b"") {
                         b"abe" => Ok(lk.idx.to_abe_str().into_bytes()),
                         b"str" => Ok(lk.idx.to_string().into_bytes()),
                         b"" => Ok(lk.idx.0.to_vec()),
@@ -267,7 +267,7 @@ impl<'o> EvalScopeImpl for LinkEnv<'o> {
 }
 
 fn eval_recv(b: Stamp, args: &[&[u8]]) -> anyhow::Result<Vec<u8>> {
-    let ok = match args.get(0).copied().unwrap_or(b"") {
+    let ok = match args.first().copied().unwrap_or(b"") {
         b"abe" => b.to_abe_str().into_bytes(),
         b"str" => b.to_string().into_bytes(),
         b"" => b.0.to_vec(),

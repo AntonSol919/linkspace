@@ -35,8 +35,6 @@ use core::mem::size_of;
 use core::ops::Deref;
 use core::slice::from_raw_parts;
 use serde::{Deserialize, Serialize};
-pub use space::*;
-pub use space_fmt::*;
 
 mod builder;
 pub mod byte_segments;

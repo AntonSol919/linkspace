@@ -70,7 +70,7 @@ pub fn pkt_info(mut common: CommonOpts, popts: PktFmtOpts) -> anyhow::Result<()>
     let write_private = common.write_private().unwrap_or(true);
     common.mut_read_private().get_or_insert(true);
     let datap_fmt = fmt
-        .get(0)
+        .first()
         .map(|o| parse_abe(o, loose))
         .transpose()?
         .unwrap_or(DEFAULT_FMT.clone());

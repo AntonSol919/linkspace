@@ -109,6 +109,7 @@ pub mod multi {
         pub fn next_d(&self, deadline: Option<Instant>) -> Option<u64> {
             let mut listener = EventListener::new(&self.0.proc);
             let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
+            listener.as_mut().listen();
             match deadline {
                 Some(d) => {
                     if listener.as_mut().wait_deadline(d).is_none() {
@@ -116,14 +117,19 @@ pub mod multi {
                         return None;
                     }
                 }
-                None => listener.wait(),
+                None => listener.as_mut().wait(),
             };
             tracing::trace!("Wakeup");
             Some(self.val_ptr().load(Ordering::SeqCst))
         }
         pub async fn next_async(&self) -> u64 {
-            self.0.proc.listen().await;
-            self.val_ptr().load(Ordering::Relaxed)
+            let mut listener = EventListener::new(&self.0.proc);
+            let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
+            listener.as_mut().listen();
+            tracing::trace!("Async Wait");
+            listener.await;
+            tracing::trace!("Async Ok");
+            self.0.val.load(Ordering::SeqCst)
         }
     }
 }

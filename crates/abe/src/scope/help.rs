@@ -18,7 +18,7 @@ impl EvalScopeImpl for Help {
         &[ScopeFunc {
             apply: |_, i: &[&[u8]], _, scope| {
                 ApplyResult::Value({
-                    if let Some(id) = i.get(0) {
+                    if let Some(id) = i.first() {
                         let mut out = "".to_string();
                         scope.describe(&mut |name, about, fncs, evls| {
                             if !out.is_empty() {

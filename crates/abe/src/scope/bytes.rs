@@ -166,7 +166,7 @@ pub fn slice<'o, F>(
         }))
     }
     let len = bytes.len() as isize;
-    let start = parse_b_signed(args.get(0).copied())?;
+    let start = parse_b_signed(args.first().copied())?;
     let end = parse_b_signed(args.get(1).copied())?;
     let step: isize = args
         .get(2)

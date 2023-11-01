@@ -147,6 +147,7 @@ impl ProcBus {
         tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Waiting");
         let mut listener = EventListener::new(&self.0.proc);
         let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
+        listener.as_mut().listen();
         match deadline {
             Some(d) => {
                 if listener.as_mut().wait_deadline(d).is_none() {
@@ -154,14 +155,17 @@ impl ProcBus {
                     return None;
                 }
             }
-            None => listener.wait(),
+            None => listener.as_mut().wait(),
         };
         tracing::trace!("Wakeup");
         Some(self.0.val.load(Ordering::SeqCst))
     }
     pub async fn next_async(&self) -> u64 {
+        let mut listener = EventListener::new(&self.0.proc);
+        let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
+        listener.as_mut().listen();
         tracing::trace!("Async Wait");
-        self.0.proc.listen().await;
+        listener.await;
         tracing::trace!("Async Ok");
         self.0.val.load(Ordering::SeqCst)
     }
