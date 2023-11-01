@@ -24,7 +24,7 @@ anyhow.workspace=true
 tracing.workspace = true
 tracing-subscriber = {workspace=true,features=["env-filter"]}
 
-pyo3 = { version = "0.20.0", features = ["extension-module","anyhow","serde"]  }
+pyo3 = { version = "0.20.0", features = ["extension-module","anyhow","abi3","serde","abi3-py311"]}
 [build-dependencies]
 vergen = { workspace = true, features = ["git", "gitcl", "rustc"] }
 

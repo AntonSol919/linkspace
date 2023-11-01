@@ -1,5 +1,6 @@
 # v0.5.1
 
+- Python bump MIN version to python3.11 ( required for buffer protocol abi )
 - Python Pkt.data field uses buffer protocol to be zero copy.
 - Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
 - improve tracing events for database actions
