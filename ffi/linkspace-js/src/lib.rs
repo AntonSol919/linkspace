@@ -8,7 +8,7 @@
 pub mod consts;
 pub mod jspkt;
 pub mod utils;
-use js_sys::{Object, Uint8Array};
+use js_sys::Uint8Array;
 use linkspace_pkt::{PartialNetHeader, MIN_NETPKT_SIZE, *};
 use smallvec::SmallVec;
 use utils::*;
@@ -21,11 +21,21 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen(start)]
 fn main() -> std::result::Result<(), JsValue> {
+    use js_sys::Object;
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-    set_iter(&js_sys::Object::get_prototype_of(
-        &jspkt::Links::empty().into(),
-    ));
+
+    // Setting the Links[Symbol.iterator] = Links::as_iter
+    let proto = Object::get_prototype_of(&jspkt::Links::empty().into());
+    js_sys::Reflect::set(
+        &proto,
+        &js_sys::Symbol::iterator(),
+        &js_sys::Reflect::get(&proto, &"as_iter".into())
+            .unwrap()
+            .into(),
+    )
+    .unwrap();
+
     Ok(())
 }
 
@@ -72,21 +82,8 @@ pub fn lk_key_decrypt(id: &str, password: &[u8]) -> Result<SigningKey> {
     Ok(SigningKey(identity::decrypt(id, password)?))
 }
 
-#[wasm_bindgen(inline_js = r#"
-export function identity(a) { return a }
-export function set_iter(obj) {
-     obj[Symbol.iterator] = function () { return this };
-};
-export function pkt_obj(pkt){
-if (pkt.data == undefined) { console.error("BUG: - the packet was deallocated?");}
-return { group: pkt.group, domain:pkt.domain, space:pkt.space, links:pkt.links_bytes(), create:pkt.create}
-};
-"#)]
 #[wasm_bindgen]
 extern "C" {
-
-    fn set_iter(obj: &js_sys::Object);
-    pub fn pkt_obj(obj: Pkt) -> Object;
 
     pub type Fields;
     #[wasm_bindgen(structural, method, getter)]
@@ -99,8 +96,6 @@ extern "C" {
     pub fn links(this: &Fields) -> JsValue;
     #[wasm_bindgen(structural, method, getter)]
     pub fn create(this: &Fields) -> JsValue;
-
-    pub fn identity(val: JsValue) -> Option<jspkt::Link>;
 
 }
 fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Link>, Stamp), JsErr> {
@@ -157,7 +152,7 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
     } else {
         static ERR: &str = "expected [Link] iter";
         let it = js_sys::try_iter(&links)?.ok_or(ERR)?;
-        it.map(|link| -> Result<_, JsErr> { Ok(identity(link?).ok_or(ERR)?.0) })
+        it.map(|link| -> Result<_, JsErr> { try_as_link(&link?) })
             .try_collect::<Vec<_>>()?
     };
     let create_stamp = obj.create();
@@ -172,6 +167,36 @@ fn common_args(obj: &Fields) -> Result<(GroupID, Domain, RootedSpaceBuf, Vec<Lin
     Ok((group, domain, spacename, links, create_stamp))
 }
 
+pub fn try_as_link(obj: &JsValue) -> Result<Link, JsErr> {
+    use js_sys::Reflect;
+    match Reflect::get(obj, &JsValue::from_str("ptr")) {
+        Ok(ptr) => {
+            let ptr: LkHash = B64(as_byte_array(&ptr)?);
+            match Reflect::get(obj, &JsValue::from_str("tag")) {
+                Ok(tag) => {
+                    let tag: Tag = AB(as_byte_array(&tag)?);
+                    Ok(Link { tag, ptr })
+                }
+                Err(_e) => Err("Expected obj with [ptr] and [tag]".into()),
+            }
+        }
+        Err(_e) => {
+            let bytes = as_byte_array::<48>(obj)?;
+            Ok(unsafe { std::mem::transmute(bytes) })
+        }
+    }
+}
+pub fn as_byte_array<const N: usize>(obj: &JsValue) -> Result<[u8; N], JsErr> {
+    let bytes = obj
+        .dyn_ref::<js_sys::Uint8Array>()
+        .ok_or("expected string or Uint8Array")?;
+    if bytes.length() != N as u32 {
+        Err("expected N bytes")?
+    }
+    let mut arr = [0; N];
+    bytes.copy_to(&mut arr);
+    Ok(arr)
+}
 #[wasm_bindgen]
 pub fn lk_linkpoint(data: &JsValue, fields: &Fields) -> Result<Pkt> {
     let data = bytelike(data)?;
@@ -235,7 +260,7 @@ const ITEXT_STYLE: &'static str = r#"
 * @param {boolean | undefined} validate
 * @returns {[Pkt,Uint8Array]}
 */
-export function lk_read(bytes: Uint8Array, validate?: boolean): [Pkt,Uint8Array];
+export function lk_read_unchecked(bytes: Uint8Array, validate?: boolean): [Pkt,Uint8Array];
 "#;
 #[wasm_bindgen(skip_typescript)]
 pub fn lk_read_unchecked(
@@ -286,6 +311,42 @@ pub fn _read(
     ))
 }
 
+fn pptr(p: Option<&Pkt>) -> Option<&dyn NetPkt> {
+    p.map(|p| &p.0 as &dyn NetPkt)
+}
+#[wasm_bindgen]
+pub fn lk_eval(
+    expr: &str,
+    pkt: Option<Pkt>,
+    argv: Option<js_sys::Iterator>,
+    loose: Option<bool>,
+) -> Result<Box<[u8]>, JsError> {
+    let v: SmallVec<[Bytes; 4]> = match argv {
+        Some(argv) => argv.into_iter().map(|v| bytelike(&v?)).try_collect()?,
+        None => SmallVec::new(),
+    };
+    let argv: SmallVec<[&[u8]; 4]> = v.iter().map(|s| s.as_slice()).collect();
+    use linkspace::abe::scope::*;
+    let udata = UserData {
+        argv: Some(&argv),
+        pkt: pptr(pkt.as_ref()),
+    };
+    let uscope = scope(udata).map_err(|e| JsError::new(&format!("{e:#?}")))?;
+    linkspace::varscope::lk_eval(uscope, expr, loose.unwrap_or(false))
+        .map_err(|e| JsError::new(&format!("{e:#?}")))
+        .map(|v| v.into_boxed_slice())
+}
+#[wasm_bindgen]
+pub fn lk_eval2str(
+    expr: &str,
+    pkt: Option<Pkt>,
+    argv: Option<js_sys::Iterator>,
+    loose: Option<bool>,
+) -> Result<String, JsError> {
+    String::from_utf8(lk_eval(expr, pkt, argv, loose)?.into())
+        .map_err(|e| JsError::new(&e.to_string()))
+}
+
 #[wasm_bindgen]
 pub fn b64(bytes: &[u8], mini: Option<bool>) -> String {
     let b = linkspace_pkt::B64(bytes);
@@ -295,10 +356,10 @@ pub fn b64(bytes: &[u8], mini: Option<bool>) -> String {
         b.to_string()
     }
 }
+
 #[wasm_bindgen]
-pub fn lk_encode(bytes: &[u8], _ignored: &str) -> String {
-    // a trivially correct stub
-    linkspace_pkt::as_abtxt_c(bytes, false).to_string()
+pub fn lk_encode(bytes: &[u8], options: Option<String>) -> String {
+    linkspace::lk_encode(bytes, options.as_deref().unwrap_or(""))
 }
 #[wasm_bindgen]
 pub fn blake3_hash(bytes: &[u8]) -> Box<[u8]> {

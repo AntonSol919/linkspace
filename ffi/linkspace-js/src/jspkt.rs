@@ -4,11 +4,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 use crate::*;
-use js_sys::Object;
 use linkspace_pkt::{LkHash, NetPkt, NetPktArc, NetPktExt, Point, PointExt, Tag};
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
-
 use crate::bytelike;
 
 // Ideally this is an ArrayBuffer and we give out readonly views
@@ -55,10 +53,7 @@ impl Pkt {
             Ok(buf)
         }
     }
-    #[wasm_bindgen(getter)]
-    pub fn obj(&self) -> Object {
-        crate::pkt_obj(self.clone())
-    }
+
     /*
     pub fn __richcmp__(&self, other: PyRef<Pkt>, op: CompareOp) -> bool {
         use linkspace::misc::TreeEntry;
@@ -211,6 +206,10 @@ pub struct LinkRes {
 }
 #[wasm_bindgen]
 impl Links {
+    #[wasm_bindgen]
+    pub fn as_iter(self) -> Links {
+        self
+    }
     pub fn empty() -> Links {
         Links {
             idx: 0,

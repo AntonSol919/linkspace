@@ -59,11 +59,7 @@ impl JsErr {
 impl std::error::Error for JsErr {}
 impl std::fmt::Debug for JsErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.0 {
-            Variant::JsVal(v) => write!(f, "{v:?}"),
-            Variant::PktErr(e) => write!(f, "{e:?}"),
-            Variant::KeyErr(e) => write!(f, "{e:?}"),
-        }
+        std::fmt::Display::fmt(self,f)
     }
 }
 impl std::fmt::Display for JsErr {
@@ -80,7 +76,7 @@ impl std::fmt::Display for JsErr {
 }
 
 use smallvec::SmallVec;
-pub type Bytes = SmallVec<[u8; 15]>;
+pub type Bytes = SmallVec<[u8; 16]>;
 
 #[wasm_bindgen]
 extern "C" {

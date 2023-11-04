@@ -3,6 +3,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use crate::Stamp;
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
 /// current time as big endian u64 microseconds since epoch
@@ -74,19 +75,19 @@ pub fn checked_stamp_sub(stamp: Stamp, dur: Duration) -> Option<Stamp> {
     stamp.get().checked_sub(sub).map(Stamp::new)
 }
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
+mod wasm {
+    use crate::Stamp;
+    use wasm_bindgen::prelude::*;
 
-use crate::Stamp;
-#[wasm_bindgen(inline_js = r#"
-export function date_now() {
-  return Date.now();
-}"#)]
-#[cfg(target_arch = "wasm32")]
-extern "C" {
-    fn date_now() -> f64;
+    #[wasm_bindgen]
+    extern "C" {
+        #[wasm_bindgen(js_namespace = Date)]
+        fn now() -> f64;
+    }
+    #[cfg(target_arch = "wasm32")]
+    pub fn now_js() -> Stamp {
+        Stamp::new((now() * 1000.0) as u64)
+    }
 }
-
 #[cfg(target_arch = "wasm32")]
-pub fn now() -> Stamp {
-    Stamp::new((date_now() * 1000.0) as u64)
-}
+pub use wasm::now_js as now;
