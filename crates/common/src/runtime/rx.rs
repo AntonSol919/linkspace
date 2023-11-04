@@ -176,8 +176,15 @@ impl Linkspace {
             _ => None,
         };
         // check the break conditions, and update 'next_check' as required for next check
+        let mut awoken = None;
         loop {
-            let _log_head = self.process();
+            let log_head = self.process();
+            tracing::trace!(ev_notify=?awoken,db_head=?log_head,"step");
+            if let Some(awoken) = awoken {
+                if awoken < log_head.get() {
+                    tracing::error!(ev_notify=?awoken,db_head=?log_head,"DESYNC?")
+                }
+            }
             if let Some((user_qid, old_status)) = current_state {
                 let status = match self.watch_status(user_qid) {
                     Some(v) => v,
@@ -242,7 +249,7 @@ impl Linkspace {
             };
 
             tracing::debug!(wakeup=?d(next_check), "waiting for new event");
-            self.env().next_deadline(Some(next_check));
+            awoken = self.env().next_deadline(Some(next_check));
         }
     }
 
@@ -251,7 +258,7 @@ impl Linkspace {
     pub fn process(&self) -> Stamp {
         let exec = &self.0.exec;
         exec.written.set(false);
-        let (txn, from, upto): (Rc<ReadTxn>, Stamp, Stamp) = {
+        let (txn, from, mut upto): (Rc<ReadTxn>, Stamp, Stamp) = {
             let mut txn = exec.process_txn.borrow_mut();
             let rx_last = exec.process_upto.get();
             match Rc::get_mut(&mut txn) {
@@ -273,7 +280,7 @@ impl Linkspace {
             }
             (txn.clone(), rx_last, txn_last)
         };
-        let _g = tracing::error_span!("process log", ?from, ?upto).entered();
+        let _g = tracing::error_span!("process log", ?from, atleast_upto=?upto).entered();
         let mut lock = exec.callbacks.borrow_mut();
         self.drain_pending(&mut lock);
         exec.is_running.set(true);
@@ -285,6 +292,7 @@ impl Linkspace {
             count = Rc::strong_count(&txn)
         };
         for pkt in txn.pkts_after(from) {
+            upto = pkt.recv;
             if pkt.net_header().flags.contains(NetFlags::SILENT) {
                 tracing::trace!("(not) skipping silent pkt - TODO make this a option");
             }
@@ -316,6 +324,8 @@ impl Linkspace {
 
         exec.is_running.set(false);
         exec.process_upto.set(upto);
+        tracing::trace!(?upto);
+
         std::mem::drop((txn, lock));
         if !exec.written.get() {
             return upto;

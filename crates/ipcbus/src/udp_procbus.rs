@@ -91,6 +91,7 @@ impl ProcBus {
     }
     pub fn _emit<const SKIP_UDP: bool>(&self, val: u64) -> u64 {
         let mut old = self.0.val.load(Ordering::Relaxed);
+        tracing::trace!(old, val, "Emit determine");
         loop {
             if old > val {
                 return old;
@@ -111,11 +112,12 @@ impl ProcBus {
                 &val.to_ne_bytes(),
             ]
             .concat();
+            tracing::trace!(val, "emit udp");
             if let Err(e) = self.0.udp.send(&msg) {
                 tracing::error!(e=?e,"IPC UDP Bus");
             }
         }
-        tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Notify");
+        tracing::trace!(val,ptr=%format!("{:p} ",&self.0.val),"emit proc");
         self.0.proc.notify(usize::MAX);
         val
     }
@@ -144,7 +146,8 @@ impl ProcBus {
         self.0.val.load(Ordering::SeqCst)
     }
     pub fn next_deadline(&self, deadline: Option<Instant>) -> Option<u64> {
-        tracing::trace!(ptr=%format!("{:p}",&self.0.val),"Waiting");
+        tracing::trace!(ptr=%format!("{:p}",&self.0.val)
+                        ,val=&self.0.val.load(Ordering::Relaxed),"Waiting");
         let mut listener = EventListener::new(&self.0.proc);
         let mut listener = unsafe { std::pin::Pin::new_unchecked(&mut listener) };
         listener.as_mut().listen();
@@ -157,8 +160,9 @@ impl ProcBus {
             }
             None => listener.as_mut().wait(),
         };
-        tracing::trace!("Wakeup");
-        Some(self.0.val.load(Ordering::SeqCst))
+        let val = self.0.val.load(Ordering::SeqCst);
+        tracing::trace!(val, "Wakeup");
+        Some(val)
     }
     pub async fn next_async(&self) -> u64 {
         let mut listener = EventListener::new(&self.0.proc);

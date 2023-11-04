@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use linkspace_pkt::{
     now,
     tree_order::{TreeEntry, TreeValueBytes},
@@ -12,7 +14,7 @@ use super::db::LMDBEnv;
 impl LMDBEnv {
     /// return first stamp used and last stamp. If first == last then nothing was written.
     #[tracing::instrument(skip_all, err)]
-    pub fn save<P: NetPkt>(&self, pkts: &mut [(P, SaveState)]) -> lmdb::Result<(u64, u64)> {
+    pub fn save<P: NetPkt>(&self, pkts: &mut [(P, SaveState)]) -> lmdb::Result<Range<u64>> {
         use lmdb::Error;
         use lmdb_sys::*;
 
@@ -58,7 +60,7 @@ impl LMDBEnv {
         tracing::trace!(total_new, start, end = at, "new txn for");
 
         if total_new == 0 {
-            return Ok((start, at));
+            return Ok(start..at);
         };
         at = start;
         for (pkt, state) in pkts.iter() {
@@ -110,6 +112,6 @@ impl LMDBEnv {
         std::mem::drop(tree);
 
         txn.commit()?;
-        Ok((start, at))
+        Ok(start..at)
     }
 }

@@ -1,6 +1,7 @@
 use std::{
     fmt::Debug,
     io::{self},
+    ops::Range,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -79,13 +80,13 @@ impl BTreeEnv {
         self.0.log_head.next_deadline(deadline)
     }
     // private generic function.
-    fn save<P: NetPkt>(&self, pkts: &mut [(P, SaveState)]) -> io::Result<(u64, u64)> {
-        let (start, end) = self.0.lmdb.save(pkts).map_err(db::as_io)?;
-        tracing::trace!(start, end, new = end - start, "save ok");
-        if start == end {
-            let _ = self.0.log_head.emit(end);
+    fn save<P: NetPkt>(&self, pkts: &mut [(P, SaveState)]) -> io::Result<Range<u64>> {
+        let range = self.0.lmdb.save(pkts).map_err(db::as_io)?;
+        tracing::trace!(?range, new = range.end - range.start, "save ok");
+        if range.start < range.end {
+            let _ = self.0.log_head.emit(range.end - 1);
         }
-        Ok((start, end))
+        Ok(range)
     }
     pub fn dir(&self) -> &Path {
         &self.0.location
@@ -106,10 +107,10 @@ impl BTreeEnv {
 
 // We have one private generic function, this instantiates one for Ptr and one for &dyn
 impl BTreeEnv {
-    pub fn save_ptr(&self, pkts: &mut [(&NetPktPtr, SaveState)]) -> io::Result<(u64, u64)> {
+    pub fn save_ptr(&self, pkts: &mut [(&NetPktPtr, SaveState)]) -> io::Result<Range<u64>> {
         self.save(pkts)
     }
-    pub fn save_dyn(&self, pkts: &mut [(&dyn NetPkt, SaveState)]) -> io::Result<(u64, u64)> {
+    pub fn save_dyn(&self, pkts: &mut [(&dyn NetPkt, SaveState)]) -> io::Result<Range<u64>> {
         self.save(pkts)
     }
     pub fn save_ptr_one(&self, pkt: &NetPktPtr) -> io::Result<SaveState> {
@@ -125,7 +126,7 @@ impl BTreeEnv {
     pub fn save_ptr_iter<'o>(
         &self,
         it: impl Iterator<Item = &'o NetPktPtr>,
-    ) -> io::Result<(u64, u64)> {
+    ) -> io::Result<Range<u64>> {
         let mut lst = smallvec::SmallVec::<[(&NetPktPtr, SaveState); 8]>::new_const();
         lst.extend(it.map(|o| (o, SaveState::Pending)));
         self.save_ptr(&mut lst)
@@ -133,7 +134,7 @@ impl BTreeEnv {
     pub fn save_dyn_iter<'o>(
         &self,
         it: impl Iterator<Item = &'o dyn NetPkt>,
-    ) -> io::Result<(u64, u64)> {
+    ) -> io::Result<Range<u64>> {
         let mut lst = smallvec::SmallVec::<[(&dyn NetPkt, SaveState); 8]>::new_const();
         lst.extend(it.map(|o| (o, SaveState::Pending)));
         self.save_dyn(&mut lst)

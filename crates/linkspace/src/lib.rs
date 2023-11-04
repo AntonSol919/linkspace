@@ -801,13 +801,13 @@ pub mod runtime {
         let (start, excl) = lk_save_all_ext(lk, pkts)?;
         Ok((excl.get() - start.get()) as usize)
     }
-    /// returns the range of recv stampes used to save new packets. total_new = r.1-r.0
+    /// returns the range [incusive,exclusive) of recv stamps used to save new packets. total_new = r.1-r.0
     pub fn lk_save_all_ext(
         lk: &Linkspace,
         pkts: &[&dyn NetPkt],
     ) -> std::io::Result<(Stamp, Stamp)> {
-        let (s, e) = lk.0.env().save_dyn_iter(pkts.iter().copied())?;
-        Ok((s.into(), e.into()))
+        let range = lk.0.env().save_dyn_iter(pkts.iter().copied())?;
+        Ok((range.start.into(), range.end.into()))
     }
 
     /// Run callback for every match for the query in the database.

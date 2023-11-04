@@ -1,6 +1,7 @@
 # v0.5.1
 
-- Python bump MIN version to python3.11 ( required for buffer protocol abi )
+- Python bump MIN version to python3.11 ( required for buffer protocol abi ) 
+- cross build change to manylinux_2_28
 - Python Pkt.data field uses buffer protocol to be zero copy.
 - expose 'now' function for python and js 
 - Print query in most-recent-first order - clarify that 'push/parse' them to the front to overwrite previous val
@@ -8,6 +9,7 @@
 - lk_get_all negative return is used if 'break', otherwise positive 
 - change lk_get_hash into lk_get_hashes 
 - JS : improve errors
+- JS : Make compatible with nodejs - (remove all inline_js scripts)
 
 # v0.5.0
 
