@@ -80,10 +80,18 @@ impl Pkt {
 
     #[getter]
     /// data
-    pub fn data(&self) -> PktData {
+    pub fn data_buffer(&self) -> PktData {
         PktData {
             pkt: self.0.pkt.pkt.clone(),
         }
+    }
+    #[getter]
+    /// data
+    pub fn data<'p>(&self, py: Python<'p>) -> &'p PyBytes {
+        PyBytes::new(py, self.0.data())
+    }
+    pub fn get_data_str(&self) -> anyhow::Result<&str> {
+        Ok(self.0.pkt.get_data_str()?)
     }
     #[getter]
     /// domain

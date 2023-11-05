@@ -3,11 +3,11 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+use crate::bytelike;
 use crate::*;
 use linkspace_pkt::{LkHash, NetPkt, NetPktArc, NetPktExt, Point, PointExt, Tag};
 use wasm_bindgen::prelude::*;
 use web_sys::TextDecoder;
-use crate::bytelike;
 
 // Ideally this is an ArrayBuffer and we give out readonly views
 #[derive(Clone)]
@@ -78,6 +78,12 @@ impl Pkt {
         self.0.hash_ref().0.into()
     }
 
+    pub fn get_data_str(&self) -> Result<String, JsErr> {
+        self.0
+            .get_data_str()
+            .map_err(|e| e.to_string().into())
+            .map(String::from)
+    }
     #[wasm_bindgen(getter)]
     /// data
     pub fn data(&self) -> Box<[u8]> {

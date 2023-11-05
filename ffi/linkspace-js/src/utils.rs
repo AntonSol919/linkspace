@@ -30,6 +30,11 @@ impl From<linkspace_argon2_identity::KeyError> for JsErr {
     }
 }
 
+impl From<String> for JsErr {
+    fn from(value: String) -> Self {
+        JsErr(Variant::JsVal(JsValue::from_str(&value)))
+    }
+}
 impl From<&str> for JsErr {
     fn from(value: &str) -> Self {
         JsErr(Variant::JsVal(JsValue::from_str(value)))
@@ -59,7 +64,7 @@ impl JsErr {
 impl std::error::Error for JsErr {}
 impl std::fmt::Debug for JsErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self,f)
+        std::fmt::Display::fmt(self, f)
     }
 }
 impl std::fmt::Display for JsErr {
