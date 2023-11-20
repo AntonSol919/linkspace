@@ -19,7 +19,7 @@ tracing.workspace = true
 anyhow.workspace =true
 
 socket2 = { version = "0.5.3", features = ["all"]}
-event-listener = "3.0.1"
+event-listener = "4.0.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 futures.workspace=true
