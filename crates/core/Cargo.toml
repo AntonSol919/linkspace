@@ -40,4 +40,4 @@ lmdb-rkv-sys = { git="https://github.com/AntonSol919/lmdb-rs" ,optional = true }
 #lmdb-rkv-sys = {path = "../../../lmdb-rs/lmdb-sys",optional=true}
 
 time = {version="0.3",features=["parsing","formatting"]}
-parse-display = "0.8.2"
+parse-display = "0.9.0"
